@@ -1,0 +1,27 @@
+{
+  "name": "pspace",
+  "version": "0.0.1",
+  "homepage": "https://github.com/philmander/pspace",
+  "author": "Phil Mander <philip.mander@gamil.com>",
+  "description": "Node JS CMS Blog thing",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/philmander/pspace"
+  },
+  "private": true,
+  "dependencies": {
+    "bluebird": "^2.2.2",
+    "body-parser": "^1.5.0",
+    "express": "^4.7.0",
+    "hbs": "^2.7.0",
+    "mongodb": "^1.4.7",
+    "mongojs": "^0.13.1",
+    "mongoose": "^3.8.13"
+  },
+  "devDependencies": {
+    "array.prototype.find": "^1.0.0",
+    "chalk": "^0.5.1",
+    "mongo-express": "^0.19.0",
+    "winston": "^0.7.3"
+  }
+}
