@@ -16,6 +16,6 @@ var urlSchema = mongoose.Schema({
     }
 });
 
-var Path = mongoose.model('Url', urlSchema);
+var Url = mongoose.model('Url', urlSchema);
 
-module.exports = Path;
+module.exports = Url;

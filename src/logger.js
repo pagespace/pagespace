@@ -1,4 +1,5 @@
 var chalk = require('chalk');
+var util = require('util');
 
 var Logger = function(module, level) {
     this.module = module;
@@ -41,7 +42,11 @@ Logger.meta = {
 Logger.prototype._out = function(level, args) {
     this.lastLevel = level;
     var meta = Logger.meta[level];
-    args[0] = meta.color(timestamp() + this.module + "\n" + meta.prefix + args[0]);
+
+    if(typeof args[0] === "object") {
+        args[0] = util.inspect(args[0]);
+    }
+    args[0] = timestamp() + " " + this.module + "\n" + meta.color(meta.prefix) + args[0];
 
     var method = level === Logger.levels.ERROR ? console.error : console.log;
     method.apply(null, Array.prototype.slice.call(args, 0));
@@ -56,7 +61,10 @@ Logger.prototype.append = function() {
 
     if(this.level <= this.lastLevel) {
         var meta = Logger.meta[this.lastLevel];
-        arguments[0] = meta.color("\t" + arguments[0]);
+        if(typeof arguments[0] === "object") {
+            arguments[0] = util.inspect(arguments[0]);
+        }
+        arguments[0] = "\t" + arguments[0];
         console.log.apply(null, Array.prototype.slice.call(arguments, 0));
     }
 };

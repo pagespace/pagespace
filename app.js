@@ -1,12 +1,14 @@
 var express = require('express');
 var path = require('path')
 var theApp = require('./src/main');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
+var session = require("express-session")
 
 var app = express();
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.json())
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
+app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -14,7 +16,8 @@ app.set('view engine', 'hbs');
 
 app.use(theApp({
     parts: [ require("./src/parts/html-doc.js") ],
-    templatesDir: path.join(__dirname, 'views')
+    templatesDir: path.join(__dirname, 'views'),
+    viewBase: path.join(__dirname, 'views')
 }));
 
 /// catch 404 and forwarding to error handler

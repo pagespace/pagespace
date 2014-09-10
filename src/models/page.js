@@ -3,6 +3,14 @@ var Schema = mongoose.Schema;
 
 var pageSchema = Schema({
 	root: Boolean,
+    title: {
+        type: String,
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
     parent: { 
     	type: Schema.Types.ObjectId, 
     	ref: 'Page' 

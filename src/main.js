@@ -1,5 +1,8 @@
 var mongoose = require('mongoose');
 var hbs = require('hbs');
+var passport = require('passport')
+var LocalStrategy = require('passport-local').Strategy;
+var Acl = require("./acl");
 var pageResolver = require('./page-resolver')();
 var logger = require('./logger')("debug");
 var Promise = require('bluebird')
@@ -7,15 +10,25 @@ var Url = require('./models/url');
 var Page = require('./models/page');
 var Template = require('./models/template');
 var Part = require('./models/part');
+var User = require('./models/user')
 require('array.prototype.find');
 
 var requestTypes = {
     PAGE: 0,
     REST: 1,
-    OTHER: 3
+    ADMIN: 2,
+    LOGIN: 3,
+    OTHER: 4
 };
 
-var apiRegex = new RegExp('^/_api/(pages|parts|templates|urls)/?(.*)');
+var appStates = {
+    NOT_READY: 0,
+    READY: 1
+};
+
+var apiRegex = new RegExp('^/_api/(pages|parts|templates|urls|users)/?(.*)');
+var adminRegex = new RegExp('^/_admin/(pages)/?(.*)');
+var loginRegex = new RegExp('^/_(login)');
 
 /**
  * The App
@@ -24,7 +37,7 @@ var apiRegex = new RegExp('^/_api/(pages|parts|templates|urls)/?(.*)');
 var TheApp = function() {
 
     this.urlsToResolve = [];
-    this.ready = false;
+    this.appState = appStates.NOT_READY;
     this.pageResolver = pageResolver;
 };
 
@@ -37,10 +50,14 @@ TheApp.prototype.init = function(options) {
 
     logger.info("Initializing the middleware");
 
+    this.templatesDir = options.templatesDir || null;
+    this.viewBase = options.viewBase || null;
+    this.parts = options.parts || [];
+
     var readyPromises = [];
 
-    var urlsDeferred = defer();
-    readyPromises.push(urlsDeferred.promise);
+    var setupDeferred = defer();
+    readyPromises.push(setupDeferred.promise);
 
     mongoose.connect('mongodb://localhost/test');
     var db = (this.db = mongoose.connection);
@@ -48,10 +65,10 @@ TheApp.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        //get all the urls in the db
         Url.find({}, 'url', function(err, docs) {
             if(err) {
-                urlsDeferred.reject();
+                logger.error(err);
+                setupDeferred.reject();
             } else {
                 self.urlsToResolve = docs.map(function(doc) {
                     return doc.url;
@@ -62,38 +79,113 @@ TheApp.prototype.init = function(options) {
                         logger.append(url);
                     });
                 }
-                urlsDeferred.resolve();
+                setupDeferred.resolve(appStates.READY);
+            }
+        });
+
+        User.find({ role: 'admin'}, 'username', function(err, users) {
+            if(err) {
+                logger.error(err);
+                setupDeferred.reject();
+            } else {
+                if(users.length === 0) {
+                    logger.info("Admin user created with defaut admin password");
+                    var defaultAdmin = new User({
+                        username: "admin",
+                        password: "admin",
+                        role: "admin"
+                    });
+                    defaultAdmin.save(function(err, model) {
+                        if(err) {
+                            logger.error(err);
+                        } else {
+                            logger.info("Admin user created successfully");
+                        }
+                    });
+                }
             }
         });
     });
-
-    this.templatesDir = options.templatesDir || null;
-    this.parts = options.parts || [];
 
     var partsPromises = this.parts.map(function(part) {
         return part.init();
     });
     readyPromises.concat(partsPromises);
 
-    Promise.all(readyPromises).then(function() {
-        logger.info('Initalized, waiting for requests')
-        self.ready = true;
+    Promise.all(readyPromises).then(function(state) {
+        logger.info('Initialized, waiting for requests')
+        self.appState = state[0];
     });
 
-    return function(req, res, next) {
+    passport.serializeUser(function(user, done) {
+        done(null, {
+            username: user.username,
+            role: user.role
+        });
+    });
 
-        if(self.ready) {
+    passport.deserializeUser(function(userProps, done) {
+        var user = new User(userProps);
+        done(null, user);
+    });
+
+    passport.use(new LocalStrategy(
+        function(username, password, done) {
+            User.findOne({ username: username }, function(err, user) {
+                if (err) {
+                    return done(err);
+                }
+                if (!user) {
+                    return done(null, false, { message: 'Incorrect username.' });
+                }
+                user.comparePassword(password, function(err, match) {
+                    if(!match) {
+                        done(null, false, { message: 'Incorrect password.' });
+                    } else {
+                        done(null, user);
+                    }
+                });
+            });
+        }
+    ));
+
+    this.acl = new Acl();
+    this.acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
+    this.acl.allow(["guest", "admin"], loginRegex, ["GET", "POST"]);
+    this.acl.allow(["admin"], apiRegex, ["GET", "POST", "PUT", "DELETE"]);
+    this.acl.allow(["admin"], adminRegex, ["GET", "POST", "PUT", "DELETE"]);
+
+    var doRequest = function(req, res, next) {
+        var user = req.user || User.createGuestUser();
+
+        if(!self.acl.isAllowed(user.role, req.url, req.method)) {
+            res.redirect('/_login');
+        }
+
+        if(self.appState === appStates.READY) {
             var urlType = self.getUrlType(req.url)
             if(urlType === requestTypes.PAGE) {
                 self.doPageRequest(req, res, next);
             } else if(urlType === requestTypes.REST) {
                 self.doApiRequest(req, res, next);
+            } else if(urlType == requestTypes.ADMIN) {
+                self.doAdminRequest(req, res, next);
+            } else if(urlType == requestTypes.LOGIN) {
+                self.doLoginRequest(req, res, next);
             }
-
         } else {
             next();
         }
-    }
+    };
+
+    return function(req, res, next) {
+
+        passport.initialize()(req, res, function() {
+            passport.session()(req, res, function() {
+                doRequest(req, res, next);
+            });
+        });
+    };
 };
 
 /**
@@ -112,26 +204,30 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
         var pageData = {};
         page.regions.forEach(function(region) {
 
-            logger.log(region.module)
+            //TODO: fix modules v parts
+            if(region.part) {
+                logger.log(region.part)
 
-            var pageModule = region.module;
+                var pagePart = region.part;
 
-            var type = pageModule.type;
-            var mod = self.parts.find(function(mod) {
-                return mod.getType() === type;
-            });
+                var type = pagePart.type;
+                var mod = self.parts.find(function(mod) {
+                    return mod.getType() === type;
+                });
 
-            pageData[region.region] = mod.read(pageModule.data, self.db);
+                pageData[region.region] = mod.read(pagePart.data, self.db);
 
-            hbs.registerPartial(region.region, mod.userView);
+                hbs.registerPartial(region.region, mod.userView);
+            }
         });
 
         res.render(page.template.src, pageData, function(err, html) {
 
             if(err) {
                 logger.error(err);
-                next();
+                next(err);
             } else {
+                logger.info("Sending page for %s", req.url)
                 res.send(html);
             }
         });
@@ -160,8 +256,12 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             model: Part
         },
         templates: {
-            collections: "template",
+            collection: "template",
             model: Template
+        },
+        users: {
+            collection: "user",
+            model: User
         }
     };
 
@@ -180,11 +280,12 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         }
 
         if(req.method === "GET") {
-            Model["find"](filter, collection, function(err, results) {
+            Model["find"](filter, function(err, results) {
                 if(err) {
                     logger.error(err);
-                    next();
+                    next(err);
                 } else {
+                    logger.info("Sending response for %s", req.url);
                     res.json(itemId ? results[0] : results);
                 }
             });
@@ -198,7 +299,13 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                 logger.append(req.body);
                 var model = new Model(req.body);
                 model.save(function(err, model) {
-                    res.json(model);
+                    if(err) {
+                        logger.error(err);
+                        next(err)
+                    } else {
+                        logger.info("Created successfully");
+                        res.json(model);
+                    }
                 });
             }
         } else if(req.method === "PUT") {
@@ -211,8 +318,10 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                 logger.append(req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
+                        logger.error(err)
                         next();
                     } else {
+                        logger.info("Updated successfully");
                         res.json(model);
                     }
                 });
@@ -225,14 +334,67 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                 logger.info("Removing %s with id [%s]", collection, itemId);
                 Model.findByIdAndRemove(itemId, function (err, model) {
                     if (err) {
+                        logger.error(err)
                         next();
                     } else {
+                        logger.info("Deleted successfully");
                         res.statusCode = 204;
                         res.send();
                     }
                 });
             }
         }
+    }
+};
+
+TheApp.prototype.doAdminRequest = function(req, res, next) {
+    logger.info("Processing admin request for " + req.url);
+
+    var apiInfo = adminRegex.exec(req.url);
+    var adminType = apiInfo[1];
+
+    res.render("admin/" + adminType, {}, function(err, html) {
+        if(err) {
+            logger.error(err);
+            next(err);
+        } else {
+            logger.info("Sending page for %s", req.url);
+            res.send(html);
+        }
+    });
+};
+
+TheApp.prototype.doLoginRequest = function(req, res, next) {
+    logger.info("Processing special request for " + req.url);
+
+    if(req.method === "GET") {
+        res.render("special/login", {}, function(err, html) {
+            if(err) {
+                logger.error(err);
+                next(err);
+            } else {
+                logger.info("Sending page for %s", req.url);
+                res.send(html);
+            }
+        });
+    } else if(req.method === "POST") {
+        passport.authenticate('local', function(err, user, info) {
+            if (err) {
+                return next(err);
+            }
+            if (!user) {
+                return res.redirect('/_login');
+            }
+            req.logIn(user, function(err) {
+                if (err) {
+                    return next(err);
+                } else {
+                    return res.json({
+                        href: "/_admin/pages"
+                    });
+                }
+            });
+        })(req, res, next);
     }
 };
 
@@ -244,6 +406,10 @@ TheApp.prototype.getUrlType = function(url) {
         type = requestTypes.PAGE;
     } else if(apiRegex.test(url)) {
         type = requestTypes.REST;
+    } else if (adminRegex.test(url)) {
+        type = requestTypes.ADMIN;
+    } else if (loginRegex.test(url)) {
+        type = requestTypes.LOGIN;
     } else {
         type = requestTypes.OTHER;
     }
