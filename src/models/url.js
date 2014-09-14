@@ -6,7 +6,7 @@ var urlSchema = mongoose.Schema({
     	type: String,
     	required: true
     },
-    page: { 
+    page: {
     	type: Schema.Types.ObjectId, 
     	ref: 'Page' 
     },

@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var hbs = require('hbs');
 var passport = require('passport')
 var LocalStrategy = require('passport-local').Strategy;
+var async = require('async');
 var Acl = require("./acl");
 var pageResolver = require('./page-resolver')();
 var logger = require('./logger')("debug");
@@ -27,7 +28,7 @@ var appStates = {
 };
 
 var apiRegex = new RegExp('^/_api/(pages|parts|templates|urls|users)/?(.*)');
-var adminRegex = new RegExp('^/_admin/(pages)/?(.*)');
+var adminRegex = new RegExp('^/_admin/(dashboard)/?(.*)');
 var loginRegex = new RegExp('^/_(login)');
 
 /**
@@ -159,7 +160,8 @@ TheApp.prototype.init = function(options) {
         var user = req.user || User.createGuestUser();
 
         if(!self.acl.isAllowed(user.role, req.url, req.method)) {
-            res.redirect('/_login');
+            logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
+            return res.redirect('/_login');
         }
 
         if(self.appState === appStates.READY) {
@@ -180,11 +182,25 @@ TheApp.prototype.init = function(options) {
 
     return function(req, res, next) {
 
-        passport.initialize()(req, res, function() {
-            passport.session()(req, res, function() {
+        /*
+        passport.initialize()(req, res, function () {
+            passport.session()(req, res, function () {
                 doRequest(req, res, next);
             });
-        });
+        });*/
+        logger.debug("Request received for " + req.url);
+        req.url = req.url.split("?")[0];
+        async.series([
+            function (callback) {
+                passport.initialize()(req, res, callback);
+            },
+            function (callback) {
+                passport.session()(req, res, callback);
+            },
+            function () {
+                doRequest(req, res, next);
+            }
+        ]);
     };
 };
 
@@ -221,7 +237,7 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
             }
         });
 
-        res.render(page.template.src, pageData, function(err, html) {
+        return res.render(page.template.src, pageData, function(err, html) {
 
             if(err) {
                 logger.error(err);
@@ -265,6 +281,14 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         }
     };
 
+    var populations = {
+        pages: "url children",
+        urls: "",
+        parts: "",
+        templates: "",
+        users: ""
+    };
+
     var apiInfo = apiRegex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
@@ -278,9 +302,14 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         } else {
             logger.debug("Searching for items in collection: " + collection);
         }
+        for(var p in req.query) {
+            if(req.query.hasOwnProperty(p)) {
+                filter[p] = typeify(req.query[p]);;
+            }
+        }
 
         if(req.method === "GET") {
-            Model["find"](filter, function(err, results) {
+            Model["find"](filter).populate(populations[apiType]).exec(function(err, results) {
                 if(err) {
                     logger.error(err);
                     next(err);
@@ -353,7 +382,7 @@ TheApp.prototype.doAdminRequest = function(req, res, next) {
     var apiInfo = adminRegex.exec(req.url);
     var adminType = apiInfo[1];
 
-    res.render("admin/" + adminType, {}, function(err, html) {
+    return res.render("admin/" + adminType, {}, function(err, html) {
         if(err) {
             logger.error(err);
             next(err);
@@ -368,7 +397,7 @@ TheApp.prototype.doLoginRequest = function(req, res, next) {
     logger.info("Processing special request for " + req.url);
 
     if(req.method === "GET") {
-        res.render("special/login", {}, function(err, html) {
+        return res.render("special/login", {}, function(err, html) {
             if(err) {
                 logger.error(err);
                 next(err);
@@ -378,7 +407,7 @@ TheApp.prototype.doLoginRequest = function(req, res, next) {
             }
         });
     } else if(req.method === "POST") {
-        passport.authenticate('local', function(err, user, info) {
+        return passport.authenticate('local', function(err, user, info) {
             if (err) {
                 return next(err);
             }
@@ -390,7 +419,7 @@ TheApp.prototype.doLoginRequest = function(req, res, next) {
                     return next(err);
                 } else {
                     return res.json({
-                        href: "/_admin/pages"
+                        href: "/_admin/dashboard"
                     });
                 }
             });
@@ -428,6 +457,18 @@ function defer() {
         reject: reject,
         promise: promise
     };
+}
+
+function typeify(value) {
+    if(!isNaN(parseFloat(value))) {
+        return parseFloat(value)
+    } else if(value.toLowerCase() === "false") {
+        return false;
+    } else if(value.toLowerCase() === "true") {
+        return true
+    } else {
+        return value;
+    }
 }
 
 module.exports = function(opts) {

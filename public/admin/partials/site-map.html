@@ -1,0 +1,18 @@
+<script type="text/ng-template"  id="page-item">
+    <a href="#">{{page.name}}</a>
+
+    <button ng-click="removePage(page)">Remove</button>
+    <button ng-click="addPage(page)">Add page</button>
+
+    <ul>
+        <li ng-repeat="page in page.children" ng-include="'page-item'"></li>
+    </ul>
+</script>
+
+<div class="sitemap">
+    <ul id="primaryNav" ng-controller="SitemapController">
+        <li id="home"><a href="#">My site</a>
+        <button ng-click="addPage()">Add page</button>
+        <li ng-repeat="page in pages" ng-include="'page-item'"></li>
+    </ul>
+</div>
