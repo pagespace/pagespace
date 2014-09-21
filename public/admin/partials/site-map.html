@@ -1,9 +1,13 @@
 <script type="text/ng-template"  id="page-item">
-    <a href="#">{{page.name}}</a>
 
-    <button ng-click="removePage(page)">Remove</button>
-    <button ng-click="addPage(page)">Add page</button>
 
+    <button class="btn btn-sm pull-left" ng-show="page.children.length == 0" ng-click="removePage(page)" title="Remove page">
+        <span class="glyphicon glyphicon-remove"></span>
+    </button>
+    <button class="btn btn-sm pull-right" ng-click="addPage(page)" title="Add page">
+        <span class="glyphicon glyphicon-plus"></span>
+    </button>
+    <a href="#/pages/{{page._id}}">{{page.name}}</a>
     <ul>
         <li ng-repeat="page in page.children" ng-include="'page-item'"></li>
     </ul>
@@ -11,8 +15,11 @@
 
 <div class="sitemap">
     <ul id="primaryNav" ng-controller="SitemapController">
-        <li id="home"><a href="#">My site</a>
-        <button ng-click="addPage()">Add page</button>
+        <li id="home">
+            <button class="btn pull-right btn-sm" ng-click="addPage()" title="Add page">
+                <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            <a href="#">My site</a>
         <li ng-repeat="page in pages" ng-include="'page-item'"></li>
     </ul>
 </div>

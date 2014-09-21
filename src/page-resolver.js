@@ -1,6 +1,5 @@
 var Promise = require("bluebird");
 
-var Url = require('./models/url');
 var Page = require('./models/page');
 
 module.exports = function() {
@@ -14,25 +13,17 @@ function PageResolver() {
 PageResolver.prototype.findPage = function(url) {
 
 	return new Promise(function (resolve, reject) {
-	    var query = Url.findOne({
+	    var query = Page.findOne({
 			url: url 
 		});
-	    query.populate("page")
+	    query.populate("redirect template");
 		query.exec(function(err, result) {
 			if(err) {
 				console.log(err);
 				reject(err);
 			} else {
-				//console.log(res)
-				Page.populate(result.page, {
-					path: 'regions.module template'
-				}, function(err, result) {
-				  	if(err) {
-				  		reject(err)
-				  	} else {
-				  		resolve(result);
-				  	}				  	
-				});								
+
+				resolve(result);
 			}
 		});
 	});		

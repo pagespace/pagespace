@@ -1,0 +1,10 @@
+<div class="list-group" ng-show="templates.length == 0">
+    <p>There are no templates</p>
+</div>
+<div class="list-group" ng-show="templates.length > 0">
+    <a href="#/templates/{{template._id}}" ng-repeat="template in templates" class="list-group-item">
+        <h4 class="list-group-item-heading">{{template.name}}</h4>
+        <p class="list-group-item-text"><small>{{template.src}}</small></p>
+    </a>
+</div>
+<a class="btn" type="button" href="#/templates/new">Create template</a>

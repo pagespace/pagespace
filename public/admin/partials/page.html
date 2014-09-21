@@ -1,1 +1,27 @@
-<p>PAGE</p>
+<p><a href="{{page.url}}" class="pull-right clearfix" target="_blank">Go to page &raquo;</a></p>
+<form role="form" ng-submit="save()">
+    <div class="form-group">
+        <input type="text" class="form-control input-lg" ng-model="page.name" placeholder="Page Title">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <div class="input-group">
+            <input type="text" class="form-control input-sm" ng-model="page.url" placeholder="Address">
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-primary btn-sm" title="Regenerate Url" ng-click="updateUrl()">
+                    <span class="glyphicon glyphicon-repeat"></span>
+                </button>
+            </span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Template</label>
+        <select ng-model="page.template" ng-options="template._id as template.name for template in templates"
+                class="form-control" placeholder="Select a template">
+            <option value="" disabled selected>Select a template</option>
+                </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary pull-right">Save</button>
+    <button ng-click="cancel()" type="button" class="btn pull-right">Cancel</button>
+</form>

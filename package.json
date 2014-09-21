@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/philmander/pspace"
   },
+  "scripts": {
+      "start": "node app.js"
+  },
   "private": true,
   "dependencies": {
     "bluebird": "^2.2.2",

@@ -25,12 +25,8 @@ var pageSchema = Schema({
    		ref: 'Template'
    	},
     url: {
-        type: Schema.Types.ObjectId,
-        ref: 'Page'
-    },
-    state: {
-        type: Number,
-        default: 0
+        type: String,
+        unique: true
     }
 });
 

@@ -5,10 +5,10 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("SitemapController", function($scope, $resource, $http) {
+adminApp.controller("SitemapController", function($scope, $location, pageService) {
 
     var getPages = function() {
-        $http.get('/_api/pages').success(function(allPages){
+        pageService.getPages().success(function(allPages){
 
             var pageMap = {};
             allPages.forEach(function(page) {
@@ -19,8 +19,9 @@ adminApp.controller("SitemapController", function($scope, $resource, $http) {
 
                 pages.forEach(function(currentPage) {
 
-                    currentPage.children = allPages.filter(function(page) {
-                        return currentPage._id === page.parent;
+                    currentPage.children = allPages.filter(function(childCandidate) {
+                        var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
+                        return currentPage._id === candidateParentId;
                     });
                     if(currentPage.children.length > 0) {
                         populateChildren(currentPage.children);
@@ -41,28 +42,15 @@ adminApp.controller("SitemapController", function($scope, $resource, $http) {
 
     $scope.addPage = function(parentPage) {
 
-        var newPage = {
-            name: "New Page"
-        };
-        if(parentPage) {
-            newPage.parent = parentPage._id;
-        } else {
-            newPage.root = "primary";
-        }
-
-        $http.post('/_api/pages', newPage).success(function() {
-            console.log("Page added");
+        parentPage = parentPage || 'primary';
+        pageService.createPage(null, parentPage).success(function() {
             getPages();
         });
     };
 
     $scope.removePage = function(page) {
 
-        var update = {
-            ready: false
-        };
-        $http.deleputte('/_api/pages/' + page._id, update).success(function() {
-            console.log("Page deactivated");
+        pageService.deletePage(page._id).success(function() {
             getPages();
         });
     };

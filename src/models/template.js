@@ -2,6 +2,10 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var templateSchema = Schema({
+    name: {
+        type: String,
+        required: true
+    },
     src: {
     	type: String,
     	unique: true,

@@ -2203,7 +2203,7 @@ function publishExternalAPI(angular){
             ngNonBindable: ngNonBindableDirective,
             ngPluralize: ngPluralizeDirective,
             ngRepeat: ngRepeatDirective,
-            ngShow: ngShowDirective,
+              class="btn pull-right"ngShow: ngShowDirective,
             ngStyle: ngStyleDirective,
             ngSwitch: ngSwitchDirective,
             ngSwitchWhen: ngSwitchWhenDirective,

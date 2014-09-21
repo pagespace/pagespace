@@ -7,6 +7,8 @@
 * Page map https://www.astuteo.com/slickmap/demo/
 * Add/edit page admin page
 * Template admin page
+* Refactor handlers. api emits event on change. update urls to resolve
+* Remember me login
 * Parts admin page
 * Starter parts
     markdown

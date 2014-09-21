@@ -6,8 +6,7 @@ var async = require('async');
 var Acl = require("./acl");
 var pageResolver = require('./page-resolver')();
 var logger = require('./logger')("debug");
-var Promise = require('bluebird')
-var Url = require('./models/url');
+var Promise = require('bluebird');
 var Page = require('./models/page');
 var Template = require('./models/template');
 var Part = require('./models/part');
@@ -27,7 +26,7 @@ var appStates = {
     READY: 1
 };
 
-var apiRegex = new RegExp('^/_api/(pages|parts|templates|urls|users)/?(.*)');
+var apiRegex = new RegExp('^/_api/(pages|parts|templates|users)/?(.*)');
 var adminRegex = new RegExp('^/_admin/(dashboard)/?(.*)');
 var loginRegex = new RegExp('^/_(login)');
 
@@ -66,7 +65,7 @@ TheApp.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        Url.find({}, 'url', function(err, docs) {
+        Page.find({}, function(err, docs) {
             if(err) {
                 logger.error(err);
                 setupDeferred.reject();
@@ -160,7 +159,8 @@ TheApp.prototype.init = function(options) {
         var user = req.user || User.createGuestUser();
 
         if(!self.acl.isAllowed(user.role, req.url, req.method)) {
-            logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
+            logger.debug("User with role [" + user.role + "] is not allowed to access " +
+                req.url + ". Redirecting to login");
             return res.redirect('/_login');
         }
 
@@ -182,13 +182,8 @@ TheApp.prototype.init = function(options) {
 
     return function(req, res, next) {
 
-        /*
-        passport.initialize()(req, res, function () {
-            passport.session()(req, res, function () {
-                doRequest(req, res, next);
-            });
-        });*/
         logger.debug("Request received for " + req.url);
+        //TODO: parse url
         req.url = req.url.split("?")[0];
         async.series([
             function (callback) {
@@ -237,7 +232,8 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
             }
         });
 
-        return res.render(page.template.src, pageData, function(err, html) {
+        var templateSrc = !page.template ? 'default.hbs' : page.template.src;
+        return res.render(templateSrc, pageData, function(err, html) {
 
             if(err) {
                 logger.error(err);
@@ -247,7 +243,6 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
                 res.send(html);
             }
         });
-
     }).catch(function(err) {
         console.log(err);
         next();
@@ -259,10 +254,6 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
     logger.info("Processing api request for " + req.url);
 
     var collectionMap = {
-        urls: {
-            collection: "url",
-            model: Url
-        },
         pages: {
             collection: "page",
             model: Page
@@ -282,8 +273,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
     };
 
     var populations = {
-        pages: "url children",
-        urls: "",
+        pages: "parent",
         parts: "",
         templates: "",
         users: ""
@@ -297,14 +287,18 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         var collection = collectionMap[apiType].collection;
         var filter = {};
         if(itemId) {
+            delete req.body._id;
+            delete req.body._v;
             filter._id = itemId;
             logger.debug("Searching for items by id [%s]: " + collection, itemId);
         } else {
             logger.debug("Searching for items in collection: " + collection);
         }
+
+        //create a filter out of the query string
         for(var p in req.query) {
             if(req.query.hasOwnProperty(p)) {
-                filter[p] = typeify(req.query[p]);;
+                filter[p] = typeify(req.query[p]);
             }
         }
 
@@ -315,7 +309,17 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                     next(err);
                 } else {
                     logger.info("Sending response for %s", req.url);
-                    res.json(itemId ? results[0] : results);
+                    results =  itemId ? results[0] : results;
+                    if(req.headers['accept'].indexOf('application/json') === -1) {
+                        var html =
+                            '<pre style="font-family: Consolas, \'Courier New\'">' + JSON.stringify(results, null, 4) + '</pre>'
+                        res.send(html, {
+                            'Content-Type' : 'text/html'
+                        }, 200);
+                    } else {
+                        res.json(results);
+                    }
+
                 }
             });
         } else if(req.method === "POST") {
@@ -347,7 +351,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                 logger.append(req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
-                        logger.error(err)
+                        logger.error(err);
                         next();
                     } else {
                         logger.info("Updated successfully");
@@ -363,7 +367,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                 logger.info("Removing %s with id [%s]", collection, itemId);
                 Model.findByIdAndRemove(itemId, function (err, model) {
                     if (err) {
-                        logger.error(err)
+                        logger.error(err);
                         next();
                     } else {
                         logger.info("Deleted successfully");
@@ -460,7 +464,7 @@ function defer() {
 }
 
 function typeify(value) {
-    if(!isNaN(parseFloat(value))) {
+    if(!isNaN(parseFloat(+value))) {
         return parseFloat(value)
     } else if(value.toLowerCase() === "false") {
         return false;
