@@ -52,12 +52,15 @@ TheApp.prototype.init = function(options) {
 
     this.templatesDir = options.templatesDir || null;
     this.viewBase = options.viewBase || null;
-    this.parts = options.parts || [];
+    this.parts = [];
 
     var readyPromises = [];
 
-    var setupDeferred = defer();
-    readyPromises.push(setupDeferred.promise);
+    var urlsDefferred = defer();
+    readyPromises.push(urlsDefferred.promise);
+
+    var partsDeffered = defer();
+    readyPromises.push(partsDeffered.promise);
 
     mongoose.connect('mongodb://localhost/test');
     var db = (this.db = mongoose.connection);
@@ -65,12 +68,12 @@ TheApp.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        Page.find({}, function(err, docs) {
+        Page.find({}, function(err, pages) {
             if(err) {
                 logger.error(err);
-                setupDeferred.reject();
+                urlsDefferred.reject();
             } else {
-                self.urlsToResolve = docs.map(function(doc) {
+                self.urlsToResolve = pages.map(function(doc) {
                     return doc.url;
                 });
                 if(logger.isDebug()) {
@@ -79,14 +82,33 @@ TheApp.prototype.init = function(options) {
                         logger.append(url);
                     });
                 }
-                setupDeferred.resolve(appStates.READY);
+                urlsDefferred.resolve(appStates.READY);
+            }
+        });
+
+        Part.find({}, function(err, parts) {
+            if(err) {
+                logger.error(err);
+                partsDeffered.reject();
+            } else {
+                logger.debug('Loading part modules');
+                parts.forEach(function(part) {
+                    try {
+                        logger.append(part.module);
+                        self.parts.push(require(part.module));
+                    } catch(e) {
+                        partsDeffered.reject(e);
+                    }
+
+                });
+                partsDeffered.resolve();
             }
         });
 
         User.find({ role: 'admin'}, 'username', function(err, users) {
             if(err) {
                 logger.error(err);
-                setupDeferred.reject();
+                urlsDefferred.reject();
             } else {
                 if(users.length === 0) {
                     logger.info("Admin user created with defaut admin password");
@@ -114,7 +136,7 @@ TheApp.prototype.init = function(options) {
 
     Promise.all(readyPromises).then(function(state) {
         logger.info('Initialized, waiting for requests')
-        self.appState = state[0];
+        self.appState = appStates.READY;
     });
 
     passport.serializeUser(function(user, done) {
@@ -176,6 +198,8 @@ TheApp.prototype.init = function(options) {
                 self.doLoginRequest(req, res, next);
             }
         } else {
+            var notReadyErr = new Error();
+            notReadyErr.status = 503;
             next();
         }
     };
@@ -206,7 +230,7 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
 
     var self = this;
 
-    logger.info("Processing page request for " + req.url);
+    logger.info('Processing page request for ' + req.url);
 
     self.pageResolver.findPage(req.url).then(function(page) {
 
@@ -214,21 +238,17 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
 
         var pageData = {};
         page.regions.forEach(function(region) {
-
-            //TODO: fix modules v parts
             if(region.part) {
-                logger.log(region.part)
+                //TODO: region.part is an id. need to populate it first
+                logger.log(region.part);
 
-                var pagePart = region.part;
-
-                var type = pagePart.type;
-                var mod = self.parts.find(function(mod) {
-                    return mod.getType() === type;
+                var partModule = self.parts.find(function(loadedPartModule) {
+                    return loadedPartModule.getName() === region.part.name;
                 });
 
-                pageData[region.region] = mod.read(pagePart.data, self.db);
+                pageData[region.region] = partModule.read(region.data, self.db);
 
-                hbs.registerPartial(region.region, mod.userView);
+                hbs.registerPartial(region.region, partModule.userView);
             }
         });
 
@@ -239,7 +259,7 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
                 logger.error(err);
                 next(err);
             } else {
-                logger.info("Sending page for %s", req.url)
+                logger.info('Sending page for %s', req.url)
                 res.send(html);
             }
         });
@@ -251,32 +271,32 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
 
 TheApp.prototype.doApiRequest = function(req, res, next) {
 
-    logger.info("Processing api request for " + req.url);
+    logger.info('Processing api request for ' + req.url);
 
     var collectionMap = {
         pages: {
-            collection: "page",
+            collection: 'page',
             model: Page
         },
         parts: {
-            collection: "part",
+            collection: 'part',
             model: Part
         },
         templates: {
-            collection: "template",
+            collection: 'template',
             model: Template
         },
         users: {
-            collection: "user",
+            collection: 'user',
             model: User
         }
     };
 
     var populations = {
-        pages: "parent",
-        parts: "",
-        templates: "",
-        users: ""
+        pages: 'parent template',
+        parts: '',
+        templates: '',
+        users: ''
     };
 
     var apiInfo = apiRegex.exec(req.url);
@@ -290,9 +310,9 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             delete req.body._id;
             delete req.body._v;
             filter._id = itemId;
-            logger.debug("Searching for items by id [%s]: " + collection, itemId);
+            logger.debug('Searching for items by id [%s]: ' + collection, itemId);
         } else {
-            logger.debug("Searching for items in collection: " + collection);
+            logger.debug('Searching for items in collection: ' + collection);
         }
 
         //create a filter out of the query string
@@ -302,17 +322,19 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             }
         }
 
-        if(req.method === "GET") {
-            Model["find"](filter).populate(populations[apiType]).exec(function(err, results) {
+        if(req.method === 'GET') {
+            Model['find'](filter).populate(populations[apiType]).exec(function(err, results) {
                 if(err) {
                     logger.error(err);
                     next(err);
                 } else {
-                    logger.info("Sending response for %s", req.url);
+                    logger.info('Sending response for %s', req.url);
                     results =  itemId ? results[0] : results;
                     if(req.headers['accept'].indexOf('application/json') === -1) {
                         var html =
-                            '<pre style="font-family: Consolas, \'Courier New\'">' + JSON.stringify(results, null, 4) + '</pre>'
+                            '<pre style="font-family: Consolas, \'Courier New\'">' +
+                            JSON.stringify(results, null, 4) +
+                            '</pre>';
                         res.send(html, {
                             'Content-Type' : 'text/html'
                         }, 200);
@@ -322,13 +344,13 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
 
                 }
             });
-        } else if(req.method === "POST") {
+        } else if(req.method === 'POST') {
             if(itemId) {
-                logger.warn("Cannot POST for this url. It shouldn't contain an id [%s]", itemId);
+                logger.warn('Cannot POST for this url. It shouldn\'t contain an id [%s]', itemId);
                 next();
             } else {
-                logger.info("Creating new %s", collection);
-                logger.debug("Creating new collection with data: " );
+                logger.info('Creating new %s', collection);
+                logger.debug('Creating new collection with data: ' );
                 logger.append(req.body);
                 var model = new Model(req.body);
                 model.save(function(err, model) {
@@ -336,41 +358,41 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
                         logger.error(err);
                         next(err)
                     } else {
-                        logger.info("Created successfully");
+                        logger.info('Created successfully');
                         res.json(model);
                     }
                 });
             }
-        } else if(req.method === "PUT") {
+        } else if(req.method === 'PUT') {
             if(!itemId) {
-                logger.warn("Cannot PUT for this url. It should contain an id");
+                logger.warn('Cannot PUT for this url. It should contain an id');
                 next();
             } else {
-                logger.info("Updating %s with id [%s]", collection, itemId);
-                logger.debug("Updating collection with data: " );
+                logger.info('Updating %s with id [%s]', collection, itemId);
+                logger.debug('Updating collection with data: ' );
                 logger.append(req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
                         logger.error(err);
                         next();
                     } else {
-                        logger.info("Updated successfully");
+                        logger.info('Updated successfully');
                         res.json(model);
                     }
                 });
             }
-        } else if(req.method === "DELETE") {
+        } else if(req.method === 'DELETE') {
             if (!itemId) {
-                logger.warn("Cannot DELETE for this url. It should contain an id");
+                logger.warn('Cannot DELETE for this url. It should contain an id');
                 next();
             } else {
-                logger.info("Removing %s with id [%s]", collection, itemId);
+                logger.info('Removing %s with id [%s]', collection, itemId);
                 Model.findByIdAndRemove(itemId, function (err, model) {
                     if (err) {
                         logger.error(err);
                         next();
                     } else {
-                        logger.info("Deleted successfully");
+                        logger.info('Deleted successfully');
                         res.statusCode = 204;
                         res.send();
                     }
@@ -381,36 +403,36 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
 };
 
 TheApp.prototype.doAdminRequest = function(req, res, next) {
-    logger.info("Processing admin request for " + req.url);
+    logger.info('Processing admin request for ' + req.url);
 
     var apiInfo = adminRegex.exec(req.url);
     var adminType = apiInfo[1];
 
-    return res.render("admin/" + adminType, {}, function(err, html) {
+    return res.render(adminType, {}, function(err, html) {
         if(err) {
             logger.error(err);
             next(err);
         } else {
-            logger.info("Sending page for %s", req.url);
+            logger.info('Sending page for %s', req.url);
             res.send(html);
         }
     });
 };
 
 TheApp.prototype.doLoginRequest = function(req, res, next) {
-    logger.info("Processing special request for " + req.url);
+    logger.info('Processing special request for ' + req.url);
 
-    if(req.method === "GET") {
-        return res.render("special/login", {}, function(err, html) {
+    if(req.method === 'GET') {
+        return res.render('login', {}, function(err, html) {
             if(err) {
                 logger.error(err);
                 next(err);
             } else {
-                logger.info("Sending page for %s", req.url);
+                logger.info('Sending page for %s', req.url);
                 res.send(html);
             }
         });
-    } else if(req.method === "POST") {
+    } else if(req.method === 'POST') {
         return passport.authenticate('local', function(err, user, info) {
             if (err) {
                 return next(err);
@@ -423,7 +445,7 @@ TheApp.prototype.doLoginRequest = function(req, res, next) {
                     return next(err);
                 } else {
                     return res.json({
-                        href: "/_admin/dashboard"
+                        href: '/_admin/dashboard'
                     });
                 }
             });
@@ -466,9 +488,9 @@ function defer() {
 function typeify(value) {
     if(!isNaN(parseFloat(+value))) {
         return parseFloat(value)
-    } else if(value.toLowerCase() === "false") {
+    } else if(value.toLowerCase() === 'false') {
         return false;
-    } else if(value.toLowerCase() === "true") {
+    } else if(value.toLowerCase() === 'true') {
         return true
     } else {
         return value;

@@ -1,6 +1,6 @@
 var express = require('express');
 var path = require('path')
-var theApp = require('./src/main');
+var theApp = require('./src/index');
 var bodyParser = require('body-parser');
 var session = require("express-session")
 
@@ -15,9 +15,9 @@ app.use(session({secret: 'keyboard cat'}));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+app.use('/app/static', express.static(path.join(__dirname, 'views/static')));
 app.use(theApp({
-    parts: [ require("./src/parts/html-doc.js") ],
-    templatesDir: path.join(__dirname, 'views'),
+    templatesDir: path.join(__dirname, 'templates'),
     viewBase: path.join(__dirname, 'views')
 }));
 

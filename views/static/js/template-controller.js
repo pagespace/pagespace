@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("TemplateController", function($scope, $routeParams, $location, templateService) {
+adminApp.controller("templateController", function($scope, $routeParams, $location, templateService) {
 
     var templateId = $routeParams.templateId;
 
@@ -35,7 +35,6 @@ adminApp.controller("TemplateController", function($scope, $routeParams, $locati
     };
 
     $scope.save = function() {
-
         if(templateId) {
             templateService.updateTemplate(templateId, $scope.template).success(function(res) {
                 console.log("Template saved");
@@ -50,10 +49,9 @@ adminApp.controller("TemplateController", function($scope, $routeParams, $locati
     };
 
     $scope.remove = function() {
-
-        templateService.deleteTemplate(pageId, page).success(function (res) {
+        templateService.deleteTemplate($scope.template._id).success(function (res) {
             console.log("Template saved");
-            $location.path("/tempates");
+            $location.path("/templates");
         });
     };
 });

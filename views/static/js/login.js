@@ -3,7 +3,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp', [ 'ngResource']);
-adminApp.controller("LoginController", function($scope, $resource, $window) {
+adminApp.controller("loginController", function($scope, $resource, $window) {
 
     $scope.submit = function() {
         var User = $resource('/_login', null);

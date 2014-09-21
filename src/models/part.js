@@ -1,15 +1,19 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var pageModuleSchema = Schema({
-    type: {
+var partSchema = Schema({
+    name: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    module: {
     	type: String,
     	unique: true,
     	required: true
-    },
-    data: Schema.Types.Mixed
+    }
 });
 
-var PageModule = mongoose.model('Part', pageModuleSchema);
+var PageModule = mongoose.model('Part', partSchema);
 
 module.exports = PageModule;

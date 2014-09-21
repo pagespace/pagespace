@@ -1,0 +1,46 @@
+<!doctype html>
+<html ng-app="adminApp">
+<head>
+    <title>Dashboard</title>
+    <link href="/app/static/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/app/static/support/slickmap/slickmap.css" rel="stylesheet">
+    <script src="/app/static/support/async.js"></script>
+    <script src="/app/static/support/angular-1.3.0-rc.1/angular.min.js"></script>
+    <script src="/app/static/support/angular-1.3.0-rc.1/angular-resource.min.js"></script>
+    <script src="/app/static/support/angular-1.3.0-rc.1/angular-route.min.js"></script>
+    <script src="/app/static/support/angular-1.3.0-rc.1/angular-animate.min.js"></script>
+
+    <script src="/app/static/js/app.js"></script>
+    <script src="/app/static/js/page-service.js"></script>
+    <script src="/app/static/js/template-service.js"></script>
+    <script src="/app/static/js/part-service.js"></script>
+    <script src="/app/static/js/sitemap-controller.js"></script>
+    <script src="/app/static/js/page-controller.js"></script>
+    <script src="/app/static/js/template-list-controller.js"></script>
+    <script src="/app/static/js/template-controller.js"></script>
+    <script src="/app/static/js/part-list-controller.js"></script>
+    <script src="/app/static/js/part-controller.js"></script>
+
+
+</head>
+<body>
+
+<header class="header clearfix">
+    <h1 class="pull-left">Dashboard</h1>
+    <ul class="nav nav-pills pull-right">
+        <li><a href="#/">Sitemap</a></li>
+        <li><a href="#/templates">Templates</a></li>
+        <li><a href="#/parts">Page Parts</a></li>
+    </ul>
+</header>
+
+<section class="main container clearfix">
+    <div ng-view></div>
+</section>
+
+<footer class="footer">
+
+</footer>
+
+</body>
+</html>

@@ -1,5 +1,0 @@
-<p>I am a template B</p>
-
-{{#A}}
-    {{> A}}
-{{/A}}

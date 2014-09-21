@@ -15,7 +15,8 @@ var pageSchema = Schema({
     },
    	regions: [{
    		region: String,
-   		module: {
+        data: Schema.Types.Mixed,
+   		part: {
    			type: Schema.Types.ObjectId,
    			ref: 'Part'
    		}

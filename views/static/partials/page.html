@@ -1,3 +1,4 @@
+<h2>Page</h2>
 <p><a href="{{page.url}}" class="pull-right clearfix" target="_blank">Go to page &raquo;</a></p>
 <form role="form" ng-submit="save()">
     <div class="form-group">
@@ -17,9 +18,19 @@
     <div class="form-group">
         <label>Template</label>
         <select ng-model="page.template" ng-options="template._id as template.name for template in templates"
-                class="form-control" placeholder="Select a template">
+                class="form-control">
             <option value="" disabled selected>Select a template</option>
-                </select>
+        </select>
+    </div>
+    <h3>Regions</h3>
+    <div class="form-group" ng-repeat="region in page.regions">
+        <label>{{region.region}}</label>
+        <select ng-model="region.part" ng-options="part._id as part.name for part in parts" class="form-control">
+            <option value="" disabled selected>Select a part</option>
+        </select>
+        <textarea ng-model="region.data" class="form-control" placeholder="Data">
+
+        </textarea>
     </div>
 
     <button type="submit" class="btn btn-primary pull-right">Save</button>

@@ -21,7 +21,7 @@ module.exports = {
             content: data
         }
 	},
-    getType: function() {
+    getName: function() {
 		return "htmlDoc";
 	}
 };
