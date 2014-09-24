@@ -95,7 +95,9 @@ TheApp.prototype.init = function(options) {
                 parts.forEach(function(part) {
                     try {
                         logger.append(part.module);
-                        self.parts.push(require(part.module));
+                        var partModule = require(part.module);
+                        partModule.init();
+                        self.parts.push(partModule);
                     } catch(e) {
                         partsDeffered.reject(e);
                     }

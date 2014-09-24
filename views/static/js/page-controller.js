@@ -43,22 +43,29 @@ adminApp.controller("pageController",
         $location.path("");
     };
 
-    $scope.$watch('page.template', function(templateId) {
+    $scope.$watch('page.template._id', function(templateId, preTemplateId) {
 
         var selectedTemplate = null;
-        $scope.templates.forEach(function(template) {
-           if(template._id === templateId) {
-               selectedTemplate = template;
-           }
-        });
+        if($scope.templates) {
+            $scope.templates.forEach(function(template) {
+                if(template._id === templateId) {
+                    selectedTemplate = template;
+                }
+            });
 
-        $scope.page.regions = selectedTemplate.regions.map(function(regionKey) {
-            return {
-                region: regionKey,
-                part: null,
-                data: null
-            };
-        })
+            if(selectedTemplate && preTemplateId) {
+                $scope.page.regions = selectedTemplate.regions.map(function(regionKey) {
+                    return {
+                        region: regionKey,
+                        part: null,
+                        data: null
+                    };
+                });
+            }
+        }
+    });
+    $scope.$watch('page.regions', function(region) {
+
     });
 
     $scope.save = function() {

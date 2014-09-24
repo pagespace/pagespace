@@ -22,6 +22,6 @@ module.exports = {
         }
 	},
     getName: function() {
-		return "htmlDoc";
+		return "HTML Test";
 	}
 };

@@ -16,13 +16,12 @@ PageResolver.prototype.findPage = function(url) {
 	    var query = Page.findOne({
 			url: url 
 		});
-	    query.populate("redirect template");
+	    query.populate("redirect template regions.part");
 		query.exec(function(err, result) {
 			if(err) {
 				console.log(err);
 				reject(err);
 			} else {
-
 				resolve(result);
 			}
 		});
