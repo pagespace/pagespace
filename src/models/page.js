@@ -15,10 +15,9 @@ var pageSchema = Schema({
     },
    	regions: [{
    		region: String,
-        data: Schema.Types.Mixed,
-   		part: {
+   		partInstance: {
    			type: Schema.Types.ObjectId,
-   			ref: 'Part'
+   			ref: 'PartInstance'
    		}
    	}],
    	template: {

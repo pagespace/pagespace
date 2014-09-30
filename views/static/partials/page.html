@@ -17,20 +17,34 @@
     </div>
     <div class="form-group">
         <label>Template</label>
-        <select ng-model="page.template._id" ng-options="template._id as template.name for template in templates"
+        <select ng-model="selectedTemplate" ng-options="template.name for template in templates track by template._id"
                 class="form-control">
             <option value="" disabled selected>Select a template</option>
         </select>
     </div>
-    <h3>Regions</h3>
-    <div class="form-group" ng-repeat="region in page.regions">
-        <label>{{region.region}}</label>
-        <select ng-model="region.part" ng-options="part._id as part.name for part in parts" class="form-control">
-            <option value="" disabled selected>Select a part</option>
-        </select>
-        <textarea ng-model="region.data" class="form-control" placeholder="Data">
+    <h3>Regions and Parts</h3>
 
-        </textarea>
+    <div ng-repeat="region in page.regions">
+        <div class="form-group">
+            <label>Region</label>
+            <select ng-model="region.region" ng-options="r as r for r in selectedTemplate.regions" class="form-control">
+                <option value="" disabled selected>Select an available region</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Part type</label>
+            <select ng-model="region.partInstance.part" ng-options="part._id as part.name for part in parts" class="form-control">
+                <option value="" disabled selected>Select a part type</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Part instance data</label>
+            <textarea ng-model="region.partInstance.data" class="form-control input-sm"></textarea>
+        </div>
+        <button ng-click="clearRegion(region)" type="button" class="btn pull-right">Remove region</button>
+    </div>
+    <div class="clearfix">
+        <button ng-click="addRegion()" type="button" class="btn pull-left">Add region</button>
     </div>
 
     <button type="submit" class="btn btn-primary pull-right">Save</button>

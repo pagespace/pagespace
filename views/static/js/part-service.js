@@ -16,11 +16,11 @@
             return $http.post('/_api/parts', partData);
         };
 
-        PartService.prototype.deleteTemplate = function(partId) {
+        PartService.prototype.deletePart = function(partId) {
             return $http.delete('/_api/parts/' + partId);
         };
 
-        PartService.prototype.updateTemplate = function(partId, partData) {
+        PartService.prototype.updatePart = function(partId, partData) {
             return $http.put('/_api/parts/' + partId, partData);
         };
 

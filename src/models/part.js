@@ -14,6 +14,6 @@ var partSchema = Schema({
     }
 });
 
-var PageModule = mongoose.model('Part', partSchema);
+var PartModule = mongoose.model('Part', partSchema);
 
-module.exports = PageModule;
+module.exports = PartModule;

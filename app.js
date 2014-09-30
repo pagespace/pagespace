@@ -7,6 +7,7 @@ var session = require("express-session")
 var app = express();
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 app.use('/favicon.ico', express.static(path.join(__dirname, 'favicon.ico')));
 app.use(bodyParser.json());
 app.use(session({secret: 'keyboard cat'}));

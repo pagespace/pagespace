@@ -23,5 +23,8 @@ module.exports = {
 	},
     getName: function() {
 		return "HTML Test";
-	}
+	},
+    getView: function(edit) {
+        return this.userView;
+    }
 };

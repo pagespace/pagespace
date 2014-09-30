@@ -10,6 +10,7 @@ var Promise = require('bluebird');
 var Page = require('./models/page');
 var Template = require('./models/template');
 var Part = require('./models/part');
+var PartInstance = require('./models/part-instance');
 var User = require('./models/user')
 require('array.prototype.find');
 
@@ -26,7 +27,7 @@ var appStates = {
     READY: 1
 };
 
-var apiRegex = new RegExp('^/_api/(pages|parts|templates|users)/?(.*)');
+var apiRegex = new RegExp('^/_api/(pages|parts|templates|users|part-instances)/?(.*)');
 var adminRegex = new RegExp('^/_admin/(dashboard)/?(.*)');
 var loginRegex = new RegExp('^/_(login)');
 
@@ -52,7 +53,7 @@ TheApp.prototype.init = function(options) {
 
     this.templatesDir = options.templatesDir || null;
     this.viewBase = options.viewBase || null;
-    this.parts = [];
+    this.parts = {};
 
     var readyPromises = [];
 
@@ -96,12 +97,11 @@ TheApp.prototype.init = function(options) {
                     try {
                         logger.append(part.module);
                         var partModule = require(part.module);
-                        partModule.init();
-                        self.parts.push(partModule);
+                        readyPromises.push(partModule.init());
+                        self.parts[part._id] = partModule;
                     } catch(e) {
                         partsDeffered.reject(e);
                     }
-
                 });
                 partsDeffered.resolve();
             }
@@ -130,11 +130,6 @@ TheApp.prototype.init = function(options) {
             }
         });
     });
-
-    var partsPromises = this.parts.map(function(part) {
-        return part.init();
-    });
-    readyPromises.concat(partsPromises);
 
     Promise.all(readyPromises).then(function(state) {
         logger.info('Initialized, waiting for requests')
@@ -208,7 +203,7 @@ TheApp.prototype.init = function(options) {
 
     return function(req, res, next) {
 
-        logger.debug("Request received for " + req.url);
+        logger.debug('Request received for ' + req.url);
         //TODO: parse url
         req.url = req.url.split("?")[0];
         async.series([
@@ -234,23 +229,41 @@ TheApp.prototype.doPageRequest = function(req, res, next) {
 
     logger.info('Processing page request for ' + req.url);
 
+    //turn on and off edit mode
+    if(req.query._edit) {
+        if(req.user && req.user.role === 'admin' && typeify(req.query._edit) === true) {
+            logger.debug("Switching edit mode on");
+            req.session.edit = true;
+        } else if(typeify(req.query._edit) === false) {
+            logger.debug("Switching edit mode off");
+            req.session.edit = false;
+        }
+    }
+
     self.pageResolver.findPage(req.url).then(function(page) {
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
 
         var pageData = {};
         page.regions.forEach(function(region) {
-            if(region.part) {
+            if(region.partInstance) {
                 //TODO: region.part is an id. need to populate it first
-                logger.log(region.part);
+                logger.log(region.partInstance);
 
-                var partModule = self.parts.find(function(loadedPartModule) {
-                    return loadedPartModule.getName() === region.part.name;
-                });
+                var partModule = self.parts[region.partInstance.part];
 
-                pageData[region.region] = partModule.read(region.data, self.db);
+                var editMode = typeof req.session.edit === "boolean" && req.session.edit;
 
-                hbs.registerPartial(region.region, partModule.userView);
+                pageData.edit = editMode;
+                pageData.title = page.name;
+                pageData[region.region] =  {
+                    id: region.partInstance._id,
+                    edit: editMode,
+                    data: partModule ? partModule.read(region.partInstance.data) : {}
+                };
+
+                var partView = partModule.getView(editMode);
+                hbs.registerPartial(region.region, partView);
             }
         });
 
@@ -284,6 +297,10 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             collection: 'part',
             model: Part
         },
+        "part-instances": {
+            collection: 'partInstance',
+            model: PartInstance
+        },
         templates: {
             collection: 'template',
             model: Template
@@ -295,8 +312,9 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
     };
 
     var populations = {
-        pages: 'parent template',
+        pages: 'parent template regions.partInstance',
         parts: '',
+        "part-instances": 'part',
         templates: '',
         users: ''
     };
@@ -310,7 +328,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         var filter = {};
         if(itemId) {
             delete req.body._id;
-            delete req.body._v;
+            delete req.body.__v;
             filter._id = itemId;
             logger.debug('Searching for items by id [%s]: ' + collection, itemId);
         } else {
@@ -325,7 +343,8 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
         }
 
         if(req.method === 'GET') {
-            Model['find'](filter).populate(populations[apiType]).exec(function(err, results) {
+            var populations = populations[apiType];
+            Model['find'](filter).populate(populations).exec(function(err, results) {
                 if(err) {
                     logger.error(err);
                     next(err);
@@ -488,7 +507,9 @@ function defer() {
 }
 
 function typeify(value) {
-    if(!isNaN(parseFloat(+value))) {
+    if(value === null) {
+        return null;
+    } else if(!isNaN(parseFloat(+value))) {
         return parseFloat(value)
     } else if(value.toLowerCase() === 'false') {
         return false;

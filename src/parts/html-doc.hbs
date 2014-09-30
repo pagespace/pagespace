@@ -1,3 +1,17 @@
-<div class="html-doc">
-	{{{content}}}
-</div>
+{{#if edit}}
+    <div class="html-doc">
+        <div ng-controller="htmlDocController" ng-init="partInstanceId = '{{id}}'">
+
+      <!--      <textarea ng-model="ck{{id}}" ck-editor>{{{data.content}}}</textarea>-->
+            <div ckedit="body" id="ck{{id}}">{{{data.content}}}</div>
+            <button ng-click="save()">Save</button>
+            <!--<div ng-include="/app/static/parts/html-doc/edit.html"></div>-->
+        </div>
+    </div>
+    <script src="/bower_components/ckeditor/ckeditor.js"></script>
+    <script src="/app/static/parts/html-doc/edit.js"></script>
+{{else}}
+    <div class="html-doc">
+        {{{data.content}}}
+    </div>
+{{/if}}

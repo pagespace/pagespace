@@ -1,13 +1,31 @@
-<p>I am a template A</p>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
 
-{{#A}}
-    {{> A}}
-{{/A}}
+        {{#if edit}}
+            <script src="/bower_components/angular/angular.min.js"></script>
+            <script>
+                angular.module('editApp', []);
+                angular.element(document).ready(function() {
+                    angular.bootstrap(document, ['editApp']);
+                });
+            </script>
+        {{/if}}
+    </head>
+    <body>
+        <p>I am a template A</p>
 
-{{#B}}
-    {{> B}}
-{{/B}}
+        {{#A}}
+            {{> A}}
+        {{/A}}
 
-{{#C}}
-    {{> C}}
-{{/C}}
+        {{#B}}
+            {{> B}}
+        {{/B}}
+
+        {{#C}}
+            {{> C}}
+        {{/C}}
+    </body>
+</html>
