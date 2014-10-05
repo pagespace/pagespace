@@ -11,7 +11,8 @@ var templateSchema = Schema({
     	unique: true,
     	required: true
     },
-    regions: [ String ]
+    regions: [ String ],
+    regionData: [ Schema.Types.Mixed ]
 });
 
 var Template = mongoose.model('Template', templateSchema);

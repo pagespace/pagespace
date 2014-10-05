@@ -7,19 +7,32 @@
         <label>Src</label>
         <input type="text" class="form-control input-medium" ng-model="template.src" placeholder="Template src">
     </div>
-    <div class="form-group">
-        <h4>Regions</h4>
-        <div ng-repeat="region in template.regions track by $index">
-            <input type="text" class="form-control input-medium" ng-model="region" placeholder="Region name">
-            <button type="button" class="btn" ng-click="removeRegion(region)">
-                <span class="glyphicon glyphicon-minus"></span>
-            </button>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <h4>Draw template</h4>
+                <draw-template regions="template.regions"></draw-template>
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn" ng-click="addRegion()">Add region</button>
+            </div>
         </div>
-        <button type="button" class="btn" ng-click="addRegion()">
-            <span class="glyphicon glyphicon-plus"></span>
-        </button>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <h4>Selected region</h4>
+                <div ng-repeat="region in template.regions track by $index">
+                    <div ng-show="selectedRegionIndex == $index">
+                        <label>Region ID</label>
+                        <input type="text" class="form-control input-medium" ng-model="template.regions[$index]" placeholder="Region name">
+                        <button type="button" class="btn" ng-click="removeRegion(region)">Remove region</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <button type="submit" class="btn btn-primary pull-right">Save</button>
-    <button ng-click="cancel()" type="button" class="btn pull-right">Cancel</button>
+    <div class="pull-right">
+        <button ng-click="cancel()" type="button" class="btn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
 </form>

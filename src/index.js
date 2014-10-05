@@ -3,16 +3,22 @@ var hbs = require('hbs');
 var passport = require('passport')
 var LocalStrategy = require('passport-local').Strategy;
 var async = require('async');
+var bunyan = require('bunyan');
 var Acl = require("./acl");
 var pageResolver = require('./page-resolver')();
-var logger = require('./logger')("debug");
+//var logger = require('./logger')("debug");
 var Promise = require('bluebird');
 var Page = require('./models/page');
 var Template = require('./models/template');
 var Part = require('./models/part');
 var PartInstance = require('./models/part-instance');
-var User = require('./models/user')
+var User = require('./models/user');
 require('array.prototype.find');
+
+var logger =  bunyan.createLogger({ name: "pspace" });
+logger.level('debug');
+
+var TAB = '\t';
 
 var requestTypes = {
     PAGE: 0,
@@ -77,12 +83,11 @@ TheApp.prototype.init = function(options) {
                 self.urlsToResolve = pages.map(function(doc) {
                     return doc.url;
                 });
-                if(logger.isDebug()) {
                     logger.debug("Urls to resolve are:")
                     self.urlsToResolve.forEach(function(url) {
-                        logger.append(url);
+                        logger.debug(TAB + url);
                     });
-                }
+
                 urlsDefferred.resolve(appStates.READY);
             }
         });
@@ -95,7 +100,7 @@ TheApp.prototype.init = function(options) {
                 logger.debug('Loading part modules');
                 parts.forEach(function(part) {
                     try {
-                        logger.append(part.module);
+                        logger.debug(TAB + part.module);
                         var partModule = require(part.module);
                         readyPromises.push(partModule.init());
                         self.parts[part._id] = partModule;
@@ -372,7 +377,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             } else {
                 logger.info('Creating new %s', collection);
                 logger.debug('Creating new collection with data: ' );
-                logger.append(req.body);
+                logger.debug(TAB + req.body);
                 var model = new Model(req.body);
                 model.save(function(err, model) {
                     if(err) {
@@ -391,7 +396,7 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
             } else {
                 logger.info('Updating %s with id [%s]', collection, itemId);
                 logger.debug('Updating collection with data: ' );
-                logger.append(req.body);
+                logger.debug(TAB + req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
                         logger.error(err);
@@ -426,10 +431,23 @@ TheApp.prototype.doApiRequest = function(req, res, next) {
 TheApp.prototype.doAdminRequest = function(req, res, next) {
     logger.info('Processing admin request for ' + req.url);
 
+    if(req.query._power) {
+        if(req.user && req.user.role === 'admin' && typeify(req.query._power) === true) {
+            logger.debug("Switching power mode on");
+            req.session.power = true;
+        } else if(typeify(req.query._power) === false) {
+            logger.debug("Switching power  mode off");
+            req.session.power = false;
+        }
+    }
+
     var apiInfo = adminRegex.exec(req.url);
     var adminType = apiInfo[1];
 
-    return res.render(adminType, {}, function(err, html) {
+    var pageData = {
+        powerMode: (req.session.power || false).toString()
+    };
+    return res.render(adminType, pageData, function(err, html) {
         if(err) {
             logger.error(err);
             next(err);

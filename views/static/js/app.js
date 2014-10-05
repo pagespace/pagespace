@@ -1,7 +1,9 @@
 var adminApp = angular.module('adminApp', [
     'ngRoute',
-    'ngResource'
+    'ngResource',
+    'angular-carousel'
 ]);
+adminApp.value('powerMode', window._powerMode);
 
 adminApp.config(['$routeProvider', function($routeProvider) {
     $routeProvider.

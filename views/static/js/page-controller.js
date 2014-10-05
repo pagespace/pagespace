@@ -6,10 +6,13 @@
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller("pageController",
-    function($scope, $routeParams, $location, $timeout, pageService, templateService, partService, partInstanceService) {
+    function($scope, $routeParams, $location, $timeout,
+             pageService, templateService, partService, partInstanceService, powerMode) {
 
     var pageId = $routeParams.pageId;
 
+    $scope.powerMode = powerMode;
+    $scope.selectedTemplateIndex = 0;
     $scope.selectedTemplate = null;
 
     async.series([
@@ -28,7 +31,14 @@ adminApp.controller("pageController",
         function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
-                $scope.selectedTemplate = page.template;
+
+                var selectedTemplate = $scope.templates.filter(function(template) {
+                    return page.template._id === template._id;
+                });
+
+                $scope.selectedTemplate = selectedTemplate.length ? selectedTemplate[0] : null;
+                $scope.selectedTemplateIndex = $scope.templates.indexOf($scope.selectedTemplate);
+
                 callback();
             });
         }
@@ -46,6 +56,10 @@ adminApp.controller("pageController",
         $location.path("");
     };
 
+    $scope.selectTemplate = function(template) {
+        $scope.selectedTemplate = template;
+    };
+
     $scope.addRegion = function() {
         $scope.page.regions.push({
             region: null,
@@ -60,7 +74,6 @@ adminApp.controller("pageController",
     };
 
     $scope.save = function() {
-
         var createPartInstanceFns = $scope.page.regions.map(function(region) {
             return function(callback) {
 
@@ -97,7 +110,7 @@ adminApp.controller("pageController",
                 url: $scope.page.url,
                 template: $scope.selectedTemplate._id,
                 regions: regionUpdates.filter(function(region) {
-                    return region !== null
+                    return region !== null;
                 })
             };
 
@@ -106,6 +119,53 @@ adminApp.controller("pageController",
                 $location.path("");
             });
         });
+    };
+});
+
+adminApp.directive('viewTemplate', function() {
+
+    function link(scope, element, attrs) {
+        element.html('<canvas width="550" height="400"></canvas>');
+        var canvas = new fabric.Canvas(element.find('canvas')[0]);
+        canvas.backgroundColor = '#ddd';
+
+        scope.template.regions.forEach(function(region, i) {
+
+            var canvasData = scope.template.regionData[i];
+
+            if(canvasData) {
+                canvasData.stroke = '#000';
+                canvasData.strokeWidth = 1;
+                canvasData.fill = '#fff';
+                var rect = new fabric.Rect(canvasData);
+                var text = new fabric.Text(region, {
+                    fontSize: 16,
+                    fontFamily: 'Arial',
+                    top: canvasData.top + 5,
+                    left: canvasData.left + 5
+                });
+
+                var group = new fabric.Group([ rect, text ], {
+                    left: canvasData.left,
+                    top: canvasData.top,
+                    hasControls: false,
+                    lockMovementX: true,
+                    lockMovementY: true
+                });
+                group.on('selected', function() {
+                    scope.selectedRegionIndex = i;
+                    scope.$apply();
+                });
+                canvas.add(group);
+                canvas.sendToBack(group);
+            }
+        });
+    }
+
+    return {
+        //scope: '=canvasData',
+        restrict: 'E',
+        link: link
     };
 });
 
