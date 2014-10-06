@@ -1,4 +1,11 @@
+//support
+var bunyan = require('bunyan');
+var hbs = require('hbs');
 
+//util
+var util = require('../util');
+var logger =  bunyan.createLogger({ name: 'page-handler' });
+logger.level('debug');
 
 var PageHandler = function(pageResolver, parts) {
     this.pageResolver = pageResolver;
@@ -6,7 +13,7 @@ var PageHandler = function(pageResolver, parts) {
 };
 
 module.exports = function(pageResolver, parts) {
-    return new PageResolver(pageResolver, parts);
+    return new PageHandler(pageResolver, parts);
 };
 
 /**
@@ -20,10 +27,10 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     //turn on and off edit mode
     if(req.query._edit) {
-        if(req.user && req.user.role === 'admin' && typeify(req.query._edit) === true) {
+        if(req.user && req.user.role === 'admin' && util.typeify(req.query._edit) === true) {
             logger.debug("Switching edit mode on");
             req.session.edit = true;
-        } else if(typeify(req.query._edit) === false) {
+        } else if(util.typeify(req.query._edit) === false) {
             logger.debug("Switching edit mode off");
             req.session.edit = false;
         }
@@ -37,7 +44,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         page.regions.forEach(function(region) {
             if(region.partInstance) {
                 //TODO: region.part is an id. need to populate it first
-                logger.log(region.partInstance);
+                logger.info(region.partInstance);
 
                 var partModule = self.parts[region.partInstance.part];
 

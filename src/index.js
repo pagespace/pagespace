@@ -1,51 +1,50 @@
+//core
+var url = require('url');
+
+//support
 var mongoose = require('mongoose');
-var hbs = require('hbs');
-var passport = require('passport')
+var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var async = require('async');
 var bunyan = require('bunyan');
 var Acl = require("./acl");
-var pageResolver = require('./page-resolver')();
-//var logger = require('./logger')("debug");
 var Promise = require('bluebird');
+require('array.prototype.find');
+
+//models
 var Page = require('./models/page');
 var Template = require('./models/template');
 var Part = require('./models/part');
 var PartInstance = require('./models/part-instance');
 var User = require('./models/user');
-require('array.prototype.find');
 
-var logger =  bunyan.createLogger({ name: "pspace" });
+//factories
+var createPageResolver = require('./page-resolver');
+var createPageHandler = require('./request-handlers/page-handler');
+var createApiHandler = require('./request-handlers/api-handler');
+var createAdminHandler = require('./request-handlers/admin-handler');
+var createLoginHandler = require('./request-handlers/login-handler');
+
+//util
+var util = require('./util');
+var consts = require('./app-constants');
+var logger =  bunyan.createLogger({ name: "index" });
 logger.level('debug');
 
 var TAB = '\t';
-
-var requestTypes = {
-    PAGE: 0,
-    REST: 1,
-    ADMIN: 2,
-    LOGIN: 3,
-    OTHER: 4
-};
-
-var appStates = {
-    NOT_READY: 0,
-    READY: 1
-};
-
-var apiRegex = new RegExp('^/_api/(pages|parts|templates|users|part-instances)/?(.*)');
-var adminRegex = new RegExp('^/_admin/(dashboard)/?(.*)');
-var loginRegex = new RegExp('^/_(login)');
 
 /**
  * The App
  * @constructor
  */
 var TheApp = function() {
-
     this.urlsToResolve = [];
-    this.appState = appStates.NOT_READY;
-    this.pageResolver = pageResolver;
+    this.appState = consts.appStates.NOT_READY;
+};
+
+
+module.exports = function(opts) {
+    return new TheApp().init(opts);
 };
 
 /**
@@ -63,18 +62,26 @@ TheApp.prototype.init = function(options) {
 
     var readyPromises = [];
 
-    var urlsDefferred = defer();
+    var urlsDefferred = util.defer();
     readyPromises.push(urlsDefferred.promise);
 
-    var partsDeffered = defer();
+    var partsDeffered = util.defer();
     readyPromises.push(partsDeffered.promise);
 
-    mongoose.connect('mongodb://localhost/test');
-    var db = (this.db = mongoose.connection);
-    db.on('error', console.error.bind(console, 'connection error:'));
+    var dbConnection = options.dbConnection;
+    if(!dbConnection) {
+        throw new Error('You must specify a db connection string')
+    }
+
+    mongoose.connect(dbConnection);
+    var db = mongoose.connection;
+    db.on('error', function(e) {
+        logger.error('connection error:' + e)
+    });
     db.once('open', function callback () {
         logger.info("Db connection established");
 
+        //cache page urls to resolve
         Page.find({}, function(err, pages) {
             if(err) {
                 logger.error(err);
@@ -88,10 +95,11 @@ TheApp.prototype.init = function(options) {
                         logger.debug(TAB + url);
                     });
 
-                urlsDefferred.resolve(appStates.READY);
+                urlsDefferred.resolve(consts.appStates.READY);
             }
         });
 
+        //cache part modules
         Part.find({}, function(err, parts) {
             if(err) {
                 logger.error(err);
@@ -112,13 +120,14 @@ TheApp.prototype.init = function(options) {
             }
         });
 
+        //create an admin user on first run
         User.find({ role: 'admin'}, 'username', function(err, users) {
             if(err) {
                 logger.error(err);
                 urlsDefferred.reject();
             } else {
                 if(users.length === 0) {
-                    logger.info("Admin user created with defaut admin password");
+                    logger.info("Admin user created with default admin password");
                     var defaultAdmin = new User({
                         username: "admin",
                         password: "admin",
@@ -136,11 +145,123 @@ TheApp.prototype.init = function(options) {
         });
     });
 
+    //once everything is ready
     Promise.all(readyPromises).then(function(state) {
-        logger.info('Initialized, waiting for requests')
-        self.appState = appStates.READY;
+        logger.info('Initialized, waiting for requests');
+        self.appState = consts.appStates.READY;
+
+        //set up page handlers
+        self.pageHandler = createPageHandler(createPageResolver(), self.parts);
+        self.apiHandler = createApiHandler();
+        self.adminHandler = createAdminHandler();
+        self.loginHandler = createLoginHandler();
     });
 
+    //auth and acl setup
+    configureAuth();
+    this.acl = setupAcl();
+
+    //handle requests
+    return function(req, res, next) {
+        logger.debug('Request received for ' + req.url);
+
+        req.url = url.parse(req.url).pathname;
+        async.series([
+            function (callback) {
+                passport.initialize()(req, res, callback);
+            },
+            function (callback) {
+                passport.session()(req, res, callback);
+            },
+            function () {
+                self.doRequest(req, res, next);
+            }
+        ]);
+    };
+};
+
+/**
+ * Handles a request
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
+TheApp.prototype.doRequest = function(req, res, next) {
+    var user = req.user || User.createGuestUser();
+
+    if(!this.acl.isAllowed(user.role, req.url, req.method)) {
+        logger.debug("User with role [" + user.role + "] is not allowed to access " +
+            req.url + ". Redirecting to login");
+
+        req.session.loginToUrl = req.url;
+        return res.redirect('/_login');
+    }
+
+    if(this.appState === consts.appStates.READY) {
+        var urlType = getUrlType(req.url);
+        var requestHandler;
+        if(urlType === consts.requestTypes.PAGE) {
+            requestHandler = this.pageHandler;
+        } else if(urlType === consts.requestTypes.REST) {
+            requestHandler = this.apiHandler;
+        } else if(urlType == consts.requestTypes.ADMIN) {
+            requestHandler = this.adminHandler;
+        } else if(urlType == consts.requestTypes.LOGIN) {
+            requestHandler = this.loginHandler;
+        }
+        requestHandler.doRequest(req, res, next);
+    } else {
+        var notReadyErr = new Error();
+        notReadyErr.status = 503;
+        next();
+    }
+};
+
+/**
+ * Maps a url to a page type
+ * @param url
+ * @returns {*}
+ */
+var getUrlType = function(url) {
+
+    var type;
+
+    if(this.urlsToResolve.indexOf(url) >= 0) {
+        type = consts.requestTypes.PAGE;
+    } else if(consts.requestRegex.API.test(url)) {
+        type = consts.requestTypes.REST;
+    } else if (consts.requestRegex.ADMIN.test(url)) {
+        type = consts.requestTypes.ADMIN;
+    } else if (consts.requestRegex.LOGIN.test(url)) {
+        type = consts.requestTypes.LOGIN;
+    } else {
+        type = consts.requestTypes.OTHER;
+    }
+
+    return type;
+};
+
+/**
+ * Sets up access control lists for the app
+ * @returns {Acl}
+ */
+var setupAcl = function() {
+
+    var acl = new Acl();
+    acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
+    acl.allow(["guest", "admin"], consts.requestRegex.LOGIN, ["GET", "POST"]);
+    acl.allow(["admin"], consts.requestRegex.API, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["admin"], consts.requestRegex.ADMIN, ["GET", "POST", "PUT", "DELETE"]);
+
+    return acl;
+};
+
+/**
+ * Passport configuration
+ */
+var configureAuth = function() {
+    //setup passport/authenticatio
     passport.serializeUser(function(user, done) {
         done(null, {
             username: user.username,
@@ -172,372 +293,4 @@ TheApp.prototype.init = function(options) {
             });
         }
     ));
-
-    this.acl = new Acl();
-    this.acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
-    this.acl.allow(["guest", "admin"], loginRegex, ["GET", "POST"]);
-    this.acl.allow(["admin"], apiRegex, ["GET", "POST", "PUT", "DELETE"]);
-    this.acl.allow(["admin"], adminRegex, ["GET", "POST", "PUT", "DELETE"]);
-
-    var doRequest = function(req, res, next) {
-        var user = req.user || User.createGuestUser();
-
-        if(!self.acl.isAllowed(user.role, req.url, req.method)) {
-            logger.debug("User with role [" + user.role + "] is not allowed to access " +
-                req.url + ". Redirecting to login");
-            return res.redirect('/_login');
-        }
-
-        if(self.appState === appStates.READY) {
-            var urlType = self.getUrlType(req.url)
-            if(urlType === requestTypes.PAGE) {
-                self.doPageRequest(req, res, next);
-            } else if(urlType === requestTypes.REST) {
-                self.doApiRequest(req, res, next);
-            } else if(urlType == requestTypes.ADMIN) {
-                self.doAdminRequest(req, res, next);
-            } else if(urlType == requestTypes.LOGIN) {
-                self.doLoginRequest(req, res, next);
-            }
-        } else {
-            var notReadyErr = new Error();
-            notReadyErr.status = 503;
-            next();
-        }
-    };
-
-    return function(req, res, next) {
-
-        logger.debug('Request received for ' + req.url);
-        //TODO: parse url
-        req.url = req.url.split("?")[0];
-        async.series([
-            function (callback) {
-                passport.initialize()(req, res, callback);
-            },
-            function (callback) {
-                passport.session()(req, res, callback);
-            },
-            function () {
-                doRequest(req, res, next);
-            }
-        ]);
-    };
-};
-
-/**
- * Process a valid request
- */
-TheApp.prototype.doPageRequest = function(req, res, next) {
-
-    var self = this;
-
-    logger.info('Processing page request for ' + req.url);
-
-    //turn on and off edit mode
-    if(req.query._edit) {
-        if(req.user && req.user.role === 'admin' && typeify(req.query._edit) === true) {
-            logger.debug("Switching edit mode on");
-            req.session.edit = true;
-        } else if(typeify(req.query._edit) === false) {
-            logger.debug("Switching edit mode off");
-            req.session.edit = false;
-        }
-    }
-
-    self.pageResolver.findPage(req.url).then(function(page) {
-
-        logger.info('Page found for ' + req.url + ': ' + page.id);
-
-        var pageData = {};
-        page.regions.forEach(function(region) {
-            if(region.partInstance) {
-                //TODO: region.part is an id. need to populate it first
-                logger.log(region.partInstance);
-
-                var partModule = self.parts[region.partInstance.part];
-
-                var editMode = typeof req.session.edit === "boolean" && req.session.edit;
-
-                pageData.edit = editMode;
-                pageData.title = page.name;
-                pageData[region.region] =  {
-                    id: region.partInstance._id,
-                    edit: editMode,
-                    data: partModule ? partModule.read(region.partInstance.data) : {}
-                };
-
-                var partView = partModule.getView(editMode);
-                hbs.registerPartial(region.region, partView);
-            }
-        });
-
-        var templateSrc = !page.template ? 'default.hbs' : page.template.src;
-        return res.render(templateSrc, pageData, function(err, html) {
-
-            if(err) {
-                logger.error(err);
-                next(err);
-            } else {
-                logger.info('Sending page for %s', req.url)
-                res.send(html);
-            }
-        });
-    }).catch(function(err) {
-        console.log(err);
-        next();
-    });
-};
-
-TheApp.prototype.doApiRequest = function(req, res, next) {
-
-    logger.info('Processing api request for ' + req.url);
-
-    var collectionMap = {
-        pages: {
-            collection: 'page',
-            model: Page
-        },
-        parts: {
-            collection: 'part',
-            model: Part
-        },
-        "part-instances": {
-            collection: 'partInstance',
-            model: PartInstance
-        },
-        templates: {
-            collection: 'template',
-            model: Template
-        },
-        users: {
-            collection: 'user',
-            model: User
-        }
-    };
-
-    var populations = {
-        pages: 'parent template regions.partInstance',
-        parts: '',
-        "part-instances": 'part',
-        templates: '',
-        users: ''
-    };
-
-    var apiInfo = apiRegex.exec(req.url);
-    var apiType = apiInfo[1];
-    var itemId = apiInfo[2];
-    if(collectionMap.hasOwnProperty(apiType)) {
-        var Model = collectionMap[apiType].model;
-        var collection = collectionMap[apiType].collection;
-        var filter = {};
-        if(itemId) {
-            delete req.body._id;
-            delete req.body.__v;
-            filter._id = itemId;
-            logger.debug('Searching for items by id [%s]: ' + collection, itemId);
-        } else {
-            logger.debug('Searching for items in collection: ' + collection);
-        }
-
-        //create a filter out of the query string
-        for(var p in req.query) {
-            if(req.query.hasOwnProperty(p)) {
-                filter[p] = typeify(req.query[p]);
-            }
-        }
-
-        if(req.method === 'GET') {
-            var populations = populations[apiType];
-            Model['find'](filter).populate(populations).exec(function(err, results) {
-                if(err) {
-                    logger.error(err);
-                    next(err);
-                } else {
-                    logger.info('Sending response for %s', req.url);
-                    results =  itemId ? results[0] : results;
-                    if(req.headers['accept'].indexOf('application/json') === -1) {
-                        var html =
-                            '<pre style="font-family: Consolas, \'Courier New\'">' +
-                            JSON.stringify(results, null, 4) +
-                            '</pre>';
-                        res.send(html, {
-                            'Content-Type' : 'text/html'
-                        }, 200);
-                    } else {
-                        res.json(results);
-                    }
-
-                }
-            });
-        } else if(req.method === 'POST') {
-            if(itemId) {
-                logger.warn('Cannot POST for this url. It shouldn\'t contain an id [%s]', itemId);
-                next();
-            } else {
-                logger.info('Creating new %s', collection);
-                logger.debug('Creating new collection with data: ' );
-                logger.debug(TAB + req.body);
-                var model = new Model(req.body);
-                model.save(function(err, model) {
-                    if(err) {
-                        logger.error(err);
-                        next(err)
-                    } else {
-                        logger.info('Created successfully');
-                        res.json(model);
-                    }
-                });
-            }
-        } else if(req.method === 'PUT') {
-            if(!itemId) {
-                logger.warn('Cannot PUT for this url. It should contain an id');
-                next();
-            } else {
-                logger.info('Updating %s with id [%s]', collection, itemId);
-                logger.debug('Updating collection with data: ' );
-                logger.debug(TAB + req.body);
-                Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
-                    if (err) {
-                        logger.error(err);
-                        next();
-                    } else {
-                        logger.info('Updated successfully');
-                        res.json(model);
-                    }
-                });
-            }
-        } else if(req.method === 'DELETE') {
-            if (!itemId) {
-                logger.warn('Cannot DELETE for this url. It should contain an id');
-                next();
-            } else {
-                logger.info('Removing %s with id [%s]', collection, itemId);
-                Model.findByIdAndRemove(itemId, function (err, model) {
-                    if (err) {
-                        logger.error(err);
-                        next();
-                    } else {
-                        logger.info('Deleted successfully');
-                        res.statusCode = 204;
-                        res.send();
-                    }
-                });
-            }
-        }
-    }
-};
-
-TheApp.prototype.doAdminRequest = function(req, res, next) {
-    logger.info('Processing admin request for ' + req.url);
-
-    if(req.query._power) {
-        if(req.user && req.user.role === 'admin' && typeify(req.query._power) === true) {
-            logger.debug("Switching power mode on");
-            req.session.power = true;
-        } else if(typeify(req.query._power) === false) {
-            logger.debug("Switching power  mode off");
-            req.session.power = false;
-        }
-    }
-
-    var apiInfo = adminRegex.exec(req.url);
-    var adminType = apiInfo[1];
-
-    var pageData = {
-        powerMode: (req.session.power || false).toString()
-    };
-    return res.render(adminType, pageData, function(err, html) {
-        if(err) {
-            logger.error(err);
-            next(err);
-        } else {
-            logger.info('Sending page for %s', req.url);
-            res.send(html);
-        }
-    });
-};
-
-TheApp.prototype.doLoginRequest = function(req, res, next) {
-    logger.info('Processing special request for ' + req.url);
-
-    if(req.method === 'GET') {
-        return res.render('login', {}, function(err, html) {
-            if(err) {
-                logger.error(err);
-                next(err);
-            } else {
-                logger.info('Sending page for %s', req.url);
-                res.send(html);
-            }
-        });
-    } else if(req.method === 'POST') {
-        return passport.authenticate('local', function(err, user, info) {
-            if (err) {
-                return next(err);
-            }
-            if (!user) {
-                return res.redirect('/_login');
-            }
-            req.logIn(user, function(err) {
-                if (err) {
-                    return next(err);
-                } else {
-                    return res.json({
-                        href: '/_admin/dashboard'
-                    });
-                }
-            });
-        })(req, res, next);
-    }
-};
-
-TheApp.prototype.getUrlType = function(url) {
-
-    var type;
-
-    if(this.urlsToResolve.indexOf(url) >= 0) {
-        type = requestTypes.PAGE;
-    } else if(apiRegex.test(url)) {
-        type = requestTypes.REST;
-    } else if (adminRegex.test(url)) {
-        type = requestTypes.ADMIN;
-    } else if (loginRegex.test(url)) {
-        type = requestTypes.LOGIN;
-    } else {
-        type = requestTypes.OTHER;
-    }
-
-    return type;
-};
-
-function defer() {
-    var resolve, reject;
-    var promise = new Promise(function() {
-        resolve = arguments[0];
-        reject = arguments[1];
-    });
-    return {
-        resolve: resolve,
-        reject: reject,
-        promise: promise
-    };
-}
-
-function typeify(value) {
-    if(value === null) {
-        return null;
-    } else if(!isNaN(parseFloat(+value))) {
-        return parseFloat(value)
-    } else if(value.toLowerCase() === 'false') {
-        return false;
-    } else if(value.toLowerCase() === 'true') {
-        return true
-    } else {
-        return value;
-    }
-}
-
-module.exports = function(opts) {
-    return new TheApp().init(opts);
 };

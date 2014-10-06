@@ -1,14 +1,12 @@
 var Promise = require("bluebird");
-
 var Page = require('./models/page');
 
-module.exports = function() {
-	return new PageResolver();
-};
-
 function PageResolver() {
-
 }
+
+module.exports = function() {
+    return new PageResolver();
+};
 
 PageResolver.prototype.findPage = function(url) {
 
