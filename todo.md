@@ -7,8 +7,7 @@
 ✓ Page map https://www.astuteo.com/slickmap/demo/
 ✓ Add/edit page admin page
 ✓ Template admin page
-* Refactor handlers. api emits event on change. update urls to resolve
-* Remember me login
+✓ Refactor handlers. api emits event on change. update urls to resolve
 ✓ Parts admin page
 ✓ bunyan logging
 ✓ visual templates
@@ -21,9 +20,11 @@
 * error resistance
 * pretty ui
 * unit tests
+* build process
 * docs
 * macros.
 * publishing
+* Remember me login
 * orange tea
 
 Publishing notes

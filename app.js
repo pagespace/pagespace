@@ -2,14 +2,18 @@ var express = require('express');
 var path = require('path')
 var theApp = require('./src/index');
 var bodyParser = require('body-parser');
-var session = require("express-session")
+var cookieParser = require('cookie-parser');
+var favicon = require('serve-favicon');
+var session = require("express-session");
+
 
 var app = express();
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
-app.use('/favicon.ico', express.static(path.join(__dirname, 'favicon.ico')));
+app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
@@ -36,6 +40,7 @@ app.use(function(req, res, next) {
 // will print stacktrace
 if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
+        console.error(err);
         res.status(err.status || 500);
         res.render('error', {
             message: err.message,

@@ -19,18 +19,21 @@ var UserSchema = mongoose.Schema({
     role: {
         type: String,
         default: "guest"
+    },
+    rememberToken: {
+        type: String
     }
 });
 
 UserSchema.pre('save', function(next) {
     var user = this;
 
-// only hash the password if it has been modified (or is new)
+    // only hash the password if it has been modified (or is new)
     if (!user.isModified('password')) {
         return next();
     }
 
-// generate a salt
+    // generate a salt
     bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
         if (err) {
             return next(err);
@@ -58,13 +61,16 @@ UserSchema.methods.comparePassword = function(candidatePassword, cb) {
     });
 };
 
+UserSchema.methods.generateToken = function() {
+    return bcrypt.hashSync(this.username + Math.random().toString(), 1);
+};
+
 UserSchema.statics.createGuestUser = function() {
     return new User({
         username: "guest",
         name: "Guest"
     });
 };
-
 
 var User = mongoose.model('User', UserSchema);
 

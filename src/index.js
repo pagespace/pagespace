@@ -5,6 +5,8 @@ var url = require('url');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var RememberMeStrategy = require('passport-remember-me').Strategy;
+
 var async = require('async');
 var bunyan = require('bunyan');
 var Acl = require("./acl");
@@ -188,19 +190,18 @@ TheApp.prototype.init = function(options) {
  * @returns {*}
  */
 TheApp.prototype.doRequest = function(req, res, next) {
-    var user = req.user || User.createGuestUser();
-
-    if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-        logger.debug("User with role [" + user.role + "] is not allowed to access " +
-            req.url + ". Redirecting to login");
-
-        req.session.loginToUrl = req.url;
-        return res.redirect('/_login');
-    }
 
     if(this.appState === consts.appStates.READY) {
-        var urlType = getUrlType(req.url);
-        var requestHandler;
+        var requestHandler, urlType;
+        var user = req.user || User.createGuestUser();
+        if(!this.acl.isAllowed(user.role, req.url, req.method)) {
+            logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
+            req.session.loginToUrl = req.url;
+            urlType = consts.requestTypes.LOGIN;
+        } else {
+            urlType = this.getUrlType(req.url);
+        }
+
         if(urlType === consts.requestTypes.PAGE) {
             requestHandler = this.pageHandler;
         } else if(urlType === consts.requestTypes.REST) {
@@ -210,11 +211,11 @@ TheApp.prototype.doRequest = function(req, res, next) {
         } else if(urlType == consts.requestTypes.LOGIN) {
             requestHandler = this.loginHandler;
         }
-        requestHandler.doRequest(req, res, next);
+        return requestHandler.doRequest(req, res, next);
     } else {
         var notReadyErr = new Error();
         notReadyErr.status = 503;
-        next();
+        return next();
     }
 };
 
@@ -223,7 +224,7 @@ TheApp.prototype.doRequest = function(req, res, next) {
  * @param url
  * @returns {*}
  */
-var getUrlType = function(url) {
+TheApp.prototype.getUrlType = function(url) {
 
     var type;
 
@@ -290,6 +291,30 @@ var configureAuth = function() {
                         done(null, user);
                     }
                 });
+            });
+        }
+    ));
+    passport.use(new RememberMeStrategy(
+        function(token, done) {
+            User.findOne({ rememberToken: token }, function(err, user) {
+                if(err) {
+                    return done(err);
+                }
+                if(!user) {
+                    return done(null, false);
+                } else {
+                    return done(null, user);
+                }
+            });
+        },
+        function(user, done) {
+            user.rememberToken = user.generateToken();
+            user.save(function(err) {
+                if(err) {
+                    return done(err);
+                } else {
+                    return done(null, user.rememberToken);
+                }
             });
         }
     ));

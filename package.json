@@ -20,7 +20,8 @@
     "hbs": "^2.7.0",
     "mongodb": "^1.4.7",
     "mongojs": "^0.13.1",
-    "mongoose": "^3.8.13"
+    "mongoose": "^3.8.13",
+    "passport-remember-me": "0.0.1"
   },
   "devDependencies": {
     "array.prototype.find": "^1.0.0",
