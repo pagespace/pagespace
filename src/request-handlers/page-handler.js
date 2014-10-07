@@ -3,7 +3,7 @@ var bunyan = require('bunyan');
 var hbs = require('hbs');
 
 //util
-var util = require('../util');
+var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
 logger.level('debug');
 

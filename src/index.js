@@ -9,7 +9,7 @@ var RememberMeStrategy = require('passport-remember-me').Strategy;
 
 var async = require('async');
 var bunyan = require('bunyan');
-var Acl = require("./acl");
+var Acl = require("./misc/acl");
 var Promise = require('bluebird');
 require('array.prototype.find');
 
@@ -21,14 +21,14 @@ var PartInstance = require('./models/part-instance');
 var User = require('./models/user');
 
 //factories
-var createPageResolver = require('./page-resolver');
+var createPageResolver = require('./misc/page-resolver');
 var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
 
 //util
-var util = require('./util');
+var util = require('./misc/util');
 var consts = require('./app-constants');
 var logger =  bunyan.createLogger({ name: "index" });
 logger.level('debug');

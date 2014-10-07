@@ -1,6 +1,6 @@
 //support
 var bunyan = require('bunyan');
-var util = require('../util');
+var util = require('../misc/util');
 
 //util
 var consts = require('../app-constants');

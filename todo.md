@@ -11,20 +11,21 @@
 ✓ Parts admin page
 ✓ bunyan logging
 ✓ visual templates
+* pretty ui 1
+* error resistance
+* unit tests
+* build process
 * Starter parts
     markdown
     html (in page)
     html (bl0g)
     blog summary
 * media uploads
-* error resistance
-* pretty ui
-* unit tests
-* build process
+
 * docs
 * macros.
 * publishing
-* Remember me login
+✓ Remember me login
 * orange tea
 
 Publishing notes

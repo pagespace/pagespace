@@ -1,5 +1,5 @@
 var Promise = require("bluebird");
-var Page = require('./models/page');
+var Page = require('./../models/page');
 
 function PageResolver() {
 }
