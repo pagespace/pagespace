@@ -5,7 +5,9 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("templateController", function($scope, $routeParams, $location, templateService) {
+adminApp.controller("templateController", function($scope, $rootScope, $routeParams, $location, templateService) {
+
+    $rootScope.pageTitle = "Template";
 
     var templateId = $routeParams.templateId;
 

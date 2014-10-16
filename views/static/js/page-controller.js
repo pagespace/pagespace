@@ -6,8 +6,10 @@
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller("pageController",
-    function($scope, $routeParams, $location, $timeout,
+    function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, partInstanceService, powerMode) {
+
+    $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
 
@@ -44,7 +46,7 @@ adminApp.controller("pageController",
         }
     ], function(err) {
         if(err) {
-            console.warn(err);
+            $rootScope.showError(err);
         }
     });
 
@@ -91,7 +93,6 @@ adminApp.controller("pageController",
                         });
                     });
                     res.error(function(err) {
-                        console.warn(err);
                         callback(err);
                     });
                 } else {
@@ -115,8 +116,10 @@ adminApp.controller("pageController",
             };
 
             pageService.updatePage(pageId, page).success(function(res) {
-                console.log("Page saved");
+                $rootScope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
+            }).error(function(err) {
+                $rootScope.showError("Error saving page: " + err);
             });
         });
     };
@@ -168,6 +171,5 @@ adminApp.directive('viewTemplate', function() {
         link: link
     };
 });
-
 
 })();

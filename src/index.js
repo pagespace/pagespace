@@ -160,8 +160,7 @@ TheApp.prototype.init = function(options) {
     });
 
     //auth and acl setup
-    configureAuth();
-    this.acl = setupAcl();
+    this.acl = this.configureAuth();
 
     //handle requests
     return function(req, res, next) {
@@ -244,25 +243,18 @@ TheApp.prototype.getUrlType = function(url) {
 };
 
 /**
- * Sets up access control lists for the app
- * @returns {Acl}
+ * Passport configuration
  */
-var setupAcl = function() {
+TheApp.prototype.configureAuth = function() {
 
+    //setup acl
     var acl = new Acl();
     acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
     acl.allow(["guest", "admin"], consts.requestRegex.LOGIN, ["GET", "POST"]);
     acl.allow(["admin"], consts.requestRegex.API, ["GET", "POST", "PUT", "DELETE"]);
     acl.allow(["admin"], consts.requestRegex.ADMIN, ["GET", "POST", "PUT", "DELETE"]);
 
-    return acl;
-};
-
-/**
- * Passport configuration
- */
-var configureAuth = function() {
-    //setup passport/authenticatio
+    //setup passport/authentication
     passport.serializeUser(function(user, done) {
         done(null, {
             username: user.username,
@@ -318,4 +310,6 @@ var configureAuth = function() {
             });
         }
     ));
+
+    return acl;
 };

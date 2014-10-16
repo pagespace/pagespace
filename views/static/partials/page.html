@@ -1,72 +1,75 @@
-<p>
-    <a href="{{page.url}}" class="pull-right" target="_blank">Go to page &raquo;</a><br>
-    <a href="/_api/pages/{{page._id}}" ng-show="powerMode" class="pull-right" target="_blank">Go to json &raquo;</a>
-</p>
-<h2>Page</h2>
-<form role="form" ng-submit="save()">
-    <div class="form-group">
-        <input type="text" class="form-control input-lg" ng-model="page.name" placeholder="Page Title">
-    </div>
-    <div class="form-group">
-        <label>Address</label>
-        <div class="input-group">
-            <input type="text" class="form-control input-sm" ng-model="page.url" placeholder="Address">
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-primary btn-sm" title="Regenerate Url" ng-click="updateUrl()">
-                    <span class="glyphicon glyphicon-repeat"></span>
-                </button>
-            </span>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-sm-6">
+<div class="row">
+    <div class="col-sm-10">
+        <form role="form" ng-submit="save()">
             <div class="form-group">
-                <h3>Select a template</h3>
-                <div rn-carousel rn-carousel-control="true" rn-carousel-index="selectedTemplateIndex">
-                     <div ng-repeat="template in templates" >
-                        <div ng-class="{'selected-template': template == selectedTemplate}">
-                            <view-template></view-template>
+                <input type="text" class="form-control input-lg" ng-model="page.name" placeholder="Page Title">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <div class="input-group">
+                    <input type="text" class="form-control input" ng-model="page.url" placeholder="Address">
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn" title="Regenerate Url" ng-click="updateUrl()">
+                            <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                    </span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-8">
+                    <div class="form-group">
+                        <h3>Select a template</h3>
+                        <div rn-carousel rn-carousel-control="true" rn-carousel-index="selectedTemplateIndex">
+                             <div ng-repeat="template in templates" >
+                                <div ng-class="{'selected-template': template == selectedTemplate}">
+                                    <view-template></view-template>
+                                </div>
+                                <button type="button" class="btn"
+                                        ng-show="selectedTemplate != template"
+                                        ng-click="selectTemplate(template)">Select template</button>
+                             </div>
                         </div>
-                        <button type="button" class="btn"
-                                ng-show="selectedTemplate != template"
-                                ng-click="selectTemplate(template)">Select template</button>
-                     </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-sm-6">
+                <div class="col-sm-4">
 
-            <h3>Regions and Parts</h3>
+                    <h3>Regions and Parts</h3>
 
-            <div ng-repeat="region in page.regions" class="clearfix">
-                <div class="form-group">
-                    <label>Region</label>
-                    <select ng-model="region.region" ng-options="r as r for r in selectedTemplate.regions" class="form-control">
-                        <option value="" disabled selected>Select an available region</option>
-                    </select>
+                    <div ng-repeat="region in page.regions" class="clearfix">
+                        <div class="form-group">
+                            <label>Region</label>
+                            <select ng-model="region.region" ng-options="r as r for r in selectedTemplate.regions" class="form-control">
+                                <option value="" disabled selected>Select an available region</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Part type</label>
+                            <select ng-model="region.partInstance.part" ng-options="part._id as part.name for part in parts" class="form-control">
+                                <option value="" disabled selected>Select a part type</option>
+                            </select>
+                        </div>
+                        <div class="form-group" ng-show="powerMode">
+                            <label>Part instance data</label>
+                            <textarea ng-model="region.partInstance.data" class="form-control input-sm"></textarea>
+                        </div>
+                        <button ng-click="clearRegion(region)" type="button" class="btn pull-right">Remove region</button>
+                    </div>
+                    <div class="clearfix">
+                        <button ng-click="addRegion()" type="button" class="btn pull-left">Add region</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Part type</label>
-                    <select ng-model="region.partInstance.part" ng-options="part._id as part.name for part in parts" class="form-control">
-                        <option value="" disabled selected>Select a part type</option>
-                    </select>
-                </div>
-                <div class="form-group" ng-show="powerMode">
-                    <label>Part instance data</label>
-                    <textarea ng-model="region.partInstance.data" class="form-control input-sm"></textarea>
-                </div>
-                <button ng-click="clearRegion(region)" type="button" class="btn pull-right">Remove region</button>
             </div>
-            <div class="clearfix">
-                <button ng-click="addRegion()" type="button" class="btn pull-left">Add region</button>
+            <div class="pull-right">
+                <button ng-click="cancel()" type="button" class="btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
             </div>
-        </div>
+        </form>
     </div>
-    <div class="pull-right">
-        <button ng-click="cancel()" type="button" class="btn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+    <div class="col-sm-2">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a href="{{page.url}}" target="_blank">Go to page &raquo;</a></li>
+            <li><a href="/_api/pages/{{page._id}}" ng-show="powerMode" target="_blank">Go to json &raquo;</a></li>
+        </ul>
     </div>
-
-
-</form>
+</div>

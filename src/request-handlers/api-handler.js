@@ -15,6 +15,8 @@ var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'api-handler' });
 logger.level('debug');
 
+var TAB = '\t';
+
 var ApiHandler = function() {
 };
 
@@ -85,7 +87,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             Model['find'](filter).populate(populations).exec(function(err, results) {
                 if(err) {
                     logger.error(err);
-                    next(err);
+                    return next(err);
                 } else {
                     logger.info('Sending response for %s', req.url);
                     results =  itemId ? results[0] : results;
@@ -94,11 +96,11 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                             '<pre style="font-family: Consolas, \'Courier New\'">' +
                             JSON.stringify(results, null, 4) +
                             '</pre>';
-                        res.send(html, {
+                        return res.send(html, {
                             'Content-Type' : 'text/html'
                         }, 200);
                     } else {
-                        res.json(results);
+                        return res.json(results);
                     }
 
                 }
@@ -115,10 +117,10 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err);
-                        next(err)
+                        return next(err)
                     } else {
                         logger.info('Created successfully');
-                        res.json(model);
+                        return res.json(model);
                     }
                 });
             }
@@ -133,10 +135,10 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
                         logger.error(err);
-                        next();
+                        return next();
                     } else {
                         logger.info('Updated successfully');
-                        res.json(model);
+                        return res.json(model);
                     }
                 });
             }
@@ -149,11 +151,11 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndRemove(itemId, function (err, model) {
                     if (err) {
                         logger.error(err);
-                        next();
+                        return next();
                     } else {
                         logger.info('Deleted successfully');
                         res.statusCode = 204;
-                        res.send();
+                        return res.send();
                     }
                 });
             }

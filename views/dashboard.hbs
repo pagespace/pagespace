@@ -30,21 +30,27 @@
     <script src="/app/static/js/part-list-controller.js"></script>
     <script src="/app/static/js/part-controller.js"></script>
     <script src="/app/static/js/part-instance-service.js"></script>
+    <script src="/app/static/js/notifications-controller.js"></script>
 </head>
 <body>
 
-<header class="header clearfix">
-    <h1 class="pull-left">Dashboard</h1>
-    <ul class="nav nav-pills pull-right">
-        <li><a href="#/">Sitemap</a></li>
-        <li><a href="#/templates">Templates</a></li>
-        <li><a href="#/parts">Page Parts</a></li>
-    </ul>
-</header>
+<div class="container-fluid">
+    <div class="row full-height">
+        <header class="col-sm-3">
+            <h1>Dashboard</h1>
+            <ul class="nav">
+                <li><a href="#/">Sitemap</a></li>
+                <li><a href="#/templates">Templates</a></li>
+                <li><a href="#/parts">Page Parts</a></li>
+            </ul>
+        </header>
+        <div class="col-sm-9">
+           <div ng-include="'/app/static/partials/notifications.html'"></div>
+           <div ng-view></div>
+        </div>
+    </div>
+</div>
 
-<section class="main container clearfix">
-    <div ng-view></div>
-</section>
 
 <footer class="footer">
 

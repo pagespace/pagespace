@@ -5,7 +5,9 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("sitemapController", function($scope, $location, pageService) {
+adminApp.controller("sitemapController", function($scope, $rootScope, $location, pageService) {
+
+    $rootScope.pageTitle = "Sitemap";
 
     var getPages = function() {
         pageService.getPages().success(function(allPages){
