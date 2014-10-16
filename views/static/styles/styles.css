@@ -9,11 +9,20 @@ body {
     background: #f3f3f3;
 }
 header {
-    background-color: #afff00;
+    background-color: #F1FF52;
+}
+header h1,
+header .nav {
+    text-align: right;
 }
 
-
-
+.action-buttons {
+    float: right;
+    height: 80px;
+}
+.action-buttons button {
+    margin-left: 15px;
+}
 
 .selected-template {
     border: 2px solid #afff00;
