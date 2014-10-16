@@ -123,7 +123,7 @@ a:visited:before {
 	margin: 10px 0 0 0;
 	width: 100%;
 	float: right;
-	padding: 9px 0 10px 0;
+	padding: 9px 0 0 0;
 	background: #f3f3f3 url(images/l3-ul-top.png) center top no-repeat;
 }
 .sitemap-primary li li li {
