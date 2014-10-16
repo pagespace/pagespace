@@ -52,9 +52,12 @@ adminApp.controller("sitemapController", function($scope, $rootScope, $location,
 
     $scope.removePage = function(page) {
 
-        pageService.deletePage(page._id).success(function() {
-            getPages();
-        });
+        var really = window.confirm('Really delete the page, ' + page.name + '?');
+        if(really) {
+            pageService.deletePage(page._id).success(function() {
+                getPages();
+            });
+        }
     };
 });
 
