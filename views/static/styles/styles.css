@@ -1,3 +1,20 @@
+html,
+body,
+body > .container-fluid,
+body > .container-fluid > .full-height,
+header {
+    height: 100%;
+}
+body {
+    background: #f3f3f3;
+}
+header {
+    background-color: #afff00;
+}
+
+
+
+
 .selected-template {
-    border: 2px solid black;
+    border: 2px solid #afff00;
 }
