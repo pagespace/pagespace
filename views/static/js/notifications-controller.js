@@ -20,14 +20,22 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         showMessage(text, 'success');
     };
 
+    $rootScope.showInfo = function(text) {
+        console.log(text);
+        showMessage(text, 'info');
+    };
+
     $rootScope.showWarning = function(text) {
         console.warn(text);
         showMessage(text, 'warning');
     };
 
-    $rootScope.showError = function(text) {
+    $rootScope.showError = function(text, err) {
         console.error(text);
-        showMessage(text, 'danger');
+        if(err) {
+            console.error(err);
+        }
+        showMessage(text + ": " + err, 'danger');
     };
 
     $scope.clear = function() {

@@ -18,6 +18,9 @@ header .nav {
 
 .action-buttons {
     height: 80px;
+    padding-top: 1em;
+    margin-top: 50px;
+    border-top: 1px solid lightgrey;
 }
 .action-buttons button {
     float: right;

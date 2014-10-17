@@ -37,6 +37,8 @@ adminApp.controller("sitemapController", function($scope, $rootScope, $location,
             populateChildren(primaryRoots);
 
             $scope.pages = primaryRoots;
+        }).error(function(err) {
+            $rootScope.showError("Error getting pages", err);
         });
     };
 
@@ -47,6 +49,8 @@ adminApp.controller("sitemapController", function($scope, $rootScope, $location,
         parentPage = parentPage || 'primary';
         pageService.createPage(null, parentPage).success(function() {
             getPages();
+        }).error(function(err) {
+            $rootScope.showError("Error adding new page", err);
         });
     };
 
@@ -56,6 +60,9 @@ adminApp.controller("sitemapController", function($scope, $rootScope, $location,
         if(really) {
             pageService.deletePage(page._id).success(function() {
                 getPages();
+                $rootScope.showInfo("Page: " + page.name + " removed.");
+            }).error(function(err) {
+                $rootScope.showError("Error deleting page", err);
             });
         }
     };

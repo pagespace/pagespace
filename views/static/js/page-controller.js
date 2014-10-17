@@ -119,7 +119,7 @@ adminApp.controller("pageController",
                 $rootScope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error saving page: " + err);
+                $rootScope.showError("Error saving page", err);
             });
         });
     };

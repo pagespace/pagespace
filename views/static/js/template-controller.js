@@ -20,11 +20,12 @@ adminApp.controller("templateController", function($scope, $rootScope, $routePar
     if(templateId) {
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;
+        }).error(function(err) {
+            $rootScope.showError("Error getting template", err);
         });
     }
 
     $scope.addRegion = function() {
-        console.log($scope.template.regions)
         var randTitle = Math.random().toString(36).substr(2,3);
         $scope.template.regions.push(randTitle);
     };
@@ -43,13 +44,17 @@ adminApp.controller("templateController", function($scope, $rootScope, $routePar
     $scope.save = function() {
         if(templateId) {
             templateService.updateTemplate(templateId, $scope.template).success(function(res) {
-                console.log("Template saved");
+                $rootScope.showSuccess("Template updated.");
                 $location.path("/templates");
+            }).error(function(err) {
+                $rootScope.showError("Error updating template", err);
             });
         } else {
             templateService.createTemplate($scope.template).success(function(res) {
-                console.log("Template created");
+                $rootScope.showSuccess("Template created.");
                 $location.path("/templates");
+            }).error(function(err) {
+                $rootScope.showError("Error creating template", err);
             });
         }
     };
@@ -58,6 +63,8 @@ adminApp.controller("templateController", function($scope, $rootScope, $routePar
         templateService.deleteTemplate($scope.template._id).success(function (res) {
             console.log("Template saved");
             $location.path("/templates");
+        }).error(function(err) {
+            $rootScope.showError("Error deleting template", err);
         });
     };
 });

@@ -13,6 +13,8 @@ adminApp.controller("templateListController", function($scope, $rootScope, $rout
 
     templateService.getTemplates().success(function(templates) {
         $scope.templates = templates;
+    }).error(function(err) {
+        $rootScope.showError("Error getting templates", err);
     });
 
 });
