@@ -28,7 +28,7 @@
 ------------------------------------------------------------ */
 
 .sitemap {
-	margin: 50px 0 40px 0;
+	margin: 50px 0 0 0;
     clear: both;
 	width: 100%;
 }
@@ -49,6 +49,7 @@
 	margin: 0;
 	float: left;
 	width: 100%;
+    padding-left: 0;
 }
 .sitemap-primary .sitemap-home {
 	display: block;
@@ -131,7 +132,7 @@ a:visited:before {
 	padding: 5px 0;
 }
 .sitemap-primary li li li .sitemap-node {
-	background-color: #eaff00;
+	background-color: #FFFF8B;
 	font-size: 16px;
 	padding: 5px 0;
 	width: 80%;
@@ -176,7 +177,6 @@ a:visited:before {
 	font-weight: bold;
 	text-align: center;
 	color: black;
-	background: #eaff00 url(images/white-highlight.png) top left repeat-x;
 }
 .sitemap-utility li a:hover {
 	background-color: #fffce5;
@@ -197,6 +197,9 @@ a:visited:before {
     border-radius: 4px;
     margin: 8px;
     padding: 3px 6px;
+}
+.sitemap-primary button:hover {
+    color: #0074ff;
 }
 .sitemap-add {
     float: right;
