@@ -1,3 +1,5 @@
+"use strict";
+
 //support
 var bunyan = require('bunyan');
 var util = require('../misc/util');

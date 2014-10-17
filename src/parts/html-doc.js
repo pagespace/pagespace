@@ -1,11 +1,13 @@
+"use strict";
+
 var fs = require("fs");
-var Promise = require("bluebird");
+var BluebirdPromise = require("bluebird");
 
 module.exports = {
     userView: null,
 	init: function() {
         var self = this;
-        return new Promise(function (resolve, reject) {
+        return new BluebirdPromise(function (resolve, reject) {
             fs.readFile(__dirname + "/html-doc.hbs", "utf-8", function(err, result) {
                 if(err) {
                     reject(err);
@@ -16,15 +18,15 @@ module.exports = {
             });
         });
     },
-	read: function(data, db) {
+	read: function(data) {
         return {
             content: data
-        }
+        };
 	},
     getName: function() {
 		return "HTML Test";
 	},
-    getView: function(edit) {
+    getView: function() {
         return this.userView;
     }
 };

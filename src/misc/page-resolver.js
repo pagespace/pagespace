@@ -1,4 +1,6 @@
-var Promise = require("bluebird");
+"use strict";
+
+var BluebirdPromise = require("bluebird");
 var Page = require('./../models/page');
 
 function PageResolver() {
@@ -10,7 +12,7 @@ module.exports = function() {
 
 PageResolver.prototype.findPage = function(url) {
 
-	return new Promise(function (resolve, reject) {
+	return new BluebirdPromise(function (resolve, reject) {
 	    var query = Page.findOne({
 			url: url 
 		});

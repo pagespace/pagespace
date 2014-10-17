@@ -1,3 +1,5 @@
+"use strict";
+
 //support
 var bunyan = require('bunyan');
 
@@ -12,13 +14,13 @@ module.exports = function() {
     return new LogoutHandler();
 };
 
-LogoutHandler.prototype.doRequest = function(req, res, next) {
+LogoutHandler.prototype.doRequest = function(req, res) {
 
     logger.info('Processing logout request for ' + req.url);
 
     if(req.method === 'GET' || req.method === 'POST') {
         req.logout();
         res.clearCookie('remember_me');
-        res.redirect('/_login');
+        return res.redirect('/_login');
     }
 };

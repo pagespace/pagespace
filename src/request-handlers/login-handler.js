@@ -1,6 +1,8 @@
+"use strict";
+
 //support
 var bunyan = require('bunyan');
-var passport = require('passport')
+var passport = require('passport');
 var async = require('async');
 var util = require('../misc/util');
 
@@ -22,7 +24,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
     if(req.method === 'GET') {
         var doNext = function(err) {
             if(err) {
-                return next(err)
+                return next(err);
             } else {
                 var data = {
                     badCredentials: util.typeify(req.query.badCredentials) || false
@@ -52,7 +54,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
             });
         })(req, res, doNext);
     } else if(req.method === 'POST') {
-        return passport.authenticate('local', function(err, user, info) {
+        return passport.authenticate('local', function(err, user) {
             if (err) {
                 return next(err);
             }
@@ -79,7 +81,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                         if (err) {
                             callback(err);
                         } else {
-                            callback()
+                            callback();
                         }
                     });
                 }

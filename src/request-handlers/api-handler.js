@@ -1,7 +1,8 @@
+"use strict";
+
 //support
 var bunyan = require('bunyan');
 var util = require('../misc/util');
-var hbs = require('hbs');
 
 //models
 var Page = require('../models/page');
@@ -51,7 +52,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         }
     };
 
-    var populations = {
+    var populationsMap = {
         pages: 'parent template regions.partInstance',
         parts: '',
         "part-instances": 'part',
@@ -78,20 +79,20 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         //create a filter out of the query string
         for(var p in req.query) {
             if(req.query.hasOwnProperty(p)) {
-                filter[p] = typeify(req.query[p]);
+                filter[p] = util.typeify(req.query[p]);
             }
         }
 
         if(req.method === 'GET') {
-            var populations = populations[apiType];
-            Model['find'](filter).populate(populations).exec(function(err, results) {
+            var populations = populationsMap[apiType];
+            Model.find(filter).populate(populations).exec(function(err, results) {
                 if(err) {
                     logger.error(err);
                     return next(err);
                 } else {
                     logger.info('Sending response for %s', req.url);
                     results =  itemId ? results[0] : results;
-                    if(req.headers['accept'].indexOf('application/json') === -1) {
+                    if(req.headers.accept.indexOf('application/json') === -1) {
                         var html =
                             '<pre style="font-family: Consolas, \'Courier New\'">' +
                             JSON.stringify(results, null, 4) +
@@ -117,7 +118,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err);
-                        return next(err)
+                        return next(err);
                     } else {
                         logger.info('Created successfully');
                         return res.json(model);
@@ -148,7 +149,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 next();
             } else {
                 logger.info('Removing %s with id [%s]', collection, itemId);
-                Model.findByIdAndRemove(itemId, function (err, model) {
+                Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
                         logger.error(err);
                         return next();

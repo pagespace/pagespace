@@ -1,6 +1,9 @@
+"use strict";
+
 var Acl = function() {
     this.permissions = [];
 };
+
 
 Acl.prototype.allow = function(roles, resource, actions) {
 

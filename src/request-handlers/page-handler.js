@@ -1,3 +1,5 @@
+"use strict";
+
 //support
 var bunyan = require('bunyan');
 var hbs = require('hbs');
@@ -70,7 +72,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                 logger.error(err);
                 next(err);
             } else {
-                logger.info('Sending page for %s', req.url)
+                logger.info('Sending page for %s', req.url);
                 res.send(html);
             }
         });

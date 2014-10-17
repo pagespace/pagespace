@@ -1,3 +1,5 @@
+"use strict";
+
 var Promise = require('bluebird');
 
 module.exports = {
@@ -6,11 +8,11 @@ module.exports = {
         if(typeof value === 'undefined' || value === null) {
             return null;
         } else if(!isNaN(parseFloat(+value))) {
-            return parseFloat(value)
+            return parseFloat(value);
         } else if(value.toLowerCase() === 'false') {
             return false;
         } else if(value.toLowerCase() === 'true') {
-            return true
+            return true;
         } else {
             return value;
         }

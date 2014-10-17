@@ -1,3 +1,5 @@
+"use strict";
+
 //core
 var url = require('url');
 
@@ -10,14 +12,12 @@ var RememberMeStrategy = require('passport-remember-me').Strategy;
 var async = require('async');
 var bunyan = require('bunyan');
 var Acl = require("./misc/acl");
-var Promise = require('bluebird');
+var BluebirdPromise = require('bluebird');
 require('array.prototype.find');
 
 //models
 var Page = require('./models/page');
-var Template = require('./models/template');
 var Part = require('./models/part');
-var PartInstance = require('./models/part-instance');
 var User = require('./models/user');
 
 //factories
@@ -73,13 +73,13 @@ TheApp.prototype.init = function(options) {
 
     var dbConnection = options.dbConnection;
     if(!dbConnection) {
-        throw new Error('You must specify a db connection string')
+        throw new Error('You must specify a db connection string');
     }
 
     mongoose.connect(dbConnection);
     var db = mongoose.connection;
     db.on('error', function(e) {
-        logger.error('connection error:' + e)
+        logger.error('connection error:' + e);
     });
     db.once('open', function callback () {
         logger.info("Db connection established");
@@ -93,7 +93,7 @@ TheApp.prototype.init = function(options) {
                 self.urlsToResolve = pages.map(function(doc) {
                     return doc.url;
                 });
-                    logger.debug("Urls to resolve are:")
+                    logger.debug("Urls to resolve are:");
                     self.urlsToResolve.forEach(function(url) {
                         logger.debug(TAB + url);
                     });
@@ -136,7 +136,7 @@ TheApp.prototype.init = function(options) {
                         password: "admin",
                         role: "admin"
                     });
-                    defaultAdmin.save(function(err, model) {
+                    defaultAdmin.save(function(err) {
                         if(err) {
                             logger.error(err);
                         } else {
@@ -149,7 +149,7 @@ TheApp.prototype.init = function(options) {
     });
 
     //once everything is ready
-    Promise.all(readyPromises).then(function(state) {
+    BluebirdPromise.all(readyPromises).then(function() {
         logger.info('Initialized, waiting for requests');
         self.appState = consts.appStates.READY;
 
@@ -207,11 +207,11 @@ TheApp.prototype.doRequest = function(req, res, next) {
             requestHandler = this.pageHandler;
         } else if(urlType === consts.requestTypes.REST) {
             requestHandler = this.apiHandler;
-        } else if(urlType == consts.requestTypes.ADMIN) {
+        } else if(urlType === consts.requestTypes.ADMIN) {
             requestHandler = this.adminHandler;
-        } else if(urlType == consts.requestTypes.LOGIN) {
+        } else if(urlType === consts.requestTypes.LOGIN) {
             requestHandler = this.loginHandler;
-        } else if(urlType == consts.requestTypes.LOGOUT) {
+        } else if(urlType === consts.requestTypes.LOGOUT) {
             requestHandler = this.logoutHandler;
         } else {
             next();
