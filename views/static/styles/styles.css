@@ -17,10 +17,10 @@ header .nav {
 }
 
 .action-buttons {
-    float: right;
     height: 80px;
 }
 .action-buttons button {
+    float: right;
     margin-left: 15px;
 }
 
