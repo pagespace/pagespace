@@ -3,6 +3,8 @@
 <head>
     <title>Login</title>
     <link href="/app/static/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/app/static/styles/styles.css" rel="stylesheet">
+
     <script src="/bower_components/angular/angular.min.js"></script>
     <script src="/bower_components/angular-resource/angular-resource.min.js"></script>
 
@@ -10,15 +12,21 @@
 </head>
 <body ng-controller="loginController">
 
-<header class="header">
 
-</header>
+<div class="container-fluid">
+    <div class="row full-height">
+        <header class="col-sm-2">
+            <h1>Dashboard</h1>
+        </header>
+        <div class="col-sm-4">
+            <h2 class="h1">Login</h2>
 
+            {{#if badCredentials}}
+                <div class="alert alert-warning" role="alert">
+                    <p>Your username or password was incorrect</p>
+                </div>
+            {{/if}}
 
-<section class="main container">
-    <div class="row">
-        <div class="col-sm-6">
-            <h1>Login</h1>
             <form role="form" ng-submit="submit()">
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -28,22 +36,20 @@
                     <label for="password">Password</label>
                     <input type="password" class="form-control" id="password" placeholder="Password" ng-model="password">
                 </div>
-                <div class="form-group">
+                <div class="form-group pull-left">
                     <div class="checkbox">
                         <label>
                             <input type="checkbox" ng-model="remember_me"> Don't forget me
                         </label>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-default">Login</button>
+                <div class="action-buttons">
+
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
             </form>
         </div>
     </div>
-</section>
-
-<footer class="footer">
-
-</footer>
-
+</div>
 </body>
 </html>

@@ -6,7 +6,8 @@ module.exports = {
         REST: 1,
         ADMIN: 2,
         LOGIN: 3,
-        OTHER: 4
+        LOGOUT: 4,
+        OTHER: 99
     },
 
     appStates: {
@@ -17,6 +18,7 @@ module.exports = {
     requestRegex: {
         API: new RegExp('^/_api/(pages|parts|templates|users|part-instances)/?(.*)'),
         ADMIN: new RegExp('^/_admin/(dashboard)/?(.*)'),
-        LOGIN: new RegExp('^/_(login)')
+        LOGIN: new RegExp('^/_(login)'),
+        LOGOUT: new RegExp('^/_(logout)')
     }
 };

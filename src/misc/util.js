@@ -3,7 +3,7 @@ var Promise = require('bluebird');
 module.exports = {
 
     typeify: function typeify(value) {
-        if(value === null) {
+        if(typeof value === 'undefined' || value === null) {
             return null;
         } else if(!isNaN(parseFloat(+value))) {
             return parseFloat(value)

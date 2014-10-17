@@ -26,6 +26,7 @@ var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
+var createLogoutHandler = require('./request-handlers/logout-handler');
 
 //util
 var util = require('./misc/util');
@@ -157,6 +158,7 @@ TheApp.prototype.init = function(options) {
         self.apiHandler = createApiHandler();
         self.adminHandler = createAdminHandler();
         self.loginHandler = createLoginHandler();
+        self.logoutHandler = createLogoutHandler();
     });
 
     //auth and acl setup
@@ -209,6 +211,10 @@ TheApp.prototype.doRequest = function(req, res, next) {
             requestHandler = this.adminHandler;
         } else if(urlType == consts.requestTypes.LOGIN) {
             requestHandler = this.loginHandler;
+        } else if(urlType == consts.requestTypes.LOGOUT) {
+            requestHandler = this.logoutHandler;
+        } else {
+            next();
         }
         return requestHandler.doRequest(req, res, next);
     } else {
@@ -235,6 +241,8 @@ TheApp.prototype.getUrlType = function(url) {
         type = consts.requestTypes.ADMIN;
     } else if (consts.requestRegex.LOGIN.test(url)) {
         type = consts.requestTypes.LOGIN;
+    } else if (consts.requestRegex.LOGOUT.test(url)) {
+        type = consts.requestTypes.LOGOUT;
     } else {
         type = consts.requestTypes.OTHER;
     }

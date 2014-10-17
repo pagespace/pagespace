@@ -2,6 +2,7 @@
 var bunyan = require('bunyan');
 var passport = require('passport')
 var async = require('async');
+var util = require('../misc/util');
 
 //util
 var logger =  bunyan.createLogger({ name: 'login-handler' });
@@ -23,7 +24,10 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
             if(err) {
                 return next(err)
             } else {
-                return res.render('login', {}, function(err, html) {
+                var data = {
+                    badCredentials: util.typeify(req.query.badCredentials) || false
+                };
+                return res.render('login', data, function(err, html) {
                     if(err) {
                         logger.error(err);
                         next(err);
@@ -35,12 +39,9 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
             }
         };
 
-        return passport.authenticate('remember-me', function(err, user, info) {
+        return passport.authenticate('remember-me', function(err, user) {
             if (err) {
                 return next(err);
-            }
-            if (!user) {
-
             }
             req.logIn(user, function(err) {
                 if (err) {
@@ -56,7 +57,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 return next(err);
             }
             if (!user) {
-                return res.redirect('/_login');
+                return res.redirect('/_login?badCredentials=true');
             }
             async.series([
                 function(callback) {

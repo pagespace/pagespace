@@ -14,7 +14,9 @@ adminApp.controller("loginController", function($scope, $resource, $window) {
         });
         res.$promise.then(function(res) {
             $scope.done = true
-            $window.location.href = res.href;
+            if(res.href) {
+                $window.location.href = res.href;
+            }
         })
     };
 });
