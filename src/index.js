@@ -41,14 +41,40 @@ var TAB = '\t';
  * @constructor
  */
 var TheApp = function() {
+
+    this.reset();
+
+    //dependencies
+    this.mongoose = mongoose;
+    this.Page = Page;
+    this.Part = Part;
+    this.User = User;
+};
+
+TheApp.prototype.reset = function() {
     this.urlsToResolve = [];
+    this.readyPromises = [];
     this.appState = consts.appStates.NOT_READY;
 };
 
+TheApp.prototype.ready = function(callback) {
 
-module.exports = function(opts) {
-    return new TheApp().init(opts);
+    var self = this;
+    if(this.readyPromises.length > 0) {
+        BluebirdPromise.all(this.readyPromises).then(function() {
+            self.appState = consts.appStates.READY;
+            callback(null);
+        }).catch(function(e) {
+            callback(e);
+        });
+    } else {
+        var notInit = new Error("The middleware has not yet been initialized. Call ready() after init()");
+        callback(notInit);
+    }
 };
+
+
+module.exports = new TheApp();
 
 /**
  * Initializes and returns the middleware
@@ -63,21 +89,19 @@ TheApp.prototype.init = function(options) {
     this.viewBase = options.viewBase || null;
     this.parts = {};
 
-    var readyPromises = [];
-
     var urlsDefferred = util.defer();
-    readyPromises.push(urlsDefferred.promise);
+    this.readyPromises.push(urlsDefferred.promise);
 
     var partsDeffered = util.defer();
-    readyPromises.push(partsDeffered.promise);
+    this.readyPromises.push(partsDeffered.promise);
 
     var dbConnection = options.dbConnection;
     if(!dbConnection) {
         throw new Error('You must specify a db connection string');
     }
 
-    mongoose.connect(dbConnection);
-    var db = mongoose.connection;
+    this.mongoose.connect(dbConnection);
+    var db = this.mongoose.connection;
     db.on('error', function(e) {
         logger.error('connection error:' + e);
     });
@@ -86,17 +110,18 @@ TheApp.prototype.init = function(options) {
 
         //cache page urls to resolve
         Page.find({}, function(err, pages) {
+            //err = new Error("BLAH!!!")
             if(err) {
                 logger.error(err);
                 urlsDefferred.reject();
             } else {
-                self.urlsToResolve = pages.map(function(doc) {
-                    return doc.url;
+                self.urlsToResolve = pages.map(function(page) {
+                    return page.url;
                 });
-                    logger.debug("Urls to resolve are:");
-                    self.urlsToResolve.forEach(function(url) {
-                        logger.debug(TAB + url);
-                    });
+                logger.debug("Urls to resolve are:");
+                self.urlsToResolve.forEach(function(url) {
+                    logger.debug(TAB + url);
+                });
 
                 urlsDefferred.resolve(consts.appStates.READY);
             }
@@ -127,7 +152,6 @@ TheApp.prototype.init = function(options) {
         User.find({ role: 'admin'}, 'username', function(err, users) {
             if(err) {
                 logger.error(err);
-                urlsDefferred.reject();
             } else {
                 if(users.length === 0) {
                     logger.info("Admin user created with default admin password");
@@ -149,16 +173,20 @@ TheApp.prototype.init = function(options) {
     });
 
     //once everything is ready
-    BluebirdPromise.all(readyPromises).then(function() {
-        logger.info('Initialized, waiting for requests');
-        self.appState = consts.appStates.READY;
+    this.ready(function(err) {
 
-        //set up page handlers
-        self.pageHandler = createPageHandler(createPageResolver(), self.parts);
-        self.apiHandler = createApiHandler();
-        self.adminHandler = createAdminHandler();
-        self.loginHandler = createLoginHandler();
-        self.logoutHandler = createLogoutHandler();
+        if(err) {
+            logger.err("The middleware could not initialize" , err);
+        } else {
+            logger.info('Initialized, waiting for requests');
+
+            //set up page handlers
+            self.pageHandler = createPageHandler(createPageResolver(), self.parts);
+            self.apiHandler = createApiHandler();
+            self.adminHandler = createAdminHandler();
+            self.loginHandler = createLoginHandler();
+            self.logoutHandler = createLogoutHandler();
+        }
     });
 
     //auth and acl setup
@@ -214,13 +242,16 @@ TheApp.prototype.doRequest = function(req, res, next) {
         } else if(urlType === consts.requestTypes.LOGOUT) {
             requestHandler = this.logoutHandler;
         } else {
-            next();
+            var notFoundErr = new Error();
+            notFoundErr.status = 404;
+            return next(notFoundErr);
         }
         return requestHandler.doRequest(req, res, next);
     } else {
+        logger.info("Request received before middleware is ready")
         var notReadyErr = new Error();
         notReadyErr.status = 503;
-        return next();
+        return next(notReadyErr);
     }
 };
 

@@ -1,6 +1,6 @@
 "use strict";
 
-var Promise = require('bluebird');
+var BluebirdPromise = require('bluebird');
 
 module.exports = {
 
@@ -20,7 +20,7 @@ module.exports = {
 
     defer: function defer() {
         var resolve, reject;
-        var promise = new Promise(function() {
+        var promise = new BluebirdPromise(function() {
             resolve = arguments[0];
             reject = arguments[1];
         });
