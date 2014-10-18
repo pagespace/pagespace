@@ -67,9 +67,8 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
         var templateSrc = !page.template ? 'default.hbs' : page.template.src;
         return res.render(templateSrc, pageData, function(err, html) {
-
             if(err) {
-                logger.error(err);
+                logger.error(err, 'Trying to render page, %s', req.url);
                 next(err);
             } else {
                 logger.info('Sending page for %s', req.url);
@@ -77,7 +76,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             }
         });
     }).catch(function(err) {
-        console.log(err);
+        logger.error(err);
         next();
     });
 };

@@ -102,18 +102,17 @@ TheApp.prototype.init = function(options) {
 
     this.mongoose.connect(dbConnection);
     var db = this.mongoose.connection;
-    db.on('error', function(e) {
-        logger.error('connection error:' + e);
+    db.on('error', function(err) {
+        logger.error(err, 'connection error');
     });
     db.once('open', function callback () {
         logger.info("Db connection established");
 
         //cache page urls to resolve
         Page.find({}, function(err, pages) {
-            //err = new Error("BLAH!!!")
             if(err) {
-                logger.error(err);
-                urlsDefferred.reject();
+                logger.error(err, 'Trying to get pages to resolve');
+                urlsDefferred.reject(err);
             } else {
                 self.urlsToResolve = pages.map(function(page) {
                     return page.url;
@@ -130,8 +129,8 @@ TheApp.prototype.init = function(options) {
         //cache part modules
         Part.find({}, function(err, parts) {
             if(err) {
-                logger.error(err);
-                partsDeffered.reject();
+                logger.error(err, 'Trying to get available parts');
+                partsDeffered.reject(err);
             } else {
                 logger.debug('Loading part modules');
                 parts.forEach(function(part) {
@@ -151,7 +150,7 @@ TheApp.prototype.init = function(options) {
         //create an admin user on first run
         User.find({ role: 'admin'}, 'username', function(err, users) {
             if(err) {
-                logger.error(err);
+                logger.error(err, 'Trying to find admin users');
             } else {
                 if(users.length === 0) {
                     logger.info("Admin user created with default admin password");
@@ -162,7 +161,7 @@ TheApp.prototype.init = function(options) {
                     });
                     defaultAdmin.save(function(err) {
                         if(err) {
-                            logger.error(err);
+                            logger.error(err, 'Trying to save the default admin user');
                         } else {
                             logger.info("Admin user created successfully");
                         }
@@ -176,7 +175,7 @@ TheApp.prototype.init = function(options) {
     this.ready(function(err) {
 
         if(err) {
-            logger.err("The middleware could not initialize" , err);
+            logger.error(err, 'The middleware could not initialize');
         } else {
             logger.info('Initialized, waiting for requests');
 
@@ -196,18 +195,25 @@ TheApp.prototype.init = function(options) {
     return function(req, res, next) {
         logger.debug('Request received for ' + req.url);
 
-        req.url = url.parse(req.url).pathname;
-        async.series([
-            function (callback) {
-                passport.initialize()(req, res, callback);
-            },
-            function (callback) {
-                passport.session()(req, res, callback);
-            },
-            function () {
-                self.doRequest(req, res, next);
-            }
-        ]);
+        if(self.appState === consts.appStates.READY) {
+            req.url = url.parse(req.url).pathname;
+            async.series([
+                function (callback) {
+                    passport.initialize()(req, res, callback);
+                },
+                function (callback) {
+                    passport.session()(req, res, callback);
+                },
+                function () {
+                    self.doRequest(req, res, next);
+                }
+            ]);
+        } else {
+            logger.info("Request received before middleware is ready")
+            var notReadyErr = new Error();
+            notReadyErr.status = 503;
+            return next(notReadyErr);
+        }
     };
 };
 
@@ -219,40 +225,33 @@ TheApp.prototype.init = function(options) {
  * @returns {*}
  */
 TheApp.prototype.doRequest = function(req, res, next) {
-
-    if(this.appState === consts.appStates.READY) {
-        var requestHandler, urlType;
-        var user = req.user || User.createGuestUser();
-        if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-            logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
-            req.session.loginToUrl = req.url;
-            urlType = consts.requestTypes.LOGIN;
-        } else {
-            urlType = this.getUrlType(req.url);
-        }
-
-        if(urlType === consts.requestTypes.PAGE) {
-            requestHandler = this.pageHandler;
-        } else if(urlType === consts.requestTypes.REST) {
-            requestHandler = this.apiHandler;
-        } else if(urlType === consts.requestTypes.ADMIN) {
-            requestHandler = this.adminHandler;
-        } else if(urlType === consts.requestTypes.LOGIN) {
-            requestHandler = this.loginHandler;
-        } else if(urlType === consts.requestTypes.LOGOUT) {
-            requestHandler = this.logoutHandler;
-        } else {
-            var notFoundErr = new Error();
-            notFoundErr.status = 404;
-            return next(notFoundErr);
-        }
-        return requestHandler.doRequest(req, res, next);
+    var requestHandler, urlType;
+    var user = req.user || User.createGuestUser();
+    if(!this.acl.isAllowed(user.role, req.url, req.method)) {
+        logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
+        req.session.loginToUrl = req.url;
+        urlType = consts.requestTypes.LOGIN;
     } else {
-        logger.info("Request received before middleware is ready")
-        var notReadyErr = new Error();
-        notReadyErr.status = 503;
-        return next(notReadyErr);
+        urlType = this.getUrlType(req.url);
     }
+
+    if(urlType === consts.requestTypes.PAGE) {
+        requestHandler = this.pageHandler;
+    } else if(urlType === consts.requestTypes.REST) {
+        requestHandler = this.apiHandler;
+    } else if(urlType === consts.requestTypes.ADMIN) {
+        requestHandler = this.adminHandler;
+    } else if(urlType === consts.requestTypes.LOGIN) {
+        requestHandler = this.loginHandler;
+    } else if(urlType === consts.requestTypes.LOGOUT) {
+        requestHandler = this.logoutHandler;
+    } else {
+        var notFoundErr = new Error();
+        notFoundErr.status = 404;
+        return next(notFoundErr);
+    }
+    return requestHandler.doRequest(req, res, next);
+
 };
 
 /**

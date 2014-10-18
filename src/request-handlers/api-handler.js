@@ -87,7 +87,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             var populations = populationsMap[apiType];
             Model.find(filter).populate(populations).exec(function(err, results) {
                 if(err) {
-                    logger.error(err);
+                    logger.error(err, 'Trying to do API GET for %s', apiType);
                     return next(err);
                 } else {
                     logger.info('Sending response for %s', req.url);
@@ -117,7 +117,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 var model = new Model(req.body);
                 model.save(function(err, model) {
                     if(err) {
-                        logger.error(err);
+                        logger.error(err, 'Trying to save for API POST for %s', apiType);
                         return next(err);
                     } else {
                         logger.info('Created successfully');
@@ -135,7 +135,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.debug(TAB + req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
-                        logger.error(err);
+                        logger.error(err, 'Trying to save for API PUT for %s', apiType);
                         return next();
                     } else {
                         logger.info('Updated successfully');
@@ -151,7 +151,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.info('Removing %s with id [%s]', collection, itemId);
                 Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
-                        logger.error(err);
+                        logger.error(err, 'Trying to do API DELETE for %s', apiType);
                         return next();
                     } else {
                         logger.info('Deleted successfully');

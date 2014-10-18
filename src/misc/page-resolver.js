@@ -19,7 +19,6 @@ PageResolver.prototype.findPage = function(url) {
 	    query.populate("redirect template regions.partInstance");
 		query.exec(function(err, result) {
 			if(err) {
-				console.log(err);
 				reject(err);
 			} else {
 				resolve(result);

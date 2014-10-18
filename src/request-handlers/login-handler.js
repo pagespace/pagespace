@@ -31,7 +31,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 };
                 return res.render('login', data, function(err, html) {
                     if(err) {
-                        logger.error(err);
+                        logger.error(err, 'Trying to render login');
                         next(err);
                     } else {
                         logger.info('Sending page for %s', req.url);

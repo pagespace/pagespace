@@ -38,7 +38,7 @@ AdminHandler.prototype.doRequest = function(req, res, next) {
     };
     return res.render(adminType, pageData, function(err, html) {
         if(err) {
-            logger.error(err);
+            logger.error(err, 'Trying to render admin page, %s', req.url);
             next(err);
         } else {
             logger.info('Sending page for %s', req.url);
