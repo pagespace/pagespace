@@ -42,31 +42,40 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
 
+        var promises = []
+        promises.push(page);
+
+        //read data for each part
+        page.regions.forEach(function (region) {
+            if (region.part) {
+                var partModule = self.parts[region.part];
+                promises.push(partModule.read(region.data));
+            } else {
+                promises.push(null);
+            }
+        });
+        return promises;
+    }).spread(function() {
+        var args = Array.prototype.slice.call(arguments, 0);
+        var page = args.shift();
+
         var pageData = {};
-        page.regions.forEach(function(region) {
-            if(region.partInstance) {
-                //TODO: region.part is an id. need to populate it first
-                logger.info(region.partInstance);
-
-                var partModule = self.parts[region.partInstance.part];
-
-                var editMode = typeof req.session.edit === "boolean" && req.session.edit;
-
-                pageData.edit = editMode;
-                pageData.title = page.name;
-                pageData[region.region] =  {
-                    id: region.partInstance._id,
-                    edit: editMode,
-                    data: partModule ? partModule.read(region.partInstance.data) : {}
+        page.regions.forEach(function (region, i) {
+            if (region.part) {
+                pageData.edit = typeof req.session.edit === "boolean" && req.session.edit;
+                pageData[region.name] = {
+                    edit: pageData.edit,
+                    content: args[i] || {}
                 };
 
-                var partView = partModule.getView(editMode);
-                hbs.registerPartial(region.region, partView);
+                var partModule = self.parts[region.part];
+                var partView = partModule.getView(pageData.edit);
+                hbs.registerPartial(region.name, partView);
             }
         });
 
         var templateSrc = !page.template ? 'default.hbs' : page.template.src;
-        return res.render(templateSrc, pageData, function(err, html) {
+        res.render(templateSrc, pageData, function(err, html) {
             if(err) {
                 logger.error(err, 'Trying to render page, %s', req.url);
                 next(err);

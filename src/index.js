@@ -13,7 +13,6 @@ var async = require('async');
 var bunyan = require('bunyan');
 var Acl = require("./misc/acl");
 var BluebirdPromise = require('bluebird');
-require('array.prototype.find');
 
 //models
 var Page = require('./models/page');
@@ -25,6 +24,7 @@ var createPageResolver = require('./misc/page-resolver');
 var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
+var createDataHandler = require('./request-handlers/data-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
 var createLogoutHandler = require('./request-handlers/logout-handler');
 
@@ -51,12 +51,19 @@ var TheApp = function() {
     this.User = User;
 };
 
+/**
+ * Resets the middleware
+ */
 TheApp.prototype.reset = function() {
     this.urlsToResolve = [];
     this.readyPromises = [];
     this.appState = consts.appStates.NOT_READY;
 };
 
+/**
+ * Calls the callback(err) when the middleware is ready. Must call after calling init()
+ * @param callback
+ */
 TheApp.prototype.ready = function(callback) {
 
     var self = this;
@@ -73,7 +80,7 @@ TheApp.prototype.ready = function(callback) {
     }
 };
 
-
+//export an new instance
 module.exports = new TheApp();
 
 /**
@@ -137,7 +144,7 @@ TheApp.prototype.init = function(options) {
                     try {
                         logger.debug(TAB + part.module);
                         var partModule = require(part.module);
-                        readyPromises.push(partModule.init());
+                        self.readyPromises.push(partModule.init());
                         self.parts[part._id] = partModule;
                     } catch(e) {
                         partsDeffered.reject(e);
@@ -183,6 +190,7 @@ TheApp.prototype.init = function(options) {
             self.pageHandler = createPageHandler(createPageResolver(), self.parts);
             self.apiHandler = createApiHandler();
             self.adminHandler = createAdminHandler();
+            self.dataHandler = createDataHandler();
             self.loginHandler = createLoginHandler();
             self.logoutHandler = createLogoutHandler();
         }
@@ -209,7 +217,7 @@ TheApp.prototype.init = function(options) {
                 }
             ]);
         } else {
-            logger.info("Request received before middleware is ready")
+            logger.info("Request received before middleware is ready");
             var notReadyErr = new Error();
             notReadyErr.status = 503;
             return next(notReadyErr);
@@ -228,7 +236,9 @@ TheApp.prototype.doRequest = function(req, res, next) {
     var requestHandler, urlType;
     var user = req.user || User.createGuestUser();
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-        logger.debug("User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login");
+        var debugMsg =
+            "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
+        logger.debug(debugMsg);
         req.session.loginToUrl = req.url;
         urlType = consts.requestTypes.LOGIN;
     } else {
@@ -237,10 +247,12 @@ TheApp.prototype.doRequest = function(req, res, next) {
 
     if(urlType === consts.requestTypes.PAGE) {
         requestHandler = this.pageHandler;
-    } else if(urlType === consts.requestTypes.REST) {
+    } else if(urlType === consts.requestTypes.API) {
         requestHandler = this.apiHandler;
     } else if(urlType === consts.requestTypes.ADMIN) {
         requestHandler = this.adminHandler;
+    } else if(urlType === consts.requestTypes.DATA) {
+        requestHandler = this.dataHandler;
     } else if(urlType === consts.requestTypes.LOGIN) {
         requestHandler = this.loginHandler;
     } else if(urlType === consts.requestTypes.LOGOUT) {
@@ -266,7 +278,7 @@ TheApp.prototype.getUrlType = function(url) {
     if(this.urlsToResolve.indexOf(url) >= 0) {
         type = consts.requestTypes.PAGE;
     } else if(consts.requestRegex.API.test(url)) {
-        type = consts.requestTypes.REST;
+        type = consts.requestTypes.API;
     } else if (consts.requestRegex.ADMIN.test(url)) {
         type = consts.requestTypes.ADMIN;
     } else if (consts.requestRegex.LOGIN.test(url)) {

@@ -2,6 +2,15 @@
 
 var BluebirdPromise = require('bluebird');
 
+var entityMap = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "/": "&#x2F;"
+};
+
 module.exports = {
 
     typeify: function typeify(value) {
@@ -29,5 +38,15 @@ module.exports = {
             reject: reject,
             promise: promise
         };
+    },
+
+    escapeHtml: function(value) {
+        if(typeof value === "string") {
+            return value.replace(/[&<>"'\/]/g, function (s) {
+                return entityMap[s];
+            });
+        } else {
+            return value;
+        }
     }
 };

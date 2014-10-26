@@ -19,6 +19,9 @@ module.exports = function() {
 AdminHandler.prototype.doRequest = function(req, res, next) {
     logger.info('Processing admin request for ' + req.url);
 
+    //TODO: power mode always on
+    req.query._power = true
+
     //check for power mode
     if(req.query._power) {
         if(req.user && req.user.role === 'admin' && util.typeify(req.query._power) === true) {

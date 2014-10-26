@@ -7,15 +7,17 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller("pageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, partInstanceService, powerMode) {
+             pageService, templateService, partService, powerMode) {
 
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
 
-    $scope.powerMode = powerMode;
+    $scope.powerMode = true;
+
+    $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
-    $scope.selectedTemplate = null;
+    $scope.template = null;
 
     async.series([
         function getTemplates(callback) {
@@ -34,12 +36,9 @@ adminApp.controller("pageController",
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
-                var selectedTemplate = $scope.templates.filter(function(template) {
-                    return page.template._id === template._id;
-                });
-
-                $scope.selectedTemplate = selectedTemplate.length ? selectedTemplate[0] : null;
-                $scope.selectedTemplateIndex = $scope.templates.indexOf($scope.selectedTemplate);
+                $scope.template = $scope.templates.filter(function(template) {
+                    return page.template && page.template._id === template._id;
+                })[0] || null;
 
                 callback();
             });
@@ -59,70 +58,38 @@ adminApp.controller("pageController",
     };
 
     $scope.selectTemplate = function(template) {
-        $scope.selectedTemplate = template;
-    };
+        $scope.template = template;
 
-    $scope.addRegion = function() {
-        $scope.page.regions.push({
-            region: null,
-            partInstance: null
-        });
-    };
-
-    $scope.clearRegion = function(regionToRemove) {
-        $scope.page.regions = $scope.page.regions.filter(function(region) {
-            return regionToRemove.region !== region.region;
+        template.regions.forEach(function(region) {
+           $scope.page.regions.push({
+               name: region
+           });
         });
     };
 
     $scope.save = function() {
-        var createPartInstanceFns = $scope.page.regions.map(function(region) {
-            return function(callback) {
+        var page = $scope.page;
 
-                var res;
-                if(region.region && region.partInstance) {
-                    if(region.partInstance._id) {
-                        res = partInstanceService.updatePartInstance(region.partInstance._id, region.partInstance);
-                    } else {
-                        res = partInstanceService.createPartInstance(region.partInstance);
-                    }
-                    res.success(function(data) {
-                        callback(null, {
-                            region: region.region,
-                            partInstance: data._id
-                        });
-                    });
-                    res.error(function(err) {
-                        callback(err);
-                    });
-                } else {
-                    callback(null, null);
-                }
-                $timeout(function() {
-                    $scope.$apply();
-                }, 0);
-
-            };
+        //unpopulate
+        page.template = $scope.template._id;
+        if(page.parent) {
+            page.parent = page.parent._id;
+        }
+        page.regions = page.regions.filter(function(val) {
+            return typeof val === 'object';
+        }).map(function(val) {
+            if(val.part) {
+                val.part = val.part._id;
+            }
+            return val;
         });
-
-        async.parallel(createPartInstanceFns, function(err, regionUpdates) {
-            var page = {
-                name: $scope.page.name,
-                url: $scope.page.url,
-                template: $scope.selectedTemplate._id,
-                regions: regionUpdates.filter(function(region) {
-                    return region !== null;
-                })
-            };
-
-            pageService.updatePage(pageId, page).success(function(res) {
-                $rootScope.showSuccess("Page: " + page.name + " saved.");
-                $location.path("");
-            }).error(function(err) {
-                $rootScope.showError("Error saving page", err);
-            });
+        pageService.updatePage(pageId, page).success(function(res) {
+            $rootScope.showSuccess("Page: " + page.name + " saved.");
+            $location.path("");
+        }).error(function(err) {
+            $rootScope.showError("Error saving page", err);
         });
-    };
+    }
 });
 
 adminApp.directive('viewTemplate', function() {

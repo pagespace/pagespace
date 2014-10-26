@@ -16,11 +16,12 @@ var pageSchema = Schema({
     	ref: 'Page' 
     },
    	regions: [{
-   		region: String,
-   		partInstance: {
-   			type: Schema.Types.ObjectId,
-   			ref: 'PartInstance'
-   		}
+   		name: String,
+        data: Schema.Types.Mixed,
+        part: {
+            type: Schema.Types.ObjectId,
+            ref: 'Part'
+        }
    	}],
    	template: {
    		type: Schema.Types.ObjectId,

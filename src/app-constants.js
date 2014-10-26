@@ -5,7 +5,7 @@ module.exports = {
 
     requestTypes: {
         PAGE: 0,
-        REST: 1,
+        API: 1,
         ADMIN: 2,
         LOGIN: 3,
         LOGOUT: 4,
@@ -19,6 +19,7 @@ module.exports = {
 
     requestRegex: {
         API: new RegExp('^/_api/(pages|parts|templates|users|part-instances)/?(.*)'),
+        DATA: new RegExp('^/_data/(.+)/(.+)'),
         ADMIN: new RegExp('^/_admin/(dashboard)/?(.*)'),
         LOGIN: new RegExp('^/_(login)'),
         LOGOUT: new RegExp('^/_(logout)')

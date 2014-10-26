@@ -11,10 +11,13 @@
 ✓ Parts admin page
 ✓ bunyan logging
 ✓ visual templates
-* pretty ui 1
-* error resistance
+✓ pretty ui 1
+✓ logout
+✓ build process
+✓ Remember me login
+✓ error resistance
+* restructure parts and templates
 * unit tests
-* build process
 * Starter parts
     markdown
     html (in page)
@@ -25,7 +28,7 @@
 * docs
 * macros.
 * publishing
-✓ Remember me login
+
 * orange tea
 
 Publishing notes

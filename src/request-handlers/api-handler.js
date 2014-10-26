@@ -8,7 +8,6 @@ var util = require('../misc/util');
 var Page = require('../models/page');
 var Template = require('../models/template');
 var Part = require('../models/part');
-var PartInstance = require('../models/part-instance');
 var User = require('../models/user');
 
 //util
@@ -38,10 +37,6 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             collection: 'part',
             model: Part
         },
-        "part-instances": {
-            collection: 'partInstance',
-            model: PartInstance
-        },
         templates: {
             collection: 'template',
             model: Template
@@ -53,9 +48,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     };
 
     var populationsMap = {
-        pages: 'parent template regions.partInstance',
+        pages: 'parent template regions.part',
         parts: '',
-        "part-instances": 'part',
         templates: '',
         users: ''
     };
@@ -66,24 +60,27 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     if(collectionMap.hasOwnProperty(apiType)) {
         var Model = collectionMap[apiType].model;
         var collection = collectionMap[apiType].collection;
-        var filter = {};
-        if(itemId) {
-            delete req.body._id;
-            delete req.body.__v;
-            filter._id = itemId;
-            logger.debug('Searching for items by id [%s]: ' + collection, itemId);
-        } else {
-            logger.debug('Searching for items in collection: ' + collection);
-        }
 
-        //create a filter out of the query string
-        for(var p in req.query) {
-            if(req.query.hasOwnProperty(p)) {
-                filter[p] = util.typeify(req.query[p]);
-            }
-        }
+        //clear props not to overwrite
+        delete req.body._id;
+        delete req.body.__v;
 
         if(req.method === 'GET') {
+            var filter = {};
+            if(itemId) {
+                filter._id = itemId;
+                logger.debug('Searching for items by id [%s]: ' + collection, itemId);
+            } else {
+                logger.debug('Searching for items in collection: ' + collection);
+            }
+
+            //create a filter out of the query string
+            for(var p in req.query) {
+                if(req.query.hasOwnProperty(p)) {
+                    filter[p] = util.typeify(req.query[p]);
+                }
+            }
+
             var populations = populationsMap[apiType];
             Model.find(filter).populate(populations).exec(function(err, results) {
                 if(err) {
@@ -95,7 +92,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     if(req.headers.accept.indexOf('application/json') === -1) {
                         var html =
                             '<pre style="font-family: Consolas, \'Courier New\'">' +
-                            JSON.stringify(results, null, 4) +
+                            util.escapeHtml(JSON.stringify(results, null, 4)) +
                             '</pre>';
                         return res.send(html, {
                             'Content-Type' : 'text/html'
@@ -103,7 +100,6 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     } else {
                         return res.json(results);
                     }
-
                 }
             });
         } else if(req.method === 'POST') {
@@ -136,7 +132,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);
-                        return next();
+                        return next(err);
                     } else {
                         logger.info('Updated successfully');
                         return res.json(model);
@@ -152,7 +148,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
-                        return next();
+                        return next(err);
                     } else {
                         logger.info('Deleted successfully');
                         res.statusCode = 204;
@@ -160,6 +156,10 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     }
                 });
             }
+        } else {
+            var err = new Error('Unrecognized method');
+            err.status = 405;
+            return next(err);
         }
     }
 };
