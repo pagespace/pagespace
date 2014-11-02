@@ -28,7 +28,7 @@ AdminHandler.prototype.doRequest = function(req, res, next) {
             logger.debug("Switching power mode on");
             req.session.power = true;
         } else if(util.typeify(req.query._power) === false) {
-            logger.debug("Switching power  mode off");
+            logger.debug("Switching power mode off");
             req.session.power = false;
         }
     }

@@ -8,7 +8,7 @@ module.exports = {
 	init: function() {
         var self = this;
         return new Promise(function (resolve, reject) {
-            fs.readFile(__dirname + "/html-doc.hbs", "utf-8", function(err, result) {
+            fs.readFile(__dirname + "/web-copy.hbs", "utf-8", function(err, result) {
                 if(err) {
                     reject(err);
                 } else {
@@ -19,14 +19,10 @@ module.exports = {
         });
     },
 	read: function(data) {
-        return new Promise(function(resolve) {
-            resolve(data);
-        });
+        return data;
 	},
-    update: function(callback, data) {
-        return {
-            content: data
-        };
+    update: function(body) {
+        return body.data;
     },
     delete: function(callback, data) {
         return {
@@ -34,7 +30,7 @@ module.exports = {
         };
     },
     getName: function() {
-		return "HTML Test";
+		return "Web copy";
 	},
     getView: function() {
         return this.userView;

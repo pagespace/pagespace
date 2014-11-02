@@ -2,7 +2,9 @@
 
 //support
 var bunyan = require('bunyan');
-var util = require('../misc/util');
+
+var events = require('events');
+var nodeUtil = require('util');
 
 //models
 var Page = require('../models/page');
@@ -12,6 +14,7 @@ var User = require('../models/user');
 
 //util
 var consts = require('../app-constants');
+var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'api-handler' });
 logger.level('debug');
 
@@ -19,12 +22,15 @@ var TAB = '\t';
 
 var ApiHandler = function() {
 };
+nodeUtil.inherits(ApiHandler, events.EventEmitter);
 
 module.exports = function() {
     return new ApiHandler();
 };
 
 ApiHandler.prototype.doRequest = function(req, res, next) {
+
+    var self = this;
 
     logger.info('Processing api request for ' + req.url);
 
@@ -114,10 +120,15 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
-                        return next(err);
+                        next(err);
                     } else {
                         logger.info('Created successfully');
-                        return res.json(model);
+                        res.json(model);
+
+                        //emit events
+                        if(collection === collectionMap.pages.collection) {
+                            self.emit(consts.events.PAGES_UPDATED);
+                        }
                     }
                 });
             }
@@ -132,10 +143,15 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);
-                        return next(err);
+                        next(err);
                     } else {
                         logger.info('Updated successfully');
-                        return res.json(model);
+                        res.json(model);
+
+                        //emit events
+                        if(collection === collectionMap.pages.collection) {
+                            self.emit(consts.events.PAGES_UPDATED);
+                        }
                     }
                 });
             }
@@ -148,18 +164,23 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
-                        return next(err);
+                        next(err);
                     } else {
                         logger.info('Deleted successfully');
                         res.statusCode = 204;
-                        return res.send();
+                        res.send();
+
+                        //emit events
+                        if(collection === collectionMap.pages.collection) {
+                            self.emit(consts.events.PAGES_UPDATED);
+                        }
                     }
                 });
             }
         } else {
             var err = new Error('Unrecognized method');
             err.status = 405;
-            return next(err);
+            next(err);
         }
     }
 };

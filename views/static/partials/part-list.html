@@ -4,7 +4,7 @@
             <p>There are no page parts</p>
         </div>
         <div class="list-group" ng-show="parts.length > 0">
-            <a href="#/templates/{{part._id}}" ng-repeat="part in parts" class="list-group-item">
+            <a href="#/parts/{{part._id}}" ng-repeat="part in parts" class="list-group-item">
                 <h4 class="list-group-item-heading">{{part.name}}</h4>
                 <p class="list-group-item-text"><small>{{part.module}}</small></p>
             </a>

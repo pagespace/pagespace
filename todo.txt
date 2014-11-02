@@ -16,7 +16,8 @@
 ✓ build process
 ✓ Remember me login
 ✓ error resistance
-* restructure parts and templates
+✓ restructure parts and templates
+* template properties
 * unit tests
 * Starter parts
     markdown

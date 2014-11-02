@@ -30,3 +30,8 @@ header .nav {
 .selected-template {
     border: 2px solid #afff00;
 }
+
+.btn:hover, .btn:focus {
+    color: #D80000;
+    text-decoration: none;
+}

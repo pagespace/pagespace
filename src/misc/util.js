@@ -13,6 +13,11 @@ var entityMap = {
 
 module.exports = {
 
+    /**
+     * Attempts to co-erce an intended type of a string value
+     * @param value
+     * @returns {*}
+     */
     typeify: function typeify(value) {
         if(typeof value === 'undefined' || value === null) {
             return null;
@@ -27,6 +32,10 @@ module.exports = {
         }
     },
 
+    /**
+     * Util for promise deferreds
+     * @returns {{resolve: *, reject: *, promise: Promise}}
+     */
     defer: function defer() {
         var resolve, reject;
         var promise = new BluebirdPromise(function() {
@@ -40,6 +49,11 @@ module.exports = {
         };
     },
 
+    /**
+     * Simple escape html function (take from Mustache)
+     * @param value
+     * @returns {*}
+     */
     escapeHtml: function(value) {
         if(typeof value === "string") {
             return value.replace(/[&<>"'\/]/g, function (s) {
@@ -48,5 +62,13 @@ module.exports = {
         } else {
             return value;
         }
+    },
+
+    /**
+     * Generates a random string
+     * @returns {string}
+     */
+    randomId: function() {
+        return Math.random().toString(36).substring(7);
     }
 };

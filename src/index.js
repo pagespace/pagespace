@@ -40,7 +40,7 @@ var TAB = '\t';
  * The App
  * @constructor
  */
-var TheApp = function() {
+var Index = function() {
 
     this.reset();
 
@@ -54,39 +54,18 @@ var TheApp = function() {
 /**
  * Resets the middleware
  */
-TheApp.prototype.reset = function() {
+Index.prototype.reset = function() {
     this.urlsToResolve = [];
-    this.readyPromises = [];
     this.appState = consts.appStates.NOT_READY;
 };
 
-/**
- * Calls the callback(err) when the middleware is ready. Must call after calling init()
- * @param callback
- */
-TheApp.prototype.ready = function(callback) {
-
-    var self = this;
-    if(this.readyPromises.length > 0) {
-        BluebirdPromise.all(this.readyPromises).then(function() {
-            self.appState = consts.appStates.READY;
-            callback(null);
-        }).catch(function(e) {
-            callback(e);
-        });
-    } else {
-        var notInit = new Error("The middleware has not yet been initialized. Call ready() after init()");
-        callback(notInit);
-    }
-};
-
 //export an new instance
-module.exports = new TheApp();
+module.exports = new Index();
 
 /**
  * Initializes and returns the middleware
  */
-TheApp.prototype.init = function(options) {
+Index.prototype.init = function(options) {
 
     var self = this;
 
@@ -95,12 +74,6 @@ TheApp.prototype.init = function(options) {
     this.templatesDir = options.templatesDir || null;
     this.viewBase = options.viewBase || null;
     this.parts = {};
-
-    var urlsDefferred = util.defer();
-    this.readyPromises.push(urlsDefferred.promise);
-
-    var partsDeffered = util.defer();
-    this.readyPromises.push(partsDeffered.promise);
 
     var dbConnection = options.dbConnection;
     if(!dbConnection) {
@@ -115,85 +88,32 @@ TheApp.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        //cache page urls to resolve
-        Page.find({}, function(err, pages) {
-            if(err) {
-                logger.error(err, 'Trying to get pages to resolve');
-                urlsDefferred.reject(err);
-            } else {
-                self.urlsToResolve = pages.map(function(page) {
-                    return page.url;
-                });
-                logger.debug("Urls to resolve are:");
-                self.urlsToResolve.forEach(function(url) {
-                    logger.debug(TAB + url);
-                });
+        var readyPromises = [];
+        readyPromises.push(self.loadPageUrls());
+        readyPromises.push(self.loadPartModules());
+        readyPromises.push(self.createFirstAdminUser());
 
-                urlsDefferred.resolve(consts.appStates.READY);
-            }
-        });
+        //once everything is ready
+        BluebirdPromise.all(readyPromises).then(function() {
+            self.appState = consts.appStates.READY;
 
-        //cache part modules
-        Part.find({}, function(err, parts) {
-            if(err) {
-                logger.error(err, 'Trying to get available parts');
-                partsDeffered.reject(err);
-            } else {
-                logger.debug('Loading part modules');
-                parts.forEach(function(part) {
-                    try {
-                        logger.debug(TAB + part.module);
-                        var partModule = require(part.module);
-                        self.readyPromises.push(partModule.init());
-                        self.parts[part._id] = partModule;
-                    } catch(e) {
-                        partsDeffered.reject(e);
-                    }
-                });
-                partsDeffered.resolve();
-            }
-        });
-
-        //create an admin user on first run
-        User.find({ role: 'admin'}, 'username', function(err, users) {
-            if(err) {
-                logger.error(err, 'Trying to find admin users');
-            } else {
-                if(users.length === 0) {
-                    logger.info("Admin user created with default admin password");
-                    var defaultAdmin = new User({
-                        username: "admin",
-                        password: "admin",
-                        role: "admin"
-                    });
-                    defaultAdmin.save(function(err) {
-                        if(err) {
-                            logger.error(err, 'Trying to save the default admin user');
-                        } else {
-                            logger.info("Admin user created successfully");
-                        }
-                    });
-                }
-            }
-        });
-    });
-
-    //once everything is ready
-    this.ready(function(err) {
-
-        if(err) {
-            logger.error(err, 'The middleware could not initialize');
-        } else {
             logger.info('Initialized, waiting for requests');
 
             //set up page handlers
             self.pageHandler = createPageHandler(createPageResolver(), self.parts);
             self.apiHandler = createApiHandler();
             self.adminHandler = createAdminHandler();
-            self.dataHandler = createDataHandler();
+            self.dataHandler = createDataHandler(self.parts);
             self.loginHandler = createLoginHandler();
             self.logoutHandler = createLogoutHandler();
-        }
+
+            //handler events
+            self.apiHandler.on(consts.events.PAGES_UPDATED, function() {
+                self.loadPageUrls();
+            });
+        }).catch(function(e) {
+            logger.error(e, 'Initialization error');
+        });
     });
 
     //auth and acl setup
@@ -226,13 +146,87 @@ TheApp.prototype.init = function(options) {
 };
 
 /**
+ * Gets all the page urls from the db that the middleware should listen for
+ * @returns {*}
+ */
+Index.prototype.loadPageUrls = function() {
+
+    var self = this;
+
+    //get all pages to resolve
+    var query = Page.find({});
+    var getPages = BluebirdPromise.promisify(query.exec, query);
+    getPages().then(function (pages) {
+        logger.debug("Urls to resolve are:");
+        self.urlsToResolve = pages.map(function (page) {
+            logger.debug(TAB + page.url);
+            return page.url;
+        });
+    });
+    return getPages;
+};
+
+/**
+ * Preloads the parts modules
+ * @returns {*}
+ */
+Index.prototype.loadPartModules = function() {
+
+    var self = this;
+
+    //cache part modules
+    var query = Part.find({});
+    var getParts = BluebirdPromise.promisify(query.exec, query);
+    getParts().then(function (parts) {
+        logger.debug('Loading part modules');
+        parts.forEach(function (part) {
+            logger.debug(TAB + part.module);
+            var partModule = require(part.module);
+            partModule.init();
+            self.parts[part._id] = partModule;
+        });
+    });
+
+    return getParts;
+};
+
+/**
+ * If there is no admin user, this is the first one and a default one is created
+ * @returns {*}
+ */
+Index.prototype.createFirstAdminUser = function() {
+
+    //create an admin user on first run
+    var query = User.find({ role: 'admin'}, 'username');
+    var createAdminUser = BluebirdPromise.promisify(query.exec, query);
+    createAdminUser().then(function(users) {
+        if(users.length === 0) {
+            logger.info("Admin user created with default admin password");
+            var defaultAdmin = new User({
+                username: "admin",
+                password: "admin",
+                role: "admin"
+            });
+            defaultAdmin.save(function(err) {
+                if(err) {
+                    logger.error(err, 'Trying to save the default admin user');
+                } else {
+                    logger.info("Admin user created successfully");
+                }
+            });
+        }
+    });
+    return createAdminUser;
+};
+
+/**
  * Handles a request
  * @param req
  * @param res
  * @param next
  * @returns {*}
  */
-TheApp.prototype.doRequest = function(req, res, next) {
+Index.prototype.doRequest = function(req, res, next) {
     var requestHandler, urlType;
     var user = req.user || User.createGuestUser();
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
@@ -271,7 +265,7 @@ TheApp.prototype.doRequest = function(req, res, next) {
  * @param url
  * @returns {*}
  */
-TheApp.prototype.getUrlType = function(url) {
+Index.prototype.getUrlType = function(url) {
 
     var type;
 
@@ -281,6 +275,8 @@ TheApp.prototype.getUrlType = function(url) {
         type = consts.requestTypes.API;
     } else if (consts.requestRegex.ADMIN.test(url)) {
         type = consts.requestTypes.ADMIN;
+    } else if (consts.requestRegex.DATA.test(url)) {
+        type = consts.requestTypes.DATA;
     } else if (consts.requestRegex.LOGIN.test(url)) {
         type = consts.requestTypes.LOGIN;
     } else if (consts.requestRegex.LOGOUT.test(url)) {
@@ -295,14 +291,16 @@ TheApp.prototype.getUrlType = function(url) {
 /**
  * Passport configuration
  */
-TheApp.prototype.configureAuth = function() {
+Index.prototype.configureAuth = function() {
 
     //setup acl
     var acl = new Acl();
     acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
     acl.allow(["guest", "admin"], consts.requestRegex.LOGIN, ["GET", "POST"]);
+    acl.allow(["guest", "admin"], consts.requestRegex.LOGOUT, ["GET", "POST"]);
     acl.allow(["admin"], consts.requestRegex.API, ["GET", "POST", "PUT", "DELETE"]);
     acl.allow(["admin"], consts.requestRegex.ADMIN, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["admin"], consts.requestRegex.DATA, ["GET", "POST", "PUT", "DELETE"]);
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {

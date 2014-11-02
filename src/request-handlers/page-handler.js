@@ -42,7 +42,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
 
-        var promises = []
+        var promises = [];
         promises.push(page);
 
         //read data for each part
@@ -64,8 +64,10 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             if (region.part) {
                 pageData.edit = typeof req.session.edit === "boolean" && req.session.edit;
                 pageData[region.name] = {
+                    content: args[i] || {},
                     edit: pageData.edit,
-                    content: args[i] || {}
+                    region: region.name,
+                    pageId: page._id
                 };
 
                 var partModule = self.parts[region.part];

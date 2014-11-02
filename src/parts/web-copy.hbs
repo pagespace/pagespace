@@ -1,9 +1,9 @@
 {{#if edit}}
     <div class="html-doc">
-        <div ng-controller="htmlDocController" ng-init="partInstanceId = '{{id}}'">
+        <div ng-controller="htmlDocController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
 
-      <!--      <textarea ng-model="ck{{id}}" ck-editor>{{{data.content}}}</textarea>-->
-            <div ckedit="body" id="ck{{id}}">{{{data.content}}}</div>
+      <!--      <textarea ng-model="ck{{region}}" ck-editor>{{{content}}}</textarea>-->
+            <div ckedit="body" id="ck{{region}}">{{{content}}}</div>
             <button ng-click="save()">Save</button>
             <!--<div ng-include="/app/static/parts/html-doc/edit.html"></div>-->
         </div>

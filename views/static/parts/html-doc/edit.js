@@ -37,8 +37,8 @@ angular.module('editApp')
 .controller("htmlDocController" , function($scope, $http) {
     $scope.save = function() {
 
-        var htmlVal = CKEDITOR.instances['ck' + $scope.partInstanceId].getData();
-        $http.put('/_api/part-instances/' + $scope.partInstanceId, {
+        var htmlVal = CKEDITOR.instances['ck' + $scope.region].getData();
+        $http.put('/_data/' + $scope.pageId + '/' + $scope.region, {
             data: htmlVal
         });
     };

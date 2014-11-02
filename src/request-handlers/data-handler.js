@@ -3,6 +3,7 @@
 //support
 var bunyan = require('bunyan');
 var hbs = require('hbs');
+var BluebirdPromise = require('bluebird');
 
 //models
 var Page = require('../models/page');
@@ -10,6 +11,7 @@ var Part = require('../models/part');
 
 //util
 var util = require('../misc/util');
+var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
 logger.level('debug');
 
@@ -28,7 +30,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
 
     var self = this;
 
-    var dataInfo = consts.requestRegex.API.exec(req.url);
+    var dataInfo = consts.requestRegex.DATA.exec(req.url);
     var pageId = dataInfo[1];
     var regionId = dataInfo[2];
 
@@ -40,54 +42,58 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         _id: pageId
     };
 
-    function findRegion(callback) {
-        Page.find(filter).populate('regions.part').exec(function(err, results) {
-            if(err) {
-                logger.error(err, 'Trying to do page GET for %s', pageId);
-                return next(err);
-            } else {
-                //get data for region
-                var region = page.regions.filter(function(region) {
-                    return region.region == regionId;
-                })[0];
-                callback(null, region);
-            }
-        });
-    }
+    //
+   /* Page.find(filter).populate('regions.part').exec(function(err, page) {
+        if(err) {
+            logger.error(err, 'Trying to do page GET for %s', pageId);
+            return next(err);
+        } else {
+            //get data for region
+            var region = page.regions.filter(function(region) {
+                return region.region == regionId;
+            })[0];
+            callback(null, region);
+        }
+    });*/
 
-    var partPromise;
-    findRegion(function(region) {
+    var query = Page.findOne(filter).populate('regions.part');
+    var findPage = BluebirdPromise.promisify(query.exec, query);
+    findPage().then(function(page) {
+        //get data for region
+        var region = page.regions.filter(function(region) {
+            return region.name === regionId;
+        })[0];
 
-        var partModule = self.parts[region.part];
+        var partPromise = null;
+        var partModule = self.parts[region.part._id];
 
         if(req.method === 'GET') {
-            partPromise = partModule.read(req.body, data);
+            partPromise = partModule.read(req.body);
         } else if(req.method === 'PUT') {
-            partPromise = partModule.update(req.body, data);
+            partPromise = partModule.update(req.body);
         } else if(req.method === 'DELETE') {
-            partPromise = partModule.delete(req.body, data);
+            partPromise = partModule.delete(req.body);
         } else {
             var err = new Error('Unsupported method');
             err.status = 405;
-            return next(err);
+            throw err;
         }
-
-        partPromise.then(function(data) {
-            if(req.method === 'PUT' || req.method === 'DELETE') {
-                region.data = data;
-                Page.save(function (err) {
-                    if (err) {
-                        return next(err);
-                    }
-                    res.statusCode = 204;
-                    return res.send();
-                });
-            } else {
-                return res.json(data);
-            }
-        });
-        partPromise.catch(function(err) {
-            return next(new Error(err));
-        });
+        return [ page, region, partPromise ];
+    }).spread(function(page, region, partData) {
+        if(req.method === 'PUT' || req.method === 'DELETE') {
+            region.data = partData;
+            page.save(function (err) {
+                if (err) {
+                    throw err;
+                }
+                res.statusCode = 204;
+                res.send();
+            });
+        } else {
+            res.json(data);
+        }
+    }).catch(function(err) {
+        return next(new Error(err));
     });
+
 };

@@ -23,5 +23,9 @@ module.exports = {
         ADMIN: new RegExp('^/_admin/(dashboard)/?(.*)'),
         LOGIN: new RegExp('^/_(login)'),
         LOGOUT: new RegExp('^/_(logout)')
+    },
+
+    events: {
+        PAGES_UPDATED: 'pages-updated'
     }
 };
