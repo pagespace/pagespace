@@ -1,17 +1,22 @@
-{{#if edit}}
-    <div class="html-doc">
-        <div ng-controller="htmlDocController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
-
-      <!--      <textarea ng-model="ck{{region}}" ck-editor>{{{content}}}</textarea>-->
-            <div ckedit="body" id="ck{{region}}">{{{content}}}</div>
-            <button ng-click="save()">Save</button>
-            <!--<div ng-include="/app/static/parts/html-doc/edit.html"></div>-->
+<div ng-non-bindable class="web-copy-part">
+    {{#if edit}}
+        <div id="{{region}}">
+            <div ng-controller="webCopyController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
+                <div ckedit="body" id="ck{{region}}">{{{content}}}</div>
+                <button ng-click="save()">Save</button>
+            </div>
         </div>
-    </div>
-    <script src="/bower_components/ckeditor/ckeditor.js"></script>
-    <script src="/app/static/parts/html-doc/edit.js"></script>
-{{else}}
-    <div class="html-doc">
+        <script src=""></script>
+        <script>
+            head.load(['/bower_components/angular/angular.min.js',
+                       '/bower_components/ckeditor/ckeditor.js',
+                       '/app/static/parts/web-copy/edit.js'], function() {
+                angular.element(document).ready(function() {
+                    angular.bootstrap(document.getElementById('{{region}}'), ['webCopyApp']);
+                });
+            });
+        </script>
+    {{else}}
         {{{content}}}
-    </div>
-{{/if}}
+    {{/if}}
+</div>

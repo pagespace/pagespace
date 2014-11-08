@@ -31,6 +31,7 @@ var createLogoutHandler = require('./request-handlers/logout-handler');
 //util
 var util = require('./misc/util');
 var consts = require('./app-constants');
+var path = require('path');
 var logger =  bunyan.createLogger({ name: "index" });
 logger.level('debug');
 
@@ -71,8 +72,6 @@ Index.prototype.init = function(options) {
 
     logger.info("Initializing the middleware");
 
-    this.templatesDir = options.templatesDir || null;
-    this.viewBase = options.viewBase || null;
     this.parts = {};
 
     var dbConnection = options.dbConnection;
@@ -360,4 +359,12 @@ Index.prototype.configureAuth = function() {
     ));
 
     return acl;
+};
+
+Index.prototype.getAdminDir = function() {
+    return path.join(__dirname, '/../admin-app');
+};
+
+Index.prototype.getViewDir = function() {
+    return path.join(__dirname, '/../views');
 };

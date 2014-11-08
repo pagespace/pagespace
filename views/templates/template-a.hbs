@@ -2,18 +2,14 @@
 <html>
     <head>
         <title>{{title}}</title>
-
-        {{#if edit}}
-            <script src="/bower_components/angular/angular.min.js"></script>
-            <script>
-                angular.module('editApp', []);
-                angular.element(document).ready(function() {
-                    angular.bootstrap(document, ['editApp']);
-                });
-            </script>
-        {{/if}}
+        <script src="/bower_components/headjs/dist/1.0.0/head.load.min.js"></script>
     </head>
     <body>
+        <div class="edit-bar">
+            <p>Dashboard</p>
+
+            
+        </div>
         <p>I am a template A</p>
 
         {{#A}}

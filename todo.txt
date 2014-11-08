@@ -17,6 +17,7 @@
 ✓ Remember me login
 ✓ error resistance
 ✓ restructure parts and templates
+* edit mode ui
 * template properties
 * unit tests
 * Starter parts

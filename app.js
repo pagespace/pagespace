@@ -6,24 +6,21 @@ var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
 var session = require("express-session");
 
-
 var app = express();
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
-app.use(favicon(__dirname + '/public/favicon.ico'));
+app.use(favicon(__dirname + '/favicon.ico'));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', theApp.getViewDir());
 app.set('view engine', 'hbs');
 
-app.use('/app/static', express.static(path.join(__dirname, 'views/static')));
+app.use('/_admin', express.static(theApp.getAdminDir()));
 app.use(theApp.init({
     dbConnection: 'mongodb://localhost/test',
-    templatesDir: path.join(__dirname, 'templates'),
     viewBase: path.join(__dirname, 'views')
 }));
 

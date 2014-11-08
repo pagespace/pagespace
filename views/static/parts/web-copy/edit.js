@@ -1,4 +1,4 @@
-angular.module('editApp')
+angular.module('webCopyApp', [])
 .directive('ckedit', function ($parse) {
 
     //from https://github.com/ericpanorel/AngularCkEdDirective
@@ -29,14 +29,12 @@ angular.module('editApp')
             };
             options.extraPlugins = 'sourcedialog';
             options.removePlugins = 'sourcearea';
-            var editorangular = CKEDITOR.inline(element[0], options); //invoke
+            CKEDITOR.inline(element[0], options); //invoke
         }
     }
-
 })
-.controller("htmlDocController" , function($scope, $http) {
+.controller('webCopyController' , function($scope, $http) {
     $scope.save = function() {
-
         var htmlVal = CKEDITOR.instances['ck' + $scope.region].getData();
         $http.put('/_data/' + $scope.pageId + '/' + $scope.region, {
             data: htmlVal

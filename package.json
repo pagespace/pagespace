@@ -32,5 +32,8 @@
     "gulp-jasmine": "^1.0.1",
     "gulp-jshint": "^1.8.5",
     "jasmine-node": "^1.14.5"
+  },
+  "peerDependencies" : {
+      "express": "^4.10.1"
   }
 }

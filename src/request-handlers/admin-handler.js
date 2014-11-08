@@ -37,6 +37,7 @@ AdminHandler.prototype.doRequest = function(req, res, next) {
     var adminType = apiInfo[1];
 
     var pageData = {
+        appRoot: '/_admin',
         powerMode: (req.session.power || false).toString()
     };
     return res.render(adminType, pageData, function(err, html) {
