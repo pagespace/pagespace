@@ -1,13 +1,17 @@
 "use strict";
 
 //support
+var fs = require("fs")
 var bunyan = require('bunyan');
 var hbs = require('hbs');
+var BluebirdPromise = require('bluebird');
 
 //util
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
 logger.level('debug');
+
+var adminbarFilePromise = null;
 
 var PageHandler = function(pageResolver, parts) {
     this.pageResolver = pageResolver;
@@ -37,6 +41,8 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             req.session.edit = false;
         }
     }
+    var showAdminBar = req.user && req.user.role === 'admin';
+    var editMode = typeof req.session.edit === "boolean" && req.session.edit;
 
     self.pageResolver.findPage(req.url).then(function(page) {
 
@@ -44,6 +50,14 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
         var promises = [];
         promises.push(page);
+
+        if(showAdminBar) {
+            var readFile = BluebirdPromise.promisify(fs.readFile);
+            adminbarFilePromise = adminbarFilePromise || readFile(__dirname + '/../../views/adminbar.hbs', "utf8");
+            promises.push(adminbarFilePromise);
+        } else {
+            promises.push('');
+        }
 
         //read data for each part
         page.regions.forEach(function (region) {
@@ -58,11 +72,14 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     }).spread(function() {
         var args = Array.prototype.slice.call(arguments, 0);
         var page = args.shift();
+        var adminbar = args.shift();
+
+        hbs.registerPartial('adminbar', adminbar);
 
         var pageData = {};
+        pageData.edit = editMode;
         page.regions.forEach(function (region, i) {
             if (region.part) {
-                pageData.edit = typeof req.session.edit === "boolean" && req.session.edit;
                 pageData[region.name] = {
                     content: args[i] || {},
                     edit: pageData.edit,
@@ -71,7 +88,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                 };
 
                 var partModule = self.parts[region.part];
-                var partView = partModule.getView(pageData.edit);
+                var partView = partModule.getView(editMode);
                 hbs.registerPartial(region.name, partView);
             }
         });

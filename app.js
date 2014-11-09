@@ -18,6 +18,7 @@ app.use(session({secret: 'keyboard cat'}));
 app.set('views', theApp.getViewDir());
 app.set('view engine', 'hbs');
 
+app.use('/app/static', express.static(__dirname + '/views/static'));
 app.use('/_admin', express.static(theApp.getAdminDir()));
 app.use(theApp.init({
     dbConnection: 'mongodb://localhost/test',

@@ -17,19 +17,19 @@
 ✓ Remember me login
 ✓ error resistance
 ✓ restructure parts and templates
-* edit mode ui
-* template properties
+✓ edit mode ui
 * unit tests
 * Starter parts
     markdown
     html (in page)
     html (bl0g)
     blog summary
+* publishing
 * media uploads
-
 * docs
 * macros.
-* publishing
+* template properties
+
 
 * orange tea
 
