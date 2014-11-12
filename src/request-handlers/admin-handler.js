@@ -20,7 +20,7 @@ AdminHandler.prototype.doRequest = function(req, res, next) {
     logger.info('Processing admin request for ' + req.url);
 
     //TODO: power mode always on
-    req.query._power = true
+    req.query._power = true;
 
     //check for power mode
     if(req.query._power) {

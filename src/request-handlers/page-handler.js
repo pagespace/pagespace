@@ -1,7 +1,7 @@
 "use strict";
 
 //support
-var fs = require("fs")
+var fs = require("fs");
 var bunyan = require('bunyan');
 var hbs = require('hbs');
 var BluebirdPromise = require('bluebird');

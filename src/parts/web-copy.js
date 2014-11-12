@@ -1,13 +1,13 @@
 "use strict";
 
 var fs = require("fs");
-var Promise = require("bluebird");
+var BluebirdPromise = require("bluebird");
 
 module.exports = {
     userView: null,
 	init: function() {
         var self = this;
-        return new Promise(function (resolve, reject) {
+        return new BluebirdPromise(function (resolve, reject) {
             fs.readFile(__dirname + "/web-copy.hbs", "utf-8", function(err, result) {
                 if(err) {
                     reject(err);
@@ -21,8 +21,8 @@ module.exports = {
 	read: function(data) {
         return data;
 	},
-    update: function(body) {
-        return body.data;
+    update: function(originalData, update) {
+        return update.data;
     },
     delete: function(callback, data) {
         return {

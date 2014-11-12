@@ -29,7 +29,6 @@ var createLoginHandler = require('./request-handlers/login-handler');
 var createLogoutHandler = require('./request-handlers/logout-handler');
 
 //util
-var util = require('./misc/util');
 var consts = require('./app-constants');
 var path = require('path');
 var logger =  bunyan.createLogger({ name: "index" });

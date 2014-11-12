@@ -34,7 +34,7 @@ module.exports = {
 
     /**
      * Util for promise deferreds
-     * @returns {{resolve: *, reject: *, promise: Promise}}
+     * @returns {{resolve: *, reject: *, promise: BluebirdPromise}}
      */
     defer: function defer() {
         var resolve, reject;

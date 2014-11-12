@@ -2,15 +2,12 @@
 
 //support
 var bunyan = require('bunyan');
-var hbs = require('hbs');
 var BluebirdPromise = require('bluebird');
 
 //models
 var Page = require('../models/page');
-var Part = require('../models/part');
 
 //util
-var util = require('../misc/util');
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
 logger.level('debug');
@@ -42,20 +39,6 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         _id: pageId
     };
 
-    //
-   /* Page.find(filter).populate('regions.part').exec(function(err, page) {
-        if(err) {
-            logger.error(err, 'Trying to do page GET for %s', pageId);
-            return next(err);
-        } else {
-            //get data for region
-            var region = page.regions.filter(function(region) {
-                return region.region == regionId;
-            })[0];
-            callback(null, region);
-        }
-    });*/
-
     var query = Page.findOne(filter).populate('regions.part');
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
@@ -68,11 +51,11 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         var partModule = self.parts[region.part._id];
 
         if(req.method === 'GET') {
-            partPromise = partModule.read(req.body);
+            partPromise = partModule.read(region.data);
         } else if(req.method === 'PUT') {
-            partPromise = partModule.update(req.body);
+            partPromise = partModule.update(region.data, req.body);
         } else if(req.method === 'DELETE') {
-            partPromise = partModule.delete(req.body);
+            partPromise = partModule.delete(region.data, req.body);
         } else {
             var err = new Error('Unsupported method');
             err.status = 405;
@@ -90,7 +73,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
                 res.send();
             });
         } else {
-            res.json(data);
+            res.json(partData);
         }
     }).catch(function(err) {
         return next(new Error(err));
