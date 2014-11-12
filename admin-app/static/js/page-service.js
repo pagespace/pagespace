@@ -5,9 +5,21 @@
         function PageService() {
             this.pageCache = [];
         }
-        PageService.prototype.getPages = function() {
+        PageService.prototype.getPages = function(filter) {
             var self = this;
-            var promise = $http.get('/_api/pages');
+
+            var queryKeyValPairs = [];
+            if(typeof filter === 'object') {
+                for(var key in filter) {
+                    if(filter.hasOwnProperty(key)) {
+                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
+                    }
+                }
+            }
+
+            var path = '/_api/pages';
+            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
+            var promise = $http.get(url);
             promise.success(function(pages) {
                 self.pageCache = pages;
             });

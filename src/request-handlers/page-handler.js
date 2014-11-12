@@ -44,6 +44,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var showAdminBar = req.user && req.user.role === 'admin';
     var editMode = typeof req.session.edit === "boolean" && req.session.edit;
 
+    //TODO: promisify pageResolver and include here
     self.pageResolver.findPage(req.url).then(function(page) {
 
         logger.info('Page found for ' + req.url + ': ' + page.id);

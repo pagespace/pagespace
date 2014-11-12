@@ -64,6 +64,14 @@ module.exports = {
         }
     },
 
+    htmlStringify: function(obj) {
+        var html =
+            '<pre style="font-family: Consolas, \'Courier New\'">' +
+                this.escapeHtml(JSON.stringify(obj, null, 4)) +
+            '</pre>';
+        return html;
+    },
+
     /**
      * Generates a random string
      * @returns {string}

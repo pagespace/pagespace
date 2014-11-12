@@ -96,10 +96,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     logger.info('Sending response for %s', req.url);
                     results =  itemId ? results[0] : results;
                     if(req.headers.accept.indexOf('application/json') === -1) {
-                        var html =
-                            '<pre style="font-family: Consolas, \'Courier New\'">' +
-                            util.escapeHtml(JSON.stringify(results, null, 4)) +
-                            '</pre>';
+                        var html = util.htmlStringify(results);
                         return res.send(html, {
                             'Content-Type' : 'text/html'
                         }, 200);

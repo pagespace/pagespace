@@ -11,7 +11,7 @@
 ✓ Parts admin page
 ✓ bunyan logging
 ✓ visual templates
-✓ pretty ui 1
+✓ pretty ui
 ✓ logout
 ✓ build process
 ✓ Remember me login
@@ -20,10 +20,11 @@
 ✓ edit mode ui
 * unit tests
 * Starter parts
-    markdown
-    html (in page)
-    html (bl0g)
+    html (in page) ✓
+    html (blog) [write markdown save as html]
     blog summary
+    navigation
+    html include
 * publishing
 * media uploads
 * docs
@@ -35,6 +36,9 @@
 
 Publishing notes
 ================
+
+live collections
+
 
 Mark pages edited, replicate to production collections
 Only publish pages

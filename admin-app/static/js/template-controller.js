@@ -5,9 +5,9 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("templateController", function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller('templateController', function($scope, $rootScope, $routeParams, $location, templateService) {
 
-    $rootScope.pageTitle = "Template";
+    $rootScope.pageTitle = 'Template';
 
     var templateId = $routeParams.templateId;
 
@@ -21,7 +21,7 @@ adminApp.controller("templateController", function($scope, $rootScope, $routePar
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;
         }).error(function(err) {
-            $rootScope.showError("Error getting template", err);
+            $rootScope.showError('Error getting template', err);
         });
     }
 
@@ -38,33 +38,33 @@ adminApp.controller("templateController", function($scope, $rootScope, $routePar
     };
 
     $scope.cancel = function() {
-        $location.path("/templates");
+        $location.path('/templates');
     };
 
     $scope.save = function() {
         if(templateId) {
             templateService.updateTemplate(templateId, $scope.template).success(function(res) {
-                $rootScope.showSuccess("Template updated.");
-                $location.path("/templates");
+                $rootScope.showSuccess('Template updated.');
+                $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError("Error updating template", err);
+                $rootScope.showError('Error updating template', err);
             });
         } else {
             templateService.createTemplate($scope.template).success(function(res) {
-                $rootScope.showSuccess("Template created.");
-                $location.path("/templates");
+                $rootScope.showSuccess('Template created.');
+                $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError("Error creating template", err);
+                $rootScope.showError('Error creating template', err);
             });
         }
     };
 
     $scope.remove = function() {
         templateService.deleteTemplate($scope.template._id).success(function (res) {
-            console.log("Template saved");
-            $location.path("/templates");
+            console.log('Template saved');
+            $location.path('/templates');
         }).error(function(err) {
-            $rootScope.showError("Error deleting template", err);
+            $rootScope.showError('Error deleting template', err);
         });
     };
 });
@@ -84,7 +84,7 @@ adminApp.directive('drawTemplate', function() {
             canvas.bringToFront(obj);
         });
 
-        canvas.on("object:moving", function(e){
+        canvas.on('object:moving', function(e){
             var obj = e.target;
 
             //keep in canvas bounds
@@ -103,7 +103,7 @@ adminApp.directive('drawTemplate', function() {
                 top: Math.round(obj.top / grid) * grid
             });
         });
-        canvas.on("object:scaling", function(e) {
+        canvas.on('object:scaling', function(e) {
             var obj = e.target;
 
             //fix stroke scaling

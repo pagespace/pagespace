@@ -19,6 +19,7 @@ consts.requests = {
     ADMIN: 2,
     LOGIN: 3,
     LOGOUT: 4,
+    PUBLISH: 5,
     OTHER: 99
 };
 
@@ -48,7 +49,7 @@ consts.requestMeta = {
     },
     PUBLISH: {
         type: consts.requests.PUBLISH,
-        regex: new RegExp('^/_publish/(.*)')
+        regex: new RegExp('^/_publish/(pages)')
     },
     OTHER: {
         type: consts.requests.OTHER,
