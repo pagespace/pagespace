@@ -5,7 +5,7 @@ var bunyan = require('bunyan');
 
 //util
 var logger =  bunyan.createLogger({ name: 'logout-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var LogoutHandler = function() {
 };

@@ -8,7 +8,7 @@ var util = require('../misc/util');
 
 //util
 var logger =  bunyan.createLogger({ name: 'login-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var LoginHandler = function() {
 };

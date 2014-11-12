@@ -24,6 +24,7 @@ var createPageResolver = require('./misc/page-resolver');
 var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
+var createPublishingHandler = require('./request-handlers/publishing-handler');
 var createDataHandler = require('./request-handlers/data-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
 var createLogoutHandler = require('./request-handlers/logout-handler');
@@ -32,7 +33,6 @@ var createLogoutHandler = require('./request-handlers/logout-handler');
 var consts = require('./app-constants');
 var path = require('path');
 var logger =  bunyan.createLogger({ name: "index" });
-logger.level('debug');
 
 var TAB = '\t';
 
@@ -55,6 +55,7 @@ var Index = function() {
  * Resets the middleware
  */
 Index.prototype.reset = function() {
+    this.urlHandlerMap = {};
     this.urlsToResolve = [];
     this.appState = consts.appStates.NOT_READY;
 };
@@ -68,6 +69,9 @@ module.exports = new Index();
 Index.prototype.init = function(options) {
 
     var self = this;
+
+    GLOBAL.logLevel = options.logLevel || 'debug';
+    logger.level(logLevel);
 
     logger.info("Initializing the middleware");
 
@@ -98,15 +102,16 @@ Index.prototype.init = function(options) {
             logger.info('Initialized, waiting for requests');
 
             //set up page handlers
-            self.pageHandler = createPageHandler(createPageResolver(), self.parts);
-            self.apiHandler = createApiHandler();
-            self.adminHandler = createAdminHandler();
-            self.dataHandler = createDataHandler(self.parts);
-            self.loginHandler = createLoginHandler();
-            self.logoutHandler = createLogoutHandler();
+            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(createPageResolver(), self.parts);
+            self.urlHandlerMap[consts.requests.API] = createApiHandler();
+            self.urlHandlerMap[consts.requests.ADMIN] = createAdminHandler();
+            self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler();
+            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts);
+            self.urlHandlerMap[consts.requests.LOGIN] = createLoginHandler();
+            self.urlHandlerMap[consts.requests.LOGOUT] = createLogoutHandler();
 
             //handler events
-            self.apiHandler.on(consts.events.PAGES_UPDATED, function() {
+            self.urlHandlerMap[consts.requests.API].on(consts.events.PAGES_UPDATED, function() {
                 self.loadPageUrls();
             });
         }).catch(function(e) {
@@ -232,28 +237,18 @@ Index.prototype.doRequest = function(req, res, next) {
             "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
         logger.debug(debugMsg);
         req.session.loginToUrl = req.url;
-        urlType = consts.requestTypes.LOGIN;
+        urlType = consts.requests.LOGIN;
     } else {
         urlType = this.getUrlType(req.url);
     }
+    requestHandler = this.urlHandlerMap[urlType];
 
-    if(urlType === consts.requestTypes.PAGE) {
-        requestHandler = this.pageHandler;
-    } else if(urlType === consts.requestTypes.API) {
-        requestHandler = this.apiHandler;
-    } else if(urlType === consts.requestTypes.ADMIN) {
-        requestHandler = this.adminHandler;
-    } else if(urlType === consts.requestTypes.DATA) {
-        requestHandler = this.dataHandler;
-    } else if(urlType === consts.requestTypes.LOGIN) {
-        requestHandler = this.loginHandler;
-    } else if(urlType === consts.requestTypes.LOGOUT) {
-        requestHandler = this.logoutHandler;
-    } else {
+    if(!requestHandler) {
         var notFoundErr = new Error();
         notFoundErr.status = 404;
         return next(notFoundErr);
     }
+
     return requestHandler.doRequest(req, res, next);
 
 };
@@ -268,19 +263,20 @@ Index.prototype.getUrlType = function(url) {
     var type;
 
     if(this.urlsToResolve.indexOf(url) >= 0) {
-        type = consts.requestTypes.PAGE;
-    } else if(consts.requestRegex.API.test(url)) {
-        type = consts.requestTypes.API;
-    } else if (consts.requestRegex.ADMIN.test(url)) {
-        type = consts.requestTypes.ADMIN;
-    } else if (consts.requestRegex.DATA.test(url)) {
-        type = consts.requestTypes.DATA;
-    } else if (consts.requestRegex.LOGIN.test(url)) {
-        type = consts.requestTypes.LOGIN;
-    } else if (consts.requestRegex.LOGOUT.test(url)) {
-        type = consts.requestTypes.LOGOUT;
+        type = consts.requests.PAGE;
     } else {
-        type = consts.requestTypes.OTHER;
+
+        var i, requestMetaKey, requestMetaKeys = Object.keys(consts.requestMeta);
+        for(i = 0; i < requestMetaKeys.length; i++) {
+            requestMetaKey = requestMetaKeys[i];
+            if(consts.requestMeta[requestMetaKey].regex && consts.requestMeta[requestMetaKey].regex.test(url)) {
+                type = consts.requestMeta[requestMetaKey].type;
+                break;
+            }
+        }
+        if(!type) {
+            type = consts.requests.OTHER;
+        }
     }
 
     return type;
@@ -294,11 +290,12 @@ Index.prototype.configureAuth = function() {
     //setup acl
     var acl = new Acl();
     acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestRegex.LOGIN, ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestRegex.LOGOUT, ["GET", "POST"]);
-    acl.allow(["admin"], consts.requestRegex.API, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestRegex.ADMIN, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestRegex.DATA, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["guest", "admin"], consts.requestMeta.LOGIN.regex, ["GET", "POST"]);
+    acl.allow(["guest", "admin"], consts.requestMeta.LOGOUT.regex, ["GET", "POST"]);
+    acl.allow(["admin"], consts.requestMeta.API.regex, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["admin"], consts.requestMeta.ADMIN.regex, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["admin"], consts.requestMeta.DATA.regex, ["GET", "POST", "PUT", "DELETE"]);
+    acl.allow(["admin"], consts.requestMeta.PUBLISH.regex, ["GET", "POST", "PUT", "DELETE"]);
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {

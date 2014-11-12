@@ -30,6 +30,10 @@ var pageSchema = Schema({
     url: {
         type: String,
         unique: true
+    },
+    draft: {
+        type: Boolean,
+        default: true
     }
 });
 

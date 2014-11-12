@@ -14,7 +14,11 @@ var templateSchema = Schema({
     	required: true
     },
     regions: [ String ],
-    regionData: [ Schema.Types.Mixed ]
+    regionData: [ Schema.Types.Mixed ],
+    draft: {
+        type: Boolean,
+        default: true
+    }
 });
 
 var Template = mongoose.model('Template', templateSchema);

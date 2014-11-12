@@ -10,7 +10,7 @@ var Page = require('../models/page');
 //util
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var DataHandler = function(parts) {
     this.parts = parts;
@@ -27,7 +27,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
 
     var self = this;
 
-    var dataInfo = consts.requestRegex.DATA.exec(req.url);
+    var dataInfo = consts.requestMeta.DATA.regex.exec(req.url);
     var pageId = dataInfo[1];
     var regionId = dataInfo[2];
 

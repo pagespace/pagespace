@@ -13,6 +13,10 @@ var partSchema = Schema({
     	type: String,
     	unique: true,
     	required: true
+    },
+    draft: {
+        type: Boolean,
+        default: true
     }
 });
 

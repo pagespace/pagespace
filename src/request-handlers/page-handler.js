@@ -9,7 +9,7 @@ var BluebirdPromise = require('bluebird');
 //util
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var adminbarFilePromise = null;
 

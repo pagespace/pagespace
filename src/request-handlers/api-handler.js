@@ -16,7 +16,7 @@ var User = require('../models/user');
 var consts = require('../app-constants');
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'api-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var TAB = '\t';
 
@@ -60,7 +60,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         users: ''
     };
 
-    var apiInfo = consts.requestRegex.API.exec(req.url);
+    var apiInfo = consts.requestMeta.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
     if(collectionMap.hasOwnProperty(apiType)) {

@@ -7,7 +7,7 @@ var util = require('../misc/util');
 //util
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'admin-handler' });
-logger.level('debug');
+logger.level(GLOBAL.logLevel);
 
 var AdminHandler = function() {
 };
@@ -33,7 +33,7 @@ AdminHandler.prototype.doRequest = function(req, res, next) {
         }
     }
 
-    var apiInfo = consts.requestRegex.ADMIN.exec(req.url);
+    var apiInfo = consts.requestMeta.ADMIN.regex.exec(req.url);
     var adminType = apiInfo[1];
 
     var pageData = {
