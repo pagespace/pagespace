@@ -1,7 +1,24 @@
 <link type="text/css" rel="stylesheet" href="/_admin/static/styles/adminbar.css">
-<script>
-    {{#if edit}}
-        window._editMode = true;
-    {{/if}}
-</script>
 <script src="/_admin/static/js/adminbar.js"></script>
+<script type="text/html" id="adminbar-html">
+    <div id="adminbar" class="adminbar">
+        <div class="adminbar-links">
+            <a href="/_admin/dashboard">Dashboard</a>
+        </div>
+        <div class="adminbar-actions">
+            <div>
+                <a href="/_logout">Logout</a>
+            </div>
+
+            <div class="switch-group">
+                <button name="_staging" value="true" class="switch {{#staging}}on{{/staging}}">Staging</button><button name="_staging" value="false"  class="switch {{#live}}on{{/live}}">Live</button>
+            </div>
+
+            {{#staging}}
+            <div class="switch-group">
+                <button name="_edit" value="true" value="_edit" class="switch {{#edit}}on{{/edit}}">Editing</button><button name="_edit" value="false" class="switch {{#preview}}on{{/preview}}">Preview</button>
+            </div>
+            {{/staging}}
+        </div>
+    </div>
+</script>

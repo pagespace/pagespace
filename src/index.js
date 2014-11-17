@@ -14,13 +14,13 @@ var bunyan = require('bunyan');
 var Acl = require("./misc/acl");
 var BluebirdPromise = require('bluebird');
 
-//models
-var Page = require('./models/page');
-var Part = require('./models/part');
-var User = require('./models/user');
+//schemas
+var pageSchema = require('./schemas/page');
+var partSchema = require('./schemas/part');
+var userSchema = require('./schemas/user');
+var modelFactory = require('./misc/model-factory');
 
 //factories
-var createPageResolver = require('./misc/page-resolver');
 var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
@@ -46,9 +46,13 @@ var Index = function() {
 
     //dependencies
     this.mongoose = mongoose;
-    this.Page = Page;
-    this.Part = Part;
-    this.User = User;
+    this.modelFactory = modelFactory();
+
+    this.modelFactory.getModel('Page', require('./schemas/page'));
+    this.modelFactory.getModel('Template', require('./schemas/template'));
+    this.modelFactory.getModel('Part', require('./schemas/part'));
+    this.modelFactory.getModel('User', require('./schemas/user'));
+
 };
 
 /**
@@ -90,23 +94,53 @@ Index.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        var readyPromises = [];
-        readyPromises.push(self.loadPageUrls());
-        readyPromises.push(self.loadPartModules());
-        readyPromises.push(self.createFirstAdminUser());
+        var loadPageUrls = self.loadPageUrls();
+        var loadPartModules = self.loadPartModules();
+        var createFirstAdminUser = self.createFirstAdminUser();
 
         //once everything is ready
-        BluebirdPromise.all(readyPromises).then(function() {
-            self.appState = consts.appStates.READY;
+        BluebirdPromise.join(loadPageUrls, loadPartModules, createFirstAdminUser, function(pages, parts, users) {
 
-            logger.info('Initialized, waiting for requests');
+            //page urls to resolve
+            logger.debug("Urls to resolve are:");
+            self.urlsToResolve = pages.map(function (page) {
+                logger.debug(TAB + page.url);
+                return page.url;
+            });
+            logger.info("Page urls to resolve loaded");
+
+            //parts
+            parts.forEach(function (part) {
+                logger.debug(TAB + part.module);
+                var partModule = require(part.module);
+                partModule.init();
+                self.parts[part._id] = partModule;
+            });
+            logger.info('Part modules loaded');
+
+            //users
+            if(users.length === 0) {
+                logger.info("Admin user created with default admin password");
+                var defaultAdmin = new User({
+                    username: "admin",
+                    password: "admin",
+                    role: "admin"
+                });
+                defaultAdmin.save(function(err) {
+                    if(err) {
+                        logger.error(err, 'Trying to save the default admin user');
+                    } else {
+                        logger.info("Admin user created successfully");
+                    }
+                });
+            }
 
             //set up page handlers
-            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(createPageResolver(), self.parts);
-            self.urlHandlerMap[consts.requests.API] = createApiHandler();
+            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(self.modelFactory, self.parts);
+            self.urlHandlerMap[consts.requests.API] = createApiHandler(self.modelFactory);
             self.urlHandlerMap[consts.requests.ADMIN] = createAdminHandler();
             self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler();
-            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts);
+            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts, self.modelFactory);
             self.urlHandlerMap[consts.requests.LOGIN] = createLoginHandler();
             self.urlHandlerMap[consts.requests.LOGOUT] = createLogoutHandler();
 
@@ -114,6 +148,9 @@ Index.prototype.init = function(options) {
             self.urlHandlerMap[consts.requests.API].on(consts.events.PAGES_UPDATED, function() {
                 self.loadPageUrls();
             });
+
+            logger.info('Initialized, waiting for requests');
+            self.appState = consts.appStates.READY;
         }).catch(function(e) {
             logger.error(e, 'Initialization error');
         });
@@ -155,18 +192,13 @@ Index.prototype.init = function(options) {
 Index.prototype.loadPageUrls = function() {
 
     var self = this;
+    logger.info("Loading page urls to resolve...");
 
     //get all pages to resolve
+    var Page = this.modelFactory.getModel('Page', pageSchema);
     var query = Page.find({});
     var getPages = BluebirdPromise.promisify(query.exec, query);
-    getPages().then(function (pages) {
-        logger.debug("Urls to resolve are:");
-        self.urlsToResolve = pages.map(function (page) {
-            logger.debug(TAB + page.url);
-            return page.url;
-        });
-    });
-    return getPages;
+    return getPages();
 };
 
 /**
@@ -177,20 +209,13 @@ Index.prototype.loadPartModules = function() {
 
     var self = this;
 
+    logger.info('Loading part modules...');
+
     //cache part modules
+    var Part = this.modelFactory.getModel('Part', partSchema);
     var query = Part.find({});
     var getParts = BluebirdPromise.promisify(query.exec, query);
-    getParts().then(function (parts) {
-        logger.debug('Loading part modules');
-        parts.forEach(function (part) {
-            logger.debug(TAB + part.module);
-            var partModule = require(part.module);
-            partModule.init();
-            self.parts[part._id] = partModule;
-        });
-    });
-
-    return getParts;
+    return getParts();
 };
 
 /**
@@ -200,26 +225,10 @@ Index.prototype.loadPartModules = function() {
 Index.prototype.createFirstAdminUser = function() {
 
     //create an admin user on first run
+    var User = this.modelFactory.getModel('User', userSchema);
     var query = User.find({ role: 'admin'}, 'username');
     var createAdminUser = BluebirdPromise.promisify(query.exec, query);
-    createAdminUser().then(function(users) {
-        if(users.length === 0) {
-            logger.info("Admin user created with default admin password");
-            var defaultAdmin = new User({
-                username: "admin",
-                password: "admin",
-                role: "admin"
-            });
-            defaultAdmin.save(function(err) {
-                if(err) {
-                    logger.error(err, 'Trying to save the default admin user');
-                } else {
-                    logger.info("Admin user created successfully");
-                }
-            });
-        }
-    });
-    return createAdminUser;
+    return createAdminUser();
 };
 
 /**
@@ -231,7 +240,7 @@ Index.prototype.createFirstAdminUser = function() {
  */
 Index.prototype.doRequest = function(req, res, next) {
     var requestHandler, urlType;
-    var user = req.user || User.createGuestUser();
+    var user = req.user || this.modelFactory.getModel('User', userSchema).createGuestUser();
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg =
             "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
@@ -287,6 +296,8 @@ Index.prototype.getUrlType = function(url) {
  */
 Index.prototype.configureAuth = function() {
 
+    var self = this;
+
     //setup acl
     var acl = new Acl();
     acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
@@ -306,12 +317,14 @@ Index.prototype.configureAuth = function() {
     });
 
     passport.deserializeUser(function(userProps, done) {
+        var User = self.modelFactory.getModel('User', userSchema);
         var user = new User(userProps);
         done(null, user);
     });
 
     passport.use(new LocalStrategy(
         function(username, password, done) {
+            var User = self.modelFactory.getModel('User', userSchema);
             User.findOne({ username: username }, function(err, user) {
                 if (err) {
                     return done(err);
@@ -331,6 +344,7 @@ Index.prototype.configureAuth = function() {
     ));
     passport.use(new RememberMeStrategy(
         function(token, done) {
+            var User = self.modelFactory.getModel('User', userSchema);
             User.findOne({ rememberToken: token }, function(err, user) {
                 if(err) {
                     return done(err);

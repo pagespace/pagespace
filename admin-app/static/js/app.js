@@ -22,7 +22,7 @@
                 controller: 'templateController'
             }).
             when('/templates/:templateId', {
-                templateUrl:  _appRoot + '/app/static/partials/template.html',
+                templateUrl:  _appRoot + '/static/partials/template.html',
                 controller: 'templateController'
             }).
             when('/parts/new', {

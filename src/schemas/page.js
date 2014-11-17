@@ -37,6 +37,6 @@ var pageSchema = Schema({
     }
 });
 
-var Page = mongoose.model('Page', pageSchema);
+//var Page = mongoose.model('Page', pageSchema);
 
-module.exports = Page;
+module.exports = pageSchema;

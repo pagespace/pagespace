@@ -6,11 +6,11 @@ var bunyan = require('bunyan');
 var events = require('events');
 var nodeUtil = require('util');
 
-//models
-var Page = require('../models/page');
-var Template = require('../models/template');
-var Part = require('../models/part');
-var User = require('../models/user');
+//schemas
+var pageSchema = require('../schemas/page');
+var templateSchema = require('../schemas/template');
+var partSchema = require('../schemas/part');
+var userSchema = require('../schemas/user');
 
 //util
 var consts = require('../app-constants');
@@ -20,12 +20,13 @@ logger.level(GLOBAL.logLevel);
 
 var TAB = '\t';
 
-var ApiHandler = function() {
+var ApiHandler = function(modelFactory) {
+    this.modelFactory = modelFactory;
 };
 nodeUtil.inherits(ApiHandler, events.EventEmitter);
 
-module.exports = function() {
-    return new ApiHandler();
+module.exports = function(modelFactory) {
+    return new ApiHandler(modelFactory);
 };
 
 ApiHandler.prototype.doRequest = function(req, res, next) {
@@ -34,22 +35,22 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
 
     logger.info('Processing api request for ' + req.url);
 
-    var collectionMap = {
+    var modelMap = {
         pages: {
-            collection: 'page',
-            model: Page
+            modelName: 'Page',
+            schema: pageSchema
         },
         parts: {
-            collection: 'part',
-            model: Part
+            modelName: 'Part',
+            model: partSchema
         },
         templates: {
-            collection: 'template',
-            model: Template
+            modelName: 'Template',
+            model: templateSchema
         },
         users: {
-            collection: 'user',
-            model: User
+            modelName: 'User',
+            model: userSchema
         }
     };
 
@@ -63,9 +64,10 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     var apiInfo = consts.requestMeta.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
-    if(collectionMap.hasOwnProperty(apiType)) {
-        var Model = collectionMap[apiType].model;
-        var collection = collectionMap[apiType].collection;
+    if(modelMap.hasOwnProperty(apiType)) {
+        var schema = modelMap[apiType].schema;
+        var modelName = modelMap[apiType].modelName;
+        var Model = this.modelFactory.getModel(modelName, schema);
 
         //clear props not to overwrite
         delete req.body._id;
@@ -75,9 +77,9 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             var filter = {};
             if(itemId) {
                 filter._id = itemId;
-                logger.debug('Searching for items by id [%s]: ' + collection, itemId);
+                logger.debug('Searching for items by id [%s]: ' + modelName, itemId);
             } else {
-                logger.debug('Searching for items in collection: ' + collection);
+                logger.debug('Searching for items in model: ' + modelName);
             }
 
             //create a filter out of the query string
@@ -110,8 +112,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot POST for this url. It shouldn\'t contain an id [%s]', itemId);
                 next();
             } else {
-                logger.info('Creating new %s', collection);
-                logger.debug('Creating new collection with data: ' );
+                logger.info('Creating new %s', modelName);
+                logger.debug('Creating new model with data: ' );
                 logger.debug(TAB + req.body);
                 var model = new Model(req.body);
                 model.save(function(err, model) {
@@ -123,7 +125,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         res.json(model);
 
                         //emit events
-                        if(collection === collectionMap.pages.collection) {
+                        if(modelName === modelMap.pages.modelName) {
                             self.emit(consts.events.PAGES_UPDATED);
                         }
                     }
@@ -134,8 +136,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot PUT for this url. It should contain an id');
                 next();
             } else {
-                logger.info('Updating %s with id [%s]', collection, itemId);
-                logger.debug('Updating collection with data: ' );
+                logger.info('Updating %s with id [%s]', modelName, itemId);
+                logger.debug('Updating model with data: ' );
                 logger.debug(TAB + req.body);
                 Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
                     if (err) {
@@ -146,7 +148,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         res.json(model);
 
                         //emit events
-                        if(collection === collectionMap.pages.collection) {
+                        if(modelName === modelMap.pages.modelName) {
                             self.emit(consts.events.PAGES_UPDATED);
                         }
                     }
@@ -157,7 +159,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot DELETE for this url. It should contain an id');
                 next();
             } else {
-                logger.info('Removing %s with id [%s]', collection, itemId);
+                logger.info('Removing %s with id [%s]', modelName, itemId);
                 Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
@@ -168,7 +170,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         res.send();
 
                         //emit events
-                        if(collection === collectionMap.pages.collection) {
+                        if(modelName === modelMap.pages.modelName) {
                             self.emit(consts.events.PAGES_UPDATED);
                         }
                     }

@@ -9,8 +9,8 @@ adminApp.controller('publishingController', function($scope, $rootScope, $routeP
     $rootScope.pageTitle = 'Publishing';
 
     //get all pages with drafts
-    publishingService.getDrafts().then(function(drafts) {
-        $scope.drafts = drafts.data;
+    publishingService.getDrafts().success(function(drafts) {
+        $scope.drafts = drafts;
     }).error(function(err) {
         $rootScope.showError('Error getting drafts to publish', err);
     });

@@ -11,8 +11,8 @@
             })
         };
 
-        PublishingService.prototype.publish = function(ids) {
-            return $http.post(ids);
+        PublishingService.prototype.publish = function(draftIds) {
+            return $http.post('/_publish/pages');
         };
 
         return new PublishingService();

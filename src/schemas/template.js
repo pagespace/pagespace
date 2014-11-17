@@ -21,6 +21,6 @@ var templateSchema = Schema({
     }
 });
 
-var Template = mongoose.model('Template', templateSchema);
+//var Template = mongoose.model('Template', templateSchema);
 
-module.exports = Template;
+module.exports = templateSchema;

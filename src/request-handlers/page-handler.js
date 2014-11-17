@@ -6,6 +6,9 @@ var bunyan = require('bunyan');
 var hbs = require('hbs');
 var BluebirdPromise = require('bluebird');
 
+//schemas
+var pageSchema = require('./../schemas/page');
+
 //util
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
@@ -13,8 +16,8 @@ logger.level(GLOBAL.logLevel);
 
 var adminbarFilePromise = null;
 
-var PageHandler = function(pageResolver, parts) {
-    this.pageResolver = pageResolver;
+var PageHandler = function(modelFactory, parts) {
+    this.modelFactory = modelFactory;
     this.parts = parts;
 };
 
@@ -41,11 +44,26 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             req.session.edit = false;
         }
     }
+    if(req.query._staging) {
+        if(req.user && req.user.role === 'admin' && util.typeify(req.query._staging) === true) {
+            logger.debug("Switching to staging mode");
+            req.session.staging = true;
+        } else if(util.typeify(req.query._staging) === false) {
+            logger.debug("Switching to live mode");
+            req.session.staging = false;
+        }
+    }
     var showAdminBar = req.user && req.user.role === 'admin';
     var editMode = typeof req.session.edit === "boolean" && req.session.edit;
+    var stagingMode = typeof req.session.staging === "boolean" && req.session.staging;
 
-    //TODO: promisify pageResolver and include here
-    self.pageResolver.findPage(req.url).then(function(page) {
+    var Page = this.modelFactory.getModel('Page', pageSchema);
+    var filter = {
+        url: req.url
+    };
+    var query = Page.findOne(filter).populate('template');
+    var findPage = BluebirdPromise.promisify(query.exec, query);
+    findPage().then(function(page) {
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
 
@@ -79,6 +97,10 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
         var pageData = {};
         pageData.edit = editMode;
+        pageData.preview = !editMode;
+        pageData.staging = stagingMode;
+        pageData.live = !stagingMode;
+
         page.regions.forEach(function (region, i) {
             if (region.part) {
                 pageData[region.name] = {

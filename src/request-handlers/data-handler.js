@@ -4,20 +4,22 @@
 var bunyan = require('bunyan');
 var BluebirdPromise = require('bluebird');
 
-//models
-var Page = require('../models/page');
+//schemas
+var pageSchema = require('../schemas/page');
+var modelFactory = require('./../misc/model-factory')();
 
 //util
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
 logger.level(GLOBAL.logLevel);
 
-var DataHandler = function(parts) {
+var DataHandler = function(parts, modelFactory) {
     this.parts = parts;
+    this.modelFactory = modelFactory;
 };
 
-module.exports = function(parts) {
-    return new DataHandler(parts);
+module.exports = function(parts, modelFactory) {
+    return new DataHandler(parts, modelFactory);
 };
 
 /**
@@ -39,6 +41,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         _id: pageId
     };
 
+    var Page = this.modelFactory.getModel('Page', pageSchema);
     var query = Page.findOne(filter).populate('regions.part');
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {

@@ -1,10 +1,12 @@
 "use strict";
 
+var modelFactory = require('./../misc/model-factory')();
+
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
 var SALT_WORK_FACTOR = 10;
 
-var UserSchema = mongoose.Schema({
+var userSchema = mongoose.Schema({
     username: {
         type: String, required: true,
         index: { unique: true }
@@ -27,7 +29,7 @@ var UserSchema = mongoose.Schema({
     }
 });
 
-UserSchema.pre('save', function(next) {
+userSchema.pre('save', function(next) {
     var user = this;
 
     // only hash the password if it has been modified (or is new)
@@ -54,7 +56,7 @@ UserSchema.pre('save', function(next) {
     });
 });
 
-UserSchema.methods.comparePassword = function(candidatePassword, cb) {
+userSchema.methods.comparePassword = function(candidatePassword, cb) {
     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
         if (err) {
             return cb(err);
@@ -63,17 +65,19 @@ UserSchema.methods.comparePassword = function(candidatePassword, cb) {
     });
 };
 
-UserSchema.methods.generateToken = function() {
+userSchema.methods.generateToken = function() {
     return bcrypt.hashSync(this.username + Math.random().toString(), 1);
 };
 
-UserSchema.statics.createGuestUser = function() {
+userSchema.statics.createGuestUser = function() {
+    //TODO: probably wrong place for this method
+    var User = modelFactory.getModel('User', userSchema);
     return new User({
         username: "guest",
         name: "Guest"
     });
 };
 
-var User = mongoose.model('User', UserSchema);
+//var User = mongoose.model('User', userSchema);
 
-module.exports = User;
+module.exports = userSchema;

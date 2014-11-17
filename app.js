@@ -22,7 +22,8 @@ app.use('/app/static', express.static(__dirname + '/views/static'));
 app.use('/_admin', express.static(theApp.getAdminDir()));
 app.use(theApp.init({
     dbConnection: 'mongodb://localhost/test',
-    viewBase: path.join(__dirname, 'views')
+    viewBase: path.join(__dirname, 'views'),
+    logLevel: "debug"
 }));
 
 /// catch 404 and forwarding to error handler

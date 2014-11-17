@@ -21,7 +21,11 @@
     margin-left: 20px;
 }
 
-.adminbar .edit-switch {
+.adminbar .switch-group {
+    background: #d3d3d3;
+}
+
+.adminbar .switch {
     border-width: 0;
     box-sizing: border-box;
     padding: 10px;
@@ -30,10 +34,9 @@
     cursor: pointer;
     font-family: Consolas, "courier new", monospace;
     font-size: 18px;
-}
-.adminbar .edit-switch[value=true] {
     background: #d3d3d3;
 }
-.adminbar .edit-switch[value=false] {
+.adminbar .switch.on {
     background: #00e5a3;
+    cursor: default;
 }
