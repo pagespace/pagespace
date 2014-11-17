@@ -57,7 +57,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var editMode = typeof req.session.edit === "boolean" && req.session.edit;
     var stagingMode = typeof req.session.staging === "boolean" && req.session.staging;
 
-    var Page = this.modelFactory.getModel('Page', pageSchema);
+    var Page = this.modelFactory.getModel('Page', pageSchema, !stagingMode ? 'live' : null);
     var filter = {
         url: req.url
     };
