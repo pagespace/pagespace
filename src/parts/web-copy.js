@@ -19,6 +19,9 @@ module.exports = {
         });
     },
 	read: function(data) {
+        if(!data) {
+            data =  '<p>Web copy</p>';
+        }
         return data;
 	},
     update: function(originalData, update) {

@@ -8,11 +8,11 @@
         PublishingService.prototype.getDrafts = function() {
             return pageService.getPages({
                 draft: true
-            })
+            });
         };
 
         PublishingService.prototype.publish = function(draftIds) {
-            return $http.post('/_publish/pages');
+            return $http.post('/_publish/pages', draftIds);
         };
 
         return new PublishingService();

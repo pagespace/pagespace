@@ -20,6 +20,7 @@ consts.requests = {
     LOGIN: 3,
     LOGOUT: 4,
     PUBLISH: 5,
+    DATA: 6,
     OTHER: 99
 };
 

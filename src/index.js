@@ -12,13 +12,10 @@ var RememberMeStrategy = require('passport-remember-me').Strategy;
 var async = require('async');
 var bunyan = require('bunyan');
 var Acl = require("./misc/acl");
-var BluebirdPromise = require('bluebird');
+var Bluebird = require('bluebird');
 
 //schemas
-var pageSchema = require('./schemas/page');
-var partSchema = require('./schemas/part');
-var userSchema = require('./schemas/user');
-var modelFactory = require('./misc/model-factory');
+var createDbSupport = require('./misc/db-support');
 
 //factories
 var createPageHandler = require('./request-handlers/page-handler');
@@ -46,13 +43,7 @@ var Index = function() {
 
     //dependencies
     this.mongoose = mongoose;
-    this.modelFactory = modelFactory();
-
-    this.modelFactory.getModel('Page', require('./schemas/page'));
-    this.modelFactory.getModel('Template', require('./schemas/template'));
-    this.modelFactory.getModel('Part', require('./schemas/part'));
-    this.modelFactory.getModel('User', require('./schemas/user'));
-
+    this.dbSupport = createDbSupport();
 };
 
 /**
@@ -79,6 +70,8 @@ Index.prototype.init = function(options) {
 
     logger.info("Initializing the middleware");
 
+    this.dbSupport.initModels();
+
     this.parts = {};
 
     var dbConnection = options.dbConnection;
@@ -94,20 +87,11 @@ Index.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        var loadPageUrls = self.loadPageUrls();
         var loadPartModules = self.loadPartModules();
         var createFirstAdminUser = self.createFirstAdminUser();
 
         //once everything is ready
-        BluebirdPromise.join(loadPageUrls, loadPartModules, createFirstAdminUser, function(pages, parts, users) {
-
-            //page urls to resolve
-            logger.debug("Urls to resolve are:");
-            self.urlsToResolve = pages.map(function (page) {
-                logger.debug(TAB + page.url);
-                return page.url;
-            });
-            logger.info("Page urls to resolve loaded");
+        Bluebird.join(loadPartModules, createFirstAdminUser, function(parts, users) {
 
             //parts
             parts.forEach(function (part) {
@@ -136,18 +120,13 @@ Index.prototype.init = function(options) {
             }
 
             //set up page handlers
-            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(self.modelFactory, self.parts);
-            self.urlHandlerMap[consts.requests.API] = createApiHandler(self.modelFactory);
+            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(self.dbSupport, self.parts);
+            self.urlHandlerMap[consts.requests.API] = createApiHandler(self.dbSupport);
             self.urlHandlerMap[consts.requests.ADMIN] = createAdminHandler();
-            self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler();
-            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts, self.modelFactory);
+            self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler(self.dbSupport);
+            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts, self.dbSupport);
             self.urlHandlerMap[consts.requests.LOGIN] = createLoginHandler();
             self.urlHandlerMap[consts.requests.LOGOUT] = createLogoutHandler();
-
-            //handler events
-            self.urlHandlerMap[consts.requests.API].on(consts.events.PAGES_UPDATED, function() {
-                self.loadPageUrls();
-            });
 
             logger.info('Initialized, waiting for requests');
             self.appState = consts.appStates.READY;
@@ -186,22 +165,6 @@ Index.prototype.init = function(options) {
 };
 
 /**
- * Gets all the page urls from the db that the middleware should listen for
- * @returns {*}
- */
-Index.prototype.loadPageUrls = function() {
-
-    var self = this;
-    logger.info("Loading page urls to resolve...");
-
-    //get all pages to resolve
-    var Page = this.modelFactory.getModel('Page', pageSchema);
-    var query = Page.find({});
-    var getPages = BluebirdPromise.promisify(query.exec, query);
-    return getPages();
-};
-
-/**
  * Preloads the parts modules
  * @returns {*}
  */
@@ -212,9 +175,9 @@ Index.prototype.loadPartModules = function() {
     logger.info('Loading part modules...');
 
     //cache part modules
-    var Part = this.modelFactory.getModel('Part', partSchema);
+    var Part = this.dbSupport.getModel('Part');
     var query = Part.find({});
-    var getParts = BluebirdPromise.promisify(query.exec, query);
+    var getParts = Bluebird.promisify(query.exec, query);
     return getParts();
 };
 
@@ -225,9 +188,9 @@ Index.prototype.loadPartModules = function() {
 Index.prototype.createFirstAdminUser = function() {
 
     //create an admin user on first run
-    var User = this.modelFactory.getModel('User', userSchema);
+    var User = this.dbSupport.getModel('User');
     var query = User.find({ role: 'admin'}, 'username');
-    var createAdminUser = BluebirdPromise.promisify(query.exec, query);
+    var createAdminUser = Bluebird.promisify(query.exec, query);
     return createAdminUser();
 };
 
@@ -240,7 +203,7 @@ Index.prototype.createFirstAdminUser = function() {
  */
 Index.prototype.doRequest = function(req, res, next) {
     var requestHandler, urlType;
-    var user = req.user || this.modelFactory.getModel('User', userSchema).createGuestUser();
+    var user = req.user || this.createGuestUser();
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg =
             "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
@@ -251,12 +214,6 @@ Index.prototype.doRequest = function(req, res, next) {
         urlType = this.getUrlType(req.url);
     }
     requestHandler = this.urlHandlerMap[urlType];
-
-    if(!requestHandler) {
-        var notFoundErr = new Error();
-        notFoundErr.status = 404;
-        return next(notFoundErr);
-    }
 
     return requestHandler.doRequest(req, res, next);
 
@@ -270,22 +227,16 @@ Index.prototype.doRequest = function(req, res, next) {
 Index.prototype.getUrlType = function(url) {
 
     var type;
-
-    if(this.urlsToResolve.indexOf(url) >= 0) {
+    var i, requestMetaKey, requestMetaKeys = Object.keys(consts.requestMeta);
+    for(i = 0; i < requestMetaKeys.length; i++) {
+        requestMetaKey = requestMetaKeys[i];
+        if(consts.requestMeta[requestMetaKey].regex && consts.requestMeta[requestMetaKey].regex.test(url)) {
+            type = consts.requestMeta[requestMetaKey].type;
+            break;
+        }
+    }
+    if(!type) {
         type = consts.requests.PAGE;
-    } else {
-
-        var i, requestMetaKey, requestMetaKeys = Object.keys(consts.requestMeta);
-        for(i = 0; i < requestMetaKeys.length; i++) {
-            requestMetaKey = requestMetaKeys[i];
-            if(consts.requestMeta[requestMetaKey].regex && consts.requestMeta[requestMetaKey].regex.test(url)) {
-                type = consts.requestMeta[requestMetaKey].type;
-                break;
-            }
-        }
-        if(!type) {
-            type = consts.requests.OTHER;
-        }
     }
 
     return type;
@@ -317,14 +268,14 @@ Index.prototype.configureAuth = function() {
     });
 
     passport.deserializeUser(function(userProps, done) {
-        var User = self.modelFactory.getModel('User', userSchema);
+        var User = self.dbSupport.getModel('User');
         var user = new User(userProps);
         done(null, user);
     });
 
     passport.use(new LocalStrategy(
         function(username, password, done) {
-            var User = self.modelFactory.getModel('User', userSchema);
+            var User = self.dbSupport.getModel('User');
             User.findOne({ username: username }, function(err, user) {
                 if (err) {
                     return done(err);
@@ -344,7 +295,7 @@ Index.prototype.configureAuth = function() {
     ));
     passport.use(new RememberMeStrategy(
         function(token, done) {
-            var User = self.modelFactory.getModel('User', userSchema);
+            var User = self.dbSupport.getModel('User');
             User.findOne({ rememberToken: token }, function(err, user) {
                 if(err) {
                     return done(err);
@@ -369,6 +320,14 @@ Index.prototype.configureAuth = function() {
     ));
 
     return acl;
+};
+
+Index.prototype.createGuestUser = function() {
+    var User = this.dbSupport.getModel('User');
+    return new User({
+        username: "guest",
+        name: "Guest"
+    });
 };
 
 Index.prototype.getAdminDir = function() {

@@ -6,9 +6,6 @@ var bunyan = require('bunyan');
 var hbs = require('hbs');
 var BluebirdPromise = require('bluebird');
 
-//schemas
-var pageSchema = require('./../schemas/page');
-
 //util
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
@@ -16,13 +13,13 @@ logger.level(GLOBAL.logLevel);
 
 var adminbarFilePromise = null;
 
-var PageHandler = function(modelFactory, parts) {
-    this.modelFactory = modelFactory;
+var PageHandler = function(dbSupport, parts) {
+    this.dbSupport = dbSupport;
     this.parts = parts;
 };
 
-module.exports = function(pageResolver, parts) {
-    return new PageHandler(pageResolver, parts);
+module.exports = function(dbSupport, parts) {
+    return new PageHandler(dbSupport, parts);
 };
 
 /**
@@ -57,13 +54,20 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var editMode = typeof req.session.edit === "boolean" && req.session.edit;
     var stagingMode = typeof req.session.staging === "boolean" && req.session.staging;
 
-    var Page = this.modelFactory.getModel('Page', pageSchema, !stagingMode ? 'live' : null);
+    var modelModifier = !stagingMode ? 'live' : null
+    var Page = this.dbSupport.getModel('Page', modelModifier);
     var filter = {
         url: req.url
     };
     var query = Page.findOne(filter).populate('template');
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
+
+        if(!page) {
+            var err = new Error("Page not found for %s", req.url);
+            err.status = 404;
+            throw err;
+        }
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
 

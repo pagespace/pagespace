@@ -2,23 +2,19 @@
 
 //support
 var bunyan = require('bunyan');
-var BluebirdPromise = require('bluebird');
-
-//models
-var pageSchema = require('../schemas/page');
+var Bluebird = require('bluebird');
 
 //util
-var modelFactory = require('./../misc/model-factory')();
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'publishing-handler' });
 logger.level(GLOBAL.logLevel);
 
-var PublishingHandler = function() {
-
+var PublishingHandler = function(dbSupport) {
+    this.dbSupport = dbSupport;
 };
 
-module.exports = function(parts) {
-    return new PublishingHandler(parts);
+module.exports = function(dbSupport) {
+    return new PublishingHandler(dbSupport);
 };
 
 /**
@@ -37,23 +33,57 @@ PublishingHandler.prototype.doRequest = function(req, res, next) {
 
 PublishingHandler.prototype.publishDrafts = function(req, res, next) {
 
-    var draftIds = req.body;
+    var self = this;
 
-    res.statusCode = 204;
-    res.send();
-/*
-    var query = Page.find(filter).populate('regions.part, template');
-    var findDraftPages = BluebirdPromise.promisify(query.exec, query);
-    findDraftPages().then(function(pages) {
-        if(req.headers.accept.indexOf('application/json') === -1) {
-            var html = util.htmlStringify(pages);
-            res.send(html, {
-                'Content-Type' : 'text/html'
-            }, 200);
-        } else {
-            res.json(pages);
+    var draftIds = req.body;
+    var orConditions = draftIds.map(function(id) {
+        return {
+            _id: id
         }
+    });
+
+    var DraftPage = this.dbSupport.getModel('Page');
+    var query = DraftPage.find({ $or : orConditions}).populate('template regions.part');
+    var findPagesToPublish = Bluebird.promisify(query.exec, query);
+    findPagesToPublish().then(function(pages) {
+
+        var updates = [];
+        var LivePage = self.dbSupport.getModel('Page', 'live');
+        var LiveTemplate = self.dbSupport.getModel('Template', 'live');
+        pages.forEach(function(page) {
+
+            //update/create live page
+            var pageId = page._id.toString();
+            var livePage = page.toObject();
+            delete livePage._id;
+            delete livePage.template;
+            livePage.draft = false;
+            var saveLivePage = Bluebird.promisify(LivePage.update, LivePage);
+            updates.push(saveLivePage({_id: pageId}, livePage, { upsert: true }));
+
+            //page template
+            if(page.template.draft) {
+                //replicate live template
+                var templateId = page.template._id.toString();
+                var liveTemplate = page.template.toObject();
+                delete liveTemplate._id;
+                liveTemplate.draft = false;
+                var saveLiveTemplate = Bluebird.promisify(LiveTemplate.update, LiveTemplate);
+                updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true }));
+
+                //save draft template
+            }
+
+            //undraft page
+            var saveDraftPage = Bluebird.promisify(page.save, page);
+            page.draft = false;
+            updates.push(saveDraftPage());
+        });
+        return updates;
+    }).spread(function() {
+        res.statusCode = 204;
+        res.send();
     }).catch(function(e) {
         next(new Error(e));
-    });*/
+    });
 };

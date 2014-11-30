@@ -4,22 +4,19 @@
 var bunyan = require('bunyan');
 var BluebirdPromise = require('bluebird');
 
-//schemas
-var pageSchema = require('../schemas/page');
-var modelFactory = require('./../misc/model-factory')();
-
 //util
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
-logger.level(GLOBAL.logLevel);
 
-var DataHandler = function(parts, modelFactory) {
+
+var DataHandler = function(parts, dbSupport) {
     this.parts = parts;
-    this.modelFactory = modelFactory;
+    this.dbSupport = dbSupport;
+    logger.level(GLOBAL.logLevel);
 };
 
-module.exports = function(parts, modelFactory) {
-    return new DataHandler(parts, modelFactory);
+module.exports = function(parts, dbSupport) {
+    return new DataHandler(parts, dbSupport);
 };
 
 /**
@@ -41,7 +38,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         _id: pageId
     };
 
-    var Page = this.modelFactory.getModel('Page', pageSchema);
+    var Page = this.dbSupport.getModel('Page');
     var query = Page.findOne(filter).populate('regions.part');
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
@@ -68,6 +65,7 @@ DataHandler.prototype.doRequest = function(req, res, next) {
     }).spread(function(page, region, partData) {
         if(req.method === 'PUT' || req.method === 'DELETE') {
             region.data = partData;
+            page.draft = true;
             page.save(function (err) {
                 if (err) {
                     throw err;

@@ -3,15 +3,6 @@
 //support
 var bunyan = require('bunyan');
 
-var events = require('events');
-var nodeUtil = require('util');
-
-//schemas
-var pageSchema = require('../schemas/page');
-var templateSchema = require('../schemas/template');
-var partSchema = require('../schemas/part');
-var userSchema = require('../schemas/user');
-
 //util
 var consts = require('../app-constants');
 var util = require('../misc/util');
@@ -20,13 +11,12 @@ logger.level(GLOBAL.logLevel);
 
 var TAB = '\t';
 
-var ApiHandler = function(modelFactory) {
-    this.modelFactory = modelFactory;
+var ApiHandler = function(dbSupport) {
+    this.dbSupport = dbSupport;
 };
-nodeUtil.inherits(ApiHandler, events.EventEmitter);
 
-module.exports = function(modelFactory) {
-    return new ApiHandler(modelFactory);
+module.exports = function(dbSupport) {
+    return new ApiHandler(dbSupport);
 };
 
 ApiHandler.prototype.doRequest = function(req, res, next) {
@@ -36,22 +26,10 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     logger.info('Processing api request for ' + req.url);
 
     var modelMap = {
-        pages: {
-            modelName: 'Page',
-            schema: pageSchema
-        },
-        parts: {
-            modelName: 'Part',
-            model: partSchema
-        },
-        templates: {
-            modelName: 'Template',
-            model: templateSchema
-        },
-        users: {
-            modelName: 'User',
-            model: userSchema
-        }
+        pages: 'Page',
+        parts: 'Part',
+        templates:'Template',
+        users: 'User'
     };
 
     var populationsMap = {
@@ -65,9 +43,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
     if(modelMap.hasOwnProperty(apiType)) {
-        var schema = modelMap[apiType].schema;
-        var modelName = modelMap[apiType].modelName;
-        var Model = this.modelFactory.getModel(modelName, schema);
+        var modelName = modelMap[apiType];
+        var Model = this.dbSupport.getModel(modelName);
 
         //clear props not to overwrite
         delete req.body._id;
@@ -123,11 +100,6 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     } else {
                         logger.info('Created successfully');
                         res.json(model);
-
-                        //emit events
-                        if(modelName === modelMap.pages.modelName) {
-                            self.emit(consts.events.PAGES_UPDATED);
-                        }
                     }
                 });
             }
@@ -138,19 +110,16 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             } else {
                 logger.info('Updating %s with id [%s]', modelName, itemId);
                 logger.debug('Updating model with data: ' );
+                var data = req.body;
+                data.draft = true;
                 logger.debug(TAB + req.body);
-                Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
+                Model.findByIdAndUpdate(itemId, { $set: data }, function (err, model) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);
                         next(err);
                     } else {
                         logger.info('Updated successfully');
                         res.json(model);
-
-                        //emit events
-                        if(modelName === modelMap.pages.modelName) {
-                            self.emit(consts.events.PAGES_UPDATED);
-                        }
                     }
                 });
             }
@@ -168,11 +137,6 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         logger.info('Deleted successfully');
                         res.statusCode = 204;
                         res.send();
-
-                        //emit events
-                        if(modelName === modelMap.pages.modelName) {
-                            self.emit(consts.events.PAGES_UPDATED);
-                        }
                     }
                 });
             }
