@@ -79,6 +79,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             adminbarFilePromise = adminbarFilePromise || readFile(__dirname + '/../../views/adminbar.hbs', "utf8");
             promises.push(adminbarFilePromise);
         } else {
+            //push empty promise, so spread args are still right
             promises.push('');
         }
 

@@ -15,13 +15,8 @@ function generateSchema() {
             required: true
         },
         regions: [ String ],
-        regionData: [ Schema.Types.Mixed ],
-        draft: {
-            type: Boolean,
-            default: true
-        }
+        regionData: [ Schema.Types.Mixed ]
     });
 }
-//var Template = mongoose.model('Template', templateSchema);
 
 module.exports = generateSchema;
