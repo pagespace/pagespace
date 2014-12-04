@@ -21,8 +21,9 @@ app.set('view engine', 'hbs');
 app.use('/app/static', express.static(__dirname + '/views/static'));
 app.use('/_admin', express.static(theApp.getAdminDir()));
 app.use(theApp.init({
-    dbConnection: 'mongodb://localhost/test',
+    db: 'mongodb://localhost/test',
     viewBase: path.join(__dirname, 'views'),
+    mediaDir: path.join(__dirname, 'media-uploads'),
     logLevel: "debug"
 }));
 

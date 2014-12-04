@@ -41,6 +41,14 @@
                 templateUrl:  _appRoot + '/static/partials/publishing.html',
                 controller: 'publishingController'
             }).
+            when('/media', {
+                templateUrl:  _appRoot + '/static/partials/media.html',
+                controller: 'mediaController'
+            }).
+            when('/media/upload', {
+                templateUrl:  _appRoot + '/static/partials/media-upload.html',
+                controller: 'mediaController'
+            }).
             when('/macros', {
                 templateUrl:  _appRoot + '/static/partials/macros.html',
                 controller: 'macrosController'

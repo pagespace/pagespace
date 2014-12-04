@@ -23,6 +23,7 @@ var createApiHandler = require('./request-handlers/api-handler');
 var createAdminHandler = require('./request-handlers/admin-handler');
 var createPublishingHandler = require('./request-handlers/publishing-handler');
 var createDataHandler = require('./request-handlers/data-handler');
+var createMediaHandler = require('./request-handlers/media-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
 var createLogoutHandler = require('./request-handlers/logout-handler');
 
@@ -51,7 +52,6 @@ var Index = function() {
  */
 Index.prototype.reset = function() {
     this.urlHandlerMap = {};
-    this.urlsToResolve = [];
     this.appState = consts.appStates.NOT_READY;
 };
 
@@ -68,13 +68,15 @@ Index.prototype.init = function(options) {
     GLOBAL.logLevel = options.logLevel || 'debug';
     logger.level(logLevel);
 
+    this.mediaDir = options.mediaDir;
+
     logger.info("Initializing the middleware");
 
     this.dbSupport.initModels();
 
     this.parts = {};
 
-    var dbConnection = options.dbConnection;
+    var dbConnection = options.db;
     if(!dbConnection) {
         throw new Error('You must specify a db connection string');
     }
@@ -125,6 +127,7 @@ Index.prototype.init = function(options) {
             self.urlHandlerMap[consts.requests.ADMIN] = createAdminHandler();
             self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler(self.dbSupport);
             self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts, self.dbSupport);
+            self.urlHandlerMap[consts.requests.MEDIA] = createMediaHandler(self.dbSupport, self.mediaDir);
             self.urlHandlerMap[consts.requests.LOGIN] = createLoginHandler();
             self.urlHandlerMap[consts.requests.LOGOUT] = createLogoutHandler();
 
@@ -251,13 +254,15 @@ Index.prototype.configureAuth = function() {
 
     //setup acl
     var acl = new Acl();
-    acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestMeta.LOGIN.regex, ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestMeta.LOGOUT.regex, ["GET", "POST"]);
-    acl.allow(["admin"], consts.requestMeta.API.regex, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestMeta.ADMIN.regex, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestMeta.DATA.regex, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestMeta.PUBLISH.regex, ["GET", "POST", "PUT", "DELETE"]);
+
+    acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
+    acl.allow(['guest', 'admin'], consts.requestMeta.LOGIN.regex, ['GET', 'POST']);
+    acl.allow(['guest', 'admin'], consts.requestMeta.LOGOUT.regex, ['GET', 'POST']);
+    acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST']);
+    acl.allow(['admin'], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {
@@ -325,8 +330,8 @@ Index.prototype.configureAuth = function() {
 Index.prototype.createGuestUser = function() {
     var User = this.dbSupport.getModel('User');
     return new User({
-        username: "guest",
-        name: "Guest"
+        username: 'guest',
+        name: 'Guest'
     });
 };
 

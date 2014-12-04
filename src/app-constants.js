@@ -21,6 +21,7 @@ consts.requests = {
     LOGOUT: 4,
     PUBLISH: 5,
     DATA: 6,
+    MEDIA: 7,
     OTHER: 99
 };
 
@@ -42,11 +43,15 @@ consts.requestMeta = {
     },
     API: {
         type: consts.requests.API,
-        regex: new RegExp('^/_api/(pages|parts|templates|users)/?(.*)')
+        regex: new RegExp('^/_api/(pages|parts|templates|users|media)/?(.*)')
     },
     DATA: {
         type: consts.requests.DATA,
         regex: new RegExp('^/_data/(.+)/(.+)')
+    },
+    MEDIA: {
+        type: consts.requests.MEDIA,
+        regex: new RegExp('^/_media/?(.*)')
     },
     PUBLISH: {
         type: consts.requests.PUBLISH,

@@ -18,29 +18,32 @@
 ✓ error resistance
 ✓ restructure parts and templates
 ✓ edit mode ui
+✓ publishing
+* media uploads
 * unit tests
+* Custom user starter parts?
 * Starter parts
     html (in page) ✓
     html (blog) [write markdown save as html]
     blog summary
     navigation
     html include
-* publishing
-* media uploads
 * docs
 * macros.
 * template properties
-
+* url management
+* archiving
+* Dashboard color switcher
 
 * orange tea
 
-Publishing notes
-================
+BUGS
+* Not found returns 500 (not 404) if page is not in db
+* Dashboard errors wrapped in html doc
 
-live collections
-
-
-Mark pages edited, replicate to production collections
-Only publish pages
-Lock templates - clone templates for changes
-How to maintain collection history?
+CURRENT
+* media upload notifications
+* API to get all media
+* media gallery page
+* single item page
+* Select media image from ck picker

@@ -33,6 +33,8 @@ PublishingHandler.prototype.doRequest = function(req, res, next) {
 
 PublishingHandler.prototype.publishDrafts = function(req, res, next) {
 
+    //TODO: deleting pages (410), updating url (new page) old-page=301+clear-data
+
     var self = this;
 
     var draftIds = req.body;
@@ -52,8 +54,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
     var findPagesToPublish = Bluebird.promisify(query.exec, query);
     findPagesToPublish().then(function(pages) {
 
-        var queuedDraftTemmplates = {};
-
+        var queuedDraftTemplates = {};
         var LivePage = self.dbSupport.getModel('Page', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
@@ -72,7 +73,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
             logger.info('Page queued to publish: %s (id=%s) @ \'%s\'', livePage.name, pageId, livePage.url);
 
             //page template
-            if(!queuedDraftTemmplates[templateId]) {
+            if(!queuedDraftTemplates[templateId]) {
                 //replicate live template
                 var liveTemplate = page.template.toObject();
                 delete liveTemplate._id;
@@ -80,10 +81,9 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
                 liveTemplate.draft = false;
                 var saveLiveTemplate = Bluebird.promisify(LiveTemplate.update, LiveTemplate);
                 updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true }));
-                queuedDraftTemmplates[templateId] = true;
+                queuedDraftTemplates[templateId] = true;
 
-                logger.info('Template queued to publish: %s (id=%s)',
-                    liveTemplate.name, templateId);
+                logger.info('Template queued to publish: %s (id=%s)', liveTemplate.name, templateId);
             }
 
             //undraft page

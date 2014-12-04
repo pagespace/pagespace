@@ -7,6 +7,7 @@ var pageSchema = require('../schemas/page');
 var partSchema = require('../schemas/part');
 var templateSchema = require('../schemas/template');
 var userSchema = require('../schemas/user');
+var mediaSchema = require('../schemas/media')
 
 var bunyan = require('bunyan');
 var logger =  bunyan.createLogger({ name: 'db-support' });
@@ -26,6 +27,10 @@ var modelData = [{
 }, {
     name: 'User',
     schema: userSchema,
+    publishable: false
+}, {
+    name: 'Media',
+    schema: mediaSchema,
     publishable: false
 }];
 

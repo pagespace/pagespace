@@ -21,8 +21,6 @@ module.exports = function(dbSupport) {
 
 ApiHandler.prototype.doRequest = function(req, res, next) {
 
-    var self = this;
-
     logger.info('Processing api request for ' + req.url);
 
     var modelMap = {

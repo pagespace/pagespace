@@ -24,7 +24,7 @@ function generateSchema(modifier) {
             data: Schema.Types.Mixed,
             part: {
                 type: Schema.Types.ObjectId,
-                ref: 'Part' + modifier
+                ref: 'Part'
             }
         }],
         template: {
