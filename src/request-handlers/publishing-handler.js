@@ -33,8 +33,6 @@ PublishingHandler.prototype._doRequest = function(req, res, next) {
 
 PublishingHandler.prototype.publishDrafts = function(req, res, next) {
 
-    //TODO: deleting pages (410), updating url (new page) old-page=301+clear-data
-
     var self = this;
 
     var draftIds = req.body;

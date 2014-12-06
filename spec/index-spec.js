@@ -1,4 +1,4 @@
-require('./jasmine-gwt');
+require('./support/jasmine-gwt');
 var httpMocks = require('express-mocks-http');
 var mongooseMock = require('./mocks/mongoose');
 var mongooseModelMock = require('./mocks/mongoose-model');

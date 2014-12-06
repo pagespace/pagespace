@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 //support
 var bunyan = require('bunyan');
@@ -17,7 +17,7 @@ module.exports = function() {
 };
 
 AdminHandler.prototype._doRequest = function(req, res, next) {
-    logger.info('Processing admin request for ' + req.url);
+    logger.info('Processing admin request for %s',req.url);
 
     var apiInfo = consts.requestMeta.ADMIN.regex.exec(req.url);
     var adminType = apiInfo[1];

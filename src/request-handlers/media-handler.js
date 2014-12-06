@@ -34,11 +34,13 @@ MediaHandler.prototype._doRequest = function(req, res, next) {
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
-        throw err;
+        return next(err);
     }
 };
 
 MediaHandler.prototype.serve = function(req, res, next) {
+
+    logger.info('Serving media for %s', req.url);
 
     var apiInfo = consts.requestMeta.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
@@ -54,10 +56,12 @@ MediaHandler.prototype.serve = function(req, res, next) {
 
             // forward non-404 errors
             stream.on('error', function error(err) {
+                logger.warning('Error streaming media for %s (%s)', req.url, model.path);
                 next(err.status === 404 ? null : err);
             });
 
             // pipe
+            logger.info('Straming media to client for  %s', model.path)
             stream.pipe(res);
         }
     });
@@ -107,6 +111,6 @@ MediaHandler.prototype.upload = function(req, res, next) {
             });
         });
     } catch(e) {
-        next(e);
+        return next(e);
     }
 };

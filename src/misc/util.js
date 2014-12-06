@@ -12,7 +12,7 @@ var entityMap = {
 module.exports = {
 
     /**
-     * Attempts to co-erce an intended type of a string value
+     * Attempts to coerce an intended type of a string value
      * @param value
      * @returns {*}
      */
