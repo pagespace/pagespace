@@ -47,7 +47,11 @@
             }).
             when('/media/upload', {
                 templateUrl:  _appRoot + '/static/partials/media-upload.html',
-                controller: 'mediaController'
+                controller: 'mediaUploadController'
+            }).
+            when('/media/:mediaId', {
+                templateUrl:  _appRoot + '/static/partials/media-item.html',
+                controller: 'mediaItemController'
             }).
             when('/macros', {
                 templateUrl:  _appRoot + '/static/partials/macros.html',

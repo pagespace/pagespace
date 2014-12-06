@@ -3,28 +3,30 @@
 //support
 var bunyan = require('bunyan');
 var Bluebird = require('bluebird');
+var send = require('send');
 
 //util
 var formidable = require('formidable'),
     http = require('http'),
-    util = require('util');
+    util = require('util'),
+    consts = require('../app-constants');
 
 var logger =  bunyan.createLogger({ name: 'publishing-handler' });
 logger.level(GLOBAL.logLevel);
 
-var PublishingHandler = function(dbSupport, mediaDir) {
+var MediaHandler = function(dbSupport, mediaDir) {
     this.dbSupport = dbSupport;
     this.mediaDir = mediaDir
 };
 
 module.exports = function(dbSupport, mediaDir) {
-    return new PublishingHandler(dbSupport, mediaDir);
+    return new MediaHandler(dbSupport, mediaDir);
 };
 
 /**
  * Process a valid request
  */
-PublishingHandler.prototype.doRequest = function(req, res, next) {
+MediaHandler.prototype.doRequest = function(req, res, next) {
 
     if(req.method === 'POST') {
         return this.upload(req, res, next);
@@ -37,11 +39,33 @@ PublishingHandler.prototype.doRequest = function(req, res, next) {
     }
 };
 
-PublishingHandler.prototype.serve = function(req, res, next) {
+MediaHandler.prototype.serve = function(req, res, next) {
+
+    var apiInfo = consts.requestMeta.MEDIA.regex.exec(req.url);
+    var itemFileName = apiInfo[1];
+    var Media = this.dbSupport.getModel('Media');
+    Media.findOne({
+        fileName: itemFileName
+    }).exec(function(err, model) {
+        if(err) {
+            return next(err);
+        }
+        if(model && model.path) {
+            var stream = send(req, model.path);
+
+            // forward non-404 errors
+            stream.on('error', function error(err) {
+                next(err.status === 404 ? null : err)
+            });
+
+            // pipe
+            stream.pipe(res)
+        }
+    });
 
 };
 
-PublishingHandler.prototype.upload = function(req, res, next) {
+MediaHandler.prototype.upload = function(req, res, next) {
 
     var self = this;
 

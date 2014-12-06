@@ -1,9 +1,9 @@
 {
-  "name": "pspace",
+  "name": "pagespace",
   "version": "0.0.1",
   "homepage": "https://github.com/philmander/pspace",
   "author": "Phil Mander <philip.mander@gamil.com>",
-  "description": "Node JS CMS Blog thing",
+  "description": "Manageable and versatile web sites powered by Node.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/philmander/pspace"
@@ -25,13 +25,16 @@
     "mongoose": "^3.8.13",
     "passport": "^0.2.1",
     "passport-local": "^1.0.0",
-    "passport-remember-me": "0.0.1"
+    "passport-remember-me": "0.0.1",
+    "send": "^0.10.1"
   },
   "devDependencies": {
     "express-mocks-http": "0.0.11",
     "gulp": "^3.8.8",
+    "gulp-concat": "^2.4.2",
     "gulp-jasmine": "^1.0.1",
     "gulp-jshint": "^1.8.5",
+    "gulp-watch": "^3.0.0",
     "jasmine-node": "^1.14.5"
   },
   "peerDependencies": {

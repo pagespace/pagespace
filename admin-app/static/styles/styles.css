@@ -55,3 +55,15 @@ header .nav {
     cursor: inherit;
     display: block;
 }
+
+.media-item {
+    float: left;
+    border: 1px solid #cccccc;
+    padding: 20px;
+    margin-right: 40px;
+    cursor: pointer;
+}
+.media-item img {
+    max-width: 200px;
+    max-height: 300px;
+}

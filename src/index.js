@@ -256,12 +256,13 @@ Index.prototype.configureAuth = function() {
     var acl = new Acl();
 
     acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
+    acl.allow(['guest'], consts.requestMeta.MEDIA.regex, ['GET']);
     acl.allow(['guest', 'admin'], consts.requestMeta.LOGIN.regex, ['GET', 'POST']);
     acl.allow(['guest', 'admin'], consts.requestMeta.LOGOUT.regex, ['GET', 'POST']);
     acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST']);
+    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST', 'GET', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
 
     //setup passport/authentication

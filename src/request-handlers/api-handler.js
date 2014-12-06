@@ -27,14 +27,16 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         pages: 'Page',
         parts: 'Part',
         templates:'Template',
-        users: 'User'
+        users: 'User',
+        media: 'Media'
     };
 
     var populationsMap = {
         pages: 'parent template regions.part',
         parts: '',
         templates: '',
-        users: ''
+        users: '',
+        media: ''
     };
 
     var apiInfo = consts.requestMeta.API.regex.exec(req.url);

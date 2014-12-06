@@ -6,8 +6,8 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaController', function($scope, $rootScope, $http) {
-    $rootScope.pageTitle = 'Media';
+adminApp.controller('mediaUploadController', function($scope, $rootScope, $http, mediaService) {
+    $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
 
@@ -30,22 +30,17 @@ adminApp.controller('mediaController', function($scope, $rootScope, $http) {
 
     $scope.upload = function() {
 
-        var formData = new FormData();
-        formData.append("file", $scope.media.file);
-        formData.append("name", $scope.media.name);
-        formData.append("description", $scope.media.description);
-        formData.append("tags", $scope.media.tags);
-
-        //store upload in session, then accept media data
-        $http.post('/_media', formData, {
-            withCredentials: true,
-            headers: { 'Content-Type': undefined },
-            transformRequest: angular.identity
-        }).success(function(uploadData) {
-
+        mediaService.uploadItem($scope.media.file, {
+           name: $scope.media.name,
+           description: $scope.media.description,
+           tags: $scope.media.tags
+        }).success(function() {
+            $rootScope.showSuccess('Upload successful');
+            $location.path('/media');
         }).error(function(err) {
-
+            $rootScope.showError('Error uploading file', err);
         });
+        $rootScope.showInfo('Upload in progress...');
     };
 });
 
