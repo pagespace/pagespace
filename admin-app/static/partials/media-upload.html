@@ -30,9 +30,13 @@
             </div>
         </div>
         <div class="col-sm-6">
-            <h4 ng-show="fileName">{{fileName}}</h4>
-            <p ng-show="fileName && !fileSrc ">No preview available</p>
-            <img src="{{fileSrc}}" alt="{{fileName}}" ng-show="fileSrc" style="max-height: 300px">
+            <div ng-show="fileName">
+                <h3>Preview</h3>
+                <h4>{{fileName}}</h4>
+                <p ng-show="fileName && !fileSrc ">No preview available</p>
+                <img src="{{fileSrc}}" alt="{{fileName}}" ng-show="fileSrc" style="max-height: 300px">
+            </div>
+
         </div>
     </form>
 </div>

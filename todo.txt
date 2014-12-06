@@ -19,8 +19,10 @@
 ✓ restructure parts and templates
 ✓ edit mode ui
 ✓ publishing
-* media uploads
-* unit tests
+✓ media uploads
+✓ template properties
+✓ unit tests
+* form validations
 * Custom user starter parts?
 * Starter parts
     html (in page) ✓
@@ -30,7 +32,8 @@
     html include
 * docs
 * macros.
-* template properties
+* Select media image from ck picker
+
 * url management
 * archiving
 * Dashboard color switcher
@@ -40,10 +43,3 @@
 BUGS
 * Not found returns 500 (not 404) if page is not in db
 * Dashboard errors wrapped in html doc
-
-CURRENT
-* media upload notifications
-* API to get all media
-* media gallery page
-* single item page
-* Select media image from ck picker

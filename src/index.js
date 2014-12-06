@@ -143,7 +143,6 @@ Index.prototype.init = function(options) {
 
     //handle requests
     return function(req, res, next) {
-        logger.debug('Request received for ' + req.url);
 
         if(self.appState === consts.appStates.READY) {
             req.url = url.parse(req.url).pathname;
@@ -207,6 +206,7 @@ Index.prototype.createFirstAdminUser = function() {
 Index.prototype.doRequest = function(req, res, next) {
     var requestHandler, urlType;
     var user = req.user || this.createGuestUser();
+    logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg =
             "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";

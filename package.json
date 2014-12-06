@@ -9,6 +9,7 @@
     "url": "https://github.com/philmander/pspace"
   },
   "scripts": {
+    "test" : "gulp test",
     "start": "node app.js | ./node_modules/.bin/bunyan"
   },
   "private": true,

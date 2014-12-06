@@ -47,7 +47,7 @@ adminApp.controller("partController", function($scope, $rootScope, $routeParams,
 
     $scope.remove = function() {
         partService.deletePart($scope.part._id).success(function (res) {
-            console.log("Part removed");
+            $rootScope.showInfo("Part removed", err);
             $location.path("/parts");
         }).error(function(err) {
             $rootScope.showError("Error deleting part", err);

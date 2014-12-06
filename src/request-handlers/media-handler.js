@@ -94,7 +94,7 @@ MediaHandler.prototype.upload = function(req, res, next) {
                 type: files.file.type,
                 path: files.file.path,
                 fileName: files.file.name,
-                size: files.size
+                size: files.file.size
             });
             media.save(function (err, model) {
                 if (err) {

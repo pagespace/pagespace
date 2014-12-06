@@ -122,10 +122,6 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
             return $http.delete('/_api/media/' + mediaId);
         };
 
-        MediaService.prototype.isImage = function(item) {
-            return item && !!item.type.match(/image\/[jpeg|png|gif]/);
-        };
-
         MediaService.prototype.uploadItem = function(file, mediaData) {
             var formData = new FormData();
             formData.append("file", file);
@@ -139,6 +135,19 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
                 headers: { 'Content-Type': undefined },
                 transformRequest: angular.identity
             });
+        };
+
+        //some utils
+        MediaService.prototype.isImage = function(item) {
+            return item && !!item.type.match(/image\/[jpeg|png|gif]/);
+        };
+
+        //thanks http://stackoverflow.com/a/14919494/200113
+        MediaService.prototype.humanFileSize = function(bytes, si) {
+            var exp = Math.log(bytes) / Math.log(1024) | 0;
+            var result = (bytes / Math.pow(1024, exp)).toFixed(2);
+
+            return result + ' ' + (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
         };
 
         return new MediaService();
@@ -160,8 +169,21 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
         $rootScope.pageTitle = 'Media';
 
         $scope.isImage = mediaService.isImage;
+        $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
+
+        $scope.deleteItem = function(item) {
+            var really = window.confirm('Really delete the item, ' + item.name + '?');
+            if(really) {
+                mediaService.deleteItem(item._id).success(function() {
+                    $location.path('/media');
+                    $rootScope.showInfo("Media: " + item.name + " removed.");
+                }).error(function(err) {
+                    $rootScope.showError("Error deleting page", err);
+                });
+            }
+        };
 
         mediaService.getItem(mediaId).success(function(item) {
             $scope.item = item;
@@ -171,7 +193,6 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
     });
 
 })();
-
 (function() {
 
 /**
@@ -179,7 +200,7 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaUploadController', function($scope, $rootScope, $http, mediaService) {
+adminApp.controller('mediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
@@ -208,8 +229,8 @@ adminApp.controller('mediaUploadController', function($scope, $rootScope, $http,
            description: $scope.media.description,
            tags: $scope.media.tags
         }).success(function() {
-            $rootScope.showSuccess('Upload successful');
             $location.path('/media');
+            $rootScope.showSuccess('Upload successful');
         }).error(function(err) {
             $rootScope.showError('Error uploading file', err);
         });
@@ -567,7 +588,7 @@ adminApp.controller("partController", function($scope, $rootScope, $routeParams,
 
     $scope.remove = function() {
         partService.deletePart($scope.part._id).success(function (res) {
-            console.log("Part removed");
+            $rootScope.showInfo("Part removed", err);
             $location.path("/parts");
         }).error(function(err) {
             $rootScope.showError("Error deleting part", err);
@@ -782,6 +803,7 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
+        properties: [],
         regions: [],
         regionData: []
     };
@@ -793,6 +815,20 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
             $rootScope.showError('Error getting template', err);
         });
     }
+
+    $scope.addProperty = function() {
+        $scope.template.properties.push({
+            name: "",
+            value: ""
+        });
+    };
+
+    $scope.removeProperty = function(prop) {
+        var index = $scope.template.properties.indexOf(prop);
+        if (index > -1) {
+            $scope.template.properties.splice(index, 1);
+        }
+    };
 
     $scope.addRegion = function() {
         var randTitle = Math.random().toString(36).substr(2,3);
@@ -811,15 +847,24 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
     };
 
     $scope.save = function() {
+
+        //remove any empty properties
+        for(var i = $scope.template.properties.length - 1; i >= 0; i--) {
+            var prop = $scope.template.properties[i];
+            if(!prop.name) {
+                $scope.template.properties.splice(i, 1);
+            }
+        }
+
         if(templateId) {
-            templateService.updateTemplate(templateId, $scope.template).success(function(res) {
+            templateService.updateTemplate(templateId, $scope.template).success(function() {
                 $rootScope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
                 $rootScope.showError('Error updating template', err);
             });
         } else {
-            templateService.createTemplate($scope.template).success(function(res) {
+            templateService.createTemplate($scope.template).success(function() {
                 $rootScope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {

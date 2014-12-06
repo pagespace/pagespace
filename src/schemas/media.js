@@ -13,7 +13,8 @@ function generateSchema() {
             type: Number
         },
         fileName: {
-            type: String
+            type: String,
+            unique: true
         },
         type: {
             type: String

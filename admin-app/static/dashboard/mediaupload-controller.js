@@ -1,4 +1,3 @@
-
 (function() {
 
 /**
@@ -6,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaUploadController', function($scope, $rootScope, $http, mediaService) {
+adminApp.controller('mediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
@@ -35,8 +34,8 @@ adminApp.controller('mediaUploadController', function($scope, $rootScope, $http,
            description: $scope.media.description,
            tags: $scope.media.tags
         }).success(function() {
-            $rootScope.showSuccess('Upload successful');
             $location.path('/media');
+            $rootScope.showSuccess('Upload successful');
         }).error(function(err) {
             $rootScope.showError('Error uploading file', err);
         });
