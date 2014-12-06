@@ -106,6 +106,11 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         pageData.staging = stagingMode;
         pageData.live = !stagingMode;
 
+        //template properties
+        page.template.properties.forEach(function(prop) {
+            pageData[prop.name] = prop.value;
+        });
+
         page.regions.forEach(function (region, i) {
             if (region.part) {
                 pageData[region.name] = {

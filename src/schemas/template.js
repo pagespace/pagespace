@@ -15,7 +15,11 @@ function generateSchema() {
             required: true
         },
         regions: [ String ],
-        regionData: [ Schema.Types.Mixed ]
+        regionData: [ Schema.Types.Mixed ],
+        properties: [{
+            name: String,
+            value: String
+        }]
     });
 }
 

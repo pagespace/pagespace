@@ -13,6 +13,7 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
+        properties: [],
         regions: [],
         regionData: []
     };
@@ -24,6 +25,20 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
             $rootScope.showError('Error getting template', err);
         });
     }
+
+    $scope.addProperty = function() {
+        $scope.template.properties.push({
+            name: "",
+            value: ""
+        });
+    };
+
+    $scope.removeProperty = function(prop) {
+        var index = $scope.template.properties.indexOf(prop);
+        if (index > -1) {
+            $scope.template.properties.splice(index, 1);
+        }
+    };
 
     $scope.addRegion = function() {
         var randTitle = Math.random().toString(36).substr(2,3);
@@ -42,15 +57,24 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
     };
 
     $scope.save = function() {
+
+        //remove any empty properties
+        for(var i = $scope.template.properties.length - 1; i >= 0; i--) {
+            var prop = $scope.template.properties[i];
+            if(!prop.name) {
+                $scope.template.properties.splice(i, 1);
+            }
+        }
+
         if(templateId) {
-            templateService.updateTemplate(templateId, $scope.template).success(function(res) {
+            templateService.updateTemplate(templateId, $scope.template).success(function() {
                 $rootScope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
                 $rootScope.showError('Error updating template', err);
             });
         } else {
-            templateService.createTemplate($scope.template).success(function(res) {
+            templateService.createTemplate($scope.template).success(function() {
                 $rootScope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {
