@@ -1,6 +1,6 @@
 var express = require('express');
 var path = require('path')
-var theApp = require('./src/index');
+var pagespace = require('./src/index');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
@@ -15,14 +15,13 @@ app.use(cookieParser());
 app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
-app.set('views', theApp.getViewDir());
+app.set('views', pagespace.getViewDir());
 app.set('view engine', 'hbs');
 
 app.use('/app/static', express.static(__dirname + '/views/static'));
-app.use('/_admin', express.static(theApp.getAdminDir()));
-app.use(theApp.init({
+app.use('/_admin', express.static(pagespace.getAdminDir()));
+app.use(pagespace.init({
     db: 'mongodb://localhost/test',
-    viewBase: path.join(__dirname, 'views'),
     mediaDir: path.join(__dirname, 'media-uploads'),
     logLevel: "debug"
 }));

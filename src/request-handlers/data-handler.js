@@ -7,12 +7,12 @@ var BluebirdPromise = require('bluebird');
 //util
 var consts = require('../app-constants');
 var logger =  bunyan.createLogger({ name: 'data-handler' });
-
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var DataHandler = function(parts, dbSupport) {
     this.parts = parts;
     this.dbSupport = dbSupport;
-    logger.level(GLOBAL.logLevel);
 };
 
 module.exports = function(parts, dbSupport) {
@@ -22,7 +22,7 @@ module.exports = function(parts, dbSupport) {
 /**
  * Process a valid request
  */
-DataHandler.prototype.doRequest = function(req, res, next) {
+DataHandler.prototype._doRequest = function(req, res, next) {
 
     var self = this;
 

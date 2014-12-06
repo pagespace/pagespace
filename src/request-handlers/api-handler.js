@@ -7,7 +7,8 @@ var bunyan = require('bunyan');
 var consts = require('../app-constants');
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'api-handler' });
-logger.level(GLOBAL.logLevel);
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var TAB = '\t';
 
@@ -19,7 +20,7 @@ module.exports = function(dbSupport) {
     return new ApiHandler(dbSupport);
 };
 
-ApiHandler.prototype.doRequest = function(req, res, next) {
+ApiHandler.prototype._doRequest = function(req, res, next) {
 
     logger.info('Processing api request for ' + req.url);
 

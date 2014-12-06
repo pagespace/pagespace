@@ -1,9 +1,9 @@
 <div ng-non-bindable class="web-copy-part">
     {{#if edit}}
         <div id="{{region}}">
-            <div ng-controller="webCopyController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
+            <div class="ps-edit-box" ng-controller="webCopyController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
                 <div ckedit="body" id="ck{{region}}">{{{content}}}</div>
-                <button ng-click="save()">Save</button>
+                <button class="ps-btn" ng-click="save()">Save</button>
             </div>
         </div>
         <script src=""></script>

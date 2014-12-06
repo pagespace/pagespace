@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 //core
 var url = require('url');
@@ -30,9 +30,11 @@ var createLogoutHandler = require('./request-handlers/logout-handler');
 //util
 var consts = require('./app-constants');
 var path = require('path');
+var logLevel = require('./misc/log-level');
 var logger =  bunyan.createLogger({ name: "index" });
 
 var TAB = '\t';
+GLOBAL.pagespace = {};
 
 /**
  * The App
@@ -45,6 +47,16 @@ var Index = function() {
     //dependencies
     this.mongoose = mongoose;
     this.dbSupport = createDbSupport();
+
+    //page handlers
+    this.createPageHandler = createPageHandler;
+    this.createApiHandler = createApiHandler;
+    this.createAdminHandler = createAdminHandler;
+    this.createPublishingHandler = createPublishingHandler;
+    this.createDataHandler = createDataHandler;
+    this.createMediaHandler = createMediaHandler;
+    this.createLoginHandler = createLoginHandler;
+    this.createLogoutHandler = createLogoutHandler;
 };
 
 /**
@@ -65,12 +77,13 @@ Index.prototype.init = function(options) {
 
     var self = this;
 
-    GLOBAL.logLevel = options.logLevel || 'debug';
-    logger.level(logLevel);
+    logLevel().set(options.logLevel || 'debug');
+    logger.level(logLevel().get());
 
     this.mediaDir = options.mediaDir;
+    this.serveAdmin = typeof options.serveAdmin === 'boolean' ? options.serveAdmin : true;
 
-    logger.info("Initializing the middleware");
+    logger.info('Initializing the middleware');
 
     this.dbSupport.initModels();
 
@@ -89,11 +102,11 @@ Index.prototype.init = function(options) {
     db.once('open', function callback () {
         logger.info("Db connection established");
 
-        var loadPartModules = self.loadPartModules();
-        var createFirstAdminUser = self.createFirstAdminUser();
+        var loadPartModules = self._loadPartModules();
+        var loadAdminUser = self._loadAdminUser();
 
         //once everything is ready
-        Bluebird.join(loadPartModules, createFirstAdminUser, function(parts, users) {
+        Bluebird.join(loadPartModules, loadAdminUser, function(parts, users) {
 
             //parts
             parts.forEach(function (part) {
@@ -107,6 +120,7 @@ Index.prototype.init = function(options) {
             //users
             if(users.length === 0) {
                 logger.info("Admin user created with default admin password");
+                var User = self.dbSupport.getModel('User');
                 var defaultAdmin = new User({
                     username: "admin",
                     password: "admin",
@@ -121,15 +135,15 @@ Index.prototype.init = function(options) {
                 });
             }
 
-            //set up page handlers
-            self.urlHandlerMap[consts.requests.PAGE] = createPageHandler(self.dbSupport, self.parts);
-            self.urlHandlerMap[consts.requests.API] = createApiHandler(self.dbSupport);
-            self.urlHandlerMap[consts.requests.ADMIN] = createAdminHandler();
-            self.urlHandlerMap[consts.requests.PUBLISH] = createPublishingHandler(self.dbSupport);
-            self.urlHandlerMap[consts.requests.DATA] = createDataHandler(self.parts, self.dbSupport);
-            self.urlHandlerMap[consts.requests.MEDIA] = createMediaHandler(self.dbSupport, self.mediaDir);
-            self.urlHandlerMap[consts.requests.LOGIN] = createLoginHandler();
-            self.urlHandlerMap[consts.requests.LOGOUT] = createLogoutHandler();
+            //set up request handlers
+            self.urlHandlerMap[consts.requests.PAGE] = self.createPageHandler(self.dbSupport, self.parts);
+            self.urlHandlerMap[consts.requests.API] = self.createApiHandler(self.dbSupport);
+            self.urlHandlerMap[consts.requests.ADMIN] = self.createAdminHandler();
+            self.urlHandlerMap[consts.requests.PUBLISH] = self.createPublishingHandler(self.dbSupport);
+            self.urlHandlerMap[consts.requests.DATA] = self.createDataHandler(self.parts, self.dbSupport);
+            self.urlHandlerMap[consts.requests.MEDIA] = self.createMediaHandler(self.dbSupport, self.mediaDir);
+            self.urlHandlerMap[consts.requests.LOGIN] = self.createLoginHandler();
+            self.urlHandlerMap[consts.requests.LOGOUT] = self.createLogoutHandler();
 
             logger.info('Initialized, waiting for requests');
             self.appState = consts.appStates.READY;
@@ -139,7 +153,7 @@ Index.prototype.init = function(options) {
     });
 
     //auth and acl setup
-    this.acl = this.configureAuth();
+    this.acl = this._configureAuth();
 
     //handle requests
     return function(req, res, next) {
@@ -154,7 +168,7 @@ Index.prototype.init = function(options) {
                     passport.session()(req, res, callback);
                 },
                 function () {
-                    self.doRequest(req, res, next);
+                    self._doRequest(req, res, next);
                 }
             ]);
         } else {
@@ -170,9 +184,7 @@ Index.prototype.init = function(options) {
  * Preloads the parts modules
  * @returns {*}
  */
-Index.prototype.loadPartModules = function() {
-
-    var self = this;
+Index.prototype._loadPartModules = function() {
 
     logger.info('Loading part modules...');
 
@@ -187,7 +199,7 @@ Index.prototype.loadPartModules = function() {
  * If there is no admin user, this is the first one and a default one is created
  * @returns {*}
  */
-Index.prototype.createFirstAdminUser = function() {
+Index.prototype._loadAdminUser = function() {
 
     //create an admin user on first run
     var User = this.dbSupport.getModel('User');
@@ -203,9 +215,9 @@ Index.prototype.createFirstAdminUser = function() {
  * @param next
  * @returns {*}
  */
-Index.prototype.doRequest = function(req, res, next) {
+Index.prototype._doRequest = function(req, res, next) {
     var requestHandler, urlType;
-    var user = req.user || this.createGuestUser();
+    var user = req.user || this._createGuestUser();
     logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg =
@@ -214,12 +226,11 @@ Index.prototype.doRequest = function(req, res, next) {
         req.session.loginToUrl = req.url;
         urlType = consts.requests.LOGIN;
     } else {
-        urlType = this.getUrlType(req.url);
+        urlType = this._getUrlType(req.url);
     }
     requestHandler = this.urlHandlerMap[urlType];
 
-    return requestHandler.doRequest(req, res, next);
-
+    return requestHandler._doRequest(req, res, next);
 };
 
 /**
@@ -227,7 +238,7 @@ Index.prototype.doRequest = function(req, res, next) {
  * @param url
  * @returns {*}
  */
-Index.prototype.getUrlType = function(url) {
+Index.prototype._getUrlType = function(url) {
 
     var type;
     var i, requestMetaKey, requestMetaKeys = Object.keys(consts.requestMeta);
@@ -248,7 +259,7 @@ Index.prototype.getUrlType = function(url) {
 /**
  * Passport configuration
  */
-Index.prototype.configureAuth = function() {
+Index.prototype._configureAuth = function() {
 
     var self = this;
 
@@ -256,14 +267,18 @@ Index.prototype.configureAuth = function() {
     var acl = new Acl();
 
     acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
-    acl.allow(['guest'], consts.requestMeta.MEDIA.regex, ['GET']);
-    acl.allow(['guest', 'admin'], consts.requestMeta.LOGIN.regex, ['GET', 'POST']);
-    acl.allow(['guest', 'admin'], consts.requestMeta.LOGOUT.regex, ['GET', 'POST']);
-    acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST', 'GET', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+
+    if(!this.serveAdmin) {
+        acl.allow([], consts.requestMeta.LOGIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    }
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {
@@ -328,12 +343,12 @@ Index.prototype.configureAuth = function() {
     return acl;
 };
 
-Index.prototype.createGuestUser = function() {
-    var User = this.dbSupport.getModel('User');
-    return new User({
+Index.prototype._createGuestUser = function() {
+    return {
         username: 'guest',
-        name: 'Guest'
-    });
+        role: 'guest',
+        name: 'Geoff Capes'
+    };
 };
 
 Index.prototype.getAdminDir = function() {

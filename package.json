@@ -9,7 +9,7 @@
     "url": "https://github.com/philmander/pspace"
   },
   "scripts": {
-    "test" : "gulp test",
+    "test": "gulp test",
     "start": "node app.js | ./node_modules/.bin/bunyan"
   },
   "private": true,
@@ -36,7 +36,8 @@
     "gulp-jasmine": "^1.0.1",
     "gulp-jshint": "^1.8.5",
     "gulp-watch": "^3.0.0",
-    "jasmine-node": "^1.14.5"
+    "jasmine-node": "^1.14.5",
+    "proxyquire": "^1.1.0"
   },
   "peerDependencies": {
     "express": "^4.10.1"

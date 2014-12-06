@@ -40,3 +40,16 @@
     background: #00e5a3;
     cursor: default;
 }
+
+.ps-edit-box {
+    outline: 2px solid #F1FF52;
+}
+.ps-btn {
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+    background: #0048AB;
+    padding: 10px;
+    border: none;
+}

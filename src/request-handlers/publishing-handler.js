@@ -5,9 +5,9 @@ var bunyan = require('bunyan');
 var Bluebird = require('bluebird');
 
 //util
-var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'publishing-handler' });
-logger.level(GLOBAL.logLevel);
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var PublishingHandler = function(dbSupport) {
     this.dbSupport = dbSupport;
@@ -20,7 +20,7 @@ module.exports = function(dbSupport) {
 /**
  * Process a valid request
  */
-PublishingHandler.prototype.doRequest = function(req, res, next) {
+PublishingHandler.prototype._doRequest = function(req, res, next) {
 
     if(req.method === 'POST') {
         return this.publishDrafts(req, res, next);
@@ -44,7 +44,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
     var orConditions = draftIds.map(function(id) {
         return {
             _id: id
-        }
+        };
     });
 
     var updates = [];

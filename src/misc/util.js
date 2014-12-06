@@ -1,14 +1,12 @@
-"use strict";
-
-var BluebirdPromise = require('bluebird');
+'use strict';
 
 var entityMap = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-    "/": "&#x2F;"
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;',
+    '/': '&#x2F;'
 };
 
 module.exports = {
@@ -38,7 +36,7 @@ module.exports = {
      * @returns {*}
      */
     escapeHtml: function(value) {
-        if(typeof value === "string") {
+        if(typeof value === 'string') {
             return value.replace(/[&<>"'\/]/g, function (s) {
                 return entityMap[s];
             });

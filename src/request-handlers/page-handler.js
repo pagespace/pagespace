@@ -9,7 +9,8 @@ var BluebirdPromise = require('bluebird');
 //util
 var util = require('../misc/util');
 var logger =  bunyan.createLogger({ name: 'page-handler' });
-logger.level(GLOBAL.logLevel);
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var adminbarFilePromise = null;
 
@@ -25,7 +26,7 @@ module.exports = function(dbSupport, parts) {
 /**
  * Process a valid request
  */
-PageHandler.prototype.doRequest = function(req, res, next) {
+PageHandler.prototype._doRequest = function(req, res, next) {
 
     var self = this;
 
@@ -54,7 +55,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var editMode = typeof req.session.edit === "boolean" && req.session.edit;
     var stagingMode = typeof req.session.staging === "boolean" && req.session.staging;
 
-    var modelModifier = !stagingMode ? 'live' : null
+    var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
     var filter = {
         url: req.url
@@ -96,9 +97,9 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     }).spread(function() {
         var args = Array.prototype.slice.call(arguments, 0);
         var page = args.shift();
-        var adminbar = args.shift();
+        var adminBar = args.shift();
 
-        hbs.registerPartial('adminbar', adminbar);
+        hbs.registerPartial('adminbar', adminBar);
 
         var pageData = {};
         pageData.edit = editMode;

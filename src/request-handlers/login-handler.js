@@ -8,7 +8,8 @@ var util = require('../misc/util');
 
 //util
 var logger =  bunyan.createLogger({ name: 'login-handler' });
-logger.level(GLOBAL.logLevel);
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var LoginHandler = function() {
 };
@@ -17,7 +18,7 @@ module.exports = function() {
     return new LoginHandler();
 };
 
-LoginHandler.prototype.doRequest = function(req, res, next) {
+LoginHandler.prototype._doRequest = function(req, res, next) {
 
     logger.info('Processing login request for ' + req.url);
 

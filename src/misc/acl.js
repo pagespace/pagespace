@@ -24,17 +24,16 @@ Acl.prototype.allow = function(roles, resource, actions) {
  */
 Acl.prototype.isAllowed = function(role, resource, action) {
 
-    var allowed = false;
-
     var permission, i;
-    for(i = this.permissions.length - 1; i >= 0 && !allowed; i--) {
+    for(i = this.permissions.length - 1; i >= 0; i--) {
         permission = this.permissions[i];
         if(permission.resourcePattern.test(resource) && permission.actions.indexOf(action) > -1) {
-            allowed = permission.roles.indexOf(role) > -1;
+            return permission.roles.indexOf(role) > -1;
         }
     }
 
-    return allowed;
+    return false;
 };
+
 
 module.exports = Acl;

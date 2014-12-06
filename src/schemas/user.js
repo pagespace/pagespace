@@ -70,6 +70,5 @@ function generateSchema() {
 
     return userSchema;
 }
-//var User = mongoose.model('User', userSchema);
 
 module.exports = generateSchema;

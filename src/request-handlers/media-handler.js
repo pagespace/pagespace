@@ -2,21 +2,20 @@
 
 //support
 var bunyan = require('bunyan');
-var Bluebird = require('bluebird');
 var send = require('send');
 
 //util
 var formidable = require('formidable'),
-    http = require('http'),
     util = require('util'),
     consts = require('../app-constants');
 
-var logger =  bunyan.createLogger({ name: 'publishing-handler' });
-logger.level(GLOBAL.logLevel);
+var logger =  bunyan.createLogger({ name: 'media-handler' });
+var logLevel = require('../misc/log-level');
+logger.level(logLevel().get());
 
 var MediaHandler = function(dbSupport, mediaDir) {
     this.dbSupport = dbSupport;
-    this.mediaDir = mediaDir
+    this.mediaDir = mediaDir;
 };
 
 module.exports = function(dbSupport, mediaDir) {
@@ -26,7 +25,7 @@ module.exports = function(dbSupport, mediaDir) {
 /**
  * Process a valid request
  */
-MediaHandler.prototype.doRequest = function(req, res, next) {
+MediaHandler.prototype._doRequest = function(req, res, next) {
 
     if(req.method === 'POST') {
         return this.upload(req, res, next);
@@ -55,11 +54,11 @@ MediaHandler.prototype.serve = function(req, res, next) {
 
             // forward non-404 errors
             stream.on('error', function error(err) {
-                next(err.status === 404 ? null : err)
+                next(err.status === 404 ? null : err);
             });
 
             // pipe
-            stream.pipe(res)
+            stream.pipe(res);
         }
     });
 
