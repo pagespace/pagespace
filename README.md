@@ -1,4 +1,4 @@
-pspace
-======
+pagespace
+=========
 
-node js cms blog thing
+Manageable and versatile web sites powered by Node.js
