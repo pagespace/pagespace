@@ -22,7 +22,7 @@ gulp.task('buildAdmin', function() {
 });
 
 gulp.task('watch', [ 'buildAdmin' ], function() {
-    gulp.watch('./admin-app/static/dashboard/*.js', ['buildAdmin']);
+    gulp.watch('./admin-app/static/dashboard/**/*.js', ['buildAdmin']);
 });
 
 gulp.task('default', ['lint'], function() {

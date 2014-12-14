@@ -5,11 +5,12 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('templateController', function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, templateService) {
 
     $rootScope.pageTitle = 'Template';
 
     var templateId = $routeParams.templateId;
+    $scope.templateId = templateId;
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
@@ -56,7 +57,12 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
         $location.path('/templates');
     };
 
-    $scope.save = function() {
+    $scope.save = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
 
         //remove any empty properties
         for(var i = $scope.template.properties.length - 1; i >= 0; i--) {
@@ -85,7 +91,7 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
 
     $scope.remove = function() {
         templateService.deleteTemplate($scope.template._id).success(function (res) {
-            console.log('Template saved');
+            console.log('Template deleted');
             $location.path('/templates');
         }).error(function(err) {
             $rootScope.showError('Error deleting template', err);

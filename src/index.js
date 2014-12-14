@@ -124,7 +124,8 @@ Index.prototype.init = function(options) {
                 var defaultAdmin = new User({
                     username: "admin",
                     password: "admin",
-                    role: "admin"
+                    role: "admin",
+                    updatePassword: true
                 });
                 defaultAdmin.save(function(err) {
                     if(err) {
@@ -349,10 +350,6 @@ Index.prototype._createGuestUser = function() {
         role: 'guest',
         name: 'Geoff Capes'
     };
-};
-
-Index.prototype.getAdminDir = function() {
-    return path.join(__dirname, '/../admin-app');
 };
 
 Index.prototype.getViewDir = function() {

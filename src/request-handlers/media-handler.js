@@ -61,7 +61,7 @@ MediaHandler.prototype.serve = function(req, res, next) {
             });
 
             // pipe
-            logger.info('Straming media to client for  %s', model.path)
+            logger.info('Streaming media to client for  %s', model.path);
             stream.pipe(res);
         }
     });

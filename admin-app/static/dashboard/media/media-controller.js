@@ -6,10 +6,11 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaController', function($scope, $rootScope, $location, mediaService) {
+adminApp.controller('MediaController', function($scope, $rootScope, $location, mediaService) {
     $rootScope.pageTitle = 'Media';
 
     $scope.isImage = mediaService.isImage;
+    $scope.getMimeClass = mediaService.getMimeClass;
 
     $scope.showItem = function(item) {
         $location.path('/media/' + item._id);

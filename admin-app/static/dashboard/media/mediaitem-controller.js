@@ -6,7 +6,7 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('mediaItemController', function($scope, $rootScope, $location, $routeParams, mediaService) {
+    adminApp.controller('MediaItemController', function($scope, $rootScope, $location, $routeParams, mediaService) {
         $rootScope.pageTitle = 'Media';
 
         $scope.isImage = mediaService.isImage;
@@ -24,6 +24,11 @@
                     $rootScope.showError("Error deleting page", err);
                 });
             }
+        };
+
+
+        $scope.cancel = function() {
+            $location.path('/media');
         };
 
         mediaService.getItem(mediaId).success(function(item) {

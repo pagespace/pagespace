@@ -16,14 +16,13 @@
             return $http.post('/_api/templates', templateData);
         };
 
-        TemplateService.prototype.deleteTemplate = function(templateId) {
-            return $http.delete('/_api/templates/' + templateId);
-        };
-
         TemplateService.prototype.updateTemplate = function(templateId, templateData) {
             return $http.put('/_api/templates/' + templateId, templateData);
         };
 
+        TemplateService.prototype.deleteTemplate = function(templateId) {
+            return $http.delete('/_api/templates/' + templateId);
+        };
 
         return new TemplateService();
     });

@@ -9,57 +9,86 @@
 
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
+
+            //pages
             when('/pages/:pageId', {
-                templateUrl:  _appRoot + '/static/partials/page.html',
-                controller: 'pageController'
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
             }).
-            when('/templates', {
-                templateUrl:  _appRoot + '/static/partials/template-list.html',
-                controller: 'templateListController'
-            }).
-            when('/templates/new', {
-                templateUrl:  _appRoot + '/static/partials/template.html',
-                controller: 'templateController'
-            }).
-            when('/templates/:templateId', {
-                templateUrl:  _appRoot + '/static/partials/template.html',
-                controller: 'templateController'
+
+            //parts
+            when('/parts', {
+                templateUrl:  _appRoot + '/static/dashboard/parts/part-list.html',
+                controller: 'PartListController'
             }).
             when('/parts/new', {
-                templateUrl:  _appRoot + '/static/partials/part.html',
-                controller: 'partController'
+                templateUrl:  _appRoot + '/static/dashboard/parts/part.html',
+                controller: 'PartController'
             }).
             when('/parts/:partId', {
-                templateUrl:  _appRoot + '/static/partials/part.html',
-                controller: 'partController'
+                templateUrl:  _appRoot + '/static/dashboard/parts/part.html',
+                controller: 'PartController'
             }).
-            when('/parts', {
-                templateUrl:  _appRoot + '/static/partials/part-list.html',
-                controller: 'partListController'
-            }).
+
+
+            //publishing
             when('/publishing', {
-                templateUrl:  _appRoot + '/static/partials/publishing.html',
-                controller: 'publishingController'
+                templateUrl:  _appRoot + '/static/dashboard/publishing/publishing.html',
+                controller: 'PublishingController'
             }).
+
+            //media
             when('/media', {
-                templateUrl:  _appRoot + '/static/partials/media.html',
-                controller: 'mediaController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media.html',
+                controller: 'MediaController'
             }).
             when('/media/upload', {
-                templateUrl:  _appRoot + '/static/partials/media-upload.html',
-                controller: 'mediaUploadController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media-upload.html',
+                controller: 'MediaUploadController'
             }).
             when('/media/:mediaId', {
-                templateUrl:  _appRoot + '/static/partials/media-item.html',
-                controller: 'mediaItemController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media-item.html',
+                controller: 'MediaItemController'
             }).
+
+            //macros
             when('/macros', {
-                templateUrl:  _appRoot + '/static/partials/macros.html',
-                controller: 'macrosController'
+                templateUrl:  _appRoot + '/static/dashboard/macros/macros.html',
+                controller: 'MacrosController'
             }).
+
+            //templates
+            when('/templates', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template-list.html',
+                controller: 'TemplateListController'
+            }).
+            when('/templates/new', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template.html',
+                controller: 'TemplateController'
+            }).
+            when('/templates/:templateId', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template.html',
+                controller: 'TemplateController'
+            }).
+
+            //users
+            when('/users', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user-list.html',
+                controller: 'UserListController'
+            }).
+            when('/users/new', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user.html',
+                controller: 'UserController'
+            }).
+            when('/users/:userId', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user.html',
+                controller: 'UserController'
+            }).
+
+            //default to sitemap
             otherwise({
-                templateUrl:  _appRoot +'/static/partials/site-map.html',
-                controller: 'sitemapController'
+                templateUrl:  _appRoot +'/static/dashboard/pages/site-map.html',
+                controller: 'SitemapController'
             });
     }]);
 })();

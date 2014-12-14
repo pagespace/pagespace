@@ -9,60 +9,153 @@
 
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
+
+            //pages
             when('/pages/:pageId', {
-                templateUrl:  _appRoot + '/static/partials/page.html',
-                controller: 'pageController'
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
             }).
-            when('/templates', {
-                templateUrl:  _appRoot + '/static/partials/template-list.html',
-                controller: 'templateListController'
-            }).
-            when('/templates/new', {
-                templateUrl:  _appRoot + '/static/partials/template.html',
-                controller: 'templateController'
-            }).
-            when('/templates/:templateId', {
-                templateUrl:  _appRoot + '/static/partials/template.html',
-                controller: 'templateController'
+
+            //parts
+            when('/parts', {
+                templateUrl:  _appRoot + '/static/dashboard/parts/part-list.html',
+                controller: 'PartListController'
             }).
             when('/parts/new', {
-                templateUrl:  _appRoot + '/static/partials/part.html',
-                controller: 'partController'
+                templateUrl:  _appRoot + '/static/dashboard/parts/part.html',
+                controller: 'PartController'
             }).
             when('/parts/:partId', {
-                templateUrl:  _appRoot + '/static/partials/part.html',
-                controller: 'partController'
+                templateUrl:  _appRoot + '/static/dashboard/parts/part.html',
+                controller: 'PartController'
             }).
-            when('/parts', {
-                templateUrl:  _appRoot + '/static/partials/part-list.html',
-                controller: 'partListController'
-            }).
+
+
+            //publishing
             when('/publishing', {
-                templateUrl:  _appRoot + '/static/partials/publishing.html',
-                controller: 'publishingController'
+                templateUrl:  _appRoot + '/static/dashboard/publishing/publishing.html',
+                controller: 'PublishingController'
             }).
+
+            //media
             when('/media', {
-                templateUrl:  _appRoot + '/static/partials/media.html',
-                controller: 'mediaController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media.html',
+                controller: 'MediaController'
             }).
             when('/media/upload', {
-                templateUrl:  _appRoot + '/static/partials/media-upload.html',
-                controller: 'mediaUploadController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media-upload.html',
+                controller: 'MediaUploadController'
             }).
             when('/media/:mediaId', {
-                templateUrl:  _appRoot + '/static/partials/media-item.html',
-                controller: 'mediaItemController'
+                templateUrl:  _appRoot + '/static/dashboard/media/media-item.html',
+                controller: 'MediaItemController'
             }).
+
+            //macros
             when('/macros', {
-                templateUrl:  _appRoot + '/static/partials/macros.html',
-                controller: 'macrosController'
+                templateUrl:  _appRoot + '/static/dashboard/macros/macros.html',
+                controller: 'MacrosController'
             }).
+
+            //templates
+            when('/templates', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template-list.html',
+                controller: 'TemplateListController'
+            }).
+            when('/templates/new', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template.html',
+                controller: 'TemplateController'
+            }).
+            when('/templates/:templateId', {
+                templateUrl:  _appRoot + '/static/dashboard/templates/template.html',
+                controller: 'TemplateController'
+            }).
+
+            //users
+            when('/users', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user-list.html',
+                controller: 'UserListController'
+            }).
+            when('/users/new', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user.html',
+                controller: 'UserController'
+            }).
+            when('/users/:userId', {
+                templateUrl:  _appRoot + '/static/dashboard/users/user.html',
+                controller: 'UserController'
+            }).
+
+            //default to sitemap
             otherwise({
-                templateUrl:  _appRoot +'/static/partials/site-map.html',
-                controller: 'sitemapController'
+                templateUrl:  _appRoot +'/static/dashboard/pages/site-map.html',
+                controller: 'SitemapController'
             });
     }]);
 })();
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('bsHasError', function() {
+        return {
+            restrict: "A",
+            link: function(scope, element, attrs, ctrl) {
+                //find parent form
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.bsHasError;
+
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    if(field) {
+                        scope.$watch(function() {
+                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
+                            element.toggleClass('has-success', field.$valid && field.$dirty);
+                        });
+                    }
+                }
+            }
+        };
+    });
+})();
+
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('psFieldMatch', function() {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, model) {
+
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.psFieldMatch;
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    model.$parsers.push(function (value) {
+                        var valid = value === field.$viewValue;
+                        model.$setValidity('psFieldMatch', valid);
+                        return valid ? value : undefined;
+                    });
+                }
+            }
+        };
+    });
+})();
+
 
 (function() {
 
@@ -71,7 +164,7 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("macrosController", function($scope, $rootScope, $routeParams, $location, templateService) {
+    adminApp.controller("MacrosController", function($scope, $rootScope, $routeParams, $location, templateService) {
         $rootScope.pageTitle = "Macros";
     });
 
@@ -84,10 +177,11 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaController', function($scope, $rootScope, $location, mediaService) {
+adminApp.controller('MediaController', function($scope, $rootScope, $location, mediaService) {
     $rootScope.pageTitle = 'Media';
 
     $scope.isImage = mediaService.isImage;
+    $scope.getMimeClass = mediaService.getMimeClass;
 
     $scope.showItem = function(item) {
         $location.path('/media/' + item._id);
@@ -142,6 +236,10 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
             return item && !!item.type.match(/image\/[jpeg|png|gif]/);
         };
 
+        MediaService.prototype.getMimeClass = function(item) {
+            return 'media-' + item.type.split('/')[1];
+        };
+
         //thanks http://stackoverflow.com/a/14919494/200113
         MediaService.prototype.humanFileSize = function(bytes, si) {
             var exp = Math.log(bytes) / Math.log(1024) | 0;
@@ -165,7 +263,7 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('mediaItemController', function($scope, $rootScope, $location, $routeParams, mediaService) {
+    adminApp.controller('MediaItemController', function($scope, $rootScope, $location, $routeParams, mediaService) {
         $rootScope.pageTitle = 'Media';
 
         $scope.isImage = mediaService.isImage;
@@ -185,6 +283,11 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
             }
         };
 
+
+        $scope.cancel = function() {
+            $location.path('/media');
+        };
+
         mediaService.getItem(mediaId).success(function(item) {
             $scope.item = item;
         }).error(function(err) {
@@ -200,7 +303,7 @@ adminApp.controller('mediaController', function($scope, $rootScope, $location, m
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
+adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
@@ -222,7 +325,12 @@ adminApp.controller('mediaUploadController', function($scope, $rootScope, $locat
         }
     };
 
-    $scope.upload = function() {
+    $scope.upload = function(form) {
+
+        if(form.$invalid || !$scope.media.file) {
+            $scope.submitted = true;
+            return;
+        }
 
         mediaService.uploadItem($scope.media.file, {
            name: $scope.media.name,
@@ -292,13 +400,14 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("pageController",
+adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, powerMode) {
 
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
+    $scope.pageId = pageId;
 
     $scope.powerMode = true;
 
@@ -354,7 +463,13 @@ adminApp.controller("pageController",
         });
     };
 
-    $scope.save = function() {
+    $scope.save = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
+
         var page = $scope.page;
 
         //unpopulate
@@ -546,185 +661,7 @@ adminApp.directive('viewTemplate', function() {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("partController", function($scope, $rootScope, $routeParams, $location, partService) {
-
-    $rootScope.pageTitle = "Page Part";
-
-    var partId = $routeParams.partId;
-
-    $scope.part = {};
-
-    if(partId) {
-        partService.getPart(partId).success(function(part) {
-            $scope.part = part;
-        }).error(function(err) {
-            $rootScope.showError("Error getting part", err);
-        });
-    }
-
-    $scope.cancel = function() {
-        $location.path("/parts");
-    };
-
-    $scope.save = function() {
-        if(partId) {
-            partService.updatePart(partId, $scope.part).success(function(res) {
-                console.log("Part saved");
-                $rootScope.showSuccess("Part updated.");
-                $location.path("/parts");
-            }).error(function(err) {
-                $rootScope.showError("Error updating part", err);
-            });
-        } else {
-            partService.createPart($scope.part).success(function(res) {
-                console.log("Part created");
-                $rootScope.showSuccess("Part created.");
-                $location.path("/parts");
-            }).error(function(err) {
-                $rootScope.showError("Error saving part", err);
-            });
-        }
-    };
-
-    $scope.remove = function() {
-        partService.deletePart($scope.part._id).success(function (res) {
-            $rootScope.showInfo("Part removed", err);
-            $location.path("/parts");
-        }).error(function(err) {
-            $rootScope.showError("Error deleting part", err);
-        });
-    };
-});
-
-
-
-})();
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller('partListController', function($scope, $rootScope, $routeParams, $location, partService) {
-
-    $rootScope.pageTitle = "Page Part";
-
-    $scope.parts = [];
-
-    partService.getParts().success(function(parts) {
-        $scope.parts = parts;
-    }).error(function(err) {
-        $rootScope.showError("Error getting parts", err);
-    });
-
-});
-
-})();
-(function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('partService', function($http) {
-
-        function PartService() {
-            this.pageCache = [];
-        }
-        PartService.prototype.getParts = function() {
-            return $http.get('/_api/parts');
-        };
-        PartService.prototype.getPart = function(partId) {
-            return $http.get('/_api/parts/' + partId);
-        };
-
-        PartService.prototype.createPart = function(partData) {
-            return $http.post('/_api/parts', partData);
-        };
-
-        PartService.prototype.deletePart = function(partId) {
-            return $http.delete('/_api/parts/' + partId);
-        };
-
-        PartService.prototype.updatePart = function(partId, partData) {
-            return $http.put('/_api/parts/' + partId, partData);
-        };
-
-
-        return new PartService();
-    });
-
-})();
-
-
-
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller('publishingController', function($scope, $rootScope, $routeParams, $location, publishingService) {
-    $rootScope.pageTitle = 'Publishing';
-
-    //get all pages with drafts
-    publishingService.getDrafts().success(function(drafts) {
-        $scope.drafts = drafts;
-    }).error(function(err) {
-        $rootScope.showError('Error getting drafts to publish', err);
-    });
-
-    $scope.cancel = function() {
-        $location.path('/');
-    };
-
-    $scope.publish = function() {
-        var toPublishIds = $scope.drafts.filter(function(page) {
-            return page.queued;
-        }).map(function(page) {
-            return page._id;
-        });
-
-        publishingService.publish(toPublishIds).success(function() {
-            $rootScope.showSuccess('Publishing successful');
-            $location.path('/');
-        }).error(function(err) {
-            $rootScope.showError('Error performing publish', err);
-        });
-    };
-});
-
-})();
-(function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('publishingService', function($http, pageService) {
-
-        function PublishingService() {
-
-        }
-        PublishingService.prototype.getDrafts = function() {
-            return pageService.getPages({
-                draft: true
-            });
-        };
-
-        PublishingService.prototype.publish = function(draftIds) {
-            return $http.post('/_publish/pages', draftIds);
-        };
-
-        return new PublishingService();
-    });
-
-})();
-
-
-
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller("sitemapController", function($scope, $rootScope, $location, pageService) {
+adminApp.controller("SitemapController", function($scope, $rootScope, $location, pageService) {
 
     $rootScope.pageTitle = "Sitemap";
 
@@ -795,11 +732,196 @@ adminApp.controller("sitemapController", function($scope, $rootScope, $location,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('templateController', function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, partService) {
+
+    $rootScope.pageTitle = "Page Part";
+
+    var partId = $routeParams.partId;
+    $scope.partId = partId;
+
+    $scope.part = {};
+
+    if(partId) {
+        partService.getPart(partId).success(function(part) {
+            $scope.part = part;
+        }).error(function(err) {
+            $rootScope.showError("Error getting part", err);
+        });
+    }
+
+    $scope.cancel = function() {
+        $location.path("/parts");
+    };
+
+    $scope.save = function(form) {
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
+
+        if(partId) {
+            partService.updatePart(partId, $scope.part).success(function(res) {
+                console.log("Part saved");
+                $rootScope.showSuccess("Part updated.");
+                $location.path("/parts");
+            }).error(function(err) {
+                $rootScope.showError("Error updating part", err);
+            });
+        } else {
+            partService.createPart($scope.part).success(function(res) {
+                console.log("Part created");
+                $rootScope.showSuccess("Part created.");
+                $location.path("/parts");
+            }).error(function(err) {
+                $rootScope.showError("Error saving part", err);
+            });
+        }
+    };
+
+    $scope.remove = function() {
+        partService.deletePart($scope.part._id).success(function (res) {
+            $rootScope.showInfo("Part removed", err);
+            $location.path("/parts");
+        }).error(function(err) {
+            $rootScope.showError("Error deleting part", err);
+        });
+    };
+});
+
+
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('PartListController', function($scope, $rootScope, $routeParams, $location, partService) {
+
+    $rootScope.pageTitle = "Page Parts";
+
+    $scope.parts = [];
+
+    partService.getParts().success(function(parts) {
+        $scope.parts = parts;
+    }).error(function(err) {
+        $rootScope.showError("Error getting parts", err);
+    });
+
+});
+
+})();
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('partService', function($http) {
+
+        function PartService() {
+            this.pageCache = [];
+        }
+        PartService.prototype.getParts = function() {
+            return $http.get('/_api/parts');
+        };
+        PartService.prototype.getPart = function(partId) {
+            return $http.get('/_api/parts/' + partId);
+        };
+
+        PartService.prototype.createPart = function(partData) {
+            return $http.post('/_api/parts', partData);
+        };
+
+        PartService.prototype.deletePart = function(partId) {
+            return $http.delete('/_api/parts/' + partId);
+        };
+
+        PartService.prototype.updatePart = function(partId, partData) {
+            return $http.put('/_api/parts/' + partId, partData);
+        };
+
+
+        return new PartService();
+    });
+
+})();
+
+
+
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $location, publishingService) {
+    $rootScope.pageTitle = 'Publishing';
+
+    //get all pages with drafts
+    publishingService.getDrafts().success(function(drafts) {
+        $scope.drafts = drafts;
+    }).error(function(err) {
+        $rootScope.showError('Error getting drafts to publish', err);
+    });
+
+    $scope.cancel = function() {
+        $location.path('/');
+    };
+
+    $scope.publish = function() {
+        var toPublishIds = $scope.drafts.filter(function(page) {
+            return page.queued;
+        }).map(function(page) {
+            return page._id;
+        });
+
+        publishingService.publish(toPublishIds).success(function() {
+            $rootScope.showSuccess('Publishing successful');
+            $location.path('/');
+        }).error(function(err) {
+            $rootScope.showError('Error performing publish', err);
+        });
+    };
+});
+
+})();
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('publishingService', function($http, pageService) {
+
+        function PublishingService() {
+
+        }
+        PublishingService.prototype.getDrafts = function() {
+            return pageService.getPages({
+                draft: true
+            });
+        };
+
+        PublishingService.prototype.publish = function(draftIds) {
+            return $http.post('/_publish/pages', draftIds);
+        };
+
+        return new PublishingService();
+    });
+
+})();
+
+
+
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, templateService) {
 
     $rootScope.pageTitle = 'Template';
 
     var templateId = $routeParams.templateId;
+    $scope.templateId = templateId;
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
@@ -846,7 +968,12 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
         $location.path('/templates');
     };
 
-    $scope.save = function() {
+    $scope.save = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
 
         //remove any empty properties
         for(var i = $scope.template.properties.length - 1; i >= 0; i--) {
@@ -875,7 +1002,7 @@ adminApp.controller('templateController', function($scope, $rootScope, $routePar
 
     $scope.remove = function() {
         templateService.deleteTemplate($scope.template._id).success(function (res) {
-            console.log('Template saved');
+            console.log('Template deleted');
             $location.path('/templates');
         }).error(function(err) {
             $rootScope.showError('Error deleting template', err);
@@ -1004,7 +1131,7 @@ adminApp.directive('drawTemplate', function() {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("templateListController", function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller("TemplateListController", function($scope, $rootScope, $routeParams, $location, templateService) {
 
     $rootScope.pageTitle = "Templates";
 
@@ -1037,16 +1164,126 @@ adminApp.controller("templateListController", function($scope, $rootScope, $rout
             return $http.post('/_api/templates', templateData);
         };
 
-        TemplateService.prototype.deleteTemplate = function(templateId) {
-            return $http.delete('/_api/templates/' + templateId);
-        };
-
         TemplateService.prototype.updateTemplate = function(templateId, templateData) {
             return $http.put('/_api/templates/' + templateId, templateData);
         };
 
+        TemplateService.prototype.deleteTemplate = function(templateId) {
+            return $http.delete('/_api/templates/' + templateId);
+        };
 
         return new TemplateService();
+    });
+
+})();
+
+
+
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, userService) {
+        $rootScope.pageTitle = "User";
+
+        var userId = $routeParams.userId;
+        $scope.userId = userId;
+
+        $scope.roles = [{
+            name: "admin",
+            label: "Admin"
+        }];
+
+        if(userId) {
+            userService.getUser(userId).success(function(user) {
+                $scope.user = user;
+            });
+        }
+
+        $scope.cancel = function() {
+            $location.path('/users');
+        };
+
+        $scope.save = function(form) {
+            if(form.$invalid) {
+                $scope.submitted = true;
+                return;
+            }
+            var user = $scope.user;
+            if(userId) {
+                userService.updateUser(userId, user).success(function() {
+                    $rootScope.showSuccess('User updated.');
+                    $location.path('/users');
+                }).error(function(err) {
+                    $rootScope.showError('Error updating user', err);
+                });
+            } else {
+                userService.createUser(user).success(function() {
+                    $rootScope.showSuccess('User created.');
+                    $location.path('/users');
+                }).error(function(err) {
+                    $rootScope.showError('Error creating user', err);
+                });
+            }
+        };
+
+        $scope.remove = function() {
+            userService.deleteTemplate($scope.user._id).success(function (res) {
+                console.log('User removed');
+                $location.path('/templates');
+            }).error(function(err) {
+                $rootScope.showError('Error deleting template', err);
+            });
+        };
+    });
+
+})();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller("UserListController", function($scope, $rootScope, $location, userService) {
+        $rootScope.pageTitle = "Users";
+
+        userService.getUsers().success(function(users) {
+            $scope.users = users;
+        });
+    });
+
+})();
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('userService', function($http) {
+
+        function UserService() {
+
+        }
+        UserService.prototype.getUsers = function() {
+            return $http.get('/_api/users');
+        };
+        UserService.prototype.getUser = function(userId) {
+            return $http.get('/_api/users/' + userId);
+        };
+
+        UserService.prototype.createUser = function(userData) {
+            return $http.post('/_api/users', userData);
+        };
+
+        UserService.prototype.deleteUser = function(userId) {
+            return $http.delete('/_api/users/' + userId);
+        };
+
+        UserService.prototype.updateUser = function(userId, userData) {
+            return $http.put('/_api/users/' + userId, userData);
+        };
+
+        return new UserService();
     });
 
 })();

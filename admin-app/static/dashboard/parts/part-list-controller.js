@@ -5,9 +5,9 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('partListController', function($scope, $rootScope, $routeParams, $location, partService) {
+adminApp.controller('PartListController', function($scope, $rootScope, $routeParams, $location, partService) {
 
-    $rootScope.pageTitle = "Page Part";
+    $rootScope.pageTitle = "Page Parts";
 
     $scope.parts = [];
 

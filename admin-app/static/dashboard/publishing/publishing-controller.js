@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('publishingController', function($scope, $rootScope, $routeParams, $location, publishingService) {
+adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $location, publishingService) {
     $rootScope.pageTitle = 'Publishing';
 
     //get all pages with drafts

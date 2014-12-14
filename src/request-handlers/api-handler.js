@@ -40,6 +40,16 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
         media: ''
     };
 
+    var defaultRestrictedFields = [ '__v']
+
+    var restrictedFields = {
+        pages: [],
+        parts: [],
+        templates: [],
+        users: [ 'password', 'updatePassword', 'rememberToken' ],
+        media: [ 'path' ]
+    };
+
     var apiInfo = consts.requestMeta.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
@@ -67,8 +77,11 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                 }
             }
 
+            var restricted = restrictedFields[apiType].concat(defaultRestrictedFields).map(function(field) {
+                return '-' + field;
+            }).join(' ');
             var populations = populationsMap[apiType];
-            Model.find(filter).populate(populations).exec(function(err, results) {
+            Model.find(filter, restricted).populate(populations).exec(function(err, results) {
                 if(err) {
                     logger.error(err, 'Trying to do API GET for %s', apiType);
                     return next(err);
@@ -114,7 +127,31 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                 var data = req.body;
                 data.draft = true;
                 logger.debug(TAB + req.body);
-                Model.findByIdAndUpdate(itemId, { $set: data }, function (err, model) {
+                Model.findById(itemId, function (err, doc) {
+                    if (err) {
+                        logger.error(err, 'Trying to save for API PUT for %s', apiType);
+                        next(err);
+                    } else if(doc) {
+                        //need to do this because findByIdAndUpdate does invoke mongoose hooks
+                        //https://github.com/LearnBoost/mongoose/issues/964
+                        for(var key in data) {
+                            if(data.hasOwnProperty(key)) {
+                                doc[key] = data[key];
+                            }
+                        }
+
+                        doc.save(function (err) {
+                            if(err) {
+                                logger.error(err, 'Trying to save for API PUT for %s', apiType);
+                                next(err);
+                            } else {
+                                logger.info('Updated successfully');
+                                res.json(model);
+                            }
+                        });
+                    }
+                });
+                /*Model.findByIdAndUpdate(itemId, { $set: data }, function (err, model) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);
                         next(err);
@@ -122,7 +159,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                         logger.info('Updated successfully');
                         res.json(model);
                     }
-                });
+                });*/
             }
         } else if(req.method === 'DELETE') {
             if (!itemId) {

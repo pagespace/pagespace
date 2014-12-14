@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('mediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
+adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
@@ -27,7 +27,12 @@ adminApp.controller('mediaUploadController', function($scope, $rootScope, $locat
         }
     };
 
-    $scope.upload = function() {
+    $scope.upload = function(form) {
+
+        if(form.$invalid || !$scope.media.file) {
+            $scope.submitted = true;
+            return;
+        }
 
         mediaService.uploadItem($scope.media.file, {
            name: $scope.media.name,

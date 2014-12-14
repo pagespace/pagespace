@@ -1,4 +1,4 @@
-✓ Populate some data, and test a query. DONE
+✓ Populate some data, and test a query.
 ✓ Nested population with Model.populate, _ref notation (page._template), get template and start rendering
 ✓ Read possible urls from db and add as ready promise
 ✓ Implement rest apis for parts, pages, templates
@@ -23,6 +23,8 @@
 ✓ template properties
 ✓ unit tests
 * form validations
+* change admin password / user management
+* orange tea
 * Custom user starter parts?
 * Starter parts
     html (in page) ✓
@@ -33,13 +35,13 @@
 * docs
 * macros.
 * Select media image from ck picker
-
 * url management
 * archiving
 * Dashboard color switcher
 
-* orange tea
-
 BUGS
 * Not found returns 500 (not 404) if page is not in db
 * Dashboard errors wrapped in html doc
+
+CURRENT
+* Send data back to user, confirm password validation

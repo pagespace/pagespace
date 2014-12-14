@@ -39,7 +39,7 @@ consts.requestMeta = {
     },
     ADMIN: {
         type: consts.requests.ADMIN,
-        regex: new RegExp('^/_admin/(dashboard)/?(.*)')
+        regex: new RegExp('^/_admin/(.+)')
     },
     API: {
         type: consts.requests.API,

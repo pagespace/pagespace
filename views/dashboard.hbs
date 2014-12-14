@@ -25,26 +25,60 @@
 
 <div class="container-fluid">
     <div class="row full-height">
-        <header class="col-sm-2">
+        <header id="sidebar" class="col-sm-2">
             <h1>Dashboard</h1>
+
+            <ul class="nav" style="text-align: center">
+                <li>
+                    <h3>Welcome {{username}}</h3>
+                </li>
+            </ul>
+
+
             <ul class="nav">
                 <li><a href="#/">Pages</a></li>
-                <li><a href="#/macros">Macros</a></li>
+                <!--<li><a href="#/macros">Macros</a></li>-->
                 <li><a href="#/media">Media</a></li>
                 <li><a href="#/publishing">Publishing</a></li>
                 <li><a href="#/templates">Templates</a></li>
                 <li><a href="#/parts">Page Parts</a></li>
+                <li><a href="#/users">Users</a></li>
             </ul>
-            <ul class="nav" style="margin-top: 3em">
+            <ul class="nav" style="margin-top: 1em">
                 <li><a href="/_logout">Logout</a></li>
+            </ul>
+            <ul class="nav" style="margin-top: 1em">
+                <li style="text-align: left">
+                    <span data-color="#cbcbcb"></span>
+                    <span data-color="#ff005a"></span>
+                    <span data-color="#00a2f3"></span>
+                    <span data-color="#faa129"></span>
+                    <span data-color="#29f38f"></span>
+                </li>
             </ul>
         </header>
         <div class="col-sm-10">
-           <div ng-include="'{{appRoot}}/static/partials/notifications.html'"></div>
+           <div ng-include="'{{appRoot}}/static/dashboard/notifications/notifications.html'"></div>
            <div ng-view></div>
         </div>
     </div>
 </div>
+<script>
+    (function() {
+        //change the sidebar color stuff
+        var sidebarColor = window.localStorage.getItem('sidebarColor');
+        if(sidebarColor) {
+            document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+        }
+        document.body.addEventListener('click', function (e) {
+            if (e.target.getAttribute('data-color')) {
+                sidebarColor = e.target.getAttribute('data-color');
+                window.localStorage.setItem('sidebarColor', sidebarColor);
+                document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+            }
+        });
+    })();
 
+</script>
 </body>
 </html>

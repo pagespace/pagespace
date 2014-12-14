@@ -5,13 +5,14 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("pageController",
+adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, powerMode) {
 
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
+    $scope.pageId = pageId;
 
     $scope.powerMode = true;
 
@@ -67,7 +68,13 @@ adminApp.controller("pageController",
         });
     };
 
-    $scope.save = function() {
+    $scope.save = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
+
         var page = $scope.page;
 
         //unpopulate

@@ -1,12 +1,12 @@
 {
   "name": "pagespace",
   "version": "0.0.1",
-  "homepage": "https://github.com/philmander/pspace",
+  "homepage": "https://github.com/philmander/pagespace",
   "author": "Phil Mander <philip.mander@gamil.com>",
   "description": "Manageable and versatile web sites powered by Node.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/philmander/pspace"
+    "url": "https://github.com/philmander/pagespace"
   },
   "scripts": {
     "test": "gulp test",
@@ -27,7 +27,8 @@
     "passport": "^0.2.1",
     "passport-local": "^1.0.0",
     "passport-remember-me": "0.0.1",
-    "send": "^0.10.1"
+    "send": "^0.10.1",
+    "serve-static": "^1.7.1"
   },
   "devDependencies": {
     "express-mocks-http": "0.0.11",

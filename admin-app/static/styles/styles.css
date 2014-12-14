@@ -8,14 +8,36 @@ header {
 body {
     background: #f3f3f3;
 }
+h1,
+.h1 {
+    margin-bottom: 40px;
+}
 header {
-    background-color: #F1FF52;
+    background-color: #CBCBCB;
 }
 header h1,
 header .nav {
     text-align: right;
 }
 
+header ul.nav li {
+    font-size: 18px;
+    border-radius: 3px;
+    border: 1px solid #f3f3f3;
+    margin-bottom: 4px;
+    background-color: rgba(255,255,255, 0.7);
+}
+
+/**
+ * Form styling
+ */
+/* form intro */
+.form-intro {
+    border-bottom: 1px solid lightgrey;
+    margin-bottom: 30px;
+}
+
+/* action buttons */
 .action-buttons {
     height: 80px;
     padding-top: 1em;
@@ -27,15 +49,7 @@ header .nav {
     margin-left: 15px;
 }
 
-.selected-template {
-    border: 2px solid #afff00;
-}
-
-.btn:hover, .btn:focus {
-    color: #D80000;
-    text-decoration: none;
-}
-
+/* Upload button */
 .btn-file {
     position: relative;
     overflow: hidden;
@@ -55,7 +69,30 @@ header .nav {
     cursor: inherit;
     display: block;
 }
+.btn:hover, .btn:focus {
+    color: #D80000;
+    text-decoration: none;
+}
+.selected-template {
+    border: 2px solid #afff00;
+}
 
+.form-control {
+    border-radius: 3px;
+}
+.well-sm {
+    border-radius: 3px;
+    background-color: #d3d3d3;
+}
+.well-sm label {
+    display: block;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+/**
+ * Media
+ */
 .media-item {
     float: left;
     border: 1px solid #cccccc;
@@ -79,4 +116,32 @@ header .nav {
 .media-item-full img {
     margin-bottom: 20px;
     max-width: 100%;
+}
+.media-pdf {
+    background: url(types/pdf.png) no-repeat center center;
+}
+
+/* Colors */
+span[data-color] {
+    float: left;
+    width: 20%;
+    height: 30px;
+    cursor: pointer;
+    border-radius: 3px;
+    border: 1px solid #f3f3f3;
+}
+span[data-color="#cbcbcb"] {
+    background-color: #cbcbcb;
+}
+span[data-color="#ff005a"] {
+    background-color: #ff005a;
+}
+span[data-color="#00a2f3"] {
+    background-color: #00a2f3;
+}
+span[data-color="#faa129"] {
+    background-color: #faa129;
+}
+span[data-color="#29f38f"] {
+    background-color: #29f38f;
 }

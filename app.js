@@ -18,8 +18,8 @@ app.use(session({secret: 'keyboard cat'}));
 app.set('views', pagespace.getViewDir());
 app.set('view engine', 'hbs');
 
+app.use('/_admin', express.static(__dirname + '/admin-app'));
 app.use('/app/static', express.static(__dirname + '/views/static'));
-app.use('/_admin', express.static(pagespace.getAdminDir()));
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
     mediaDir: path.join(__dirname, 'media-uploads'),

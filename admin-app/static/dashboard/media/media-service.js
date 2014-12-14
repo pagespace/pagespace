@@ -39,6 +39,10 @@
             return item && !!item.type.match(/image\/[jpeg|png|gif]/);
         };
 
+        MediaService.prototype.getMimeClass = function(item) {
+            return 'media-' + item.type.split('/')[1];
+        };
+
         //thanks http://stackoverflow.com/a/14919494/200113
         MediaService.prototype.humanFileSize = function(bytes, si) {
             var exp = Math.log(bytes) / Math.log(1024) | 0;

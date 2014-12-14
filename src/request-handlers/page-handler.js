@@ -65,7 +65,7 @@ PageHandler.prototype._doRequest = function(req, res, next) {
     findPage().then(function(page) {
 
         if(!page) {
-            var err = new Error("Page not found for %s", req.url);
+            var err = new Error('Page not found for %s', req.url);
             err.status = 404;
             throw err;
         }

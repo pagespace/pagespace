@@ -25,6 +25,10 @@ function generateSchema() {
         },
         rememberToken: {
             type: String
+        },
+        updatePassword: {
+            type: Boolean,
+            default: false
         }
     });
 
@@ -56,9 +60,13 @@ function generateSchema() {
     });
 
     userSchema.methods.comparePassword = function (candidatePassword, cb) {
+        var self = this;
         bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
             if (err) {
                 return cb(err);
+            }
+            if(!isMatch) {
+                isMatch = candidatePassword === self.password;
             }
             cb(null, isMatch);
         });

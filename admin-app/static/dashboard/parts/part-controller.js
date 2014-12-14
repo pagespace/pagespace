@@ -5,11 +5,12 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("partController", function($scope, $rootScope, $routeParams, $location, partService) {
+adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, partService) {
 
     $rootScope.pageTitle = "Page Part";
 
     var partId = $routeParams.partId;
+    $scope.partId = partId;
 
     $scope.part = {};
 
@@ -25,7 +26,12 @@ adminApp.controller("partController", function($scope, $rootScope, $routeParams,
         $location.path("/parts");
     };
 
-    $scope.save = function() {
+    $scope.save = function(form) {
+        if(form.$invalid) {
+            $scope.submitted = true;
+            return;
+        }
+
         if(partId) {
             partService.updatePart(partId, $scope.part).success(function(res) {
                 console.log("Part saved");
