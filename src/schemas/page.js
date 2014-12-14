@@ -39,10 +39,16 @@ function generateSchema(modifier) {
         draft: {
             type: Boolean,
             default: true
+        },
+        published: {
+            type: Boolean,
+            default: false
+        },
+        gone: {
+            type: Boolean,
+            default: false
         }
     });
 }
-
-//var Page = mongoose.model('Page', pageSchema);
 
 module.exports = generateSchema;

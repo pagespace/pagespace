@@ -5,7 +5,7 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, userService) {
+    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, $window, userService) {
         $rootScope.pageTitle = "User";
 
         var userId = $routeParams.userId;
@@ -28,6 +28,7 @@
 
         $scope.save = function(form) {
             if(form.$invalid) {
+                $window.scrollTo(0,0);
                 $scope.submitted = true;
                 return;
             }

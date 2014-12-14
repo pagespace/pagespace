@@ -56,6 +56,10 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
         var LivePage = self.dbSupport.getModel('Page', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
+            if(!page.template) {
+                return;
+            }
+
             var templateId = page.template._id.toString();
 
             //update/create live page
@@ -87,6 +91,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
             //undraft page
             var saveDraftPage = Bluebird.promisify(page.save, page);
             page.draft = false;
+            page.published = true;
             updates.push(saveDraftPage());
         });
 

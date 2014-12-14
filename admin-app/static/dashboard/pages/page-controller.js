@@ -7,14 +7,12 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, powerMode) {
+             pageService, templateService, partService, $window) {
 
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
     $scope.pageId = pageId;
-
-    $scope.powerMode = true;
 
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
@@ -72,6 +70,7 @@ adminApp.controller("PageController",
 
         if(form.$invalid) {
             $scope.submitted = true;
+            $window.scrollTo(0,0);
             return;
         }
 

@@ -7,20 +7,25 @@ function generateSchema() {
 
     return Schema({
         path: {
-            type: String
+            type: String,
+            required: true
         },
         size: {
-            type: Number
+            type: Number,
+            required: true
         },
         fileName: {
             type: String,
-            unique: true
+            unique: true,
+            required: true
         },
         type: {
-            type: String
+            type: String,
+            required: true
         },
         name: {
-            type: String
+            type: String,
+            required: true
         },
         description: {
             type: String

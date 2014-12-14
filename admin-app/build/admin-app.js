@@ -5,7 +5,6 @@
         'ngResource',
         'angular-carousel'
     ]);
-    adminApp.value('powerMode', window._powerMode);
 
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
@@ -303,7 +302,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, mediaService) {
+adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, $window, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
@@ -328,6 +327,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $locat
     $scope.upload = function(form) {
 
         if(form.$invalid || !$scope.media.file) {
+            $window.scrollTo(0,0);
             $scope.submitted = true;
             return;
         }
@@ -402,14 +402,12 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, powerMode) {
+             pageService, templateService, partService, $window) {
 
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
     $scope.pageId = pageId;
-
-    $scope.powerMode = true;
 
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
@@ -467,6 +465,7 @@ adminApp.controller("PageController",
 
         if(form.$invalid) {
             $scope.submitted = true;
+            $window.scrollTo(0,0);
             return;
         }
 
@@ -592,8 +591,16 @@ adminApp.directive('viewTemplate', function() {
             return $http.post('/_api/pages', pageData);
         };
 
-        PageService.prototype.deletePage = function(pageId) {
-            return $http.delete('/_api/pages/' + pageId);
+        PageService.prototype.deletePage = function(page) {
+            if(page.published) {
+                //live pages are upated to be gone
+                return $http.put('/_api/pages/' + pageId, {
+                    gone: true
+                });
+            } else {
+                //pages which have never been published can be hard deleted
+                return $http.delete('/_api/pages/' + pageId);
+            }
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
@@ -669,6 +676,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         pageService.getPages().success(function(allPages){
 
             var pageMap = {};
+            allPages = allPages.filter(function(page) {
+                return !page.gone;
+            });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
             });
@@ -714,7 +724,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
         var really = window.confirm('Really delete the page, ' + page.name + '?');
         if(really) {
-            pageService.deletePage(page._id).success(function() {
+            pageService.deletePage(page).success(function() {
                 getPages();
                 $rootScope.showInfo("Page: " + page.name + " removed.");
             }).error(function(err) {
@@ -732,7 +742,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, partService) {
+adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, $window, partService) {
 
     $rootScope.pageTitle = "Page Part";
 
@@ -756,6 +766,7 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
     $scope.save = function(form) {
         if(form.$invalid) {
             $scope.submitted = true;
+            $window.scrollTo(0,0);
             return;
         }
 
@@ -916,7 +927,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window, templateService) {
 
     $rootScope.pageTitle = 'Template';
 
@@ -971,6 +982,7 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.save = function(form) {
 
         if(form.$invalid) {
+            $window.scrollTo(0,0);
             $scope.submitted = true;
             return;
         }
@@ -1186,7 +1198,7 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, userService) {
+    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, $window, userService) {
         $rootScope.pageTitle = "User";
 
         var userId = $routeParams.userId;
@@ -1209,6 +1221,7 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
 
         $scope.save = function(form) {
             if(form.$invalid) {
+                $window.scrollTo(0,0);
                 $scope.submitted = true;
                 return;
             }

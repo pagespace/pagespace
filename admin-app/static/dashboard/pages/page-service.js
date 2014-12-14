@@ -48,8 +48,16 @@
             return $http.post('/_api/pages', pageData);
         };
 
-        PageService.prototype.deletePage = function(pageId) {
-            return $http.delete('/_api/pages/' + pageId);
+        PageService.prototype.deletePage = function(page) {
+            if(page.published) {
+                //live pages are upated to be gone
+                return $http.put('/_api/pages/' + pageId, {
+                    gone: true
+                });
+            } else {
+                //pages which have never been published can be hard deleted
+                return $http.delete('/_api/pages/' + pageId);
+            }
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {

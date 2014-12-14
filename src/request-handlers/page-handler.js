@@ -64,9 +64,14 @@ PageHandler.prototype._doRequest = function(req, res, next) {
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
 
+        var err;
         if(!page) {
-            var err = new Error('Page not found for %s', req.url);
+            err = new Error('Page not found for ' + req.url);
             err.status = 404;
+            throw err;
+        } else if(page.gone) {
+            err = new Error('Page gone for ' + req.url);
+            err.status = 410;
             throw err;
         }
 
@@ -139,6 +144,6 @@ PageHandler.prototype._doRequest = function(req, res, next) {
         });
     }).catch(function(err) {
         logger.error(err);
-        next();
+        next(err);
     });
 };

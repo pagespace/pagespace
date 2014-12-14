@@ -13,6 +13,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         pageService.getPages().success(function(allPages){
 
             var pageMap = {};
+            allPages = allPages.filter(function(page) {
+                return !page.gone;
+            });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
             });
@@ -58,7 +61,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
         var really = window.confirm('Really delete the page, ' + page.name + '?');
         if(really) {
-            pageService.deletePage(page._id).success(function() {
+            pageService.deletePage(page).success(function() {
                 getPages();
                 $rootScope.showInfo("Page: " + page.name + " removed.");
             }).error(function(err) {

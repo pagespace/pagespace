@@ -11,17 +11,20 @@ function generateSchema() {
             index: { unique: true }
         },
         password: {
-            type: String
+            type: String,
+            required: true
         },
         name: {
-            type: String
+            type: String,
+            required: true
         },
         email: {
             type: String
         },
         role: {
             type: String,
-            default: "guest"
+            default: "guest",
+            required: true
         },
         rememberToken: {
             type: String

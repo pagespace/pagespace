@@ -22,8 +22,9 @@
 ✓ media uploads
 ✓ template properties
 ✓ unit tests
-* form validations
-* change admin password / user management
+✓ form validations
+✓ change admin password / user management
+* serve statics
 * orange tea
 * Custom user starter parts?
 * Starter parts
@@ -40,8 +41,4 @@
 * Dashboard color switcher
 
 BUGS
-* Not found returns 500 (not 404) if page is not in db
 * Dashboard errors wrapped in html doc
-
-CURRENT
-* Send data back to user, confirm password validation

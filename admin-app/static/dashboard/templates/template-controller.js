@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window, templateService) {
 
     $rootScope.pageTitle = 'Template';
 
@@ -60,6 +60,7 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.save = function(form) {
 
         if(form.$invalid) {
+            $window.scrollTo(0,0);
             $scope.submitted = true;
             return;
         }
