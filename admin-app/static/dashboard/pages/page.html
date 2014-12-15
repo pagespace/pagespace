@@ -2,7 +2,8 @@
     <div class="col-sm-7">
         <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
             <div class="form-intro">
-                <p ng-show="!pageId">Create a new page</p>
+                <p ng-show="!pageId && page.root == 'primary'">Create a new top level page</p>
+                <p ng-show="!pageId && page.parent">Create a sub page of <b>{{page.parent.name}}</b></p>
                 <p ng-show="pageId">Update the page:  <b>{{page.name}}</b></p>
                 <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
             </div>
@@ -38,7 +39,8 @@
                         <view-template></view-template>
                         <div class="action-buttons">
                             <button type="button" class="btn btn-primary"
-                                    ng-click="selectTemplate(template)">Select template</button>
+                                    ng-click="selectTemplate(template)">Next</button>
+                            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -47,6 +49,7 @@
             <div ng-if="template != null">
 
                 <h3>Template</h3>
+                <h4>{{template.name}}</h4>
                 <view-template></view-template>
 
                 <div ng-repeat="region in template.regions track by $index">

@@ -14,6 +14,18 @@
                 templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/pages/new', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/new/:parentPageId', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/delete/:pageId', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/delete-page.html',
+                controller: 'DeletePageController'
+            }).
 
             //parts
             when('/parts', {

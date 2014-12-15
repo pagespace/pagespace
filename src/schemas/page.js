@@ -44,9 +44,13 @@ function generateSchema(modifier) {
             type: Boolean,
             default: false
         },
-        gone: {
-            type: Boolean,
-            default: false
+        redirect: {
+            type: Schema.Types.ObjectId,
+            ref: 'Page' + modifier
+        },
+        status: {
+            type: Number,
+            default: 200
         }
     });
 }

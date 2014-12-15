@@ -14,6 +14,18 @@
                 templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/pages/new', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/new/:parentPageId', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/delete/:pageId', {
+                templateUrl:  _appRoot + '/static/dashboard/pages/delete-page.html',
+                controller: 'DeletePageController'
+            }).
 
             //parts
             when('/parts', {
@@ -400,6 +412,60 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
+adminApp.controller("DeletePageController",
+    function($scope, $rootScope, $routeParams, $location, $timeout,
+             pageService, templateService, partService, $window) {
+
+    $rootScope.pageTitle = "Delete page";
+
+    var pageId = $routeParams.pageId;
+    $scope.status = 410;
+
+    pageService.getPage(pageId).success(function(page) {
+        $scope.page = page;
+
+        //default delete status
+        page.status = 410;
+    }).error(function(err) {
+        $rootScope.showError('Couldn\'t find a page to delete', err);
+    });
+    pageService.getPages().success(function(pages) {
+        $scope.pages = pages;
+    }).error(function(err) {
+        $rootScope.showError('Couldn\'t get pages', err);
+    });
+
+    $scope.cancel = function() {
+        $location.path("");
+    };
+
+    $scope.submit = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            $window.scrollTo(0,0);
+            return;
+        }
+
+        var page = $scope.page;
+
+        pageService.deletePage(page).success(function() {
+            $location.path("");
+            $rootScope.showInfo("Page: " + page.name + " removed.");
+        }).error(function(err) {
+            $rootScope.showError("Error deleting page", err);
+        });
+    }
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
@@ -407,26 +473,28 @@ adminApp.controller("PageController",
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
-    $scope.pageId = pageId;
+    var parentPageId = $routeParams.parentPageId
 
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
 
-    async.series([
-        function getTemplates(callback) {
-            templateService.getTemplates().success(function(templates) {
-                $scope.templates = templates;
-                callback()
-            });
-        },
-        function getParts(callback) {
-            partService.getParts().success(function(parts) {
-                $scope.parts = parts;
-                callback()
-            });
-        },
-        function getPage(callback) {
+    var getPageFunctions = []
+    getPageFunctions.push(function getTemplates(callback) {
+        templateService.getTemplates().success(function(templates) {
+            $scope.templates = templates;
+            callback()
+        });
+    });
+    getPageFunctions.push(function getParts(callback) {
+        partService.getParts().success(function(parts) {
+            $scope.parts = parts;
+            callback()
+        });
+    });
+    if(pageId) {
+        $scope.pageId = pageId;
+        getPageFunctions.push(function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
@@ -436,8 +504,24 @@ adminApp.controller("PageController",
 
                 callback();
             });
+        });
+    } else {
+        $scope.page = {
+            regions: []
+        };
+        if(parentPageId) {
+            getPageFunctions.push(function getParentPage(callback) {
+                pageService.getPage(parentPageId).success(function(page) {
+                    $scope.page.parent = page;
+                    callback();
+                });
+            });
+        } else {
+            $scope.page.root = 'primary';
         }
-    ], function(err) {
+    }
+
+    async.series(getPageFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
         }
@@ -461,6 +545,12 @@ adminApp.controller("PageController",
         });
     };
 
+    $scope.$watch('page.name', function() {
+        if($scope.pageForm.url.$pristine && !pageId) {
+            $scope.updateUrl();
+        }
+    });
+
     $scope.save = function(form) {
 
         if(form.$invalid) {
@@ -473,7 +563,7 @@ adminApp.controller("PageController",
 
         //unpopulate
         page.template = $scope.template._id;
-        if(page.parent) {
+        if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
         }
         page.regions = page.regions.filter(function(val) {
@@ -484,12 +574,22 @@ adminApp.controller("PageController",
             }
             return val;
         });
-        pageService.updatePage(pageId, page).success(function(res) {
-            $rootScope.showSuccess("Page: " + page.name + " saved.");
-            $location.path("");
-        }).error(function(err) {
-            $rootScope.showError("Error saving page", err);
-        });
+
+        if(pageId) {
+            pageService.updatePage(pageId, page).success(function(res) {
+                $rootScope.showSuccess("Page: " + page.name + " saved.");
+                $location.path("");
+            }).error(function(err) {
+                $rootScope.showError("Error saving page", err);
+            });
+        } else {
+            pageService.createPage($scope.page).success(function() {
+                $rootScope.showSuccess("Page: " + page.name + " created.");
+                $location.path("");
+            }).error(function(err) {
+                $rootScope.showError("Error adding new page", err);
+            });
+        }
     }
 });
 
@@ -572,20 +672,10 @@ adminApp.directive('viewTemplate', function() {
             return $http.get('/_api/pages/' + pageId);
         };
 
-        PageService.prototype.createPage = function(pageData, parent) {
-
-            pageData = pageData || {};
-
-            pageData.name = pageData.name || getNewPageName(this.pageCache);
-
-            if(typeof parent === "string") {
-                pageData.root = parent;
-            } else if(parent && parent._id){
-                pageData.parent = parent._id;
-            }
+        PageService.prototype.createPage = function(pageData) {
 
             if(!pageData.url) {
-                pageData.url = this.generateUrl(pageData, parent);
+                pageData.url = this.generateUrl(pageData);
             }
 
             return $http.post('/_api/pages', pageData);
@@ -593,13 +683,16 @@ adminApp.directive('viewTemplate', function() {
 
         PageService.prototype.deletePage = function(page) {
             if(page.published) {
-                //live pages are upated to be gone
-                return $http.put('/_api/pages/' + pageId, {
-                    gone: true
-                });
+                var pageData = {
+                    status: page.status,
+                    redirect: page.redirect._id
+                };
+
+                //live pages are updated to be gone
+                return $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                return $http.delete('/_api/pages/' + pageId);
+                return $http.delete('/_api/pages/' + page._id);
             }
         };
 
@@ -677,7 +770,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var pageMap = {};
             allPages = allPages.filter(function(page) {
-                return !page.gone;
+                return page.status === 200;
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
@@ -712,25 +805,16 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.addPage = function(parentPage) {
 
-        parentPage = parentPage || 'primary';
-        pageService.createPage(null, parentPage).success(function() {
-            getPages();
-        }).error(function(err) {
-            $rootScope.showError("Error adding new page", err);
-        });
+        var parentPageId = '';
+        if(parentPage) {
+            parentPageId = '/' + parentPage._id;
+        }
+        $location.path('/pages/new' + parentPageId);
     };
 
     $scope.removePage = function(page) {
 
-        var really = window.confirm('Really delete the page, ' + page.name + '?');
-        if(really) {
-            pageService.deletePage(page).success(function() {
-                getPages();
-                $rootScope.showInfo("Page: " + page.name + " removed.");
-            }).error(function(err) {
-                $rootScope.showError("Error deleting page", err);
-            });
-        }
+        $location.path('/pages/delete/' + page._id);
     };
 });
 

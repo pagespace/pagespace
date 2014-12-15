@@ -14,7 +14,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var pageMap = {};
             allPages = allPages.filter(function(page) {
-                return !page.gone;
+                return page.status === 200;
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
@@ -49,25 +49,16 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.addPage = function(parentPage) {
 
-        parentPage = parentPage || 'primary';
-        pageService.createPage(null, parentPage).success(function() {
-            getPages();
-        }).error(function(err) {
-            $rootScope.showError("Error adding new page", err);
-        });
+        var parentPageId = '';
+        if(parentPage) {
+            parentPageId = '/' + parentPage._id;
+        }
+        $location.path('/pages/new' + parentPageId);
     };
 
     $scope.removePage = function(page) {
 
-        var really = window.confirm('Really delete the page, ' + page.name + '?');
-        if(really) {
-            pageService.deletePage(page).success(function() {
-                getPages();
-                $rootScope.showInfo("Page: " + page.name + " removed.");
-            }).error(function(err) {
-                $rootScope.showError("Error deleting page", err);
-            });
-        }
+        $location.path('/pages/delete/' + page._id);
     };
 });
 

@@ -12,26 +12,28 @@ adminApp.controller("PageController",
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
-    $scope.pageId = pageId;
+    var parentPageId = $routeParams.parentPageId
 
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
 
-    async.series([
-        function getTemplates(callback) {
-            templateService.getTemplates().success(function(templates) {
-                $scope.templates = templates;
-                callback()
-            });
-        },
-        function getParts(callback) {
-            partService.getParts().success(function(parts) {
-                $scope.parts = parts;
-                callback()
-            });
-        },
-        function getPage(callback) {
+    var getPageFunctions = []
+    getPageFunctions.push(function getTemplates(callback) {
+        templateService.getTemplates().success(function(templates) {
+            $scope.templates = templates;
+            callback()
+        });
+    });
+    getPageFunctions.push(function getParts(callback) {
+        partService.getParts().success(function(parts) {
+            $scope.parts = parts;
+            callback()
+        });
+    });
+    if(pageId) {
+        $scope.pageId = pageId;
+        getPageFunctions.push(function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
@@ -41,8 +43,24 @@ adminApp.controller("PageController",
 
                 callback();
             });
+        });
+    } else {
+        $scope.page = {
+            regions: []
+        };
+        if(parentPageId) {
+            getPageFunctions.push(function getParentPage(callback) {
+                pageService.getPage(parentPageId).success(function(page) {
+                    $scope.page.parent = page;
+                    callback();
+                });
+            });
+        } else {
+            $scope.page.root = 'primary';
         }
-    ], function(err) {
+    }
+
+    async.series(getPageFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
         }
@@ -66,6 +84,12 @@ adminApp.controller("PageController",
         });
     };
 
+    $scope.$watch('page.name', function() {
+        if($scope.pageForm.url.$pristine && !pageId) {
+            $scope.updateUrl();
+        }
+    });
+
     $scope.save = function(form) {
 
         if(form.$invalid) {
@@ -78,7 +102,7 @@ adminApp.controller("PageController",
 
         //unpopulate
         page.template = $scope.template._id;
-        if(page.parent) {
+        if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
         }
         page.regions = page.regions.filter(function(val) {
@@ -89,12 +113,22 @@ adminApp.controller("PageController",
             }
             return val;
         });
-        pageService.updatePage(pageId, page).success(function(res) {
-            $rootScope.showSuccess("Page: " + page.name + " saved.");
-            $location.path("");
-        }).error(function(err) {
-            $rootScope.showError("Error saving page", err);
-        });
+
+        if(pageId) {
+            pageService.updatePage(pageId, page).success(function(res) {
+                $rootScope.showSuccess("Page: " + page.name + " saved.");
+                $location.path("");
+            }).error(function(err) {
+                $rootScope.showError("Error saving page", err);
+            });
+        } else {
+            pageService.createPage($scope.page).success(function() {
+                $rootScope.showSuccess("Page: " + page.name + " created.");
+                $location.path("");
+            }).error(function(err) {
+                $rootScope.showError("Error adding new page", err);
+            });
+        }
     }
 });
 

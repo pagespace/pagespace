@@ -29,20 +29,10 @@
             return $http.get('/_api/pages/' + pageId);
         };
 
-        PageService.prototype.createPage = function(pageData, parent) {
-
-            pageData = pageData || {};
-
-            pageData.name = pageData.name || getNewPageName(this.pageCache);
-
-            if(typeof parent === "string") {
-                pageData.root = parent;
-            } else if(parent && parent._id){
-                pageData.parent = parent._id;
-            }
+        PageService.prototype.createPage = function(pageData) {
 
             if(!pageData.url) {
-                pageData.url = this.generateUrl(pageData, parent);
+                pageData.url = this.generateUrl(pageData);
             }
 
             return $http.post('/_api/pages', pageData);
@@ -50,13 +40,16 @@
 
         PageService.prototype.deletePage = function(page) {
             if(page.published) {
-                //live pages are upated to be gone
-                return $http.put('/_api/pages/' + pageId, {
-                    gone: true
-                });
+                var pageData = {
+                    status: page.status,
+                    redirect: page.redirect._id
+                };
+
+                //live pages are updated to be gone
+                return $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                return $http.delete('/_api/pages/' + pageId);
+                return $http.delete('/_api/pages/' + page._id);
             }
         };
 
