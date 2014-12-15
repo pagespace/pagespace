@@ -6,10 +6,14 @@
                 <p>There is nothing to publish</p>
             </div>
             <div class="list-group" ng-show="drafts.length > 0">
-                <div ng-repeat="page in drafts" class="list-group-item">
+                <div ng-repeat="page in drafts" class="list-group-item"
+                     ng-class="{'list-group-item-success': page.queued}" ng-click="page.queued = !page.queued">
                     <div class="pull-right">
-                        <label for="toggle-{{page._id}}">Queue to publish</label>
-                        <input id="toggle-{{page._id}}" type="checkbox" ng-model="page.queued">
+                        <div class="checkbox">
+                            <label for="toggle-{{page._id}}">
+                            <input id="toggle-{{page._id}}" type="checkbox" ng-model="page.queued">
+                                Queue to publish </label>
+                        </div>
                     </div>
 
                     <h4 class="list-group-item-heading">{{page.name}}</h4>
