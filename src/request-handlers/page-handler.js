@@ -12,6 +12,8 @@ var logger =  bunyan.createLogger({ name: 'page-handler' });
 var logLevel = require('../misc/log-level');
 logger.level(logLevel().get());
 
+var redirectStatuses = [ 301, 302, 303, 307 ];
+
 var adminbarFilePromise = null;
 
 var PageHandler = function(dbSupport, parts) {
@@ -65,14 +67,16 @@ PageHandler.prototype._doRequest = function(req, res, next) {
     findPage().then(function(page) {
 
         var err;
-        if(!page) {
+        if(!page || (page && page.status === 404)) {
             err = new Error('Page not found for ' + req.url);
             err.status = 404;
             throw err;
-        } else if(page.gone) {
+        } else if(page.status === 410) {
             err = new Error('Page gone for ' + req.url);
             err.status = 410;
             throw err;
+        } else if(redirectStatuses.indexOf(page.status)) {
+            //TODO: implement redirects
         }
 
         logger.info('Page found for ' + req.url + ': ' + page.id);
