@@ -949,7 +949,7 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $location, publishingService) {
+adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location, publishingService) {
     $rootScope.pageTitle = 'Publishing';
 
     //get all pages with drafts
@@ -969,6 +969,12 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
         }).map(function(page) {
             return page._id;
         });
+
+        if(toPublishIds.length === 0) {
+            $window.scrollTo(0,0);
+            $scope.submitted = true;
+            return;
+        }
 
         publishingService.publish(toPublishIds).success(function() {
             $rootScope.showSuccess('Publishing successful');

@@ -2,12 +2,19 @@
     <div class="col-sm-6">
         <form role="form" ng-submit="publish()">
 
-            <div class="list-group" ng-show="drafts.length == 0">
-                <p>There is nothing to publish</p>
+            <div class="list-group" >
+
+            </div>
+            <div class="form-intro">
+                <p ng-show="drafts.length == 0">There is nothing to publish</p>
+                <p ng-show="drafts.length > 0">Select pages to publish:</p>
+                <p ng-show="submitted" class="text-danger">Please select one or more pages to publish</p>
             </div>
             <div class="list-group" ng-show="drafts.length > 0">
-                <div ng-repeat="page in drafts" class="list-group-item"
-                     ng-class="{'list-group-item-success': page.queued}" ng-click="page.queued = !page.queued">
+                <div ng-repeat="page in drafts"
+                     class="list-group-item"
+                     ng-class="{'list-group-item-success': page.queued && page.status == 200, 'list-group-item-danger': page.queued && page.status != 200}"
+                     ng-click="page.queued = !page.queued" style="cursor: pointer">
                     <div class="pull-right">
                         <div class="checkbox">
                             <label for="toggle-{{page._id}}">
@@ -16,8 +23,14 @@
                         </div>
                     </div>
 
-                    <h4 class="list-group-item-heading">{{page.name}}</h4>
-                    <p class="list-group-item-text"><small>{{page.url}}</small></p>
+                    <h4 class="list-group-item-heading">{{page.name}}
+                        <small ng-show="!page.published"><i><b>new</b></i></small>
+                        <small ng-show="page.published && page.status == 200"><i><b>new</b></i></small>
+                        <small ng-show="page.status != 200"><i><b>delete</b></i></small>
+                    </h4>
+                    <p class="list-group-item-text">
+                        <small><a href="{{page.url}}" target="_blank">{{page.url}}</a></small>
+                    </p>
                 </div>
             </div>
 
