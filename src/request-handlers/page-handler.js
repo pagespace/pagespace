@@ -66,86 +66,116 @@ PageHandler.prototype._doRequest = function(req, res, next) {
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
 
+        page = page || {};
+
         var err;
-        if(!page || (page && page.status === 404)) {
+        var promises = [];
+        if(page.status) {
+            //status is good
+            promises.push(page.status);
+        } else {
+            //doesn't exist create 404
+            page.status = 404;
+        }
+
+
+        if(page.status === 200) {
+            //page found and is ok
+
+            logger.info('Page found for ' + req.url + ': ' + page.id);
+
+            promises.push(page);
+
+            if(showAdminBar) {
+                var readFile = BluebirdPromise.promisify(fs.readFile);
+                adminbarFilePromise = adminbarFilePromise || readFile(__dirname + '/../../views/adminbar.hbs', "utf8");
+                promises.push(adminbarFilePromise);
+            } else {
+                //push empty promise, so spread args are still right
+                promises.push('');
+            }
+
+            //read data for each part
+            page.regions.forEach(function (region) {
+                if (region.part) {
+                    var partModule = self.parts[region.part];
+                    promises.push(partModule.read(region.data));
+                } else {
+                    promises.push(null);
+                }
+            });
+        } else if(page.status === 404) {
+            //page is a 404
             err = new Error('Page not found for ' + req.url);
             err.status = 404;
             throw err;
         } else if(page.status === 410) {
+            //page is a 410 (gone)
             err = new Error('Page gone for ' + req.url);
             err.status = 410;
             throw err;
-        } else if(redirectStatuses.indexOf(page.status)) {
-            //TODO: implement redirects
+        } else if(redirectStatuses.indexOf(page.status) >= 0) {
+            //page is a redirect (301, 302, 303, 307)
+            query = Page.findById(page.redirect);
+            findPage = BluebirdPromise.promisify(query.exec, query);
+            promises.push(findPage());
         }
-
-        logger.info('Page found for ' + req.url + ': ' + page.id);
-
-        var promises = [];
-        promises.push(page);
-
-        if(showAdminBar) {
-            var readFile = BluebirdPromise.promisify(fs.readFile);
-            adminbarFilePromise = adminbarFilePromise || readFile(__dirname + '/../../views/adminbar.hbs', "utf8");
-            promises.push(adminbarFilePromise);
-        } else {
-            //push empty promise, so spread args are still right
-            promises.push('');
-        }
-
-        //read data for each part
-        page.regions.forEach(function (region) {
-            if (region.part) {
-                var partModule = self.parts[region.part];
-                promises.push(partModule.read(region.data));
-            } else {
-                promises.push(null);
-            }
-        });
         return promises;
     }).spread(function() {
         var args = Array.prototype.slice.call(arguments, 0);
-        var page = args.shift();
-        var adminBar = args.shift();
 
-        hbs.registerPartial('adminbar', adminBar);
+        var status = args.shift();
+        if(status === 200) {
+            var page = args.shift();
+            var adminBar = args.shift();
 
-        var pageData = {};
-        pageData.edit = editMode;
-        pageData.preview = !editMode;
-        pageData.staging = stagingMode;
-        pageData.live = !stagingMode;
+            hbs.registerPartial('adminbar', adminBar);
 
-        //template properties
-        page.template.properties.forEach(function(prop) {
-            pageData[prop.name] = prop.value;
-        });
+            var pageData = {};
+            pageData.edit = editMode;
+            pageData.preview = !editMode;
+            pageData.staging = stagingMode;
+            pageData.live = !stagingMode;
 
-        page.regions.forEach(function (region, i) {
-            if (region.part) {
-                pageData[region.name] = {
-                    content: args[i] || {},
-                    edit: pageData.edit,
-                    region: region.name,
-                    pageId: page._id
-                };
+            //template properties
+            page.template.properties.forEach(function(prop) {
+                pageData[prop.name] = prop.value;
+            });
 
-                var partModule = self.parts[region.part];
-                var partView = partModule.getView(editMode);
-                hbs.registerPartial(region.name, partView);
-            }
-        });
+            page.regions.forEach(function (region, i) {
+                if (region.part) {
+                    pageData[region.name] = {
+                        content: args[i] || {},
+                        edit: pageData.edit,
+                        region: region.name,
+                        pageId: page._id
+                    };
 
-        var templateSrc = !page.template ? 'default.hbs' : page.template.src;
-        res.render(templateSrc, pageData, function(err, html) {
-            if(err) {
-                logger.error(err, 'Trying to render page, %s', req.url);
-                next(err);
-            } else {
-                logger.info('Sending page for %s', req.url);
-                res.send(html);
-            }
-        });
+                    var partModule = self.parts[region.part];
+                    var partView = partModule.getView(editMode);
+                    hbs.registerPartial(region.name, partView);
+                }
+            });
+
+            var templateSrc = !page.template ? 'default.hbs' : page.template.src;
+            res.render(templateSrc, pageData, function(err, html) {
+                if(err) {
+                    logger.error(err, 'Trying to render page, %s', req.url);
+                    next(err);
+                } else {
+                    logger.info('Sending page for %s', req.url);
+                    res.send(html);
+                }
+            });
+        } else if(redirectStatuses.indexOf(status) >= 0) {
+            //redirects
+            var redirectPage = args.shift();
+            res.redirect(status, redirectPage);
+        } else {
+            var err = new Error("Status not supported");
+            err.status = status;
+            next(err);
+        }
     }).catch(function(err) {
         logger.error(err);
         next(err);
