@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
+var siteSchema = require('../schemas/site');
 var pageSchema = require('../schemas/page');
 var partSchema = require('../schemas/part');
 var templateSchema = require('../schemas/template');
@@ -15,6 +16,10 @@ var logger =  bunyan.createLogger({ name: 'db-support' });
 logger.level(logLevel().get());
 
 var modelData = [{
+    name: 'Site',
+    schema: siteSchema,
+    publishable: false
+}, {
     name: 'Page',
     schema: pageSchema,
     publishable: true

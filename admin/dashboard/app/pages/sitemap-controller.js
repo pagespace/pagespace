@@ -5,9 +5,17 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("SitemapController", function($scope, $rootScope, $location, pageService) {
+adminApp.controller("SitemapController", function($scope, $rootScope, $location, siteService, pageService) {
 
     $rootScope.pageTitle = "Sitemap";
+
+    var getSite = function() {
+        siteService.getSite().success(function(site) {
+            $scope.site = site;
+        }).error(function(err) {
+            $rootScope.showError("Error getting site", err);
+        });
+    };
 
     var getPages = function() {
         pageService.getPages().success(function(allPages){
@@ -45,6 +53,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         });
     };
 
+    getSite();
     getPages();
 
     $scope.addPage = function(parentPage) {

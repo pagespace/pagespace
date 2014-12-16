@@ -67,6 +67,12 @@
                 controller: 'MacrosController'
             }).
 
+            //site
+            when('/site', {
+                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
+                controller: 'SiteSettingsController'
+            }).
+
             //templates
             when('/templates', {
                 templateUrl: '/_static/dashboard/app/templates/template-list.html',
@@ -760,9 +766,17 @@ adminApp.directive('viewTemplate', function() {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("SitemapController", function($scope, $rootScope, $location, pageService) {
+adminApp.controller("SitemapController", function($scope, $rootScope, $location, siteService, pageService) {
 
     $rootScope.pageTitle = "Sitemap";
+
+    var getSite = function() {
+        siteService.getSite().success(function(site) {
+            $scope.site = site;
+        }).error(function(err) {
+            $rootScope.showError("Error getting site", err);
+        });
+    };
 
     var getPages = function() {
         pageService.getPages().success(function(allPages){
@@ -800,6 +814,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         });
     };
 
+    getSite();
     getPages();
 
     $scope.addPage = function(parentPage) {
@@ -1009,6 +1024,65 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
 
 
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('siteService', function($http) {
+
+        function SiteService() {
+
+        }
+        SiteService.prototype.getSite = function() {
+            return $http.get('/_api/sites/1');
+        };
+
+        SiteService.prototype.updateSite = function(siteData) {
+            return $http.put('/_api/sites/1', siteData);
+        };
+
+        return new SiteService();
+    });
+
+})();
+
+
+
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, siteService) {
+        $rootScope.pageTitle = "Site settings";
+
+        siteService.getSite().success(function(site) {
+            $scope.site = site;
+        });
+
+        $scope.cancel = function() {
+            $location.path('/');
+        };
+
+        $scope.save = function(form) {
+
+            if(form.$invalid) {
+                $window.scrollTo(0,0);
+                $scope.submitted = true;
+                return;
+            }
+            var site = $scope.site;
+
+            siteService.updateSite(site).success(function() {
+                $rootScope.showSuccess('Site updated.');
+                $location.path('/');
+            }).error(function(err) {
+                $rootScope.showError('Error updating site', err);
+            });
+        };
+    });
+
+})();
 (function() {
 
 /**

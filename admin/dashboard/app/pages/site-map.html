@@ -20,7 +20,7 @@
                     <button class="btn btn-sm sitemap-add" ng-click="addPage()" title="Add page">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
-                    <a href="#">My site</a>
+                    <a href="#/site">{{site.name}}</a>
                 </div>
             </li>
             <li ng-repeat="page in pages" ng-include="'page-item'"></li>

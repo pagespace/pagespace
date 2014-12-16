@@ -106,9 +106,10 @@ Index.prototype.init = function(options) {
 
         var loadPartModules = self._loadPartModules();
         var loadAdminUser = self._loadAdminUser();
+        var loadSite = self._loadSite();
 
         //once everything is ready
-        Bluebird.join(loadPartModules, loadAdminUser, function(parts, users) {
+        Bluebird.join(loadPartModules, loadAdminUser, loadSite, function(parts, users, site) {
 
             //parts
             parts.forEach(function (part) {
@@ -121,7 +122,7 @@ Index.prototype.init = function(options) {
 
             //users
             if(users.length === 0) {
-                logger.info("Admin user created with default admin password");
+                logger.info("Creating admin user with default admin password");
                 var User = self.dbSupport.getModel('User');
                 var defaultAdmin = new User({
                     username: "admin",
@@ -131,11 +132,29 @@ Index.prototype.init = function(options) {
                 });
                 defaultAdmin.save(function(err) {
                     if(err) {
-                        logger.error(err, 'Trying to save the default admin user');
+                        logger.error(err, 'Error trying to save the default admin user');
                     } else {
                         logger.info("Admin user created successfully");
                     }
                 });
+            }
+
+            if(!site) {
+                logger.info("Creating first site");
+                var Site = self.dbSupport.getModel('Site');
+                var newSite = new Site({
+                    _id: consts.DEFAULT_SITE_ID,
+                    name: "New Pagespace site"
+                });
+                newSite.save(function(err) {
+                    if(err) {
+                        logger.error(err, 'Error trying to save the new site');
+                    } else {
+                        logger.info("New site created successfully");
+                    }
+                });
+                //TODO: promisify this and set up url handlers in next then when site is ready
+                //TODO: site object should be on every page template
             }
 
             //set up request handlers
@@ -200,7 +219,7 @@ Index.prototype._loadPartModules = function() {
 };
 
 /**
- * If there is no admin user, this is the first one and a default one is created
+ * Gets the admin users (if exists)
  * @returns {*}
  */
 Index.prototype._loadAdminUser = function() {
@@ -208,8 +227,21 @@ Index.prototype._loadAdminUser = function() {
     //create an admin user on first run
     var User = this.dbSupport.getModel('User');
     var query = User.find({ role: 'admin'}, 'username');
-    var createAdminUser = Bluebird.promisify(query.exec, query);
-    return createAdminUser();
+    var getAdminUser = Bluebird.promisify(query.exec, query);
+    return getAdminUser();
+};
+
+/**
+ * Gets the site (if exists)
+ * @returns {*}
+ */
+Index.prototype._loadSite = function() {
+
+    //create an admin user on first run
+    var Site = this.dbSupport.getModel('Site');
+    var query = Site.findById(consts.DEFAULT_SITE_ID);
+    var getSite = Bluebird.promisify(query.exec, query);
+    return getSite();
 };
 
 /**

@@ -25,6 +25,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
     logger.info('Processing api request for ' + req.url);
 
     var modelMap = {
+        sites: 'Site',
         pages: 'Page',
         parts: 'Part',
         templates:'Template',
@@ -33,6 +34,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
     };
 
     var populationsMap = {
+        sites: '',
         pages: 'parent template regions.part',
         parts: '',
         templates: '',
@@ -43,6 +45,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
     var defaultRestrictedFields = [ '__v']
 
     var restrictedFields = {
+        sites: [],
         pages: [],
         parts: [],
         templates: [],

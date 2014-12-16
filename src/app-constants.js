@@ -10,7 +10,8 @@ var consts = {
 
     events: {
         PAGES_UPDATED: 'pages-updated'
-    }
+    },
+    DEFAULT_SITE_ID: '1'
 };
 
 consts.requests = {
@@ -44,7 +45,7 @@ consts.requestMeta = {
     },
     API: {
         type: consts.requests.API,
-        regex: new RegExp('^/_api/(pages|parts|templates|users|media)/?(.*)')
+        regex: new RegExp('^/_api/(sites|pages|parts|templates|users|media)/?(.*)')
     },
     DATA: {
         type: consts.requests.DATA,

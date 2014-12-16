@@ -67,6 +67,12 @@
                 controller: 'MacrosController'
             }).
 
+            //site
+            when('/site', {
+                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
+                controller: 'SiteSettingsController'
+            }).
+
             //templates
             when('/templates', {
                 templateUrl: '/_static/dashboard/app/templates/template-list.html',
