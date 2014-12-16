@@ -1,25 +1,22 @@
-<!doctype html>
+<!DOCTYPE html>
 <html ng-app="adminApp">
 <head>
-    <title>Dashboard</title>
-    <link href="{{appRoot}}/static/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{appRoot}}/static/styles/slickmap/slickmap.css" rel="stylesheet">
-    <link href="{{appRoot}}/bower_components/angular-carousel/dist/angular-carousel.css" rel="stylesheet">
-    <link href="{{appRoot}}/static/styles/styles.css" rel="stylesheet">
+    <title>Dashboard :: Pagespace</title>
+    <meta charset="utf-8">
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
+    <link href="/_static/bower_components/angular-carousel/dist/angular-carousel.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
 
-    <script>
-        window._appRoot = '{{appRoot}}';
-    </script>
+    <script src="/_static/bower_components/fabric/dist/fabric.min.js"></script>
+    <script src="/_static/bower_components/async/lib/async.js"></script>
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
+    <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/_static/bower_components/angular-touch/angular-touch.min.js"></script>
+    <script src="/_static/bower_components/angular-carousel/dist/angular-carousel.min.js"></script>
 
-    <script src="{{appRoot}}/bower_components/fabric/dist/fabric.min.js"></script>
-    <script src="{{appRoot}}/bower_components/async/lib/async.js"></script>
-    <script src="{{appRoot}}/bower_components/angular/angular.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-resource/angular-resource.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-route/angular-route.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-touch/angular-touch.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-carousel/dist/angular-carousel.min.js"></script>
-
-    <script src="{{appRoot}}/build/admin-app.js"></script>
+    <script src="/_static/dashboard/build/admin-app.js"></script>
 </head>
 <body>
 
@@ -58,7 +55,7 @@
             <p style="text-align: center"><br>Pagespace &copy; 2014</p>
         </header>
         <div class="col-sm-10">
-           <div ng-include="'{{appRoot}}/static/dashboard/notifications/notifications.html'"></div>
+           <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
            <div ng-view></div>
         </div>
     </div>

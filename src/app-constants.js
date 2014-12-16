@@ -16,12 +16,13 @@ var consts = {
 consts.requests = {
     PAGE: 0,
     API: 1,
-    ADMIN: 2,
+    DASHBOARD: 2,
     LOGIN: 3,
     LOGOUT: 4,
     PUBLISH: 5,
     DATA: 6,
     MEDIA: 7,
+    STATIC: 8,
     OTHER: 99
 };
 
@@ -37,9 +38,9 @@ consts.requestMeta = {
         type: consts.requests.LOGOUT,
         regex: new RegExp('^/_(logout)')
     },
-    ADMIN: {
-        type: consts.requests.ADMIN,
-        regex: new RegExp('^/_admin/(.+)')
+    DASHBOARD: {
+        type: consts.requests.DASHBOARD,
+        regex: new RegExp('^/_(dashboard)')
     },
     API: {
         type: consts.requests.API,
@@ -56,6 +57,10 @@ consts.requestMeta = {
     PUBLISH: {
         type: consts.requests.PUBLISH,
         regex: new RegExp('^/_publish/(pages)')
+    },
+    STATIC: {
+        type: consts.requests.STATIC,
+        regex: new RegExp('^/_static/(dashboard|bar|bower_components|parts)/(.*)')
     },
     OTHER: {
         type: consts.requests.OTHER,

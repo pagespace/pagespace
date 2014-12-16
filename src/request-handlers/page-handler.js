@@ -78,7 +78,6 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             page.status = 404;
         }
 
-
         if(page.status === 200) {
             //page found and is ok
 

@@ -147,7 +147,7 @@ scenario("Incoming requests :", function() {
 
         when('the request is for an api and the user is authorized', function() {
             then('the api request handler should be invoked', function() {
-                mockReq.API.user = mockUser.ADMIN;
+                mockReq.API.user = mockUser.DASHBOARD;
                 var mockHandler = pagespace.urlHandlerMap[consts.requests.API];
                 spyOn(mockHandler, '_doRequest');
                 middleware(mockReq.API, mockRes, mockNext);
@@ -167,8 +167,8 @@ scenario("Incoming requests :", function() {
 
         when('the request is for an api and the user is authorized', function() {
             then('the admin request handler should be invoked', function() {
-                mockReq.DASHBOARD.user = mockUser.ADMIN;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.ADMIN];
+                mockReq.DASHBOARD.user = mockUser.DASHBOARD;
+                var mockHandler = pagespace.urlHandlerMap[consts.requests.DASHBOARD];
                 spyOn(mockHandler, '_doRequest');
                 middleware(mockReq.DASHBOARD, mockRes, mockNext);
                 expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);

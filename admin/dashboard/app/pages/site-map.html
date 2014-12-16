@@ -1,0 +1,29 @@
+<script type="text/ng-template"  id="page-item">
+    <div class="sitemap-node clearfix">
+        <button class="btn btn-sm sitemap-remove" ng-show="page.children.length == 0" ng-click="removePage(page)" title="Remove page">
+            <span class="glyphicon glyphicon-remove"></span>
+        </button>
+        <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add page">
+            <span class="glyphicon glyphicon-plus"></span>
+        </button>
+        <a href="#/pages/{{page._id}}">{{page.name}}<span ng-show="page.draft"><b>*</b></span></a>
+    </div>
+    <ul ng-if="page.children.length">
+        <li ng-repeat="page in page.children" ng-include="'page-item'"></li>
+    </ul>
+</script>
+<div class="col-sm-10">
+    <div class="sitemap">
+        <ul class="sitemap-primary col{{pages.length}}">
+            <li class="sitemap-home">
+                <div class="sitemap-node clearfix">
+                    <button class="btn btn-sm sitemap-add" ng-click="addPage()" title="Add page">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                    <a href="#">My site</a>
+                </div>
+            </li>
+            <li ng-repeat="page in pages" ng-include="'page-item'"></li>
+        </ul>
+    </div>
+</div>

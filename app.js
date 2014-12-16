@@ -8,7 +8,6 @@ var session = require("express-session");
 
 var app = express();
 
-app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 app.use(favicon(__dirname + '/favicon.ico'));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -18,7 +17,6 @@ app.use(session({secret: 'keyboard cat'}));
 app.set('views', pagespace.getViewDir());
 app.set('view engine', 'hbs');
 
-app.use('/_admin', express.static(__dirname + '/admin-app'));
 app.use('/app/static', express.static(__dirname + '/views/static'));
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
@@ -37,6 +35,7 @@ app.use(function(req, res, next) {
 
 // development error handler
 // will print stacktrace
+//TODO: send according to request accept
 if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
         console.error(err);

@@ -20,12 +20,13 @@ var createDbSupport = require('./misc/db-support');
 //factories
 var createPageHandler = require('./request-handlers/page-handler');
 var createApiHandler = require('./request-handlers/api-handler');
-var createAdminHandler = require('./request-handlers/admin-handler');
+var createDashboardHandler = require('./request-handlers/dashboard-handler');
 var createPublishingHandler = require('./request-handlers/publishing-handler');
 var createDataHandler = require('./request-handlers/data-handler');
 var createMediaHandler = require('./request-handlers/media-handler');
 var createLoginHandler = require('./request-handlers/login-handler');
 var createLogoutHandler = require('./request-handlers/logout-handler');
+var createStaticHandler = require('./request-handlers/static-handler');
 
 //util
 var consts = require('./app-constants');
@@ -51,12 +52,13 @@ var Index = function() {
     //page handlers
     this.createPageHandler = createPageHandler;
     this.createApiHandler = createApiHandler;
-    this.createAdminHandler = createAdminHandler;
+    this.createDashboardHandler = createDashboardHandler;
     this.createPublishingHandler = createPublishingHandler;
     this.createDataHandler = createDataHandler;
     this.createMediaHandler = createMediaHandler;
     this.createLoginHandler = createLoginHandler;
     this.createLogoutHandler = createLogoutHandler;
+    this.createStaticHandler = createStaticHandler;
 };
 
 /**
@@ -81,7 +83,7 @@ Index.prototype.init = function(options) {
     logger.level(logLevel().get());
 
     this.mediaDir = options.mediaDir;
-    this.serveAdmin = typeof options.serveAdmin === 'boolean' ? options.serveAdmin : true;
+    this.serveDashboard = typeof options.serveDashboard === 'boolean' ? options.serveDashboard : true;
 
     logger.info('Initializing the middleware');
 
@@ -139,12 +141,13 @@ Index.prototype.init = function(options) {
             //set up request handlers
             self.urlHandlerMap[consts.requests.PAGE] = self.createPageHandler(self.dbSupport, self.parts);
             self.urlHandlerMap[consts.requests.API] = self.createApiHandler(self.dbSupport);
-            self.urlHandlerMap[consts.requests.ADMIN] = self.createAdminHandler();
+            self.urlHandlerMap[consts.requests.DASHBOARD] = self.createDashboardHandler();
             self.urlHandlerMap[consts.requests.PUBLISH] = self.createPublishingHandler(self.dbSupport);
             self.urlHandlerMap[consts.requests.DATA] = self.createDataHandler(self.parts, self.dbSupport);
             self.urlHandlerMap[consts.requests.MEDIA] = self.createMediaHandler(self.dbSupport, self.mediaDir);
             self.urlHandlerMap[consts.requests.LOGIN] = self.createLoginHandler();
             self.urlHandlerMap[consts.requests.LOGOUT] = self.createLogoutHandler();
+            self.urlHandlerMap[consts.requests.STATIC] = self.createStaticHandler();
 
             logger.info('Initialized, waiting for requests');
             self.appState = consts.appStates.READY;
@@ -272,13 +275,13 @@ Index.prototype._configureAuth = function() {
     acl.allow(['admin'], consts.requestMeta.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requestMeta.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
 
-    if(!this.serveAdmin) {
+    if(!this.serveDashboard) {
         acl.allow([], consts.requestMeta.LOGIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
         acl.allow([], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
         acl.allow([], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requestMeta.ADMIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requestMeta.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     }
 
     //setup passport/authentication
