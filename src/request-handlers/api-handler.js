@@ -42,7 +42,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
         media: ''
     };
 
-    var defaultRestrictedFields = [ '__v']
+    var defaultRestrictedFields = [ '__v'];
 
     var restrictedFields = {
         sites: [],

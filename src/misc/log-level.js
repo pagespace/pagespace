@@ -3,7 +3,7 @@
 var instance = null;
 
 var LogLevel = function() {
-    this.level = 'info'
+    this.level = 'info';
 };
 
 module.exports = function() {

@@ -30,7 +30,6 @@ var createStaticHandler = require('./request-handlers/static-handler');
 
 //util
 var consts = require('./app-constants');
-var path = require('path');
 var logLevel = require('./misc/log-level');
 var logger =  bunyan.createLogger({ name: "index" });
 
@@ -131,11 +130,11 @@ Index.prototype.init = function(options) {
                     name: "New Pagespace site"
                 });
                 var saveNewSite = Bluebird.promisify(newSite.save, newSite);
-                var saveSitePromise = saveNewSite()
+                var saveSitePromise = saveNewSite();
                 promises.push(saveSitePromise);
                 saveSitePromise.then(function() {
                     logger.info("New site created successfully");
-                })
+                });
             } else {
                 promises.push(site);
             }
@@ -157,7 +156,7 @@ Index.prototype.init = function(options) {
                     logger.info("Admin user created successfully");
                 });
             } else {
-                promises.push(users[0])
+                promises.push(users[0]);
             }
             return promises;
         }).spread(function(site) {
