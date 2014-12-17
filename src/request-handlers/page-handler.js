@@ -16,13 +16,14 @@ var redirectStatuses = [ 301, 302, 303, 307 ];
 
 var adminbarFilePromise = null;
 
-var PageHandler = function(dbSupport, parts) {
+var PageHandler = function(dbSupport, parts, site) {
     this.dbSupport = dbSupport;
     this.parts = parts;
+    this.site = site;
 };
 
-module.exports = function(dbSupport, parts) {
-    return new PageHandler(dbSupport, parts);
+module.exports = function(dbSupport, parts, site) {
+    return new PageHandler(dbSupport, parts, site);
 };
 
 /**
@@ -131,14 +132,17 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             hbs.registerPartial('adminbar', adminBar);
 
             var pageData = {};
+            pageData.site = self.site.toObject();
+            pageData.page = page.toObject();
             pageData.edit = editMode;
             pageData.preview = !editMode;
             pageData.staging = stagingMode;
             pageData.live = !stagingMode;
 
             //template properties
+            pageData.template = {};
             page.template.properties.forEach(function(prop) {
-                pageData[prop.name] = prop.value;
+                pageData.template[prop.name] = prop.value;
             });
 
             page.regions.forEach(function (region, i) {

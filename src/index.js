@@ -111,6 +111,8 @@ Index.prototype.init = function(options) {
         //once everything is ready
         Bluebird.join(loadPartModules, loadAdminUser, loadSite, function(parts, users, site) {
 
+            var promises = [];
+
             //parts
             parts.forEach(function (part) {
                 logger.debug(TAB + part.module);
@@ -120,8 +122,26 @@ Index.prototype.init = function(options) {
             });
             logger.info('Part modules loaded');
 
+            //site
+            if (!site) {
+                logger.info("Creating first site");
+                var Site = self.dbSupport.getModel('Site');
+                var newSite = new Site({
+                    _id: consts.DEFAULT_SITE_ID,
+                    name: "New Pagespace site"
+                });
+                var saveNewSite = Bluebird.promisify(newSite.save, newSite);
+                var saveSitePromise = saveNewSite()
+                promises.push(saveSitePromise);
+                saveSitePromise.then(function() {
+                    logger.info("New site created successfully");
+                })
+            } else {
+                promises.push(site);
+            }
+
             //users
-            if(users.length === 0) {
+            if (users.length === 0) {
                 logger.info("Creating admin user with default admin password");
                 var User = self.dbSupport.getModel('User');
                 var defaultAdmin = new User({
@@ -130,35 +150,20 @@ Index.prototype.init = function(options) {
                     role: "admin",
                     updatePassword: true
                 });
-                defaultAdmin.save(function(err) {
-                    if(err) {
-                        logger.error(err, 'Error trying to save the default admin user');
-                    } else {
-                        logger.info("Admin user created successfully");
-                    }
+                var saveAdminUser = Bluebird.promisify(defaultAdmin.save, defaultAdmin);
+                var saveAdminUserPromise = saveAdminUser();
+                promises.push(saveAdminUser());
+                saveAdminUserPromise.then(function() {
+                    logger.info("Admin user created successfully");
                 });
+            } else {
+                promises.push(users[0])
             }
-
-            if(!site) {
-                logger.info("Creating first site");
-                var Site = self.dbSupport.getModel('Site');
-                var newSite = new Site({
-                    _id: consts.DEFAULT_SITE_ID,
-                    name: "New Pagespace site"
-                });
-                newSite.save(function(err) {
-                    if(err) {
-                        logger.error(err, 'Error trying to save the new site');
-                    } else {
-                        logger.info("New site created successfully");
-                    }
-                });
-                //TODO: promisify this and set up url handlers in next then when site is ready
-                //TODO: site object should be on every page template
-            }
+            return promises;
+        }).spread(function(site) {
 
             //set up request handlers
-            self.urlHandlerMap[consts.requests.PAGE] = self.createPageHandler(self.dbSupport, self.parts);
+            self.urlHandlerMap[consts.requests.PAGE] = self.createPageHandler(self.dbSupport, self.parts, site);
             self.urlHandlerMap[consts.requests.API] = self.createApiHandler(self.dbSupport);
             self.urlHandlerMap[consts.requests.DASHBOARD] = self.createDashboardHandler();
             self.urlHandlerMap[consts.requests.PUBLISH] = self.createPublishingHandler(self.dbSupport);
@@ -385,8 +390,4 @@ Index.prototype._createGuestUser = function() {
         role: 'guest',
         name: 'Geoff Capes'
     };
-};
-
-Index.prototype.getViewDir = function() {
-    return path.join(__dirname, '/../views');
 };

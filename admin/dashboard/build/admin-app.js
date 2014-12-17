@@ -18,11 +18,11 @@
                 controller: 'PageController'
             }).
             when('/pages/new/:parentPageId', {
-                templateUrl: '_/static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
             when('/pages/delete/:pageId', {
-                templateUrl: '_/static/dashboard/app/pages/delete-page.html',
+                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
             }).
 
@@ -1053,11 +1053,15 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, siteService) {
+    adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
         $rootScope.pageTitle = "Site settings";
 
         siteService.getSite().success(function(site) {
             $scope.site = site;
+        });
+
+        pageService.getPages().success(function(pages) {
+            $scope.pages = pages;
         });
 
         $scope.cancel = function() {
@@ -1072,6 +1076,8 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
                 return;
             }
             var site = $scope.site;
+
+            //TODO: create or update page with url '/'
 
             siteService.updateSite(site).success(function() {
                 $rootScope.showSuccess('Site updated.');

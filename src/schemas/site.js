@@ -12,8 +12,7 @@ function generateSchema() {
             required: true
         },
         analytics: {
-            type: Schema.Types.ObjectId,
-            ref: 'Site'
+            type: String
         }
     });
 }

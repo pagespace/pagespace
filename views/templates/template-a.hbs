@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{title}}</title>
-        <meta name="foo" value="{{foo}}">
+        <title>{{site.name}} - {{page.name}}</title>
+        <meta name="foo" value="{{template.foo}}">
         <script src="/_static/bower_components/headjs/dist/1.0.0/head.load.min.js"></script>
         {{> adminbar}}
     </head>
@@ -20,5 +20,9 @@
         {{#C}}
             {{> C}}
         {{/C}}
+
+        <script>
+            {{{site.analytics}}}
+        </script>
     </body>
 </html>
