@@ -17,7 +17,6 @@ app.use(session({secret: 'keyboard cat'}));
 app.set('views', pagespace.getViewDir());
 app.set('view engine', 'hbs');
 
-app.use('/app/static', express.static(__dirname + '/views/static'));
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
     mediaDir: path.join(__dirname, 'media-uploads'),

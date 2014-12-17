@@ -30,6 +30,7 @@ var createStaticHandler = require('./request-handlers/static-handler');
 
 //util
 var consts = require('./app-constants');
+var path = require('path');
 var logLevel = require('./misc/log-level');
 var logger =  bunyan.createLogger({ name: "index" });
 
@@ -389,4 +390,8 @@ Index.prototype._createGuestUser = function() {
         role: 'guest',
         name: 'Geoff Capes'
     };
+};
+
+Index.prototype.getViewDir = function() {
+    return path.join(__dirname, '/../views');
 };
