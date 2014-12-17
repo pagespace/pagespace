@@ -18,11 +18,11 @@
                 controller: 'PageController'
             }).
             when('/pages/new/:parentPageId', {
-                templateUrl: '_/static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
             when('/pages/delete/:pageId', {
-                templateUrl: '_/static/dashboard/app/pages/delete-page.html',
+                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
             }).
 
