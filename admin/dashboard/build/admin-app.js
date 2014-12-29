@@ -1,22 +1,3 @@
-/**
- * Copyright © 2015, Philip Mander
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 (function() {
     var adminApp = angular.module('adminApp', [
         'ngRoute',
@@ -526,6 +507,11 @@ adminApp.controller("PageController",
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
+                page.regions.map(function(region) {
+                    region.data = stringifyData(region.data)
+                    return region;
+                });
+
                 callback();
             });
         });
@@ -590,13 +576,16 @@ adminApp.controller("PageController",
         if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
         }
-        page.regions = page.regions.filter(function(val) {
-            return typeof val === 'object';
-        }).map(function(val) {
-            if(val.part) {
-                val.part = val.part._id;
+        page.regions = page.regions.filter(function(region) {
+            return typeof region === 'object';
+        }).map(function(region) {
+            if(region.part) {
+                region.part = region.part._id;
             }
-            return val;
+            if(isJson(region.data)) {
+                region.data = JSON.parse(region.data);
+            }
+            return region;
         });
 
         if(pageId) {
@@ -614,6 +603,19 @@ adminApp.controller("PageController",
                 $rootScope.showError("Error adding new page", err);
             });
         }
+    };
+
+    function stringifyData(val) {
+        return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
+    }
+
+    function isJson(str) {
+        try {
+            JSON.parse(str);
+        } catch(e) {
+            return false;
+        }
+        return true;
     }
 });
 
@@ -708,9 +710,12 @@ adminApp.directive('viewTemplate', function() {
         PageService.prototype.deletePage = function(page) {
             if(page.published) {
                 var pageData = {
-                    status: page.status,
-                    redirect: page.redirect._id
+                    status: page.status
                 };
+
+                if(page.redirect) {
+                    pageData.redirect = page.redirect._id;
+                }
 
                 //live pages are updated to be gone
                 return $http.put('/_api/pages/' + page._id, pageData);
