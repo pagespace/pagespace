@@ -1,3 +1,22 @@
+/**
+ * Copyright © 2015, Philip Mander
+ *
+ * This file is part of Pagespace.
+ *
+ * Pagespace is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pagespace is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 'use strict';
 
 var fs = require('fs');
@@ -20,9 +39,9 @@ PartResolver.prototype.require = function(partModuleId) {
 
     if(!partModuleId) {
         return null;
-    } else if(this.cache[partModuleId]) {
-        return this.cache[partModuleId];
-    } else {
+    }
+    var partModule = this.get(partModuleId);
+    if(!partModule) {
         //resolve part module
         //this whole part is a bit convoluted. Assumes module paths starting with ./ or ../
         //should be resolved relative to the express app using this middleware.
@@ -30,7 +49,7 @@ PartResolver.prototype.require = function(partModuleId) {
         logger.info('Loading part module from %s...', partModulePath);
 
         try {
-            var partModule = require(partModulePath);
+            partModule = require(partModulePath);
 
             //resolve part view
             //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
@@ -46,6 +65,11 @@ PartResolver.prototype.require = function(partModuleId) {
             logger.error(e, 'A part module could not be resolved');
         }
     }
+    return partModule;
+};
+
+PartResolver.prototype.get = function(partModuleId) {
+    return this.cache[partModuleId] || null;
 };
 
 PartResolver.prototype._resolveModulePath = function(modulePath) {
