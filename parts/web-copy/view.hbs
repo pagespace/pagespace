@@ -2,21 +2,20 @@
     {{#if edit}}
         <div id="{{region}}">
             <div class="ps-edit-box" ng-controller="webCopyController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
-                <div ckedit="body" id="ck{{region}}">{{{content}}}</div>
+                <div ckedit="body" id="ck{{region}}">{{{data}}}</div>
                 <button class="ps-btn" ng-click="save()">Save</button>
             </div>
         </div>
-        <script src=""></script>
         <script>
             head.load(['/_static/bower_components/angular/angular.min.js',
-                       '/_static/bower_components/ckeditor/ckeditor.js',
-                       '/_static/parts/web-copy/edit.js'], function() {
+                '/_static/bower_components/ckeditor/ckeditor.js',
+                '/_static/parts/web-copy/edit.js'], function() {
                 angular.element(document).ready(function() {
                     angular.bootstrap(document.getElementById('{{region}}'), ['webCopyApp']);
                 });
             });
         </script>
     {{else}}
-        {{{content}}}
+        {{{data}}}
     {{/if}}
 </div>

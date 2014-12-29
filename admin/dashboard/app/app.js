@@ -9,15 +9,15 @@
         $routeProvider.
 
             //pages
-            when('/pages/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
-                controller: 'PageController'
-            }).
             when('/pages/new', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
             when('/pages/new/:parentPageId', {
+                templateUrl: '/_static/dashboard/app/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).

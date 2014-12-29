@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var consts = {
     TAB: '\t',
@@ -7,66 +7,58 @@ var consts = {
         NOT_READY: 0,
         READY: 1
     },
-
-    events: {
-        PAGES_UPDATED: 'pages-updated'
-    },
     DEFAULT_SITE_ID: '1'
 };
+module.exports = consts;
 
 consts.requests = {
-    PAGE: 0,
-    API: 1,
-    DASHBOARD: 2,
-    LOGIN: 3,
-    LOGOUT: 4,
-    PUBLISH: 5,
-    DATA: 6,
-    MEDIA: 7,
-    STATIC: 8,
-    OTHER: 99
-};
-
-consts.requestMeta = {
     PAGE: {
-        regex: null
+        key: 'PAGE',
+        regex: null,
+        handler: require('./request-handlers/page-handler')
     },
     LOGIN: {
-        type: consts.requests.LOGIN,
-        regex: new RegExp('^/_(login)')
+        key: 'LOGIN',
+        regex: new RegExp('^/_(login)'),
+        handler: require('./request-handlers/login-handler')
     },
     LOGOUT: {
-        type: consts.requests.LOGOUT,
-        regex: new RegExp('^/_(logout)')
+        key: 'LOGOUT',
+        regex: new RegExp('^/_(logout)'),
+        handler: require('./request-handlers/logout-handler')
     },
     DASHBOARD: {
-        type: consts.requests.DASHBOARD,
-        regex: new RegExp('^/_(dashboard)')
+        key: 'DASHBOARD',
+        regex: new RegExp('^/_(dashboard)'),
+        handler: require('./request-handlers/dashboard-handler')
     },
     API: {
-        type: consts.requests.API,
-        regex: new RegExp('^/_api/(sites|pages|parts|templates|users|media)/?(.*)')
+        key: 'API',
+        regex: new RegExp('^/_api/(sites|pages|parts|templates|users|media)/?(.*)'),
+        handler: require('./request-handlers/api-handler')
     },
     DATA: {
-        type: consts.requests.DATA,
-        regex: new RegExp('^/_data/(.+)/(.+)')
+        key: 'DATA',
+        regex: new RegExp('^/_data/(.+)/(.+)'),
+        handler: require('./request-handlers/data-handler')
     },
     MEDIA: {
-        type: consts.requests.MEDIA,
-        regex: new RegExp('^/_media/?(.*)')
+        key: 'MEDIA',
+        regex: new RegExp('^/_media/?(.*)'),
+        handler: require('./request-handlers/media-handler')
     },
     PUBLISH: {
-        type: consts.requests.PUBLISH,
-        regex: new RegExp('^/_publish/(pages)')
+        key: 'PUBLISH',
+        regex: new RegExp('^/_publish/(pages)'),
+        handler: require('./request-handlers/publishing-handler')
     },
     STATIC: {
-        type: consts.requests.STATIC,
-        regex: new RegExp('^/_static/(dashboard|bar|bower_components|parts)/(.*)')
+        key: 'STATIC',
+        regex: new RegExp('^/_static/(dashboard|bar|bower_components|parts)/(.*)'),
+        handler: require('./request-handlers/static-handler')
     },
     OTHER: {
-        type: consts.requests.OTHER,
+        key: 'OTHER',
         regex: null
     }
 };
-
-module.exports = consts;

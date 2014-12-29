@@ -1,27 +1,27 @@
 'use strict';
 
 //support
-var bunyan = require('bunyan');
 var serveStatic = require('serve-static');
 
 //util
 var consts = require('../app-constants');
-var logLevel = require('../misc/log-level');
-var logger =  bunyan.createLogger({ name: 'static-handler' });
-logger.level(logLevel().get());
 
-var StaticHandler = function() {
+var StaticHandler = function(support) {
+    this.logger = support.logger.child({module: 'static-handler'});
     this.adminStaticServe = serveStatic(__dirname + '/../../admin', { index: false });
 };
 
-module.exports = function() {
-    return new StaticHandler();
+module.exports = function(support) {
+    return new StaticHandler(support);
 };
 
 StaticHandler.prototype._doRequest = function(req, res, next) {
+
+    var logger = this.logger;
+
     logger.info('Processing static request for %s', req.url);
 
-    var apiInfo = consts.requestMeta.STATIC.regex.exec(req.url);
+    var apiInfo = consts.requests.STATIC.regex.exec(req.url);
     var staticType = apiInfo[1];
     var staticPath = apiInfo[2];
 

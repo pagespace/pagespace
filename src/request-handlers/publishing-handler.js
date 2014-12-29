@@ -1,20 +1,16 @@
-"use strict";
+'use strict';
 
 //support
-var bunyan = require('bunyan');
 var Bluebird = require('bluebird');
 
-//util
-var logger =  bunyan.createLogger({ name: 'publishing-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
 
-var PublishingHandler = function(dbSupport) {
-    this.dbSupport = dbSupport;
+var PublishingHandler = function(support) {
+    this.logger = this.logger = support.logger.child({module: 'publishing-handler'});;
+    this.dbSupport = support.dbSupport;
 };
 
-module.exports = function(dbSupport) {
-    return new PublishingHandler(dbSupport);
+module.exports = function(support) {
+    return new PublishingHandler(support);
 };
 
 /**
@@ -34,6 +30,7 @@ PublishingHandler.prototype._doRequest = function(req, res, next) {
 PublishingHandler.prototype.publishDrafts = function(req, res, next) {
 
     var self = this;
+    var logger = this.logger;
 
     var draftIds = req.body;
 
@@ -56,11 +53,13 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
         var LivePage = self.dbSupport.getModel('Page', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
-            if(!page.template) {
+            var templateId = null;
+            if(!page.template && page.status === 200) {
+                logger.warn('Attempting to publish page without a template: %s', page._id);
                 return;
+            } else if(page.status === 200) {
+                templateId = page.template._id.toString();
             }
-
-            var templateId = page.template._id.toString();
 
             //update/create live page
             var pageId = page._id.toString();
@@ -75,7 +74,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
             logger.info('Page queued to publish: %s (id=%s) @ \'%s\'', livePage.name, pageId, livePage.url);
 
             //page template
-            if(!queuedDraftTemplates[templateId]) {
+            if(templateId && !queuedDraftTemplates[templateId]) {
                 //replicate live template
                 var liveTemplate = page.template.toObject();
                 delete liveTemplate._id;

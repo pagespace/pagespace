@@ -41,9 +41,12 @@
         PageService.prototype.deletePage = function(page) {
             if(page.published) {
                 var pageData = {
-                    status: page.status,
-                    redirect: page.redirect._id
+                    status: page.status
                 };
+
+                if(page.redirect) {
+                    pageData.redirect = page.redirect._id;
+                }
 
                 //live pages are updated to be gone
                 return $http.put('/_api/pages/' + page._id, pageData);
@@ -72,6 +75,7 @@
 
     function slugify(str) {
 
+        str = str || '';
         str = str.replace(/^\s+|\s+$/g, ''); // trim
         str = str.toLowerCase();
 

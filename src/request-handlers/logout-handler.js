@@ -1,21 +1,17 @@
-"use strict";
+'use strict';
 
-//support
-var bunyan = require('bunyan');
 
-//util
-var logger =  bunyan.createLogger({ name: 'logout-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
-
-var LogoutHandler = function() {
+var LogoutHandler = function(support) {
+    this.logger = support.logger.child({module:'logout-handler'});
 };
 
-module.exports = function() {
-    return new LogoutHandler();
+module.exports = function(support) {
+    return new LogoutHandler(support);
 };
 
 LogoutHandler.prototype._doRequest = function(req, res) {
+
+    var logger = this.logger;
 
     logger.info('Processing logout request for ' + req.url);
 

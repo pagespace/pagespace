@@ -1,26 +1,21 @@
-"use strict";
-
-//support
-var bunyan = require('bunyan');
+'use strict';
 
 //util
 var consts = require('../app-constants');
 var util = require('../misc/util');
-var logger =  bunyan.createLogger({ name: 'api-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
 
-var TAB = '\t';
-
-var ApiHandler = function(dbSupport) {
-    this.dbSupport = dbSupport;
+var ApiHandler = function(support) {
+    this.dbSupport = support.dbSupport;
+    this.logger = support.logger.child({module: 'api-handler'});
 };
 
-module.exports = function(dbSupport) {
-    return new ApiHandler(dbSupport);
+module.exports = function(support) {
+    return new ApiHandler(support);
 };
 
 ApiHandler.prototype._doRequest = function(req, res, next) {
+
+    var logger = this.logger;
 
     logger.info('Processing api request for ' + req.url);
 
@@ -53,7 +48,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
         media: [ 'path' ]
     };
 
-    var apiInfo = consts.requestMeta.API.regex.exec(req.url);
+    var apiInfo = consts.requests.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
     if(modelMap.hasOwnProperty(apiType)) {
@@ -108,7 +103,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
             } else {
                 logger.info('Creating new %s', modelName);
                 logger.debug('Creating new model with data: ' );
-                logger.debug(TAB + req.body);
+                logger.debug(req.body);
                 var model = new Model(req.body);
                 model.save(function(err, model) {
                     if(err) {
@@ -129,7 +124,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                 logger.debug('Updating model with data: ' );
                 var data = req.body;
                 data.draft = true;
-                logger.debug(TAB + req.body);
+                logger.debug(req.body);
                 Model.findById(itemId, function (err, doc) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);

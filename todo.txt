@@ -28,6 +28,7 @@
 * site settings
 ✓ serve statics
 * orange tea
+
 * Custom user starter parts?
 * Starter parts
     html (in page) ✓
@@ -44,3 +45,7 @@
 
 BUGS
 * Dashboard errors wrapped in html doc
+
+CURRENT
+* Modules auto resolve after added (separate module resolution thing)
+* Able to edit JSON as raw data

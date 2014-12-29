@@ -11,31 +11,20 @@ var RememberMeStrategy = require('passport-remember-me').Strategy;
 
 var async = require('async');
 var bunyan = require('bunyan');
-var Acl = require("./misc/acl");
+var Acl = require('./misc/acl');
 var Bluebird = require('bluebird');
 
 //schemas
 var createDbSupport = require('./misc/db-support');
 
-//factories
-var createPageHandler = require('./request-handlers/page-handler');
-var createApiHandler = require('./request-handlers/api-handler');
-var createDashboardHandler = require('./request-handlers/dashboard-handler');
-var createPublishingHandler = require('./request-handlers/publishing-handler');
-var createDataHandler = require('./request-handlers/data-handler');
-var createMediaHandler = require('./request-handlers/media-handler');
-var createLoginHandler = require('./request-handlers/login-handler');
-var createLogoutHandler = require('./request-handlers/logout-handler');
-var createStaticHandler = require('./request-handlers/static-handler');
+//other
+var createViewEngine = require('./misc/view-engine');
+var createPartResolver = require('./misc/part-resolver');
 
 //util
 var consts = require('./app-constants');
 var path = require('path');
-var logLevel = require('./misc/log-level');
-var logger =  bunyan.createLogger({ name: "index" });
-
-var TAB = '\t';
-GLOBAL.pagespace = {};
+var fs = require('fs');
 
 /**
  * The App
@@ -47,18 +36,11 @@ var Index = function() {
 
     //dependencies
     this.mongoose = mongoose;
-    this.dbSupport = createDbSupport();
+    this.viewEngine = createViewEngine();
+    this.dbSupport = null;
 
-    //page handlers
-    this.createPageHandler = createPageHandler;
-    this.createApiHandler = createApiHandler;
-    this.createDashboardHandler = createDashboardHandler;
-    this.createPublishingHandler = createPublishingHandler;
-    this.createDataHandler = createDataHandler;
-    this.createMediaHandler = createMediaHandler;
-    this.createLoginHandler = createLoginHandler;
-    this.createLogoutHandler = createLogoutHandler;
-    this.createStaticHandler = createStaticHandler;
+    //request handlers
+    this.requestHandlers = {};
 };
 
 /**
@@ -79,17 +61,29 @@ Index.prototype.init = function(options) {
 
     var self = this;
 
-    logLevel().set(options.logLevel || 'debug');
-    logger.level(logLevel().get());
+    //logger setup
+    if(options.logger) {
+        this.logger = options.logger;
+    } else {
+        this.logger = bunyan.createLogger({ name: 'page-space' });
+        this.logger.level(options.logLevel || 'info');
+    }
+    var logger = this.logger;
+    logger.info('Log level set to %s', logger.level());
+
+    //instantiate if not already mocked
+    this.dbSupport = this.dbSupport || createDbSupport({ logger: logger });
+    this.partResolver = this.partResolver || createPartResolver({
+        logger: logger,
+        basePath: module.parent.filename
+    });
 
     this.mediaDir = options.mediaDir;
     this.serveDashboard = typeof options.serveDashboard === 'boolean' ? options.serveDashboard : true;
 
-    logger.info('Initializing the middleware');
+    logger.info('Initializing the middleware...');
 
     this.dbSupport.initModels();
-
-    this.parts = {};
 
     var dbConnection = options.db;
     if(!dbConnection) {
@@ -102,7 +96,7 @@ Index.prototype.init = function(options) {
         logger.error(err, 'connection error');
     });
     db.once('open', function callback () {
-        logger.info("Db connection established");
+        logger.info('Db connection established');
 
         var loadPartModules = self._loadPartModules();
         var loadAdminUser = self._loadAdminUser();
@@ -113,28 +107,28 @@ Index.prototype.init = function(options) {
 
             var promises = [];
 
-            //parts
+            logger.info('Resolving part modules...');
+            if(!parts.length) {
+                logger.info('There are no registered part modules. Add some via the dashboard');
+            }
             parts.forEach(function (part) {
-                logger.debug(TAB + part.module);
-                var partModule = require(part.module);
-                partModule.init();
-                self.parts[part._id] = partModule;
+                //requires a caches part modules for later page requests
+                self.partResolver.require(part.module);
             });
-            logger.info('Part modules loaded');
 
             //site
             if (!site) {
-                logger.info("Creating first site");
+                logger.info('Creating first site');
                 var Site = self.dbSupport.getModel('Site');
                 var newSite = new Site({
                     _id: consts.DEFAULT_SITE_ID,
-                    name: "New Pagespace site"
+                    name: 'New Pagespace site'
                 });
                 var saveNewSite = Bluebird.promisify(newSite.save, newSite);
                 var saveSitePromise = saveNewSite();
                 promises.push(saveSitePromise);
                 saveSitePromise.then(function() {
-                    logger.info("New site created successfully");
+                    logger.info('New site created successfully');
                 });
             } else {
                 promises.push(site);
@@ -142,19 +136,20 @@ Index.prototype.init = function(options) {
 
             //users
             if (users.length === 0) {
-                logger.info("Creating admin user with default admin password");
+                logger.info('Creating admin user with default admin password');
                 var User = self.dbSupport.getModel('User');
                 var defaultAdmin = new User({
-                    username: "admin",
-                    password: "admin",
-                    role: "admin",
+                    username: 'admin',
+                    password: 'admin',
+                    role: 'admin',
+                    name: 'Administrator',
                     updatePassword: true
                 });
                 var saveAdminUser = Bluebird.promisify(defaultAdmin.save, defaultAdmin);
                 var saveAdminUserPromise = saveAdminUser();
                 promises.push(saveAdminUser());
                 saveAdminUserPromise.then(function() {
-                    logger.info("Admin user created successfully");
+                    logger.info('Admin user created successfully');
                 });
             } else {
                 promises.push(users[0]);
@@ -162,16 +157,14 @@ Index.prototype.init = function(options) {
             return promises;
         }).spread(function(site) {
 
-            //set up request handlers
-            self.urlHandlerMap[consts.requests.PAGE] = self.createPageHandler(self.dbSupport, self.parts, site);
-            self.urlHandlerMap[consts.requests.API] = self.createApiHandler(self.dbSupport);
-            self.urlHandlerMap[consts.requests.DASHBOARD] = self.createDashboardHandler();
-            self.urlHandlerMap[consts.requests.PUBLISH] = self.createPublishingHandler(self.dbSupport);
-            self.urlHandlerMap[consts.requests.DATA] = self.createDataHandler(self.parts, self.dbSupport);
-            self.urlHandlerMap[consts.requests.MEDIA] = self.createMediaHandler(self.dbSupport, self.mediaDir);
-            self.urlHandlerMap[consts.requests.LOGIN] = self.createLoginHandler();
-            self.urlHandlerMap[consts.requests.LOGOUT] = self.createLogoutHandler();
-            self.urlHandlerMap[consts.requests.STATIC] = self.createStaticHandler();
+            self.requestHandlerSupport = {
+                logger: logger,
+                viewEngine: self.viewEngine,
+                dbSupport: self.dbSupport,
+                partResolver: self.partResolver,
+                site: site,
+                mediaDir: self.mediaDir
+            };
 
             logger.info('Initialized, waiting for requests');
             self.appState = consts.appStates.READY;
@@ -185,6 +178,9 @@ Index.prototype.init = function(options) {
 
     //handle requests
     return function(req, res, next) {
+
+        //fixes issues with hbs and multiple express view directories
+        res.locals = { layout: false };
 
         if(self.appState === consts.appStates.READY) {
             req.url = url.parse(req.url).pathname;
@@ -200,7 +196,7 @@ Index.prototype.init = function(options) {
                 }
             ]);
         } else {
-            logger.info("Request received before middleware is ready");
+            logger.info('Request received before middleware is ready');
             var notReadyErr = new Error();
             notReadyErr.status = 503;
             return next(notReadyErr);
@@ -214,9 +210,8 @@ Index.prototype.init = function(options) {
  */
 Index.prototype._loadPartModules = function() {
 
-    logger.info('Loading part modules...');
-
     //cache part modules
+    this.logger.info('Loading part modules...');
     var Part = this.dbSupport.getModel('Part');
     var query = Part.find({});
     var getParts = Bluebird.promisify(query.exec, query);
@@ -257,20 +252,22 @@ Index.prototype._loadSite = function() {
  * @returns {*}
  */
 Index.prototype._doRequest = function(req, res, next) {
-    var requestHandler, urlType;
+
+    var logger = this.logger;
+
+    var requestHandler, requestType;
     var user = req.user || this._createGuestUser();
     logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg =
-            "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
-        logger.debug(debugMsg);
+            'User with role [%s] is not allowed to access %s. Redirecting to login.';
+        logger.debug(debugMsg, user.role, req.url);
         req.session.loginToUrl = req.url;
-        urlType = consts.requests.LOGIN;
+        requestType = consts.requests.LOGIN;
     } else {
-        urlType = this._getUrlType(req.url);
+        requestType = this._getRequestType(req.url);
     }
-    requestHandler = this.urlHandlerMap[urlType];
-
+    requestHandler = this._getRequestHandler(requestType);
     return requestHandler._doRequest(req, res, next);
 };
 
@@ -279,22 +276,40 @@ Index.prototype._doRequest = function(req, res, next) {
  * @param url
  * @returns {*}
  */
-Index.prototype._getUrlType = function(url) {
+Index.prototype._getRequestType = function(url) {
 
     var type;
-    var i, requestMetaKey, requestMetaKeys = Object.keys(consts.requestMeta);
-    for(i = 0; i < requestMetaKeys.length; i++) {
-        requestMetaKey = requestMetaKeys[i];
-        if(consts.requestMeta[requestMetaKey].regex && consts.requestMeta[requestMetaKey].regex.test(url)) {
-            type = consts.requestMeta[requestMetaKey].type;
-            break;
+    for(var requestKey in consts.requests) {
+        if(consts.requests.hasOwnProperty(requestKey)) {
+            if(consts.requests[requestKey].regex && consts.requests[requestKey].regex.test(url)) {
+                type = consts.requests[requestKey];
+                break;
+            }
         }
     }
+
     if(!type) {
         type = consts.requests.PAGE;
     }
 
     return type;
+};
+
+/**
+ * Maps a url to a page type
+ * @param url
+ * @returns {*}
+ */
+Index.prototype._getRequestHandler = function(requestType) {
+
+    this.requestHandlers = {};
+
+    var instance = this.requestHandlers[requestType.key];
+    if(!instance) {
+        instance = requestType.handler(this.requestHandlerSupport);
+        this.requestHandlers[requestType.key] = instance;
+    }
+    return instance;
 };
 
 /**
@@ -308,17 +323,17 @@ Index.prototype._configureAuth = function() {
     var acl = new Acl();
 
     acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
-    acl.allow(['admin'], consts.requestMeta.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requestMeta.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
 
     if(!this.serveDashboard) {
-        acl.allow([], consts.requestMeta.LOGIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requestMeta.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requestMeta.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requestMeta.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requests.LOGIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+        acl.allow([], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     }
 
     //setup passport/authentication
@@ -394,4 +409,7 @@ Index.prototype._createGuestUser = function() {
 
 Index.prototype.getViewDir = function() {
     return path.join(__dirname, '/../views');
+};
+Index.prototype.getViewEngine = function() {
+    return this.viewEngine.__express;
 };

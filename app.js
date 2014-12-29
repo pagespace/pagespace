@@ -1,5 +1,5 @@
 var express = require('express');
-var path = require('path')
+var path = require('path');
 var pagespace = require('./src/index');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
@@ -14,8 +14,8 @@ app.use(cookieParser());
 app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
-app.set('views', pagespace.getViewDir());
-app.set('view engine', 'hbs');
+app.set('views', [ pagespace.getViewDir() ]);
+app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
@@ -39,7 +39,7 @@ if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);
-        res.render('error', {
+        res.render('error.hbs', {
             message: err.message,
             error: err
         });

@@ -1,22 +1,20 @@
-"use strict";
+'use strict';
 
 //support
-var bunyan = require('bunyan');
 var BluebirdPromise = require('bluebird');
 
 //util
 var consts = require('../app-constants');
-var logger =  bunyan.createLogger({ name: 'data-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
 
-var DataHandler = function(parts, dbSupport) {
-    this.parts = parts;
-    this.dbSupport = dbSupport;
+var DataHandler = function(support) {
+
+    this.logger = support.logger.child({module: 'data-handler'});
+    this.parts = support.parts;
+    this.dbSupport = support.dbSupport;
 };
 
-module.exports = function(parts, dbSupport) {
-    return new DataHandler(parts, dbSupport);
+module.exports = function(support) {
+    return new DataHandler(support);
 };
 
 /**
@@ -25,8 +23,10 @@ module.exports = function(parts, dbSupport) {
 DataHandler.prototype._doRequest = function(req, res, next) {
 
     var self = this;
+    var logger = this.logger;
+    //TODO: logging
 
-    var dataInfo = consts.requestMeta.DATA.regex.exec(req.url);
+    var dataInfo = consts.requests.DATA.regex.exec(req.url);
     var pageId = dataInfo[1];
     var regionId = dataInfo[2];
 

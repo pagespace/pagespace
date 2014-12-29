@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
@@ -20,7 +20,10 @@ function generateSchema(modifier) {
             ref: 'Page' + modifier
         },
         regions: [{
-            name: String,
+            name: {
+                type: String,
+                required: true
+            },
             data: Schema.Types.Mixed,
             part: {
                 type: Schema.Types.ObjectId,

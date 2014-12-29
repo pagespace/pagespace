@@ -1,21 +1,17 @@
 'use strict';
 
-//support
-var bunyan = require('bunyan');
-
-//util
-var logLevel = require('../misc/log-level');
-var logger =  bunyan.createLogger({ name: 'dashboard-handler' });
-logger.level(logLevel().get());
-
-var DashboardHandler = function() {
+var DashboardHandler = function(support) {
+    this.logger = support.logger.child({module: 'dashboard-handler'});
 };
 
-module.exports = function() {
-    return new DashboardHandler();
+module.exports = function(support) {
+    return new DashboardHandler(support);
 };
 
 DashboardHandler.prototype._doRequest = function(req, res, next) {
+
+    var logger = this.logger;
+
     logger.info('Processing admin request for %s', req.url);
 
     var pageData = {
@@ -23,7 +19,7 @@ DashboardHandler.prototype._doRequest = function(req, res, next) {
         username: req.user.username
     };
 
-    return res.render('dashboard', pageData, function(err, html) {
+    return res.render('dashboard.hbs', pageData, function(err, html) {
         if(err) {
             logger.error(err, 'Error trying to render dashboard page, %s', req.url);
             next(err);

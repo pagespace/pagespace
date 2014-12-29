@@ -1,7 +1,6 @@
-"use strict";
+'use strict';
 
 //support
-var bunyan = require('bunyan');
 var send = require('send');
 
 //util
@@ -9,17 +8,14 @@ var formidable = require('formidable'),
     util = require('util'),
     consts = require('../app-constants');
 
-var logger =  bunyan.createLogger({ name: 'media-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
-
-var MediaHandler = function(dbSupport, mediaDir) {
-    this.dbSupport = dbSupport;
-    this.mediaDir = mediaDir;
+var MediaHandler = function(support) {
+    this.dbSupport = support.dbSupport;
+    this.mediaDir = support.mediaDir;
+    this.logger = support.logger.child({module: 'media-handler'});
 };
 
-module.exports = function(dbSupport, mediaDir) {
-    return new MediaHandler(dbSupport, mediaDir);
+module.exports = function(support) {
+    return new MediaHandler(support);
 };
 
 /**
@@ -40,9 +36,11 @@ MediaHandler.prototype._doRequest = function(req, res, next) {
 
 MediaHandler.prototype.serve = function(req, res, next) {
 
+    var logger = this.logger;
+
     logger.info('Serving media for %s', req.url);
 
-    var apiInfo = consts.requestMeta.MEDIA.regex.exec(req.url);
+    var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
     var Media = this.dbSupport.getModel('Media');
     Media.findOne({
@@ -84,7 +82,7 @@ MediaHandler.prototype.upload = function(req, res, next) {
 
             var tags = [];
             if(fields.tags) {
-                tags = fields.tags.split(",").map(function(tag) {
+                tags = fields.tags.split(',').map(function(tag) {
                     return tag.trim();
                 });
             }

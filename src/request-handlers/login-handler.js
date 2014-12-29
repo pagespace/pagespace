@@ -1,24 +1,22 @@
-"use strict";
+'use strict';
 
 //support
-var bunyan = require('bunyan');
 var passport = require('passport');
 var async = require('async');
 var util = require('../misc/util');
 
-//util
-var logger =  bunyan.createLogger({ name: 'login-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
 
-var LoginHandler = function() {
+var LoginHandler = function(support) {
+    this.logger = support.logger.child({module: 'login-handler'});
 };
 
-module.exports = function() {
-    return new LoginHandler();
+module.exports = function(support) {
+    return new LoginHandler(support);
 };
 
 LoginHandler.prototype._doRequest = function(req, res, next) {
+
+    var logger = this.logger;
 
     logger.info('Processing login request for ' + req.url);
 
@@ -30,7 +28,7 @@ LoginHandler.prototype._doRequest = function(req, res, next) {
                 var data = {
                     badCredentials: util.typeify(req.query.badCredentials) || false
                 };
-                return res.render('login', data, function(err, html) {
+                return res.render('login.hbs', data, function(err, html) {
                     if(err) {
                         logger.error(err, 'Trying to render login');
                         next(err);

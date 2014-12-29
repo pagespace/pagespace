@@ -1,29 +1,30 @@
-"use strict";
+'use strict';
 
 //support
-var fs = require("fs");
-var bunyan = require('bunyan');
-var hbs = require('hbs');
+var fs = require('fs');
+var url = require('url');
 var BluebirdPromise = require('bluebird');
 
 //util
-var util = require('../misc/util');
-var logger =  bunyan.createLogger({ name: 'page-handler' });
-var logLevel = require('../misc/log-level');
-logger.level(logLevel().get());
+var util = require('util');
+var path = require('path');
+var psUtil = require('../misc/util');
 
 var redirectStatuses = [ 301, 302, 303, 307 ];
 
 var adminbarFilePromise = null;
 
-var PageHandler = function(dbSupport, parts, site) {
-    this.dbSupport = dbSupport;
-    this.parts = parts;
-    this.site = site;
+var PageHandler = function(support) {
+    this.viewEngine = support.viewEngine;
+    this.dbSupport = support.dbSupport;
+    this.parts = support.parts;
+    this.site = support.site;
+    this.logger = support.logger.child({module: 'page-handler'});
+    this.partResolver = support.partResolver;
 };
 
-module.exports = function(dbSupport, parts, site) {
-    return new PageHandler(dbSupport, parts, site);
+module.exports = function(support) {
+    return new PageHandler(support);
 };
 
 /**
@@ -32,40 +33,40 @@ module.exports = function(dbSupport, parts, site) {
 PageHandler.prototype._doRequest = function(req, res, next) {
 
     var self = this;
+    var logger = this.logger;
 
-    logger.info('Processing page request for ' + req.url);
+    var urlPath = url.parse(req.url).pathname;
 
-    //turn on and off edit mode
-    if(req.query._edit) {
-        if(req.user && req.user.role === 'admin' && util.typeify(req.query._edit) === true) {
-            logger.debug("Switching edit mode on");
-            req.session.edit = true;
-        } else if(util.typeify(req.query._edit) === false) {
-            logger.debug("Switching edit mode off");
-            req.session.edit = false;
+    logger.info('Processing page request for %s', urlPath);
+
+    function sessionValueSwitch(req, queryParam, sessionKey) {
+        if(req.query[queryParam]) {
+            if(req.user && req.user.role === 'admin' && psUtil.typeify(req.query[queryParam]) === true) {
+                logger.debug('Switching %s on', sessionKey);
+                req.session[sessionKey] = true;
+            } else if(psUtil.typeify(req.query[queryParam]) === false) {
+                logger.debug('Switching %s off', sessionKey);
+                req.session[sessionKey] = false;
+            }
         }
+        return req.session[sessionKey] || false;
     }
-    if(req.query._staging) {
-        if(req.user && req.user.role === 'admin' && util.typeify(req.query._staging) === true) {
-            logger.debug("Switching to staging mode");
-            req.session.staging = true;
-        } else if(util.typeify(req.query._staging) === false) {
-            logger.debug("Switching to live mode");
-            req.session.staging = false;
-        }
-    }
+
     var showAdminBar = req.user && req.user.role === 'admin';
-    var editMode = typeof req.session.edit === "boolean" && req.session.edit;
-    var stagingMode = typeof req.session.staging === "boolean" && req.session.staging;
+    var editMode = sessionValueSwitch(req, '_edit', 'edit');
+    var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
     var filter = {
-        url: req.url
+        url: urlPath
     };
-    var query = Page.findOne(filter).populate('template');
+    var query = Page.findOne(filter).populate('template redirect regions.part');
     var findPage = BluebirdPromise.promisify(query.exec, query);
     findPage().then(function(page) {
+
+        logger.debug('Page retrieved');
+        logger.debug(util.inspect(page));
 
         page = page || {};
 
@@ -82,13 +83,15 @@ PageHandler.prototype._doRequest = function(req, res, next) {
         if(page.status === 200) {
             //page found and is ok
 
-            logger.info('Page found for ' + req.url + ': ' + page.id);
+            logger.info('Page found for %s: %s', urlPath, page.id);
 
             promises.push(page);
 
             if(showAdminBar) {
                 var readFile = BluebirdPromise.promisify(fs.readFile);
-                adminbarFilePromise = adminbarFilePromise || readFile(__dirname + '/../../views/adminbar.hbs', "utf8");
+                var adminBarLocation = path.join(__dirname, '/../../views/adminbar.hbs');
+                logger.debug('Showing admin bar (from: %s) ', adminBarLocation);
+                adminbarFilePromise = adminbarFilePromise || readFile(adminBarLocation, "utf8");
                 promises.push(adminbarFilePromise);
             } else {
                 //push empty promise, so spread args are still right
@@ -97,39 +100,37 @@ PageHandler.prototype._doRequest = function(req, res, next) {
 
             //read data for each part
             page.regions.forEach(function (region) {
-                if (region.part) {
-                    var partModule = self.parts[region.part];
-                    promises.push(partModule.read(region.data));
+                var partModule = self.partResolver.require(region.part.module);
+                if(partModule && typeof partModule.process === 'function') {
+                    promises.push(partModule.process(region.data));
                 } else {
                     promises.push(null);
                 }
             });
         } else if(page.status === 404) {
             //page is a 404
-            err = new Error('Page not found for ' + req.url);
+            err = new Error('Page not found for ' + urlPath);
             err.status = 404;
             throw err;
         } else if(page.status === 410) {
             //page is a 410 (gone)
-            err = new Error('Page gone for ' + req.url);
+            err = new Error('Page gone for ' + urlPath);
             err.status = 410;
             throw err;
         } else if(redirectStatuses.indexOf(page.status) >= 0) {
             //page is a redirect (301, 302, 303, 307)
-            query = Page.findById(page.redirect);
-            findPage = BluebirdPromise.promisify(query.exec, query);
-            promises.push(findPage());
+            promises.push(page.redirect);
         }
         return promises;
     }).spread(function() {
+        var err;
         var args = Array.prototype.slice.call(arguments, 0);
-
         var status = args.shift();
         if(status === 200) {
             var page = args.shift();
             var adminBar = args.shift();
 
-            hbs.registerPartial('adminbar', adminBar);
+            self.viewEngine.registerPartial('adminbar', adminBar);
 
             var pageData = {};
             pageData.site = self.site.toObject();
@@ -148,34 +149,51 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             page.regions.forEach(function (region, i) {
                 if (region.part) {
                     pageData[region.name] = {
-                        content: args[i] || {},
+                        data: args[i] || {},
                         edit: pageData.edit,
                         region: region.name,
                         pageId: page._id
                     };
 
                     var partModule = self.parts[region.part];
-                    var partView = partModule.getView(editMode);
-                    hbs.registerPartial(region.name, partView);
+                    self.viewEngine.registerPartial(region.name, partModule.viewPartial || '');
                 }
             });
 
             var templateSrc = !page.template ? 'default.hbs' : page.template.src;
+
+            //force an extension
+            if(!/\.hbs$/.test(templateSrc)) {
+                templateSrc += '.hbs';
+            }
             res.render(templateSrc, pageData, function(err, html) {
                 if(err) {
-                    logger.error(err, 'Trying to render page, %s', req.url);
+                    logger.error(err, 'Trying to render page, %s', urlPath);
                     next(err);
                 } else {
-                    logger.info('Sending page for %s', req.url);
+                    logger.info('Sending page for %s', urlPath);
                     res.send(html);
                 }
+                //clean up
+                page.regions.forEach(function (region, i) {
+                    if (region.part) {
+                        self.viewEngine.unregisterPartial(region.name);
+                    }
+                });
             });
         } else if(redirectStatuses.indexOf(status) >= 0) {
             //redirects
             var redirectPage = args.shift();
-            res.redirect(status, redirectPage);
+            if(redirectPage && redirectPage.url) {
+                res.redirect(status, redirectPage.url);
+            } else {
+                err = new Error('Page not found for ' + urlPath);
+                err.status = 404;
+                throw err;
+            }
+
         } else {
-            var err = new Error("Status not supported");
+            err = new Error("Status not supported");
             err.status = status;
             next(err);
         }

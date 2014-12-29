@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
@@ -10,6 +10,9 @@ function generateSchema() {
         name: {
             type: String,
             required: true
+        },
+        description: {
+            type: String
         },
         analytics: {
             type: String

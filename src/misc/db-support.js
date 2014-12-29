@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var mongoose = require('mongoose');
 var toCollectionName = require('mongoose/lib/utils').toCollectionName;
@@ -9,11 +9,6 @@ var partSchema = require('../schemas/part');
 var templateSchema = require('../schemas/template');
 var userSchema = require('../schemas/user');
 var mediaSchema = require('../schemas/media');
-
-var bunyan = require('bunyan');
-var logLevel = require('./log-level');
-var logger =  bunyan.createLogger({ name: 'db-support' });
-logger.level(logLevel().get());
 
 var modelData = [{
     name: 'Site',
@@ -41,18 +36,21 @@ var modelData = [{
     publishable: false
 }];
 
-var DbSupport = function() {
+var DbSupport = function(opts) {
 
     this.cache = {};
+
+    this.logger =  opts.logger.child({module: 'db-support'});
 };
 
-module.exports = function() {
-    return new DbSupport();
+module.exports = function(opts) {
+    return new DbSupport(opts);
 };
 
 DbSupport.prototype.initModels = function() {
 
     var self = this;
+    var logger = this.logger;
     
     var liveModifier = '_live';
     
@@ -61,13 +59,13 @@ DbSupport.prototype.initModels = function() {
         var schema = modelDatum.schema();
         var collectionName = toCollectionName(name);
         self.cache[name] = mongoose.model(name, schema, collectionName);
-        logger.debug('Model with name [%s] and collection [%s] created', name, collectionName);
+        logger.debug('Mongoose model with name [%s] and collection [%s] created', name, collectionName);
         if(modelDatum.publishable) {
             var liveName = name + liveModifier;
             var liveCollectionName = collectionName + liveModifier;
             var liveSchema = modelDatum.schema(liveModifier);
             self.cache[liveName] = mongoose.model(liveName, liveSchema, liveCollectionName);
-            logger.debug('Model with name [%s] and collection [%s] created', liveName, liveCollectionName);
+            logger.debug('Mongoose model with name [%s] and collection [%s] created', liveName, liveCollectionName);
         }
     });
 };
