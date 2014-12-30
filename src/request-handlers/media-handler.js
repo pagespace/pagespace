@@ -90,8 +90,13 @@ MediaHandler.prototype.upload = function(req, res, next) {
     var self = this;
     var logger = this.logger;
 
-    var form = new formidable.IncomingForm();
+    if(!this.mediaDir) {
+        logger.error('Cannot upload media. No upload directory was specified.')
+        var e = new Error('Unable to upload media');
+        return next(e);
+    }
 
+    var form = new formidable.IncomingForm();
     form.uploadDir = this.mediaDir;
     form.keepExtensions = true;
     form.type = 'multipart';
@@ -123,6 +128,7 @@ MediaHandler.prototype.upload = function(req, res, next) {
                     next(err);
                 } else {
                     logger.info('Created successfully');
+                    //don't send file paths to client
                     delete model.filePath;
                     res.json(model);
                 }

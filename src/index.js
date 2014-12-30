@@ -41,7 +41,7 @@ var createPartResolver = require('./misc/part-resolver');
 //util
 var consts = require('./app-constants');
 var path = require('path');
-var fs = require('fs');
+var mkdirp = require('mkdirp');
 
 /**
  * The App
@@ -86,16 +86,24 @@ Index.prototype.init = function(options) {
         this.logger.level(options.logLevel || 'info');
     }
     var logger = this.logger;
-    logger.info('Log level set to %s', logger.level());
 
     //instantiate if not already mocked
     this.dbSupport = this.dbSupport || createDbSupport({ logger: logger });
+    this.userBasePath = path.dirname(module.parent.filename);
     this.partResolver = this.partResolver || createPartResolver({
         logger: logger,
-        basePath: module.parent.filename
+        userBasePath: this.userBasePath
     });
 
-    this.mediaDir = options.mediaDir;
+    if(!options.mediaDir) {
+        var defaultMediaDir = path.join(this.userBasePath, 'media-uploads');
+        logger.warn('No media directory was specified. Defaulting to %s', defaultMediaDir);
+        var dir = mkdirp.sync(defaultMediaDir);
+        if(dir) {
+            logger.info('New media directory created at %s', dir);
+        }
+    }
+    this.mediaDir = options.mediaDir || defaultMediaDir;
     this.serveDashboard = typeof options.serveDashboard === 'boolean' ? options.serveDashboard : true;
 
     logger.info('Initializing the middleware...');
@@ -180,7 +188,8 @@ Index.prototype.init = function(options) {
                 dbSupport: self.dbSupport,
                 partResolver: self.partResolver,
                 site: site,
-                mediaDir: self.mediaDir
+                mediaDir: self.mediaDir,
+                userBasePath: self.userBasePath
             };
 
             logger.info('Initialized, waiting for requests');
