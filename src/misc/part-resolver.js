@@ -25,7 +25,7 @@ var path = require('path');
 var PartResolver = function(opts) {
 
     this.logger = opts.logger.child({module: 'part-resolver'});
-    this.basePath = opts.basePath;
+    this.userBasePath = opts.userBasePath;
     this.cache = {};
 };
 
@@ -76,7 +76,7 @@ PartResolver.prototype._resolveModulePath = function(modulePath) {
 
     //resolve relative module paths to the app calling this middlware module
     if(modulePath.indexOf('./') === 0 || modulePath.indexOf('../') === 0) {
-        var loadFrom = path.dirname(this.basePath);
+        var loadFrom = path.dirname(this.userBasePath);
         return path.join(loadFrom, modulePath);
     } else {
         return modulePath;

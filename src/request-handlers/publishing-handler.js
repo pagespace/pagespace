@@ -24,7 +24,7 @@ var Bluebird = require('bluebird');
 
 
 var PublishingHandler = function(support) {
-    this.logger = this.logger = support.logger.child({module: 'publishing-handler'});;
+    this.logger = this.logger = support.logger.child({module: 'publishing-handler'});
     this.dbSupport = support.dbSupport;
 };
 

@@ -42,7 +42,7 @@ module.exports = function(support) {
 DataHandler.prototype._doRequest = function(req, res, next) {
 
     var self = this;
-    var logger = this.logger;
+    //var logger = this.logger;
     //TODO: logging
 
     var dataInfo = consts.requests.DATA.regex.exec(req.url);

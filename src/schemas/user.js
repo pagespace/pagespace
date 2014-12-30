@@ -23,7 +23,7 @@ function generateSchema() {
         },
         role: {
             type: String,
-            default: "guest",
+            default: 'guest',
             required: true
         },
         rememberToken: {

@@ -88,6 +88,7 @@ MediaHandler.prototype.serve = function(req, res, next) {
 MediaHandler.prototype.upload = function(req, res, next) {
 
     var self = this;
+    var logger = this.logger;
 
     var form = new formidable.IncomingForm();
 

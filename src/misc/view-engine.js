@@ -76,17 +76,17 @@ ViewEngine.prototype.__express = function(filename, locals, cb) {
 };
 
 ViewEngine.prototype.registerHelper = function(name, helper, template) {
-    this.getHandlebarsInstance(template).registerHelper(name, helper)
+    this.getHandlebarsInstance(template).registerHelper(name, helper);
 };
 
 ViewEngine.prototype.registerPartial = function (name, partial, template) {
-    this.getHandlebarsInstance(template).registerPartial(name, partial)
+    this.getHandlebarsInstance(template).registerPartial(name, partial);
 };
 
 ViewEngine.prototype.unregisterHelper = function(name, template) {
-    this.getHandlebarsInstance(template).unregisterHelper(name)
+    this.getHandlebarsInstance(template).unregisterHelper(name);
 };
 
 ViewEngine.prototype.unregisterPartial = function (name, template) {
-    this.getHandlebarsInstance(template).unregisterPartial(name)
+    this.getHandlebarsInstance(template).unregisterPartial(name);
 };
