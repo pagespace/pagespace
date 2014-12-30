@@ -31,12 +31,14 @@ var psUtil = require('../misc/util');
 
 var redirectStatuses = [ 301, 302, 303, 307 ];
 
+var readFileAsync = BluebirdPromise.promisify(fs.readFile);
 var adminbarFilePromise = null;
 
 var PageHandler = function(support) {
+
     this.viewEngine = support.viewEngine;
     this.dbSupport = support.dbSupport;
-    this.parts = support.parts;
+    this.userBasePath = support.userBasePath;
     this.site = support.site;
     this.logger = support.logger.child({module: 'page-handler'});
     this.partResolver = support.partResolver;
@@ -107,10 +109,9 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             promises.push(page);
 
             if(showAdminBar) {
-                var readFile = BluebirdPromise.promisify(fs.readFile);
                 var adminBarLocation = path.join(__dirname, '/../../views/adminbar.hbs');
                 logger.debug('Showing admin bar (from: %s) ', adminBarLocation);
-                adminbarFilePromise = adminbarFilePromise || readFile(adminBarLocation, "utf8");
+                adminbarFilePromise = adminbarFilePromise || readFileAsync(adminBarLocation, 'utf8');
                 promises.push(adminbarFilePromise);
             } else {
                 //push empty promise, so spread args are still right
@@ -121,7 +122,10 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             page.regions.forEach(function (region) {
                 var partModule = self.partResolver.require(region.part ? region.part.module : null);
                 if(partModule && typeof partModule.process === 'function') {
-                    promises.push(partModule.process(region.data));
+                    var partPromise = partModule.process(region.data, {
+                        basePath: self.userBasePath
+                    });
+                    promises.push(partPromise);
                 } else {
                     promises.push(null);
                 }
@@ -194,7 +198,7 @@ PageHandler.prototype._doRequest = function(req, res, next) {
                     res.send(html);
                 }
                 //clean up
-                page.regions.forEach(function (region, i) {
+                page.regions.forEach(function (region) {
                     if (region.part) {
                         self.viewEngine.unregisterPartial(region.name);
                     }
@@ -212,7 +216,7 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             }
 
         } else {
-            err = new Error("Status not supported");
+            err = new Error('Status not supported');
             err.status = status;
             next(err);
         }

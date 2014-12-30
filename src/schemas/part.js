@@ -7,7 +7,6 @@ function generateSchema() {
     return Schema({
         name: {
             type: String,
-            unique: true,
             required: true
         },
         module: {

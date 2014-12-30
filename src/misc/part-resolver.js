@@ -76,8 +76,7 @@ PartResolver.prototype._resolveModulePath = function(modulePath) {
 
     //resolve relative module paths to the app calling this middlware module
     if(modulePath.indexOf('./') === 0 || modulePath.indexOf('../') === 0) {
-        var loadFrom = path.dirname(this.userBasePath);
-        return path.join(loadFrom, modulePath);
+        return path.resolve(this.userBasePath, modulePath);
     } else {
         return modulePath;
     }
