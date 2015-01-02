@@ -1,0 +1,13 @@
+.html-part textarea {
+    width: 100%;
+    min-height: 300px;
+}
+.html-part button {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    background: #d3d3d3;
+}
