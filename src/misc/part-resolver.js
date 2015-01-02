@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -24,7 +24,7 @@ var path = require('path');
 
 var PartResolver = function(opts) {
 
-    this.logger = opts.logger.child({module: 'part-resolver'});
+    this.logger = opts.logger;
     this.userBasePath = opts.userBasePath;
     this.cache = {};
 };
@@ -51,15 +51,7 @@ PartResolver.prototype.require = function(partModuleId) {
         try {
             partModule = require(partModulePath);
 
-            //resolve part view
-            //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
-            var partViewDir = path.extname(partModulePath) ? path.dirname(partModulePath) : partModulePath;
-            var partViewPath = path.join(partViewDir, 'view.hbs');
-
-            //load the part view
-            logger.debug('Loading part view partial from %s...', partViewPath);
-            var view = fs.readFileSync(partViewPath, 'utf8');
-            partModule.init(view);
+            this.initPartModule(partModulePath, partModule);
             this.cache[partModuleId] = partModule;
         } catch(e) {
             logger.error(e, 'A part module could not be resolved');
@@ -69,7 +61,30 @@ PartResolver.prototype.require = function(partModuleId) {
 };
 
 PartResolver.prototype.get = function(partModuleId) {
-    return this.cache[partModuleId] || null;
+    var module = this.cache[partModuleId] || null;
+
+    //TODO: this is not for production, need to remove
+    if(module) {
+        var partModulePath = this._resolveModulePath(partModuleId);
+        this.initPartModule(partModulePath, module);
+    }
+
+    return module;
+};
+
+PartResolver.prototype.initPartModule = function(partModulePath, partModule) {
+
+    var logger = this.logger;
+
+    //resolve part view
+    //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
+    var partViewDir = path.extname(partModulePath) ? path.dirname(partModulePath) : partModulePath;
+    var partViewPath = path.join(partViewDir, 'view.hbs');
+
+    //load the part view
+    logger.debug('Loading part view partial from %s...', partViewPath);
+    var view = fs.readFileSync(partViewPath, 'utf8');
+    partModule.init(view);
 };
 
 PartResolver.prototype._resolveModulePath = function(modulePath) {

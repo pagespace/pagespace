@@ -478,13 +478,13 @@ adminApp.controller("PageController",
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
-    var parentPageId = $routeParams.parentPageId
+    var parentPageId = $routeParams.parentPageId;
 
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
 
-    var getPageFunctions = []
+    var getPageFunctions = [];
     getPageFunctions.push(function getTemplates(callback) {
         templateService.getTemplates().success(function(templates) {
             $scope.templates = templates;
@@ -503,12 +503,14 @@ adminApp.controller("PageController",
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
+                page.expiresAt = new Date(page.expiresAt);
+
                 $scope.template = $scope.templates.filter(function(template) {
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
                 page.regions.map(function(region) {
-                    region.data = stringifyData(region.data)
+                    region.data = stringifyData(region.data);
                     return region;
                 });
 
@@ -808,7 +810,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var pageMap = {};
             allPages = allPages.filter(function(page) {
-                return page.status === 200;
+                return page.status < 400;
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;

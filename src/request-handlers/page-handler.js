@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -40,7 +40,6 @@ var PageHandler = function(support) {
     this.dbSupport = support.dbSupport;
     this.userBasePath = support.userBasePath;
     this.site = support.site;
-    this.logger = support.logger.child({module: 'page-handler'});
     this.partResolver = support.partResolver;
 };
 
@@ -51,10 +50,9 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-PageHandler.prototype._doRequest = function(req, res, next) {
+PageHandler.prototype._doRequest = function(req, res, next, logger) {
 
     var self = this;
-    var logger = this.logger;
 
     var urlPath = url.parse(req.url).pathname;
 
@@ -122,8 +120,11 @@ PageHandler.prototype._doRequest = function(req, res, next) {
             page.regions.forEach(function (region) {
                 var partModule = self.partResolver.require(region.part ? region.part.module : null);
                 if(partModule && typeof partModule.process === 'function') {
-                    var partPromise = partModule.process(region.data, {
-                        basePath: self.userBasePath
+                    var regionData = region.data || {};
+                    var partPromise = partModule.process(regionData, {
+                        basePath: self.userBasePath,
+                        PageModel: Page,
+                        logger: logger.child({part: region.part.name})
                     });
                     promises.push(partPromise);
                 } else {

@@ -7,7 +7,7 @@ function generateSchema(modifier) {
 
     modifier = modifier || '';
 
-    return Schema({
+    var pageSchema = Schema({
         root: {
             type: String
         },
@@ -54,8 +54,34 @@ function generateSchema(modifier) {
         status: {
             type: Number,
             default: 200
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now()
+        },
+        updatedAt: {
+            type: Date
+        },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        updatedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        expiresAt: {
+            type: Date,
+            default: new Date(Date.now + 1000 * 60 * 60 * 24 * 365 * 50) //50 years default!
         }
     });
+
+    pageSchema.pre('save', function (next) {
+        this.updatedAt = Date.now();
+        next();
+    });
+
+    return pageSchema;
 }
 
 module.exports = generateSchema;

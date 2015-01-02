@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -59,7 +59,7 @@ var DbSupport = function(opts) {
 
     this.cache = {};
 
-    this.logger =  opts.logger.child({module: 'db-support'});
+    this.logger =  opts.logger;
 };
 
 module.exports = function(opts) {

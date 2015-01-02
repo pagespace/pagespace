@@ -1,15 +1,66 @@
 <div ng-non-bindable class="web-copy-part">
     {{#if edit}}
-        <div id="{{region}}">
-            <div class="ps-edit-box" ng-controller="webCopyController" ng-init="region = '{{region}}'; pageId = '{{pageId}}'">
-                <div ckedit="body" id="ck{{region}}">{{{data}}}</div>
-                <button class="ps-btn" ng-click="save()">Save</button>
+        <div class="ps-edit-box" ng-controller="WebCopyController" ng-init="region='{{region}}'; pageId='{{pageId}}'">
+            <div wysihtml class="wysihtml-editor">
+                <div class="toolbar" class="hidden">
+                    <button data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-bold"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-italic"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="insertUnorderedList" title="Insert an unordered list" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-list"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="insertOrderedList" title="Insert an ordered list" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-list-numbered"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="createLink" title="Insert a link" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-link"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="insertImage" title="Insert an image" class="command" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-image"></use></svg>
+                    </button>
+                    <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command" >h1</button>
+                    <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command" >h2</button>
+                    <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3" title="Insert headline 3" class="command" >h3</button>
+                    <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="p" title="Insert paragraph" class="command" >p</button>
+                    <button data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"  style="display: none;"></button>
+                    <button data-behavior="showSource" title="Show HTML" class="action" >
+                        <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-embed2"></use></svg>
+                    </button>
+                    <div data-wysihtml5-dialog="createLink" style="display: none;">
+                        <label>
+                            Link:
+                            <input data-wysihtml5-dialog-field="href" value="">
+                        </label>
+                        <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+                    </div>
+                    <div data-wysihtml5-dialog="insertImage" style="display: none;">
+                        <label>
+                            Image:
+                            <input data-wysihtml5-dialog-field="src" value="">
+                        </label>
+                        <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+                    </div>
+                </div>
+
+                <div class="editor">{{{data}}}</div>
+                <div class="source hidden">
+                    <textarea name="editor-source" rows="10"></textarea>
+                </div>
+                <div class="edit-actions">
+                    <button ng-click="save()">Save <span ng-show="changed == true">*</span></button>
+                </div>
             </div>
         </div>
         <script>
-            head.load(['/_static/bower_components/angular/angular.min.js',
-                '/_static/bower_components/ckeditor/ckeditor.js',
-                '/_static/parts/web-copy/edit.js'], function() {
+            head.load([
+                '/_static/bower_components/angular/angular.min.js',
+                '/_static/bower_components/wysihtml/dist/wysihtml5x-toolbar.min.js',
+                '/_static/parts/web-copy/parser-rules.js',
+                '/_static/parts/web-copy/web-copy.js',
+                '/_static/parts/web-copy/web-copy-editor.css'], function() {
                 angular.element(document).ready(function() {
                     angular.bootstrap(document.getElementById('{{region}}'), ['webCopyApp']);
                 });

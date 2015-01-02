@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -26,9 +26,7 @@ var BluebirdPromise = require('bluebird');
 var consts = require('../app-constants');
 
 var DataHandler = function(support) {
-
-    this.logger = support.logger.child({module: 'data-handler'});
-    this.parts = support.parts;
+    this.partResolver = support.partResolver;
     this.dbSupport = support.dbSupport;
 };
 
@@ -49,10 +47,6 @@ DataHandler.prototype._doRequest = function(req, res, next) {
     var pageId = dataInfo[1];
     var regionId = dataInfo[2];
 
-    //clear props not to overwrite
-    delete req.body._id;
-    delete req.body.__v;
-
     var filter = {
         _id: pageId
     };
@@ -67,26 +61,28 @@ DataHandler.prototype._doRequest = function(req, res, next) {
         })[0];
 
         var partPromise = null;
-        var partModule = self.parts[region.part._id];
+        var partModule = self.partResolver.require(region.part ? region.part.module : null);
 
-        if(req.method === 'GET') {
-            partPromise = partModule.read(region.data);
-        } else if(req.method === 'PUT') {
-            partPromise = partModule.update(region.data, req.body);
-        } else if(req.method === 'DELETE') {
-            partPromise = partModule.delete(region.data, req.body);
-        } else {
-            var err = new Error('Unsupported method');
-            err.status = 405;
-            throw err;
+        if(partModule) {
+            if(req.method === 'GET') {
+                partPromise = partModule.process(region.data);
+            } else if(req.method === 'PUT') {
+                partPromise = req.body;
+            } else {
+                var err = new Error('Unsupported method');
+                err.status = 405;
+                throw err;
+            }
         }
+
         return [ page, region, partPromise ];
     }).spread(function(page, region, partData) {
-        if(req.method === 'PUT' || req.method === 'DELETE') {
-            region.data = partData;
+        if(req.method === 'PUT') {
+            region.data = partData.data;
             page.draft = true;
             page.save(function (err) {
                 if (err) {
+                    //TOOD: promisify, this won't work
                     throw err;
                 }
                 res.statusCode = 204;
@@ -98,5 +94,4 @@ DataHandler.prototype._doRequest = function(req, res, next) {
     }).catch(function(err) {
         return next(new Error(err));
     });
-
 };

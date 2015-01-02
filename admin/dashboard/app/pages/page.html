@@ -29,6 +29,12 @@
                     </div>
                 </div>
             </div>
+            <div class="form-group" bs-has-error="expiresAt">
+                <label class="col-sm-2 control-label">Expires</label>
+                <div class="col-sm-7">
+                    <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
+                </div>
+            </div>
 
             <!-- Select template -->
             <div ng-if="template == null">

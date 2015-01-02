@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -25,20 +25,17 @@ var serveStatic = require('serve-static');
 //util
 var consts = require('../app-constants');
 
-var StaticHandler = function(support) {
-    this.logger = support.logger.child({module: 'static-handler'});
+var StaticHandler = function() {
     this.adminStaticServe = serveStatic(__dirname + '/../../admin', { index: false });
 };
 
-module.exports = function(support) {
-    return new StaticHandler(support);
+module.exports = function() {
+    return new StaticHandler();
 };
 
-StaticHandler.prototype._doRequest = function(req, res, next) {
+StaticHandler.prototype._doRequest = function(req, res, next, logger) {
 
-    var logger = this.logger;
-
-    logger.info('Processing static request for %s', req.url);
+    logger.debug('Processing static request for %s', req.url);
 
     var apiInfo = consts.requests.STATIC.regex.exec(req.url);
     var staticType = apiInfo[1];

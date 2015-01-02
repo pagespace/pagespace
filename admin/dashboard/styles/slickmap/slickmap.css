@@ -12,9 +12,9 @@
 	width:100% !important;
 }
 
-.sitemap-primary.col1 li { width:99.9%; }
-.sitemap-primary.col2 li { width:50.0%; }
-.sitemap-primary.col3 li { width:33.3%; }
+.sitemap-primary.col1 li { width:25.0%; }
+.sitemap-primary.col2 li { width:25.0%; }
+.sitemap-primary.col3 li { width:25.0%; }
 .sitemap-primary.col4 li { width:25.0%; }
 .sitemap-primary.col5 li { width:20.0%; }
 .sitemap-primary.col6 li { width:16.6%; }
@@ -209,4 +209,7 @@ a:visited:before {
 }
 .sitemap-remove {
     float: left;
+}
+.sitemap .ghost {
+    opacity: 0.5;
 }

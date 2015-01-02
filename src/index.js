@@ -78,38 +78,47 @@ Index.prototype.init = function(options) {
 
     var self = this;
 
-    //logger setup
-    if(options.logger) {
-        this.logger = options.logger;
-    } else {
-        this.logger = bunyan.createLogger({ name: 'page-space' });
-        this.logger.level(options.logLevel || 'info');
-    }
-    var logger = this.logger;
-
-    //instantiate if not already mocked
-    this.dbSupport = this.dbSupport || createDbSupport({ logger: logger });
+    //count requests;
+    this.requestCount = 0;
     this.userBasePath = path.dirname(module.parent.filename);
+
+    //logger setup
+    var logStreams = options.logStreams instanceof Array || [];
+    this.logger =  bunyan.createLogger({
+        name: 'pagespace',
+        streams: [{
+            level: options.logLevel || 'info',
+            stream: process.stdout
+        }].concat(logStreams)
+    });
+    var logger = this.logger.child({ phase : 'init'});
+
+    logger.info('Initializing the middleware...');
+
+    //this resolves part modules
     this.partResolver = this.partResolver || createPartResolver({
         logger: logger,
         userBasePath: this.userBasePath
     });
 
-    if(!options.mediaDir) {
-        var defaultMediaDir = path.join(this.userBasePath, 'media-uploads');
-        logger.warn('No media directory was specified. Defaulting to %s', defaultMediaDir);
-        var dir = mkdirp.sync(defaultMediaDir);
+    //define where to save media uploads
+    if(options.mediaDir) {
+        this.mediaDir = options.mediaDir;
+    } else {
+        this.mediaDir = path.join(this.userBasePath, 'media-uploads');
+        logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
+        var dir = mkdirp.sync(this.mediaDir);
         if(dir) {
             logger.info('New media directory created at %s', dir);
         }
     }
-    this.mediaDir = options.mediaDir || defaultMediaDir;
+
+    //optionally do not serve the dashboard
     this.serveDashboard = typeof options.serveDashboard === 'boolean' ? options.serveDashboard : true;
 
-    logger.info('Initializing the middleware...');
-
+    //initialize db
+    this.dbSupport = this.dbSupport || createDbSupport({ logger: logger });
     this.dbSupport.initModels();
-
     var dbConnection = options.db;
     if(!dbConnection) {
         throw new Error('You must specify a db connection string');
@@ -132,6 +141,7 @@ Index.prototype.init = function(options) {
 
             var promises = [];
 
+            //pre-resolve part modules (
             logger.info('Resolving part modules...');
             if(!parts.length) {
                 logger.info('There are no registered part modules. Add some via the dashboard');
@@ -141,7 +151,7 @@ Index.prototype.init = function(options) {
                 self.partResolver.require(part.module);
             });
 
-            //site
+            //setup the site model for first run
             if (!site) {
                 logger.info('Creating first site');
                 var Site = self.dbSupport.getModel('Site');
@@ -159,7 +169,7 @@ Index.prototype.init = function(options) {
                 promises.push(site);
             }
 
-            //users
+            //set up the default admin user for first run
             if (users.length === 0) {
                 logger.info('Creating admin user with default admin password');
                 var User = self.dbSupport.getModel('User');
@@ -182,6 +192,7 @@ Index.prototype.init = function(options) {
             return promises;
         }).spread(function(site) {
 
+            //general support instances supplied to all request handlers
             self.requestHandlerSupport = {
                 logger: logger,
                 viewEngine: self.viewEngine,
@@ -193,6 +204,8 @@ Index.prototype.init = function(options) {
             };
 
             logger.info('Initialized, waiting for requests');
+
+            //app state is now ready
             self.appState = consts.appStates.READY;
         }).catch(function(e) {
             logger.error(e, 'Initialization error');
@@ -205,11 +218,9 @@ Index.prototype.init = function(options) {
     //handle requests
     return function(req, res, next) {
 
-        //fixes issues with hbs and multiple express view directories
-        res.locals = { layout: false };
-
         if(self.appState === consts.appStates.READY) {
             req.url = url.parse(req.url).pathname;
+            //run all requests through passport first
             async.series([
                 function (callback) {
                     passport.initialize()(req, res, callback);
@@ -279,7 +290,11 @@ Index.prototype._loadSite = function() {
  */
 Index.prototype._doRequest = function(req, res, next) {
 
-    var logger = this.logger;
+    //special logger per request, with request context data
+    var logger = this.logger.child({
+        sessionId: req.sessionID,
+        reqId: this.requestCount++
+    });
 
     var requestHandler, requestType;
     var user = req.user || this._createGuestUser();
@@ -294,7 +309,7 @@ Index.prototype._doRequest = function(req, res, next) {
         requestType = this._getRequestType(req.url);
     }
     requestHandler = this._getRequestHandler(requestType);
-    return requestHandler._doRequest(req, res, next);
+    return requestHandler._doRequest(req, res, next, logger);
 };
 
 /**

@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -30,7 +30,6 @@ var formidable = require('formidable'),
 var MediaHandler = function(support) {
     this.dbSupport = support.dbSupport;
     this.mediaDir = support.mediaDir;
-    this.logger = support.logger.child({module: 'media-handler'});
 };
 
 module.exports = function(support) {
@@ -40,12 +39,12 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-MediaHandler.prototype._doRequest = function(req, res, next) {
+MediaHandler.prototype._doRequest = function(req, res, next, logger) {
 
     if(req.method === 'POST') {
-        return this.upload(req, res, next);
+        return this.upload(req, res, next, logger);
     } else if(req.method === 'GET') {
-        return this.serve(req, res, next);
+        return this.serve(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -53,9 +52,7 @@ MediaHandler.prototype._doRequest = function(req, res, next) {
     }
 };
 
-MediaHandler.prototype.serve = function(req, res, next) {
-
-    var logger = this.logger;
+MediaHandler.prototype.serve = function(req, res, next, logger) {
 
     logger.info('Serving media for %s', req.url);
 
@@ -85,13 +82,12 @@ MediaHandler.prototype.serve = function(req, res, next) {
 
 };
 
-MediaHandler.prototype.upload = function(req, res, next) {
+MediaHandler.prototype.upload = function(req, res, next, logger) {
 
     var self = this;
-    var logger = this.logger;
 
     if(!this.mediaDir) {
-        logger.error('Cannot upload media. No upload directory was specified.')
+        logger.error('Cannot upload media. No upload directory was specified.');
         var e = new Error('Unable to upload media');
         return next(e);
     }

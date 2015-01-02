@@ -1,12 +1,15 @@
 <script type="text/ng-template"  id="page-item">
-    <div class="sitemap-node clearfix">
+    <div class="sitemap-node clearfix" ng-class="{ghost: page.status > 300}">
         <button class="btn btn-sm sitemap-remove" ng-show="page.children.length == 0" ng-click="removePage(page)" title="Remove page">
             <span class="glyphicon glyphicon-remove"></span>
         </button>
         <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add page">
             <span class="glyphicon glyphicon-plus"></span>
         </button>
-        <a href="#/pages/{{page._id}}">{{page.name}}<span ng-show="page.draft"><b>*</b></span></a>
+
+        <a href="#/pages/{{page._id}}" ng-if="!page.redirect">{{page.name}}<span ng-show="page.draft"><b>*</b></span></a>
+        <a href="#/pages/{{page.redirect._id}}" ng-if="page.redirect">Redirect to {{page.redirect.name}}</a>
+
     </div>
     <ul ng-if="page.children.length">
         <li ng-repeat="page in page.children" ng-include="'page-item'"></li>

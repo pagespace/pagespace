@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -24,7 +24,6 @@ var Bluebird = require('bluebird');
 
 
 var PublishingHandler = function(support) {
-    this.logger = this.logger = support.logger.child({module: 'publishing-handler'});
     this.dbSupport = support.dbSupport;
 };
 
@@ -35,10 +34,10 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-PublishingHandler.prototype._doRequest = function(req, res, next) {
+PublishingHandler.prototype._doRequest = function(req, res, next, logger) {
 
     if(req.method === 'POST') {
-        return this.publishDrafts(req, res, next);
+        return this.publishDrafts(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -46,10 +45,9 @@ PublishingHandler.prototype._doRequest = function(req, res, next) {
     }
 };
 
-PublishingHandler.prototype.publishDrafts = function(req, res, next) {
+PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
 
     var self = this;
-    var logger = this.logger;
 
     var draftIds = req.body;
 
@@ -86,6 +84,16 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next) {
             delete livePage._id;
             delete livePage.__v;
             delete livePage.template;
+
+            //if not previously published, update the created date
+            if(!livePage.published) {
+                livePage.createdAt = Date.now();
+            }
+            //initial and subsequent publishing events
+            livePage.updatedAt = Date.now();
+            livePage.updatedBy = req.user._id;
+
+            //no longer a draft
             livePage.draft = false;
             livePage.template = templateId;
             var saveLivePage = Bluebird.promisify(LivePage.update, LivePage);

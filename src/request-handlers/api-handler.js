@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -25,18 +25,15 @@ var util = require('../misc/util');
 
 var ApiHandler = function(support) {
     this.dbSupport = support.dbSupport;
-    this.logger = support.logger.child({module: 'api-handler'});
 };
 
 module.exports = function(support) {
     return new ApiHandler(support);
 };
 
-ApiHandler.prototype._doRequest = function(req, res, next) {
+ApiHandler.prototype._doRequest = function(req, res, next, logger) {
 
-    var logger = this.logger;
-
-    logger.info('Processing api request for ' + req.url);
+    logger.info('Processing api request for %s ', req.url);
 
     var modelMap = {
         sites: 'Site',
@@ -49,7 +46,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
 
     var populationsMap = {
         sites: '',
-        pages: 'parent template regions.part',
+        pages: 'parent template regions.part redirect',
         parts: '',
         templates: '',
         users: '',
@@ -78,6 +75,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
         delete req.body._id;
         delete req.body.__v;
 
+        var docData;
         if(req.method === 'GET') {
             var filter = {};
             if(itemId) {
@@ -98,7 +96,7 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                 return '-' + field;
             }).join(' ');
             var populations = populationsMap[apiType];
-            Model.find(filter, restricted).populate(populations).exec(function(err, results) {
+            Model.find(filter, restricted).populate(populations).sort('-createdAt').exec(function(err, results) {
                 if(err) {
                     logger.error(err, 'Trying to do API GET for %s', apiType);
                     return next(err);
@@ -123,7 +121,10 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                 logger.info('Creating new %s', modelName);
                 logger.debug('Creating new model with data: ' );
                 logger.debug(req.body);
-                var model = new Model(req.body);
+
+                docData = req.body;
+                docData.createdBy = req.user._id;
+                var model = new Model(docData);
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
@@ -141,8 +142,9 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
             } else {
                 logger.info('Updating %s with id [%s]', modelName, itemId);
                 logger.debug('Updating model with data: ' );
-                var data = req.body;
-                data.draft = true;
+                docData = req.body;
+                docData.updatedBy = req.user._id;
+                this.draft = true;
                 logger.debug(req.body);
                 Model.findById(itemId, function (err, doc) {
                     if (err) {
@@ -151,9 +153,9 @@ ApiHandler.prototype._doRequest = function(req, res, next) {
                     } else if(doc) {
                         //need to do this because findByIdAndUpdate does invoke mongoose hooks
                         //https://github.com/LearnBoost/mongoose/issues/964
-                        for(var key in data) {
-                            if(data.hasOwnProperty(key)) {
-                                doc[key] = data[key];
+                        for(var key in docData) {
+                            if(docData.hasOwnProperty(key)) {
+                                doc[key] = docData[key];
                             }
                         }
 

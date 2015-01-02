@@ -22,7 +22,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var pageMap = {};
             allPages = allPages.filter(function(page) {
-                return page.status === 200;
+                return page.status < 400;
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;

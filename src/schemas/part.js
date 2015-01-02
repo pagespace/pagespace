@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 function generateSchema() {
-    return Schema({
+    var partSchema = Schema({
         name: {
             type: String,
             required: true
@@ -13,11 +13,30 @@ function generateSchema() {
             type: String,
             unique: true,
             required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now()
+        },
+        updatedAt: {
+            type: Date
+        },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        updatedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
         }
     });
+
+    partSchema.pre('save', function (next) {
+        this.updatedAt = Date.now();
+        next();
+    });
+
+    return partSchema;
 }
-
-
-//var PartModule = mongoose.model('Part', partSchema);
 
 module.exports = generateSchema;

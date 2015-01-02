@@ -14,7 +14,7 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
@@ -25,17 +25,14 @@ var async = require('async');
 var util = require('../misc/util');
 
 
-var LoginHandler = function(support) {
-    this.logger = support.logger.child({module: 'login-handler'});
+var LoginHandler = function() {
 };
 
-module.exports = function(support) {
-    return new LoginHandler(support);
+module.exports = function() {
+    return new LoginHandler();
 };
 
-LoginHandler.prototype._doRequest = function(req, res, next) {
-
-    var logger = this.logger;
+LoginHandler.prototype._doRequest = function(req, res, next, logger) {
 
     logger.info('Processing login request for ' + req.url);
 

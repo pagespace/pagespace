@@ -1,11 +1,12 @@
 'use strict';
 
 var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 var bcrypt = require('bcrypt');
 var SALT_WORK_FACTOR = 10;
 
 function generateSchema() {
-    var userSchema = mongoose.Schema({
+    var userSchema = Schema({
         username: {
             type: String, required: true,
             index: { unique: true }
@@ -32,11 +33,28 @@ function generateSchema() {
         updatePassword: {
             type: Boolean,
             default: false
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now()
+        },
+        updatedAt: {
+            type: Date
+        },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        updatedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
         }
     });
 
     userSchema.pre('save', function (next) {
         var user = this;
+
+        user.updatedAt = Date.now();
 
         // only hash the password if it has been modified (or is new)
         if (!user.isModified('password')) {

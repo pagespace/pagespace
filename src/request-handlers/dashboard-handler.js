@@ -14,22 +14,19 @@
  * Lesser GNU General Public License for more details.
 
  * You should have received a copy of the Lesser GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 'use strict';
 
-var DashboardHandler = function(support) {
-    this.logger = support.logger.child({module: 'dashboard-handler'});
+var DashboardHandler = function() {
 };
 
-module.exports = function(support) {
-    return new DashboardHandler(support);
+module.exports = function() {
+    return new DashboardHandler();
 };
 
-DashboardHandler.prototype._doRequest = function(req, res, next) {
-
-    var logger = this.logger;
+DashboardHandler.prototype._doRequest = function(req, res, next, logger) {
 
     logger.info('Processing admin request for %s', req.url);
 

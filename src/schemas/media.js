@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 
 function generateSchema() {
 
-    return Schema({
+    var mediaSchema = Schema({
         path: {
             type: String,
             required: true
@@ -32,8 +32,30 @@ function generateSchema() {
         },
         tags: [{
             type: String
-        }]
+        }],
+        createdAt: {
+            type: Date,
+            default: Date.now()
+        },
+        updatedAt: {
+            type: Date
+        },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        updatedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }
     });
+
+    mediaSchema.pre('save', function (next) {
+        this.updatedAt = Date.now();
+        next();
+    });
+
+    return mediaSchema;
 }
 
 module.exports = generateSchema;
