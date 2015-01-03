@@ -20,6 +20,7 @@
 'use strict';
 
 //support
+var fs = require('fs');
 var send = require('send');
 
 //util
@@ -45,6 +46,8 @@ MediaHandler.prototype._doRequest = function(req, res, next, logger) {
         return this.upload(req, res, next, logger);
     } else if(req.method === 'GET') {
         return this.serve(req, res, next, logger);
+    } else if(req.method === 'PUT') {
+        return this.update(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -75,9 +78,35 @@ MediaHandler.prototype.serve = function(req, res, next, logger) {
             });
 
             // pipe
-            logger.info('Streaming media to client for  %s', model.path);
+            logger.debug('Streaming media to client for  %s', model.path);
             stream.pipe(res);
         }
+    });
+};
+
+MediaHandler.prototype.update = function(req, res, next, logger) {
+
+    logger.info('Updating media text for %s', req.url);
+
+    var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
+    var itemFileName = apiInfo[1];
+    var Media = this.dbSupport.getModel('Media');
+    Media.findOne({
+        fileName: itemFileName
+    }).exec(function(err, model) {
+        if(err) {
+            return next(err);
+        }
+        logger.info('Updating file %s', model.path);
+        var content = req.body.content;
+        fs.writeFile(model.path, content, function(err) {
+            if(err) {
+                logger.error('Could not write file to %s', model.path);
+                next(err);
+            } else {
+                res.send('%s updated successfully', itemFileName);
+            }
+        });
     });
 
 };
