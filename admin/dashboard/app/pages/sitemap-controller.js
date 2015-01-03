@@ -35,6 +35,12 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     currentPage.children = allPages.filter(function(childCandidate) {
                         var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
                         return currentPage._id === candidateParentId;
+                    }).sort(function(a, b) {
+                        if (a.order < b.order)
+                            return -1;
+                        if (a.order > b.order)
+                            return 1;
+                        return 0;
                     });
                     if(currentPage.children.length > 0) {
                         populateChildren(currentPage.children);
@@ -58,11 +64,32 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.addPage = function(parentPage) {
 
-        var parentPageId = '';
+        var parentRoute, siblingsQuery;
         if(parentPage) {
-            parentPageId = '/' + parentPage._id;
+            parentRoute = parentPage._id;
+            siblingsQuery = {
+                parent: parentPage._id
+            }
+        } else {
+            parentRoute = 'root';
+            siblingsQuery = {
+                root: 'primary'
+            }
         }
-        $location.path('/pages/new' + parentPageId);
+        $rootScope.showInfo('Preparing new page...');
+        //get future siblings
+        pageService.getPages(siblingsQuery).success(function(pages) {
+
+            var highestOrder = pages.map(function(page) {
+                return page.order || 0;
+            }).reduce(function(prev, curr){
+                    return Math.max(prev, curr);
+            }, -1);
+            highestOrder++;
+            $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
+        }).error(function(err) {
+            $rootScope.showError('Unable to determine order of new page', err);
+        });
     };
 
     $scope.removePage = function(page) {
