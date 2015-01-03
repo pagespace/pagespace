@@ -1,7 +1,7 @@
-<div ng-non-bindable class="html-part">
+<div ng-non-bindable class="html-part {{data.wrapperClass}}">
     {{#if edit}}
         <div class="ps-edit-box" ng-controller="HtmlController" ng-init="region='{{region}}'; pageId='{{pageId}}'">
-            <textarea ng-model="html">{{{data}}}</textarea>
+            <textarea ng-model="html">{{{data.html}}}</textarea>
             <button ng-click="save()">Save <span ng-show="changed == true">*</span></button>
         </div>
         <script>
@@ -15,6 +15,6 @@
             });
         </script>
     {{else}}
-        {{{data}}}
+        {{{data.html}}}
     {{/if}}
 </div>
