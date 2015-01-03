@@ -1,7 +1,7 @@
-<div ng-non-bindable class="web-copy-part">
+<div ng-non-bindable class="web-copy-part" >
     {{#if edit}}
-        <div class="ps-edit-box" ng-controller="WebCopyController" ng-init="region='{{region}}'; pageId='{{pageId}}'">
-            <div wysihtml class="wysihtml-editor">
+        <div class="ps-edit-box" id="{{region}}" ng-controller="WebCopyController" ng-init="region='{{region}}'; pageId='{{pageId}}'">
+            <div ps-wysihtml class="wysihtml-editor">
                 <div class="toolbar" class="hidden">
                     <button data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command" >
                         <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-bold"></use></svg>
@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                <div class="editor">{{{data}}}</div>
+                <div class="editor">{{{data.html}}}</div>
                 <div class="source hidden">
                     <textarea name="editor-source" rows="10"></textarea>
                 </div>
@@ -67,6 +67,6 @@
             });
         </script>
     {{else}}
-        {{{data}}}
+        {{{data.html}}}
     {{/if}}
 </div>
