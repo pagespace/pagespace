@@ -19,15 +19,14 @@
 
 'use strict';
 
-var mongoose = require('mongoose');
 var toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
-var siteSchema = require('../schemas/site');
-var pageSchema = require('../schemas/page');
-var partSchema = require('../schemas/part');
-var templateSchema = require('../schemas/template');
-var userSchema = require('../schemas/user');
-var mediaSchema = require('../schemas/media');
+var siteSchema = require('../schemas/site'),
+    pageSchema = require('../schemas/page'),
+    partSchema = require('../schemas/part'),
+    templateSchema = require('../schemas/template'),
+    userSchema = require('../schemas/user'),
+    mediaSchema = require('../schemas/media');
 
 var modelData = [{
     name: 'Site',
@@ -57,6 +56,7 @@ var modelData = [{
 
 var DbSupport = function(opts) {
 
+    this.mongoose = opts.mongoose;
     this.cache = {};
 
     this.logger =  opts.logger;
@@ -70,10 +70,12 @@ DbSupport.prototype.initModels = function() {
 
     var self = this;
     var logger = this.logger;
+    var mongoose = this.mongoose;
     
     var liveModifier = '_live';
     
     modelData.forEach(function(modelDatum) {
+
         var name = modelDatum.name;
         var schema = modelDatum.schema();
         var collectionName = toCollectionName(name);
@@ -93,7 +95,7 @@ DbSupport.prototype.getModel = function(name, modifier) {
 
     var modelName = name + (modifier ? '_' + modifier : '');
     var model = this.cache[modelName];
-    
+
     if(!model) {
         throw new Error('No schema is associated with the model with name ' + name + ' [' + modelName + ']');
     }

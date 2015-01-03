@@ -19,8 +19,8 @@
 
 'use strict';
 
-var fs = require('fs');
-var handlebars = require('handlebars');
+var fs = require('fs'),
+    handlebars = require('handlebars');
 
 //TODO: add debug logging
 function ViewEngine() {

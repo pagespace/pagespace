@@ -19,16 +19,33 @@
 
 'use strict';
 
-var DashboardHandler = function() {
+var psUtil = require('../misc/pagespace-util');
+
+/**
+ *
+ * @constructor
+ */
+var DashboardHandler = function(support) {
+    this.logger = support.logger;
+    this.reqCount = 0;
 };
 
-module.exports = function() {
-    return new DashboardHandler();
+module.exports = function(support) {
+    return new DashboardHandler(support);
 };
 
-DashboardHandler.prototype._doRequest = function(req, res, next, logger) {
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
+DashboardHandler.prototype.doRequest = function(req, res, next) {
 
-    logger.info('Processing admin request for %s', req.url);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'dashboard', ++this.reqCount);
+
+    logger.info('New dashboard request from %s', req.user.username);
 
     var pageData = {
         role: req.user.role,
@@ -40,7 +57,7 @@ DashboardHandler.prototype._doRequest = function(req, res, next, logger) {
             logger.error(err, 'Error trying to render dashboard page, %s', req.url);
             next(err);
         } else {
-            logger.info('Sending page for %s', req.url);
+            logger.info('Dashboard request OK');
             res.send(html);
         }
     });

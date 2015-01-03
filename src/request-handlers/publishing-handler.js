@@ -20,11 +20,13 @@
 'use strict';
 
 //support
-var Bluebird = require('bluebird');
-
+var Promise = require('bluebird'),
+    psUtil = require('../misc/pagespace-util');
 
 var PublishingHandler = function(support) {
+    this.logger = support.logger;
     this.dbSupport = support.dbSupport;
+    this.reqCount = 0;
 };
 
 module.exports = function(support) {
@@ -34,8 +36,11 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-PublishingHandler.prototype._doRequest = function(req, res, next, logger) {
+PublishingHandler.prototype.doRequest = function(req, res, next) {
 
+    var logger = psUtil.getRequestLogger(this.logger, req, 'publishing', ++this.reqCount);
+
+    logger.info('New publishing request');
     if(req.method === 'POST') {
         return this.publishDrafts(req, res, next, logger);
     } else {
@@ -63,7 +68,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
 
     var DraftPage = this.dbSupport.getModel('Page');
     var query = DraftPage.find({ $or : orConditions}).populate('template regions.part');
-    var findPagesToPublish = Bluebird.promisify(query.exec, query);
+    var findPagesToPublish = Promise.promisify(query.exec, query);
     findPagesToPublish().then(function(pages) {
 
         var queuedDraftTemplates = {};
@@ -96,7 +101,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
             //no longer a draft
             livePage.draft = false;
             livePage.template = templateId;
-            var saveLivePage = Bluebird.promisify(LivePage.update, LivePage);
+            var saveLivePage = Promise.promisify(LivePage.update, LivePage);
             updates.push(saveLivePage({_id: pageId}, livePage, { upsert: true }));
             logger.info('Page queued to publish: %s (id=%s) @ \'%s\'', livePage.name, pageId, livePage.url);
 
@@ -107,7 +112,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
                 delete liveTemplate._id;
                 delete liveTemplate.__v;
                 liveTemplate.draft = false;
-                var saveLiveTemplate = Bluebird.promisify(LiveTemplate.update, LiveTemplate);
+                var saveLiveTemplate = Promise.promisify(LiveTemplate.update, LiveTemplate);
                 updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true }));
                 queuedDraftTemplates[templateId] = true;
 
@@ -115,7 +120,7 @@ PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
             }
 
             //undraft page
-            var saveDraftPage = Bluebird.promisify(page.save, page);
+            var saveDraftPage = Promise.promisify(page.save, page);
             page.draft = false;
             page.published = true;
             updates.push(saveDraftPage());

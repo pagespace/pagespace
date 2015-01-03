@@ -20,21 +20,25 @@
 'use strict';
 
 //support
-var passport = require('passport');
-var async = require('async');
-var util = require('../misc/util');
+var passport = require('passport'),
+    async = require('async'),
+    psUtil = require('../misc/pagespace-util');
 
 
-var LoginHandler = function() {
+var LoginHandler = function(support) {
+    this.logger = support.logger;
+    this.reqCount = 0;
 };
 
-module.exports = function() {
-    return new LoginHandler();
+module.exports = function(support) {
+    return new LoginHandler(support);
 };
 
-LoginHandler.prototype._doRequest = function(req, res, next, logger) {
+LoginHandler.prototype.doRequest = function(req, res, next) {
 
-    logger.info('Processing login request for ' + req.url);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'login', ++this.reqCount);
+
+    logger.info('New login request');
 
     if(req.method === 'GET') {
         var doNext = function(err) {
@@ -42,14 +46,14 @@ LoginHandler.prototype._doRequest = function(req, res, next, logger) {
                 return next(err);
             } else {
                 var data = {
-                    badCredentials: util.typeify(req.query.badCredentials) || false
+                    badCredentials: psUtil.typeify(req.query.badCredentials) || false
                 };
                 return res.render('login.hbs', data, function(err, html) {
                     if(err) {
                         logger.error(err, 'Trying to render login');
                         next(err);
                     } else {
-                        logger.info('Sending page for %s', req.url);
+                        logger.info('Sending login page');
                         res.send(html);
                     }
                 });
@@ -62,8 +66,10 @@ LoginHandler.prototype._doRequest = function(req, res, next, logger) {
             }
             req.logIn(user, function(err) {
                 if (err) {
+                    logger.warn(err, 'Error authenticating user with remember me');
                     return next(err);
                 } else {
+                    logger.info('User authenticated with remember me: %s', user.username);
                     return res.redirect(req.session.loginToUrl);
                 }
             });
@@ -102,8 +108,10 @@ LoginHandler.prototype._doRequest = function(req, res, next, logger) {
                 }
             ], function(err, results) {
                 if(err) {
+                    logger.info('User logged failed');
                     return next(err);
                 } else {
+                    logger.info('User logged in OK');
                     if(results[0]) {
                         res.cookie('remember_me', results[0], {
                             path: '/',

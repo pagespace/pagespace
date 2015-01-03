@@ -19,18 +19,20 @@
 
 'use strict';
 
-//support
-var fs = require('fs');
-var send = require('send');
+var fs = require('fs'),
 
-//util
-var formidable = require('formidable'),
-    util = require('util'),
-    consts = require('../app-constants');
+    send = require('send'),
+    formidable = require('formidable'),
+
+    consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
+
 
 var MediaHandler = function(support) {
+    this.logger = support.logger;
     this.dbSupport = support.dbSupport;
     this.mediaDir = support.mediaDir;
+    this.reqCount = 0;
 };
 
 module.exports = function(support) {
@@ -40,14 +42,19 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-MediaHandler.prototype._doRequest = function(req, res, next, logger) {
+MediaHandler.prototype.doRequest = function(req, res, next) {
+
+    var logger = psUtil.getRequestLogger(this.logger, req, 'media', ++this.reqCount);
 
     if(req.method === 'POST') {
-        return this.upload(req, res, next, logger);
+        logger.info('New media upload request');
+        return this._upload(req, res, next, logger);
     } else if(req.method === 'GET') {
-        return this.serve(req, res, next, logger);
+        logger.debug('New media serve request');
+        return this._serve(req, res, next, logger);
     } else if(req.method === 'PUT') {
-        return this.update(req, res, next, logger);
+        logger.info('New media update request');
+        return this._update(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -55,9 +62,7 @@ MediaHandler.prototype._doRequest = function(req, res, next, logger) {
     }
 };
 
-MediaHandler.prototype.serve = function(req, res, next, logger) {
-
-    logger.info('Serving media for %s', req.url);
+MediaHandler.prototype._serve = function(req, res, next, logger) {
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
@@ -66,6 +71,7 @@ MediaHandler.prototype.serve = function(req, res, next, logger) {
         fileName: itemFileName
     }).exec(function(err, model) {
         if(err) {
+            logger.warn(err, 'Unable to serve media');
             return next(err);
         }
         if(model && model.path) {
@@ -84,26 +90,29 @@ MediaHandler.prototype.serve = function(req, res, next, logger) {
     });
 };
 
-MediaHandler.prototype.update = function(req, res, next, logger) {
+MediaHandler.prototype._update = function(req, res, next, logger) {
 
-    logger.info('Updating media text for %s', req.url);
+
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
+    logger.info('Updating media text for %s', itemFileName);
     var Media = this.dbSupport.getModel('Media');
     Media.findOne({
         fileName: itemFileName
     }).exec(function(err, model) {
         if(err) {
+            logger.warn(err, 'Unable to find media item to update');
             return next(err);
         }
         logger.info('Updating file %s', model.path);
         var content = req.body.content;
         fs.writeFile(model.path, content, function(err) {
             if(err) {
-                logger.error('Could not write file to %s', model.path);
+                logger.error(err, 'Could not write file to %s', model.path);
                 next(err);
             } else {
+                logger.info('Update media text OK');
                 res.send('%s updated successfully', itemFileName);
             }
         });
@@ -111,7 +120,7 @@ MediaHandler.prototype.update = function(req, res, next, logger) {
 
 };
 
-MediaHandler.prototype.upload = function(req, res, next, logger) {
+MediaHandler.prototype._upload = function(req, res, next, logger) {
 
     var self = this;
 
@@ -120,6 +129,7 @@ MediaHandler.prototype.upload = function(req, res, next, logger) {
         var e = new Error('Unable to upload media');
         return next(e);
     }
+    logger.info('Uploading new media item');
 
     var form = new formidable.IncomingForm();
     form.uploadDir = this.mediaDir;
@@ -127,9 +137,9 @@ MediaHandler.prototype.upload = function(req, res, next, logger) {
     form.type = 'multipart';
 
     try {
+        //save media
         form.parse(req, function(err, fields, files) {
-            logger.info(util.inspect({fields: fields, files: files}));
-
+            logger.info('Media item saved to: %s', files.file.path);
             var tags = [];
             if(fields.tags) {
                 tags = fields.tags.split(',').map(function(tag) {
@@ -147,19 +157,21 @@ MediaHandler.prototype.upload = function(req, res, next, logger) {
                 fileName: files.file.name,
                 size: files.file.size
             });
+
             media.save(function (err, model) {
                 if (err) {
-                    logger.error(err, 'Trying to save for media item for %s', fields);
+                    logger.error(err, 'Trying to save for media item for to db for %s', fields);
                     next(err);
                 } else {
-                    logger.info('Created successfully');
+                    logger.info('Media upload request OK');
                     //don't send file paths to client
                     delete model.filePath;
                     res.json(model);
                 }
             });
         });
-    } catch(e) {
+    } catch(err) {
+        logger.error(err, 'Error uploading media item');
         return next(e);
     }
 };

@@ -19,21 +19,25 @@
 
 'use strict';
 
-//support
-var serveStatic = require('serve-static');
+var serveStatic = require('serve-static'),
+    consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
 
-//util
-var consts = require('../app-constants');
-
-var StaticHandler = function() {
-    this.adminStaticServe = serveStatic(__dirname + '/../../admin', { index: false });
+var StaticHandler = function(support) {
+    this.logger = support.logger;
+    this.adminStaticServe = serveStatic(__dirname + '/../../admin', {
+        index: false
+    });
+    this.reqCount = 0;
 };
 
-module.exports = function() {
-    return new StaticHandler();
+module.exports = function(support) {
+    return new StaticHandler(support);
 };
 
-StaticHandler.prototype._doRequest = function(req, res, next, logger) {
+StaticHandler.prototype.doRequest = function(req, res, next) {
+
+    var logger = psUtil.getRequestLogger(this.logger, req, 'static', ++this.reqCount);
 
     logger.debug('Processing static request for %s', req.url);
 

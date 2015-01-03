@@ -78,5 +78,14 @@ module.exports = {
      */
     randomId: function() {
         return Math.random().toString(36).substring(7);
+    },
+
+    getRequestLogger: function(logger, req, source, count) {
+        return logger.child({
+            sessionID: req.sessionID,
+            reqId: source + '-' + count,
+            url: req.url,
+            method: req.method
+        });
     }
 };

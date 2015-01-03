@@ -20,14 +20,16 @@
 'use strict';
 
 //support
-var BluebirdPromise = require('bluebird');
-
-//util
-var consts = require('../app-constants');
+var Promise = require('bluebird'),
+    consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
 
 var DataHandler = function(support) {
+
+    this.logger = support.logger;
     this.partResolver = support.partResolver;
     this.dbSupport = support.dbSupport;
+    this.reqCount = 0;
 };
 
 module.exports = function(support) {
@@ -37,11 +39,12 @@ module.exports = function(support) {
 /**
  * Process a valid request
  */
-DataHandler.prototype._doRequest = function(req, res, next) {
+DataHandler.prototype.doRequest = function(req, res, next) {
 
     var self = this;
-    //var logger = this.logger;
-    //TODO: logging
+    var logger = psUtil.getRequestLogger(this.logger, req, 'data', ++this.reqCount);
+
+    logger.info('New data request from %s', req.user.username);
 
     var dataInfo = consts.requests.DATA.regex.exec(req.url);
     var pageId = dataInfo[1];
@@ -53,7 +56,7 @@ DataHandler.prototype._doRequest = function(req, res, next) {
 
     var Page = this.dbSupport.getModel('Page');
     var query = Page.findOne(filter).populate('regions.part');
-    var findPage = BluebirdPromise.promisify(query.exec, query);
+    var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
         var region = page.regions.filter(function(region) {
@@ -83,15 +86,19 @@ DataHandler.prototype._doRequest = function(req, res, next) {
             page.save(function (err) {
                 if (err) {
                     //TOOD: promisify, this won't work
+                    logger.error(err, 'Error saving data');
                     throw err;
                 }
+                logger.info('Data request OK');
                 res.statusCode = 204;
                 res.send();
             });
         } else {
+            logger.info('Data request OK');
             res.json(partData);
         }
     }).catch(function(err) {
-        return next(new Error(err));
+        logger.error(err, 'Data request failed');
+        next(new Error(err));
     });
 };

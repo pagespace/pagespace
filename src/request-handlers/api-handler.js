@@ -19,22 +19,26 @@
 
 'use strict';
 
-//util
-var consts = require('../app-constants');
-var util = require('../misc/util');
+var consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
 
 var ApiHandler = function(support) {
+    this.logger = support.logger;
     this.dbSupport = support.dbSupport;
+    this.reqCount = 0;
 };
 
 module.exports = function(support) {
     return new ApiHandler(support);
 };
 
-ApiHandler.prototype._doRequest = function(req, res, next, logger) {
+ApiHandler.prototype.doRequest = function(req, res, next) {
 
-    logger.info('Processing api request for %s ', req.url);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'api', ++this.reqCount);
 
+    logger.info('New api request');
+
+    //maps collection names to models
     var modelMap = {
         sites: 'Site',
         pages: 'Page',
@@ -44,6 +48,7 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
         media: 'Media'
     };
 
+    //fields to auto populate when making queries to these collcetions (the keys)
     var populationsMap = {
         sites: '',
         pages: 'parent template regions.part redirect',
@@ -53,8 +58,8 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
         media: ''
     };
 
+    //don't send these fields to client
     var defaultRestrictedFields = [ '__v'];
-
     var restrictedFields = {
         sites: [],
         pages: [],
@@ -67,11 +72,13 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
     var apiInfo = consts.requests.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
+
+    //can now process the supported api type
     if(modelMap.hasOwnProperty(apiType)) {
         var modelName = modelMap[apiType];
         var Model = this.dbSupport.getModel(modelName);
 
-        //clear props not to overwrite
+        //clear props not to write to db
         delete req.body._id;
         delete req.body.__v;
 
@@ -85,26 +92,27 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
                 logger.debug('Searching for items in model: ' + modelName);
             }
 
-            //create a filter out of the query string
+            //create a filter from the query string
             for(var p in req.query) {
                 if(req.query.hasOwnProperty(p)) {
-                    filter[p] = util.typeify(req.query[p]);
+                    filter[p] = psUtil.typeify(req.query[p]);
                 }
             }
 
+            //create addtional restricted fields
             var restricted = restrictedFields[apiType].concat(defaultRestrictedFields).map(function(field) {
                 return '-' + field;
             }).join(' ');
             var populations = populationsMap[apiType];
             Model.find(filter, restricted).populate(populations).sort('-createdAt').exec(function(err, results) {
                 if(err) {
-                    logger.error(err, 'Trying to do API GET for %s', apiType);
+                    logger.error(err, 'Error trying API GET for %s', apiType);
                     return next(err);
                 } else {
-                    logger.info('Sending response for %s', req.url);
+                    logger.info('API request OK');
                     results =  itemId ? results[0] : results;
                     if(req.headers.accept.indexOf('application/json') === -1) {
-                        var html = util.htmlStringify(results);
+                        var html = psUtil.htmlStringify(results);
                         return res.send(html, {
                             'Content-Type' : 'text/html'
                         }, 200);
@@ -130,7 +138,7 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('Created successfully');
+                        logger.info('API post OK');
                         res.json(model);
                     }
                 });
@@ -158,27 +166,17 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
                                 doc[key] = docData[key];
                             }
                         }
-
                         doc.save(function (err) {
                             if(err) {
                                 logger.error(err, 'Trying to save for API PUT for %s', apiType);
                                 next(err);
                             } else {
-                                logger.info('Updated successfully');
+                                logger.info('API PUT OK');
                                 res.json(model);
                             }
                         });
                     }
                 });
-                /*Model.findByIdAndUpdate(itemId, { $set: data }, function (err, model) {
-                    if (err) {
-                        logger.error(err, 'Trying to save for API PUT for %s', apiType);
-                        next(err);
-                    } else {
-                        logger.info('Updated successfully');
-                        res.json(model);
-                    }
-                });*/
             }
         } else if(req.method === 'DELETE') {
             if (!itemId) {
@@ -191,7 +189,7 @@ ApiHandler.prototype._doRequest = function(req, res, next, logger) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('Deleted successfully');
+                        logger.info('API DELETE OK');
                         res.statusCode = 204;
                         res.send();
                     }

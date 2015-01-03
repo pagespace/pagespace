@@ -17,31 +17,23 @@
 
 'use strict';
 
-//core
-var url = require('url');
+var url = require('url'),
+    path = require('path'),
 
-//support
-var mongoose = require('mongoose');
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var RememberMeStrategy = require('passport-remember-me').Strategy;
+    mongoose = require('mongoose'),
+    passport = require('passport'),
+    LocalStrategy = require('passport-local').Strategy,
+    RememberMeStrategy = require('passport-remember-me').Strategy,
+    async = require('async'),
+    bunyan = require('bunyan'),
+    mkdirp = require('mkdirp'),
 
-var async = require('async');
-var bunyan = require('bunyan');
-var Acl = require('./misc/acl');
-var Bluebird = require('bluebird');
-
-//schemas
-var createDbSupport = require('./misc/db-support');
-
-//other
-var createViewEngine = require('./misc/view-engine');
-var createPartResolver = require('./misc/part-resolver');
-
-//util
-var consts = require('./app-constants');
-var path = require('path');
-var mkdirp = require('mkdirp');
+    consts = require('./app-constants'),
+    Acl = require('./misc/acl'),
+    createDbSupport = require('./misc/db-support'),
+    createDataSetup = require('./misc/data-setup'),
+    createViewEngine = require('./misc/view-engine'),
+    createPartResolver = require('./misc/part-resolver');
 
 /**
  * The App
@@ -68,7 +60,7 @@ Index.prototype.reset = function() {
     this.appState = consts.appStates.NOT_READY;
 };
 
-//export an new instance
+//export a new instance
 module.exports = new Index();
 
 /**
@@ -78,8 +70,11 @@ Index.prototype.init = function(options) {
 
     var self = this;
 
+    if(!options || typeof options !== 'object') {
+        throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
+    }
+
     //count requests;
-    this.requestCount = 0;
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
@@ -91,7 +86,7 @@ Index.prototype.init = function(options) {
             stream: process.stdout
         }].concat(logStreams)
     });
-    var logger = this.logger.child({ phase : 'init'});
+    var logger = this.logger.child();
 
     logger.info('Initializing the middleware...');
 
@@ -113,84 +108,35 @@ Index.prototype.init = function(options) {
         }
     }
 
-    //optionally do not serve the dashboard
-    this.serveDashboard = typeof options.serveDashboard === 'boolean' ? options.serveDashboard : true;
-
     //initialize db
-    this.dbSupport = this.dbSupport || createDbSupport({ logger: logger });
-    this.dbSupport.initModels();
-    var dbConnection = options.db;
-    if(!dbConnection) {
+    if(!options.db) {
         throw new Error('You must specify a db connection string');
     }
-
-    this.mongoose.connect(dbConnection);
-    var db = this.mongoose.connection;
-    db.on('error', function(err) {
-        logger.error(err, 'connection error');
+    this.mongoose.connect(options.db);
+    this.dbSupport = this.dbSupport || createDbSupport({
+        logger: logger,
+        mongoose: this.mongoose
     });
-    db.once('open', function callback () {
-        logger.info('Db connection established');
+    this.dbSupport.initModels();
 
-        var loadPartModules = self._loadPartModules();
-        var loadAdminUser = self._loadAdminUser();
-        var loadSite = self._loadSite();
-
-        //once everything is ready
-        Bluebird.join(loadPartModules, loadAdminUser, loadSite, function(parts, users, site) {
-
-            var promises = [];
+    var db = this.mongoose.connection;
+    db.once('open', function() {
+        logger.info('DB connection established');
+        var dataSetup = createDataSetup({
+            logger: logger,
+            dbSupport: self.dbSupport
+        });
+        dataSetup.runSetup().spread(function(partModules, site) {
 
             //pre-resolve part modules (
             logger.info('Resolving part modules...');
-            if(!parts.length) {
+            if (!partModules.length) {
                 logger.info('There are no registered part modules. Add some via the dashboard');
             }
-            parts.forEach(function (part) {
-                //requires a caches part modules for later page requests
-                self.partResolver.require(part.module);
+            partModules.forEach(function (partModule) {
+                //requires and caches part modules for later page requests
+                self.partResolver.require(partModule.module);
             });
-
-            //setup the site model for first run
-            if (!site) {
-                logger.info('Creating first site');
-                var Site = self.dbSupport.getModel('Site');
-                var newSite = new Site({
-                    _id: consts.DEFAULT_SITE_ID,
-                    name: 'New Pagespace site'
-                });
-                var saveNewSite = Bluebird.promisify(newSite.save, newSite);
-                var saveSitePromise = saveNewSite();
-                promises.push(saveSitePromise);
-                saveSitePromise.then(function() {
-                    logger.info('New site created successfully');
-                });
-            } else {
-                promises.push(site);
-            }
-
-            //set up the default admin user for first run
-            if (users.length === 0) {
-                logger.info('Creating admin user with default admin password');
-                var User = self.dbSupport.getModel('User');
-                var defaultAdmin = new User({
-                    username: 'admin',
-                    password: 'admin',
-                    role: 'admin',
-                    name: 'Administrator',
-                    updatePassword: true
-                });
-                var saveAdminUser = Bluebird.promisify(defaultAdmin.save, defaultAdmin);
-                var saveAdminUserPromise = saveAdminUser();
-                promises.push(saveAdminUser());
-                saveAdminUserPromise.then(function() {
-                    logger.info('Admin user created successfully');
-                });
-            } else {
-                promises.push(users[0]);
-            }
-            return promises;
-        }).spread(function(site) {
 
             //general support instances supplied to all request handlers
             self.requestHandlerSupport = {
@@ -198,7 +144,7 @@ Index.prototype.init = function(options) {
                 viewEngine: self.viewEngine,
                 dbSupport: self.dbSupport,
                 partResolver: self.partResolver,
-                site: site,
+                site: site.toObject(),
                 mediaDir: self.mediaDir,
                 userBasePath: self.userBasePath
             };
@@ -231,54 +177,16 @@ Index.prototype.init = function(options) {
                 function () {
                     self._doRequest(req, res, next);
                 }
-            ]);
+            ], function(err) {
+                return next(err);
+            });
         } else {
-            logger.info('Request received before middleware is ready');
+            logger.warn('Request received before middleware is ready (%s)', req.url);
             var notReadyErr = new Error();
             notReadyErr.status = 503;
             return next(notReadyErr);
         }
     };
-};
-
-/**
- * Preloads the parts modules
- * @returns {*}
- */
-Index.prototype._loadPartModules = function() {
-
-    //cache part modules
-    this.logger.info('Loading part modules...');
-    var Part = this.dbSupport.getModel('Part');
-    var query = Part.find({});
-    var getParts = Bluebird.promisify(query.exec, query);
-    return getParts();
-};
-
-/**
- * Gets the admin users (if exists)
- * @returns {*}
- */
-Index.prototype._loadAdminUser = function() {
-
-    //create an admin user on first run
-    var User = this.dbSupport.getModel('User');
-    var query = User.find({ role: 'admin'}, 'username');
-    var getAdminUser = Bluebird.promisify(query.exec, query);
-    return getAdminUser();
-};
-
-/**
- * Gets the site (if exists)
- * @returns {*}
- */
-Index.prototype._loadSite = function() {
-
-    //create an admin user on first run
-    var Site = this.dbSupport.getModel('Site');
-    var query = Site.findById(consts.DEFAULT_SITE_ID);
-    var getSite = Bluebird.promisify(query.exec, query);
-    return getSite();
 };
 
 /**
@@ -290,18 +198,16 @@ Index.prototype._loadSite = function() {
  */
 Index.prototype._doRequest = function(req, res, next) {
 
-    //special logger per request, with request context data
-    var logger = this.logger.child({
-        sessionId: req.sessionID,
-        reqId: this.requestCount++
-    });
+    var logger = this.logger;
 
     var requestHandler, requestType;
-    var user = req.user || this._createGuestUser();
+    var user = req.user || {
+        username: 'guest',
+        role: 'guest'
+    };
     logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-        var debugMsg =
-            'User with role [%s] is not allowed to access %s. Redirecting to login.';
+        var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
         req.session.loginToUrl = req.url;
         requestType = consts.requests.LOGIN;
@@ -309,7 +215,7 @@ Index.prototype._doRequest = function(req, res, next) {
         requestType = this._getRequestType(req.url);
     }
     requestHandler = this._getRequestHandler(requestType);
-    return requestHandler._doRequest(req, res, next, logger);
+    return requestHandler.doRequest(req, res, next);
 };
 
 /**
@@ -363,19 +269,15 @@ Index.prototype._configureAuth = function() {
     //setup acl
     var acl = new Acl();
 
+    //rules later in the list take precedence
     acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
     acl.allow(['admin'], consts.requests.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requests.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
     acl.allow(['admin'], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.CACHE.regex, ['GET', 'POST', 'PUT', 'DELETE']);
 
-    if(!this.serveDashboard) {
-        acl.allow([], consts.requests.LOGIN.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-        acl.allow([], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    }
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {
@@ -438,14 +340,6 @@ Index.prototype._configureAuth = function() {
     ));
 
     return acl;
-};
-
-Index.prototype._createGuestUser = function() {
-    return {
-        username: 'guest',
-        role: 'guest',
-        name: 'Geoff Capes'
-    };
 };
 
 Index.prototype.getViewDir = function() {
