@@ -9,11 +9,17 @@ adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
+    $rootScope.clearNotification();
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
     var parentPageId = $routeParams.parentPageId;
+    var order = $routeParams.order;
 
+    //sets the code mirror mode for editing raw part data
+    $scope.editorOpts = {
+        mode: 'application/json'
+    };
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
@@ -106,6 +112,10 @@ adminApp.controller("PageController",
         }
 
         var page = $scope.page;
+
+        if(order) {
+            page.order = order;
+        }
 
         //unpopulate
         page.template = $scope.template._id;

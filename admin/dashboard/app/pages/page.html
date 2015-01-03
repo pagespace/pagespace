@@ -75,7 +75,9 @@
                             <label class="col-sm-2 control-label">Raw data</label>
                             <div class="col-sm-7">
                                 <textarea ng-model="page.regions[$index].data"
-                                          style="height: 200px" class="form-control"
+                                          ui-codemirror ng-model="itemText"
+                                          ui-codemirror-opts="editorOpts"
+                                          class="form-control"
                                         placeholder="Edit raw part data (for advanced users)"></textarea>
                             </div>
                         </div>
