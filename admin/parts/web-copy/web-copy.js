@@ -1,5 +1,5 @@
 angular.module('webCopyApp', [])
-.directive('wysihtml', function () {
+.directive('psWysihtml', function () {
 
     return {
         restrict: 'A',
