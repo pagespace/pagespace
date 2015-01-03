@@ -1,11 +1,32 @@
 require('./support/jasmine-gwt');
+var Promise = require('bluebird');
 var httpMocks = require('express-mocks-http');
 var mongooseMock = require('./mocks/mongoose');
 var mongooseModelMock = require('./mocks/mongoose-model');
 var consts = require('../src/app-constants');
+var fn = function() {};
 
 var pagespace = require('../src/index');
 pagespace.mongoose = mongooseMock;
+pagespace.dbSupport = {
+    getModel: fn,
+    initModels: fn
+};
+pagespace.dataSetup = {
+    runSetup: function() {
+        var site = {
+            toObject: fn
+        };
+        return {
+            spread: function(callback) {
+                callback([], site);
+                return {
+                    catch: fn
+                }
+            }
+        }
+    }
+};
 
 var middleware;
 
@@ -14,7 +35,7 @@ var mockReq;
 var mockRes = httpMocks.createResponse();
 var mockNext = function() {};
 var MockRequestHandler = function() {};
-MockRequestHandler.prototype._doRequest = function(req, re, next) {};
+MockRequestHandler.prototype.doRequest = function(req, re, next) {};
 
 function beforeScenario() {
     mockReq = {
@@ -32,7 +53,7 @@ function beforeScenario() {
         }),
         DASHBOARD: httpMocks.createRequest({
             method: 'GET',
-            url: '/_admin/dashboard'
+            url: '/_dashboard'
         }),
         LOGOUT: httpMocks.createRequest({
             method: 'GET',
@@ -91,97 +112,91 @@ scenario("Incoming requests :", function() {
             spyOn(pagespace.dbSupport, 'initModels').andCallFake(function() {});
 
             //mock handlers
-            pagespace.createPageHandler = function() { return new MockRequestHandler() };
-            pagespace.createApiHandler = function() { return new MockRequestHandler() };
-            pagespace.createAdminHandler = function() { return new MockRequestHandler() };
-            pagespace.createPublishingHandler = function() { return new MockRequestHandler() };
-            pagespace.createDataHandler = function() { return new MockRequestHandler() };
-            pagespace.createMediaHandler = function() { return new MockRequestHandler() };
-            pagespace.createLoginHandler = function() { return new MockRequestHandler() };
-            pagespace.createLogoutHandler = function() { return new MockRequestHandler() };
+            pagespace.requestHandlers = {};
+            for(var requestType in consts.requests) {
+                pagespace.requestHandlers[requestType] = new MockRequestHandler();
+            }
 
             pagespace.reset();
             middleware = pagespace.init({
-                db: 'mongodb://localhost/test',
-                mediaDir: null,
-                logLevel: "debug"
+                db: 'mongodb://localhost/test'
             });
         });
 
         when('the request is for login', function() {
             then('the login request handler should be invoked', function() {
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.LOGIN, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.LOGIN, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGIN, mockRes, mockNext);
             });
         });
 
         when('the request is for logout', function() {
             then('the logout request handler should be invoked', function() {
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGOUT];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGOUT'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.LOGOUT, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.LOGOUT, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGOUT, mockRes, mockNext);
             });
         });
 
         when('the request is for a page', function() {
             then('the page request handler should be invoked', function() {
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.PAGE];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['PAGE'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.PAGE, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.PAGE, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PAGE, mockRes, mockNext);
             });
         });
 
         when('the request is for an api and the user is not authorized', function() {
-            then('the api request handler should be invoked', function() {
+            then('the login request handler should be invoked', function() {
                 mockReq.API.user = mockUser.GUEST;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.API, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
             });
         });
 
         when('the request is for an api and the user is authorized', function() {
             then('the api request handler should be invoked', function() {
-                mockReq.API.user = mockUser.DASHBOARD;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.API];
-                spyOn(mockHandler, '_doRequest');
+                mockReq.API.user = mockUser.ADMIN;
+                var mockHandler = pagespace.requestHandlers['API'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.API, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
             });
         });
 
-        when('the request is for the admin dashboard and the user is not authorized', function() {
+        when('the request is for the dashboard and the user is not authorized', function() {
             then('the login request handler should be invoked', function() {
                 mockReq.DASHBOARD.user = mockUser.GUEST;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.DASHBOARD, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
             });
         });
 
-        when('the request is for an api and the user is authorized', function() {
+        when('the request is for dashboard and the user is authorized', function() {
             then('the admin request handler should be invoked', function() {
-                mockReq.DASHBOARD.user = mockUser.DASHBOARD;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.DASHBOARD];
-                spyOn(mockHandler, '_doRequest');
+                mockReq.DASHBOARD.user = mockUser.ADMIN;
+                var mockHandler = pagespace.requestHandlers['DASHBOARD'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.DASHBOARD, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
             });
         });
 
         when('the request is to get media and the user is not authorized', function() {
             then('the media request handler should be invoked', function() {
                 mockReq.MEDIA.user = mockUser.GUEST;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.MEDIA];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['MEDIA'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.MEDIA, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
             });
         });
 
@@ -189,20 +204,20 @@ scenario("Incoming requests :", function() {
             then('the login request handler should be invoked', function() {
                 mockReq.MEDIA.user = mockUser.GUEST;
                 mockReq.MEDIA.method = 'POST';
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.MEDIA, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
             });
         });
 
         when('the request is to get the publishing queue and the user is not authorized', function() {
             then('the login request handler should be invoked', function() {
                 mockReq.PUBLISHING.user = mockUser.GUEST;
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.PUBLISHING, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
             });
         });
 
@@ -210,10 +225,10 @@ scenario("Incoming requests :", function() {
             then('the login request handler should be invoked', function() {
                 mockReq.PUBLISHING.user = mockUser.GUEST;
                 mockReq.PUBLISHING.method = 'POST';
-                var mockHandler = pagespace.urlHandlerMap[consts.requests.LOGIN];
-                spyOn(mockHandler, '_doRequest');
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
                 middleware(mockReq.PUBLISHING, mockRes, mockNext);
-                expect(mockHandler._doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
             });
         });
 

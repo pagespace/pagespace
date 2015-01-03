@@ -54,7 +54,7 @@ module.exports = {
      * @param value
      * @returns {*}
      */
-    escapeHtml: function(value) {
+    escapeHtml: function escapeHtml(value) {
         if(typeof value === 'string') {
             return value.replace(/[&<>"'\/]/g, function (s) {
                 return entityMap[s];
@@ -64,7 +64,7 @@ module.exports = {
         }
     },
 
-    htmlStringify: function(obj) {
+    htmlStringify: function htmlStringify(obj) {
         var html =
             '<pre style="font-family: Consolas, \'Courier New\'">' +
                 this.escapeHtml(JSON.stringify(obj, null, 4)) +
@@ -72,15 +72,7 @@ module.exports = {
         return html;
     },
 
-    /**
-     * Generates a random string
-     * @returns {string}
-     */
-    randomId: function() {
-        return Math.random().toString(36).substring(7);
-    },
-
-    getRequestLogger: function(logger, req, source, count) {
+    getRequestLogger: function getRequestLogger(logger, req, source, count) {
         return logger.child({
             sessionID: req.sessionID,
             reqId: source + '-' + count,

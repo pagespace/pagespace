@@ -47,6 +47,7 @@ var Index = function() {
     this.mongoose = mongoose;
     this.viewEngine = createViewEngine();
     this.dbSupport = null;
+    this.dataSetup = null;
 
     //request handlers
     this.requestHandlers = {};
@@ -56,7 +57,7 @@ var Index = function() {
  * Resets the middleware
  */
 Index.prototype.reset = function() {
-    this.urlHandlerMap = {};
+
     this.appState = consts.appStates.NOT_READY;
 };
 
@@ -122,11 +123,11 @@ Index.prototype.init = function(options) {
     var db = this.mongoose.connection;
     db.once('open', function() {
         logger.info('DB connection established');
-        var dataSetup = createDataSetup({
+        self.dataSetup = self.dataSetup || createDataSetup({
             logger: logger,
             dbSupport: self.dbSupport
         });
-        dataSetup.runSetup().spread(function(partModules, site) {
+        self.dataSetup.runSetup().spread(function(partModules, site) {
 
             //pre-resolve part modules (
             logger.info('Resolving part modules...');
@@ -248,8 +249,6 @@ Index.prototype._getRequestType = function(url) {
  * @returns {*}
  */
 Index.prototype._getRequestHandler = function(requestType) {
-
-    this.requestHandlers = {};
 
     var instance = this.requestHandlers[requestType.key];
     if(!instance) {

@@ -1,6 +1,6 @@
 require('../support/jasmine-gwt');
 
-var util = require('../../src/misc/util');
+var util = require('../../src/misc/pagespace-util');
 
 scenario("Page space utils :", function() {
 

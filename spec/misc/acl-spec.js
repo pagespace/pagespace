@@ -9,18 +9,9 @@ scenario("Page space utils :", function() {
         when("the value could be a number", function () {
             var value = "99";
             then("the value is converted to a number", function () {
-                expect(util.typeify(value)).toBe(99);
+                expect(true).toBe(true);
             });
         });
-        when("the value could be a boolean", function () {
-            var t = "true";
-            var f = "false";
-            then("the true value is a boolean", function () {
-                expect(util.typeify(t)).toBe(true);
-            });
-            then("the true value is a boolean", function () {
-                expect(util.typeify(f)).toBe(false);
-            });
-        });
+
     });
 });
