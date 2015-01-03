@@ -57,7 +57,7 @@ CacheHandler.prototype._resetPartModule = function(req, res, next, logger) {
     var moduleId = req.body.module;
     var partModule = this.partResolver.require(moduleId);
 
-    var message, err;
+    var err;
     if(partModule && typeof partModule.reset === 'function') {
         var cacheKey = req.body.key || null;
         partModule.reset(cacheKey);
