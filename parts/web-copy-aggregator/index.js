@@ -11,7 +11,7 @@ module.exports = {
     process: function(data, support) {
 
         var templateData = {
-            separatorClass: data.separatorClass || ''
+            wrapperClass: data.wrapperClass || ''
         };
 
         var regionName = data.regionName || null;
@@ -37,8 +37,8 @@ module.exports = {
             templateData.htmlItems = pages.reduce(function(html, page) {
                 for(var i = 0; i < page.regions.length; i++) {
                     var region = page.regions[i];
-                    if(region.name === regionName && typeof region.data === 'string') {
-                        html.push(page.regions[i].data);
+                    if(region.name === regionName && region.data && typeof region.data.html  === 'string') {
+                        html.push(page.regions[i].data.html);
                     }
                 }
                 return html;
