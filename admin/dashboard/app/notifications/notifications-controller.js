@@ -13,6 +13,7 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
             type: type,
             text: text
         };
+
     }
 
     $rootScope.showSuccess = function(text) {
@@ -35,7 +36,14 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         if(err) {
             console.error(err);
         }
-        showMessage(text + ": " + err, 'danger');
+        var message = text;
+        if(err.message) {
+            message += ': ' + err.message;
+        }
+        if(err.error && err.error.status) {
+            message += ' (' + err.error.status + ')';
+        }
+        showMessage(message, 'danger');
     };
 
     $rootScope.clearNotification = function() {

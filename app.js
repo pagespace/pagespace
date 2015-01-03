@@ -39,10 +39,17 @@ if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);
-        res.render('error.hbs', {
+        var resData = {
             message: err.message,
             error: err
-        });
+        };
+        if(req.headers.accept.indexOf('application/json') === -1) {
+            res.render('error.hbs', resData);
+        } else {
+            res.json(resData)
+
+        }
+
     });
 }
 

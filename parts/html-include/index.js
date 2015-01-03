@@ -14,6 +14,13 @@ module.exports = {
     init: function(viewPartial) {
         this.viewPartial = viewPartial;
     },
+    reset: function(key) {
+        if(key) {
+            delete cache[key];
+        } else {
+            cache = {};
+        }
+    },
     process: function(data, support) {
 
         //read from cache

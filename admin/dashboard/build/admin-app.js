@@ -406,6 +406,7 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
             type: type,
             text: text
         };
+
     }
 
     $rootScope.showSuccess = function(text) {
@@ -428,7 +429,14 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         if(err) {
             console.error(err);
         }
-        showMessage(text + ": " + err, 'danger');
+        var message = text;
+        if(err.message) {
+            message += ': ' + err.message;
+        }
+        if(err.error && err.error.status) {
+            message += ' (' + err.error.status + ')';
+        }
+        showMessage(message, 'danger');
     };
 
     $rootScope.clearNotification = function() {
@@ -951,6 +959,14 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         });
     }
 
+    $scope.reset = function() {
+        partService.resetPart($scope.part).success(function() {
+            $rootScope.showSuccess("Cache cleared");
+        }).error(function(err) {
+            $rootScope.showError("Error getting part", err);
+        })
+    };
+
     $scope.cancel = function() {
         $location.path("/parts");
     };
@@ -1040,6 +1056,12 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
 
         PartService.prototype.updatePart = function(partId, partData) {
             return $http.put('/_api/parts/' + partId, partData);
+        };
+
+        PartService.prototype.resetPart = function(partData) {
+            return $http.put('/_cache/parts', {
+                module: partData.module
+            });
         };
 
 
