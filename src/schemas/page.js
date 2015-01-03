@@ -39,6 +39,10 @@ function generateSchema(modifier) {
             unique: true,
             index: true
         },
+        order: {
+            type: Number,
+            default: -1
+        },
         draft: {
             type: Boolean,
             default: true

@@ -25,27 +25,32 @@
 ✓ form validations
 ✓ change admin password / user management
 ✓ rename _admin to _dashboard
-* site settings
+✓ site settings
 ✓ serve statics
 * orange tea
 
-* Custom user starter parts?
-* Starter parts
-    html (in page) ✓
-    html (blog) [write markdown save as html]
-    blog summary
-    navigation
-    html include
+✓ Custom user starter parts?
+✓ Starter parts
+    ✓ html (in page)
+    ✓ html (blog)
+    * navigation
+    ✓ html include
 * docs
 * macros.
 * Select media image from ck picker
-* url management
 * archiving
-* Dashboard color switcher
+✓ Dashboard color switcher
 
 BUGS
 * Dashboard errors wrapped in html doc
 
-CURRENT
-* Modules auto resolve after added (separate module resolution thing)
-* Able to edit JSON as raw data
+PRODUCTION CHECKLIST
+* Full code review
+* Logging review
+* Caching
+* OTT
+* Test perf (jmeter)
+* More caching
+* unit tests
+* Publish npm
+* Security checks
