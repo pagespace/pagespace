@@ -2,18 +2,19 @@
     var adminApp = angular.module('adminApp', [
         'ngRoute',
         'ngResource',
-        'angular-carousel'
+        'angular-carousel',
+        'ui.codemirror'
     ]);
 
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
 
             //pages
-            when('/pages/new', {
+            when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/pages/new/:parentPageId', {
+            when('/pages/new/:parentPageId/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).

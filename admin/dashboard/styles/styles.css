@@ -123,6 +123,9 @@ header ul.nav li {
 .media-pdf {
     background: url(types/pdf.png) no-repeat center center;
 }
+.media-html {
+    background: url(types/html.png) no-repeat center center;
+}
 
 /* Colors */
 span[data-color] {

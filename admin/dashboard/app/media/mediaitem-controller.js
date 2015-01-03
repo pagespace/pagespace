@@ -10,6 +10,7 @@
         $rootScope.pageTitle = 'Media';
 
         $scope.isImage = mediaService.isImage;
+        $scope.isText = mediaService.isText;
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
@@ -31,11 +32,28 @@
             $location.path('/media');
         };
 
-        mediaService.getItem(mediaId).success(function(item) {
-            $scope.item = item;
-        }).error(function(err) {
-            $rootScope.showError("Error getting media item", err);
+        mediaService.getItem(mediaId).then(function(res) {
+            $scope.item = res.data;
+            return mediaService.isText(res.data) ? mediaService.getItemText(res.data) : null;
+        }).then(function(res) {
+            if(res) {
+                $scope.editorOpts = {
+                    mode: 'xml'
+                };
+                $scope.itemText = res.data;
+            }
+        }).catch(function(err) {
+            $rootScope.showError('Error getting media item', err);
         });
+
+        $scope.updateItemText = function() {
+            mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
+                $rootScope.showSuccess('Media item updated');
+                $location.path('/media');
+            }).error(function(err) {
+                $rootScope.showError('Could not update text media', err);
+            });
+        };
     });
 
 })();

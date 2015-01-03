@@ -11,8 +11,10 @@
             return $http.get('/_api/media/' + mediaId);
         };
 
-        MediaService.prototype.createItem = function(mediaData) {
-            return $http.post('/_api/media', mediaData);
+        MediaService.prototype.updateItemText = function(mediaData, content) {
+            return $http.put('/_media/' + mediaData.fileName, {
+                content: content
+            });
         };
 
         MediaService.prototype.deleteItem = function(mediaId) {
@@ -33,10 +35,16 @@
                 transformRequest: angular.identity
             });
         };
+        MediaService.prototype.getItemText = function(item) {
+            return $http.get('/_media/' + item.fileName);
+        };
 
         //some utils
         MediaService.prototype.isImage = function(item) {
             return item && !!item.type.match(/image\/[jpeg|png|gif]/);
+        };
+        MediaService.prototype.isText = function(item) {
+            return item && !!item.type.match(/text\/[plain|json|html]/);
         };
 
         MediaService.prototype.getMimeClass = function(item) {

@@ -2,18 +2,19 @@
     var adminApp = angular.module('adminApp', [
         'ngRoute',
         'ngResource',
-        'angular-carousel'
+        'angular-carousel',
+        'ui.codemirror'
     ]);
 
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
 
             //pages
-            when('/pages/new', {
+            when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/pages/new/:parentPageId', {
+            when('/pages/new/:parentPageId/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
@@ -224,8 +225,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             return $http.get('/_api/media/' + mediaId);
         };
 
-        MediaService.prototype.createItem = function(mediaData) {
-            return $http.post('/_api/media', mediaData);
+        MediaService.prototype.updateItemText = function(mediaData, content) {
+            return $http.put('/_media/' + mediaData.fileName, {
+                content: content
+            });
         };
 
         MediaService.prototype.deleteItem = function(mediaId) {
@@ -246,10 +249,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
                 transformRequest: angular.identity
             });
         };
+        MediaService.prototype.getItemText = function(item) {
+            return $http.get('/_media/' + item.fileName);
+        };
 
         //some utils
         MediaService.prototype.isImage = function(item) {
             return item && !!item.type.match(/image\/[jpeg|png|gif]/);
+        };
+        MediaService.prototype.isText = function(item) {
+            return item && !!item.type.match(/text\/[plain|json|html]/);
         };
 
         MediaService.prototype.getMimeClass = function(item) {
@@ -283,6 +292,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         $rootScope.pageTitle = 'Media';
 
         $scope.isImage = mediaService.isImage;
+        $scope.isText = mediaService.isText;
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
@@ -304,11 +314,28 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             $location.path('/media');
         };
 
-        mediaService.getItem(mediaId).success(function(item) {
-            $scope.item = item;
-        }).error(function(err) {
-            $rootScope.showError("Error getting media item", err);
+        mediaService.getItem(mediaId).then(function(res) {
+            $scope.item = res.data;
+            return mediaService.isText(res.data) ? mediaService.getItemText(res.data) : null;
+        }).then(function(res) {
+            if(res) {
+                $scope.editorOpts = {
+                    mode: 'xml'
+                };
+                $scope.itemText = res.data;
+            }
+        }).catch(function(err) {
+            $rootScope.showError('Error getting media item', err);
         });
+
+        $scope.updateItemText = function() {
+            mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
+                $rootScope.showSuccess('Media item updated');
+                $location.path('/media');
+            }).error(function(err) {
+                $rootScope.showError('Could not update text media', err);
+            });
+        };
     });
 
 })();
@@ -404,6 +431,9 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         showMessage(text + ": " + err, 'danger');
     };
 
+    $rootScope.clearNotification = function() {
+        $scope.message = null;
+    };
     $scope.clear = function() {
         $scope.message = null;
     };
@@ -475,11 +505,17 @@ adminApp.controller("PageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
+    $rootScope.clearNotification();
     $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
     var parentPageId = $routeParams.parentPageId;
+    var order = $routeParams.order;
 
+    //sets the code mirror mode for editing raw part data
+    $scope.editorOpts = {
+        mode: 'application/json'
+    };
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
@@ -572,6 +608,10 @@ adminApp.controller("PageController",
         }
 
         var page = $scope.page;
+
+        if(order) {
+            page.order = order;
+        }
 
         //unpopulate
         page.template = $scope.template._id;
@@ -823,6 +863,12 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     currentPage.children = allPages.filter(function(childCandidate) {
                         var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
                         return currentPage._id === candidateParentId;
+                    }).sort(function(a, b) {
+                        if (a.order < b.order)
+                            return -1;
+                        if (a.order > b.order)
+                            return 1;
+                        return 0;
                     });
                     if(currentPage.children.length > 0) {
                         populateChildren(currentPage.children);
@@ -846,11 +892,32 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.addPage = function(parentPage) {
 
-        var parentPageId = '';
+        var parentRoute, siblingsQuery;
         if(parentPage) {
-            parentPageId = '/' + parentPage._id;
+            parentRoute = parentPage._id;
+            siblingsQuery = {
+                parent: parentPage._id
+            }
+        } else {
+            parentRoute = 'root';
+            siblingsQuery = {
+                root: 'primary'
+            }
         }
-        $location.path('/pages/new' + parentPageId);
+        $rootScope.showInfo('Preparing new page...');
+        //get future siblings
+        pageService.getPages(siblingsQuery).success(function(pages) {
+
+            var highestOrder = pages.map(function(page) {
+                return page.order || 0;
+            }).reduce(function(prev, curr){
+                    return Math.max(prev, curr);
+            }, -1);
+            highestOrder++;
+            $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
+        }).error(function(err) {
+            $rootScope.showError('Unable to determine order of new page', err);
+        });
     };
 
     $scope.removePage = function(page) {

@@ -20,6 +20,7 @@
     "bootstrap": "~3.2.0",
     "async": "~0.9.0",
     "headjs": "~1.0.3",
-    "ng-tags-input": "2.1.1"
+    "ng-tags-input": "2.1.1",
+    "angular-ui-codemirror": "~0.2.1"
   }
 }

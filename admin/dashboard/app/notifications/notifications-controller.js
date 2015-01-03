@@ -38,6 +38,9 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         showMessage(text + ": " + err, 'danger');
     };
 
+    $rootScope.clearNotification = function() {
+        $scope.message = null;
+    };
     $scope.clear = function() {
         $scope.message = null;
     };
