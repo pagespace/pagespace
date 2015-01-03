@@ -22,6 +22,14 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         });
     }
 
+    $scope.reset = function() {
+        partService.resetPart($scope.part).success(function() {
+            $rootScope.showSuccess("Cache cleared");
+        }).error(function(err) {
+            $rootScope.showError("Error getting part", err);
+        })
+    };
+
     $scope.cancel = function() {
         $location.path("/parts");
     };

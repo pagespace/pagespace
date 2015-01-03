@@ -24,6 +24,12 @@
             return $http.put('/_api/parts/' + partId, partData);
         };
 
+        PartService.prototype.resetPart = function(partData) {
+            return $http.put('/_cache/parts', {
+                module: partData.module
+            });
+        };
+
 
         return new PartService();
     });
