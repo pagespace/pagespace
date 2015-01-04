@@ -12,6 +12,11 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
     var partId = $routeParams.partId;
     $scope.partId = partId;
 
+    //sets the code mirror mode for editing raw part data
+    $scope.editorOpts = {
+        mode: 'application/json'
+    };
+
     $scope.part = {};
 
     if(partId) {

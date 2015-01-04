@@ -555,6 +555,7 @@ adminApp.controller("PageController",
 
                 page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
+                    region.dataFromServer = !!region.data
                     return region;
                 });
 
@@ -597,6 +598,7 @@ adminApp.controller("PageController",
         template.regions.forEach(function(region) {
            $scope.page.regions.push({
                name: region
+
            });
         });
     };
@@ -606,6 +608,17 @@ adminApp.controller("PageController",
             $scope.updateUrl();
         }
     });
+
+    $scope.setDefaultPartData = function() {
+        //this will check all parts that have not had data explicitly set and set the default part data
+        //for the selected part
+        $scope.page.regions.forEach(function(region, index) {
+            var dataField = $scope.pageForm['regiondata_' + index];
+            if(region.part && dataField.$pristine && !region.dataFromServer) {
+                region.data = region.part.defaultData || "";
+            }
+        });
+    };
 
     $scope.save = function(form) {
 
@@ -951,6 +964,11 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
 
     var partId = $routeParams.partId;
     $scope.partId = partId;
+
+    //sets the code mirror mode for editing raw part data
+    $scope.editorOpts = {
+        mode: 'application/json'
+    };
 
     $scope.part = {};
 

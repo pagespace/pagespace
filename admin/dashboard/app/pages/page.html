@@ -66,7 +66,8 @@
                             <label class="col-sm-2 control-label">Part type</label>
                             <div class="col-sm-7">
                                 <select ng-model="page.regions[$index].part"
-                                        ng-options="part as part.name for part in parts track by part._id" class="form-control">
+                                        ng-options="part as part.name for part in parts track by part._id" class="form-control"
+                                        ng-change="setDefaultPartData()">
                                     <option value="" disabled selected>Select a part type</option>
                                 </select>
                             </div>
@@ -75,9 +76,10 @@
                             <label class="col-sm-2 control-label">Raw data</label>
                             <div class="col-sm-7">
                                 <textarea ng-model="page.regions[$index].data"
-                                          ui-codemirror ng-model="itemText"
+                                          ui-codemirror
                                           ui-codemirror-opts="editorOpts"
                                           class="form-control"
+                                          name="regiondata_{{$index}}"
                                         placeholder="Edit raw part data (for advanced users)"></textarea>
                             </div>
                         </div>
