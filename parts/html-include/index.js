@@ -65,8 +65,10 @@ module.exports = {
 
                 req.end();
             });
+        } else if(data && data.html) {
+            return data.html;
         }
 
-        return 'No file specified';
+        return '<p>No data specified</p>';
     }
 };
