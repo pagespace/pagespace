@@ -1,26 +1,39 @@
-"use strict";
+/**
+ * Copyright © 2015, Philip Mander
+ *
+ * This file is part of Pagespace.
+ *
+ * Pagespace is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pagespace is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
 
 //support
-var bunyan = require('bunyan');
-var hbs = require('hbs');
-var BluebirdPromise = require('bluebird');
+var Promise = require('bluebird'),
+    consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
 
-//models
-var Page = require('../models/page');
-var Part = require('../models/part');
+var DataHandler = function(support) {
 
-//util
-var util = require('../misc/util');
-var consts = require('../app-constants');
-var logger =  bunyan.createLogger({ name: 'data-handler' });
-logger.level('debug');
-
-var DataHandler = function(parts) {
-    this.parts = parts;
+    this.logger = support.logger;
+    this.partResolver = support.partResolver;
+    this.dbSupport = support.dbSupport;
+    this.reqCount = 0;
 };
 
-module.exports = function(parts) {
-    return new DataHandler(parts);
+module.exports = function(support) {
+    return new DataHandler(support);
 };
 
 /**
@@ -29,35 +42,21 @@ module.exports = function(parts) {
 DataHandler.prototype.doRequest = function(req, res, next) {
 
     var self = this;
+    var logger = psUtil.getRequestLogger(this.logger, req, 'data', ++this.reqCount);
 
-    var dataInfo = consts.requestRegex.DATA.exec(req.url);
+    logger.info('New data request from %s', req.user.username);
+
+    var dataInfo = consts.requests.DATA.regex.exec(req.url);
     var pageId = dataInfo[1];
     var regionId = dataInfo[2];
-
-    //clear props not to overwrite
-    delete req.body._id;
-    delete req.body.__v;
 
     var filter = {
         _id: pageId
     };
 
-    //
-   /* Page.find(filter).populate('regions.part').exec(function(err, page) {
-        if(err) {
-            logger.error(err, 'Trying to do page GET for %s', pageId);
-            return next(err);
-        } else {
-            //get data for region
-            var region = page.regions.filter(function(region) {
-                return region.region == regionId;
-            })[0];
-            callback(null, region);
-        }
-    });*/
-
+    var Page = this.dbSupport.getModel('Page');
     var query = Page.findOne(filter).populate('regions.part');
-    var findPage = BluebirdPromise.promisify(query.exec, query);
+    var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
         var region = page.regions.filter(function(region) {
@@ -65,35 +64,41 @@ DataHandler.prototype.doRequest = function(req, res, next) {
         })[0];
 
         var partPromise = null;
-        var partModule = self.parts[region.part._id];
+        var partModule = self.partResolver.require(region.part ? region.part.module : null);
 
-        if(req.method === 'GET') {
-            partPromise = partModule.read(req.body);
-        } else if(req.method === 'PUT') {
-            partPromise = partModule.update(req.body);
-        } else if(req.method === 'DELETE') {
-            partPromise = partModule.delete(req.body);
-        } else {
-            var err = new Error('Unsupported method');
-            err.status = 405;
-            throw err;
+        if(partModule) {
+            if(req.method === 'GET') {
+                partPromise = partModule.process(region.data);
+            } else if(req.method === 'PUT') {
+                partPromise = req.body;
+            } else {
+                var err = new Error('Unsupported method');
+                err.status = 405;
+                throw err;
+            }
         }
+
         return [ page, region, partPromise ];
     }).spread(function(page, region, partData) {
-        if(req.method === 'PUT' || req.method === 'DELETE') {
-            region.data = partData;
+        if(req.method === 'PUT') {
+            region.data = partData.data;
+            page.draft = true;
             page.save(function (err) {
                 if (err) {
+                    //TOOD: promisify, this won't work
+                    logger.error(err, 'Error saving data');
                     throw err;
                 }
+                logger.info('Data request OK');
                 res.statusCode = 204;
                 res.send();
             });
         } else {
-            res.json(data);
+            logger.info('Data request OK');
+            res.json(partData);
         }
     }).catch(function(err) {
-        return next(new Error(err));
+        logger.error(err, 'Data request failed');
+        next(new Error(err));
     });
-
 };

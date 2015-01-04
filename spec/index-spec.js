@@ -1,9 +1,32 @@
-require('./jasmine-gwt');
+require('./support/jasmine-gwt');
+var Promise = require('bluebird');
 var httpMocks = require('express-mocks-http');
 var mongooseMock = require('./mocks/mongoose');
+var mongooseModelMock = require('./mocks/mongoose-model');
+var consts = require('../src/app-constants');
+var fn = function() {};
 
-var theApp = require('../src/index');
-theApp.mongoose = mongooseMock;
+var pagespace = require('../src/index');
+pagespace.mongoose = mongooseMock;
+pagespace.dbSupport = {
+    getModel: fn,
+    initModels: fn
+};
+pagespace.dataSetup = {
+    runSetup: function() {
+        var site = {
+            toObject: fn
+        };
+        return {
+            spread: function(callback) {
+                callback([], site);
+                return {
+                    catch: fn
+                }
+            }
+        }
+    }
+};
 
 var middleware;
 
@@ -11,6 +34,8 @@ var mockUser;
 var mockReq;
 var mockRes = httpMocks.createResponse();
 var mockNext = function() {};
+var MockRequestHandler = function() {};
+MockRequestHandler.prototype.doRequest = function(req, re, next) {};
 
 function beforeScenario() {
     mockReq = {
@@ -26,21 +51,28 @@ function beforeScenario() {
             method: 'GET',
             url: '/_api/pages'
         }),
-        ADMIN: httpMocks.createRequest({
+        DASHBOARD: httpMocks.createRequest({
             method: 'GET',
-            url: '/_admin/dashboard'
+            url: '/_dashboard'
         }),
         LOGOUT: httpMocks.createRequest({
             method: 'GET',
             url: '/_logout'
         }),
-        UNKNOWN: httpMocks.createRequest({
+        MEDIA: httpMocks.createRequest({
             method: 'GET',
-            url: '/geoff-capes'
+            url: '/_media/one.png'
+        }),
+        PUBLISHING: httpMocks.createRequest({
+            method: 'GET',
+            url: '/_publish/pages'
         })
     };
 
     mockUser = {
+        GUEST: {
+            role: 'guest'
+        },
         ADMIN: {
             role: 'admin'
         }
@@ -51,8 +83,7 @@ scenario("Incoming requests :", function() {
 
     beforeScenario();
 
-    given('a new request to a ready application', function() {
-
+    given('a new request is made', function() {
         beforeEach(function() {
 
             spyOn(mongooseMock, 'connect').andReturn(mongooseMock.connection);
@@ -60,155 +91,150 @@ scenario("Incoming requests :", function() {
                 callback();
             });
 
-            spyOn(theApp.Page, 'find').andCallFake(function(query, callback) {
-                callback(null, [{
-                    url: '/one'
-                },{
-                    url: '/two'
-                },{
-                    url: '/three'
-                }]);
-            });
-            spyOn(theApp.Part, 'find').andCallFake(function(query, callback) {
-                callback(null, []);
-            });
-            spyOn(theApp.User, 'find').andCallFake(function(query, fields, callback) {
-                callback(null, {
-                    username: 'admin'
-                });
+            spyOn(pagespace.dbSupport, 'getModel').andCallFake(function(schema) {
+
+                function data(schema) {
+                    if(schema === 'Part') {
+                        return [];
+                    } else if(schema === 'User') {
+                        return [{
+                            username: 'admin',
+                            role: 'admin'
+                        }]
+                    }
+                }
+
+                var model = mongooseModelMock;
+                model.data = data(schema);
+                return model;
             });
 
-            theApp.reset();
-            middleware = theApp.init({
-                dbConnection: 'mongodb://localhost/test',
-                templatesDir: '/templates',
-                viewBase: '/views'
+            spyOn(pagespace.dbSupport, 'initModels').andCallFake(function() {});
+
+            //mock handlers
+            pagespace.requestHandlers = {};
+            for(var requestType in consts.requests) {
+                pagespace.requestHandlers[requestType] = new MockRequestHandler();
+            }
+
+            pagespace.reset();
+            middleware = pagespace.init({
+                db: 'mongodb://localhost/test'
             });
         });
 
         when('the request is for login', function() {
-            then('the login request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    spyOn(theApp.loginHandler, 'doRequest');
-                    middleware(mockReq.LOGIN, mockRes, mockNext);
-                    expect(theApp.loginHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGIN, mockRes, mockNext);
-                    done();
-                });
+            then('the login request handler should be invoked', function() {
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.LOGIN, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGIN, mockRes, mockNext);
             });
         });
 
         when('the request is for logout', function() {
-            then('the logout request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    spyOn(theApp.logoutHandler, 'doRequest');
-                    middleware(mockReq.LOGOUT, mockRes, mockNext);
-                    expect(theApp.logoutHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGOUT, mockRes, mockNext);
-                    done()
-                });
+            then('the logout request handler should be invoked', function() {
+                var mockHandler = pagespace.requestHandlers['LOGOUT'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.LOGOUT, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.LOGOUT, mockRes, mockNext);
             });
         });
 
         when('the request is for a page', function() {
-            then('the page request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    spyOn(theApp.pageHandler, 'doRequest');
-                    middleware(mockReq.PAGE, mockRes, mockNext);
-                    expect(theApp.pageHandler.doRequest).toHaveBeenCalledWith(mockReq.PAGE, mockRes, mockNext);
-                    done()
-                });
+            then('the page request handler should be invoked', function() {
+                var mockHandler = pagespace.requestHandlers['PAGE'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.PAGE, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PAGE, mockRes, mockNext);
             });
         });
 
         when('the request is for an api and the user is not authorized', function() {
-            then('the login request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    spyOn(theApp.loginHandler, 'doRequest');
-                    middleware(mockReq.API, mockRes, mockNext);
-                    expect(theApp.loginHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
-                    done()
-                });
+            then('the login request handler should be invoked', function() {
+                mockReq.API.user = mockUser.GUEST;
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.API, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
             });
         });
 
         when('the request is for an api and the user is authorized', function() {
-            then('the api request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    mockReq.API.user = mockUser.ADMIN;
-                    spyOn(theApp.apiHandler, 'doRequest');
-                    middleware(mockReq.API, mockRes, mockNext);
-                    expect(theApp.apiHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
-                    done()
-                });
+            then('the api request handler should be invoked', function() {
+                mockReq.API.user = mockUser.ADMIN;
+                var mockHandler = pagespace.requestHandlers['API'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.API, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.API, mockRes, mockNext);
             });
         });
 
-        when('the request is for an api and the user is not authorized', function() {
-            then('the login request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    spyOn(theApp.loginHandler, 'doRequest');
-                    middleware(mockReq.ADMIN, mockRes, mockNext);
-                    expect(theApp.loginHandler.doRequest).toHaveBeenCalledWith(mockReq.ADMIN, mockRes, mockNext);
-                    done()
-                });
+        when('the request is for the dashboard and the user is not authorized', function() {
+            then('the login request handler should be invoked', function() {
+                mockReq.DASHBOARD.user = mockUser.GUEST;
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.DASHBOARD, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
             });
         });
 
-        when('the request is for an api and the user is authorized', function() {
-            then('the admin request handler should be invoked', function(done) {
-                theApp.ready(function() {
-                    mockReq.ADMIN.user = mockUser.ADMIN;
-                    spyOn(theApp.adminHandler, 'doRequest');
-                    middleware(mockReq.ADMIN, mockRes, mockNext);
-                    expect(theApp.adminHandler.doRequest).toHaveBeenCalledWith(mockReq.ADMIN, mockRes, mockNext);
-                    done()
-                });
+        when('the request is for dashboard and the user is authorized', function() {
+            then('the admin request handler should be invoked', function() {
+                mockReq.DASHBOARD.user = mockUser.ADMIN;
+                var mockHandler = pagespace.requestHandlers['DASHBOARD'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.DASHBOARD, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.DASHBOARD, mockRes, mockNext);
             });
         });
 
-        when('the request is not recognized', function() {
-            then('the next function should be invoked with a 404 error', function(done) {
-                theApp.ready(function() {
-                    mockNext = jasmine.createSpy();
-                    middleware(mockReq.UNKNOWN, mockRes, mockNext);
-                    expect(mockNext).toHaveBeenCalled();
-                    expect(mockNext.mostRecentCall.args[0].status).toEqual(404);
-                    done()
-                });
-            });
-        });
-    });
-
-    given('a new request to an unready application', function() {
-
-        beforeEach(function() {
-
-            spyOn(mongooseMock, 'connect').andReturn(mongooseMock.connection);
-            spyOn(mongooseMock.connection, 'once').andCallFake(function (event, callback) {
-                callback();
-            });
-
-            spyOn(theApp.Page, 'find').andCallFake(function(query, callback) {
-                callback(null, []);
-            });
-            spyOn(theApp.Part, 'find').andCallFake(function(query, callback) {
-                //callback(null, []);
-            });
-            spyOn(theApp.User, 'find').andCallFake(function(query, fields, callback) {
-                callback(null, {
-                    username: 'admin'
-                });
-            });
-
-            theApp.reset();
-            middleware = theApp.init({
-                dbConnection: 'mongodb://localhost/test',
-                templatesDir: '/templates',
-                viewBase: '/views'
+        when('the request is to get media and the user is not authorized', function() {
+            then('the media request handler should be invoked', function() {
+                mockReq.MEDIA.user = mockUser.GUEST;
+                var mockHandler = pagespace.requestHandlers['MEDIA'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.MEDIA, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
             });
         });
 
-        when('a request is processed', function() {
+        when('the request is to upload media and the user is not authorized', function() {
+            then('the login request handler should be invoked', function() {
+                mockReq.MEDIA.user = mockUser.GUEST;
+                mockReq.MEDIA.method = 'POST';
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.MEDIA, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.MEDIA, mockRes, mockNext);
+            });
+        });
+
+        when('the request is to get the publishing queue and the user is not authorized', function() {
+            then('the login request handler should be invoked', function() {
+                mockReq.PUBLISHING.user = mockUser.GUEST;
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.PUBLISHING, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
+            });
+        });
+
+        when('the request is to publish items and the user is not authorized', function() {
+            then('the login request handler should be invoked', function() {
+                mockReq.PUBLISHING.user = mockUser.GUEST;
+                mockReq.PUBLISHING.method = 'POST';
+                var mockHandler = pagespace.requestHandlers['LOGIN'];
+                spyOn(mockHandler, 'doRequest');
+                middleware(mockReq.PUBLISHING, mockRes, mockNext);
+                expect(mockHandler.doRequest).toHaveBeenCalledWith(mockReq.PUBLISHING, mockRes, mockNext);
+            });
+        });
+
+        when('the middleware is not ready', function() {
             then('the next function should be invoked with a 503 error', function() {
+                pagespace.appState = consts.appStates.NOT_READY;
                 mockNext = jasmine.createSpy();
                 middleware(mockReq.LOGIN, mockRes, mockNext);
                 expect(mockNext).toHaveBeenCalled();

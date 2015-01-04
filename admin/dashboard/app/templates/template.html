@@ -1,0 +1,88 @@
+<div class="row">
+    <div class="col-sm-6">
+        <form role="form" name="templateForm" class="form-horizontal" novalidate ng-submit="save(templateForm)">
+
+            <div class="form-intro">
+                <p ng-show="!templateId">Create a new template</p>
+                <p ng-show="templateId">Update details for template: <b>{{template.name}}</b></p>
+                <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
+            </div>
+
+            <div class="form-group" bs-has-error="name">
+                <label class="col-sm-2 control-label">Template name</label>
+                <div class="col-sm-7">
+                    <input type="text" class="form-control"  name="name" required
+                           ng-model="template.name" placeholder="Three columns (required)">
+                </div>
+            </div>
+            <div class="form-group" bs-has-error="src">
+                <label class="col-sm-2 control-label">Source</label>
+                <div class="col-sm-7">
+                    <input type="text" class="form-control input-medium" name="src" required
+                           ng-model="template.src" placeholder="three-columns.hbs (required)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Properties</label>
+                <div class="col-sm-7">
+                    <div class="form-group" ng-repeat="prop in template.properties" style="margin-bottom: 10px">
+                        <div class="col-xs-4">
+                            <input type="text" class="form-control input-medium" ng-model="prop.name" placeholder="Name">
+                        </div>
+                        <div class="col-xs-4">
+                            <input type="text" class="form-control input-medium" ng-model="prop.value" placeholder="Name">
+                        </div>
+                        <div class="col-xs-2">
+                            <button type="button"  class="btn" ng-click="removeProperty(prop)">
+                                <span class="glyphicon glyphicon-remove"></span> Remove property
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button"  class="btn" ng-click="addProperty()">
+                            <span class="glyphicon glyphicon-plus"></span> Add property
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Draw template</h3>
+
+            <div class="form-group">
+                <div class="col-sm-9">
+                    <draw-template regions="template.regions"></draw-template>
+                </div>
+                <div class="col-sm-3">
+                    <button type="button" class="btn" ng-click="addRegion()">
+                        <span class="glyphicon glyphicon-plus"></span> Add region
+                    </button>
+                </div>
+            </div>
+
+
+            <h3>Selected region</h3>
+            <div ng-repeat="region in template.regions track by $index">
+                <div ng-show="selectedRegionIndex == $index" class="form-group">
+                    <label class="col-sm-2 control-label">Region ID</label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control input-medium" ng-model="template.regions[$index]" placeholder="Region name">
+                        <br>
+                        <button type="button" class="btn" ng-click="removeRegion(region)">
+                            <span class="glyphicon glyphicon-minus"></span> Remove region
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-sm-2">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a href="/_api/templates/{{template._id}}" target="_blank">Go to json &raquo;</a></li>
+        </ul>
+    </div>
+</div>

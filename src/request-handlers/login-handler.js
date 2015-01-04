@@ -1,25 +1,44 @@
-"use strict";
+/**
+ * Copyright © 2015, Philip Mander
+ *
+ * This file is part of Pagespace.
+ *
+ * Pagespace is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pagespace is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
 
 //support
-var bunyan = require('bunyan');
-var passport = require('passport');
-var async = require('async');
-var util = require('../misc/util');
+var passport = require('passport'),
+    async = require('async'),
+    psUtil = require('../misc/pagespace-util');
 
-//util
-var logger =  bunyan.createLogger({ name: 'login-handler' });
-logger.level('debug');
 
-var LoginHandler = function() {
+var LoginHandler = function(support) {
+    this.logger = support.logger;
+    this.reqCount = 0;
 };
 
-module.exports = function() {
-    return new LoginHandler();
+module.exports = function(support) {
+    return new LoginHandler(support);
 };
 
 LoginHandler.prototype.doRequest = function(req, res, next) {
 
-    logger.info('Processing login request for ' + req.url);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'login', ++this.reqCount);
+
+    logger.info('New login request');
 
     if(req.method === 'GET') {
         var doNext = function(err) {
@@ -27,14 +46,14 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 return next(err);
             } else {
                 var data = {
-                    badCredentials: util.typeify(req.query.badCredentials) || false
+                    badCredentials: psUtil.typeify(req.query.badCredentials) || false
                 };
-                return res.render('login', data, function(err, html) {
+                return res.render('login.hbs', data, function(err, html) {
                     if(err) {
                         logger.error(err, 'Trying to render login');
                         next(err);
                     } else {
-                        logger.info('Sending page for %s', req.url);
+                        logger.info('Sending login page');
                         res.send(html);
                     }
                 });
@@ -47,8 +66,10 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
             }
             req.logIn(user, function(err) {
                 if (err) {
+                    logger.warn(err, 'Error authenticating user with remember me');
                     return next(err);
                 } else {
+                    logger.info('User authenticated with remember me: %s', user.username);
                     return res.redirect(req.session.loginToUrl);
                 }
             });
@@ -87,8 +108,10 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 }
             ], function(err, results) {
                 if(err) {
+                    logger.info('User logged failed');
                     return next(err);
                 } else {
+                    logger.info('User logged in OK');
                     if(results[0]) {
                         res.cookie('remember_me', results[0], {
                             path: '/',

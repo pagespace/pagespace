@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-sm-9">
+        <div class="media-item" ng-repeat="item in mediaItems" ng-click="showItem(item)">
+            <h3>{{item.name}}</h3>
+            <p>{{item.type}}</p>
+            <div  class="media-item-wrap" ng-class="getMimeClass(item)">
+                <div ng-show="isImage(item)">
+                    <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a href="#/media/upload">Upload  &raquo;</a></li>
+        </ul>
+    </div>
+</div>

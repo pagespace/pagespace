@@ -1,6 +1,6 @@
 var express = require('express');
-var path = require('path')
-var theApp = require('./src/index');
+var path = require('path');
+var pagespace = require('./src/index');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
@@ -8,21 +8,19 @@ var session = require("express-session");
 
 var app = express();
 
-app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 app.use(favicon(__dirname + '/favicon.ico'));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(session({secret: 'keyboard cat'}));
 
 // view engine setup
-app.set('views', theApp.getViewDir());
-app.set('view engine', 'hbs');
+app.set('views', [ pagespace.getViewDir() ]);
+app.engine('hbs', pagespace.getViewEngine());
 
-app.use('/app/static', express.static(__dirname + '/views/static'));
-app.use('/_admin', express.static(theApp.getAdminDir()));
-app.use(theApp.init({
-    dbConnection: 'mongodb://localhost/test',
-    viewBase: path.join(__dirname, 'views')
+app.use(pagespace.init({
+    db: 'mongodb://localhost/test',
+    mediaDir: path.join(__dirname, 'media-uploads'),
+    logLevel: "debug"
 }));
 
 /// catch 404 and forwarding to error handler
@@ -36,14 +34,20 @@ app.use(function(req, res, next) {
 
 // development error handler
 // will print stacktrace
+//TODO: send according to request accept
 if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);
-        res.render('error', {
+        var resData = {
             message: err.message,
-            error: err
-        });
+            status: err.status
+        };
+        if(req.headers.accept.indexOf('application/json') === -1) {
+            res.render('error.hbs', resData);
+        } else {
+            res.json(resData)
+        }
     });
 }
 

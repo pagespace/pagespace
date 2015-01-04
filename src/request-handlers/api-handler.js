@@ -1,105 +1,118 @@
-"use strict";
+/**
+ * Copyright © 2015, Philip Mander
+ *
+ * This file is part of Pagespace.
+ *
+ * Pagespace is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pagespace is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
 
-//support
-var bunyan = require('bunyan');
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-var events = require('events');
-var nodeUtil = require('util');
+'use strict';
 
-//models
-var Page = require('../models/page');
-var Template = require('../models/template');
-var Part = require('../models/part');
-var User = require('../models/user');
+var consts = require('../app-constants'),
+    psUtil = require('../misc/pagespace-util');
 
-//util
-var consts = require('../app-constants');
-var util = require('../misc/util');
-var logger =  bunyan.createLogger({ name: 'api-handler' });
-logger.level('debug');
-
-var TAB = '\t';
-
-var ApiHandler = function() {
+var ApiHandler = function(support) {
+    this.logger = support.logger;
+    this.dbSupport = support.dbSupport;
+    this.reqCount = 0;
 };
-nodeUtil.inherits(ApiHandler, events.EventEmitter);
 
-module.exports = function() {
-    return new ApiHandler();
+module.exports = function(support) {
+    return new ApiHandler(support);
 };
 
 ApiHandler.prototype.doRequest = function(req, res, next) {
 
-    var self = this;
+    var logger = psUtil.getRequestLogger(this.logger, req, 'api', ++this.reqCount);
 
-    logger.info('Processing api request for ' + req.url);
+    logger.info('New api request');
 
-    var collectionMap = {
-        pages: {
-            collection: 'page',
-            model: Page
-        },
-        parts: {
-            collection: 'part',
-            model: Part
-        },
-        templates: {
-            collection: 'template',
-            model: Template
-        },
-        users: {
-            collection: 'user',
-            model: User
-        }
+    //maps collection names to models
+    var modelMap = {
+        sites: 'Site',
+        pages: 'Page',
+        parts: 'Part',
+        templates:'Template',
+        users: 'User',
+        media: 'Media'
     };
 
+    //fields to auto populate when making queries to these collcetions (the keys)
     var populationsMap = {
-        pages: 'parent template regions.part',
+        sites: '',
+        pages: 'parent template regions.part redirect',
         parts: '',
         templates: '',
-        users: ''
+        users: '',
+        media: ''
     };
 
-    var apiInfo = consts.requestRegex.API.exec(req.url);
+    //don't send these fields to client
+    var defaultRestrictedFields = [ '__v'];
+    var restrictedFields = {
+        sites: [],
+        pages: [],
+        parts: [],
+        templates: [],
+        users: [ 'password', 'updatePassword', 'rememberToken' ],
+        media: [ 'path' ]
+    };
+
+    var apiInfo = consts.requests.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
-    if(collectionMap.hasOwnProperty(apiType)) {
-        var Model = collectionMap[apiType].model;
-        var collection = collectionMap[apiType].collection;
 
-        //clear props not to overwrite
+    //can now process the supported api type
+    if(modelMap.hasOwnProperty(apiType)) {
+        var modelName = modelMap[apiType];
+        var Model = this.dbSupport.getModel(modelName);
+
+        //clear props not to write to db
         delete req.body._id;
         delete req.body.__v;
 
+        var docData;
         if(req.method === 'GET') {
             var filter = {};
             if(itemId) {
                 filter._id = itemId;
-                logger.debug('Searching for items by id [%s]: ' + collection, itemId);
+                logger.debug('Searching for items by id [%s]: ' + modelName, itemId);
             } else {
-                logger.debug('Searching for items in collection: ' + collection);
+                logger.debug('Searching for items in model: ' + modelName);
             }
 
-            //create a filter out of the query string
+            //create a filter from the query string
             for(var p in req.query) {
                 if(req.query.hasOwnProperty(p)) {
-                    filter[p] = util.typeify(req.query[p]);
+                    filter[p] = psUtil.typeify(req.query[p]);
                 }
             }
 
+            //create addtional restricted fields
+            var restricted = restrictedFields[apiType].concat(defaultRestrictedFields).map(function(field) {
+                return '-' + field;
+            }).join(' ');
             var populations = populationsMap[apiType];
-            Model.find(filter).populate(populations).exec(function(err, results) {
+            Model.find(filter, restricted).populate(populations).sort('-createdAt').exec(function(err, results) {
                 if(err) {
-                    logger.error(err, 'Trying to do API GET for %s', apiType);
+                    logger.error(err, 'Error trying API GET for %s', apiType);
                     return next(err);
                 } else {
-                    logger.info('Sending response for %s', req.url);
+                    logger.info('API request OK');
                     results =  itemId ? results[0] : results;
                     if(req.headers.accept.indexOf('application/json') === -1) {
-                        var html =
-                            '<pre style="font-family: Consolas, \'Courier New\'">' +
-                            util.escapeHtml(JSON.stringify(results, null, 4)) +
-                            '</pre>';
+                        var html = psUtil.htmlStringify(results);
                         return res.send(html, {
                             'Content-Type' : 'text/html'
                         }, 200);
@@ -113,22 +126,20 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot POST for this url. It shouldn\'t contain an id [%s]', itemId);
                 next();
             } else {
-                logger.info('Creating new %s', collection);
-                logger.debug('Creating new collection with data: ' );
-                logger.debug(TAB + req.body);
-                var model = new Model(req.body);
+                logger.info('Creating new %s', modelName);
+                logger.debug('Creating new model with data: ' );
+                logger.debug(req.body);
+
+                docData = req.body;
+                docData.createdBy = req.user._id;
+                var model = new Model(docData);
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('Created successfully');
+                        logger.info('API post OK');
                         res.json(model);
-
-                        //emit events
-                        if(collection === collectionMap.pages.collection) {
-                            self.emit(consts.events.PAGES_UPDATED);
-                        }
                     }
                 });
             }
@@ -137,21 +148,33 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot PUT for this url. It should contain an id');
                 next();
             } else {
-                logger.info('Updating %s with id [%s]', collection, itemId);
-                logger.debug('Updating collection with data: ' );
-                logger.debug(TAB + req.body);
-                Model.findByIdAndUpdate(itemId, { $set: req.body }, function (err, model) {
+                logger.info('Updating %s with id [%s]', modelName, itemId);
+                logger.debug('Updating model with data: ' );
+                docData = req.body;
+                docData.updatedBy = req.user._id;
+                this.draft = true;
+                logger.debug(req.body);
+                Model.findById(itemId, function (err, doc) {
                     if (err) {
                         logger.error(err, 'Trying to save for API PUT for %s', apiType);
                         next(err);
-                    } else {
-                        logger.info('Updated successfully');
-                        res.json(model);
-
-                        //emit events
-                        if(collection === collectionMap.pages.collection) {
-                            self.emit(consts.events.PAGES_UPDATED);
+                    } else if(doc) {
+                        //need to do this because findByIdAndUpdate does invoke mongoose hooks
+                        //https://github.com/LearnBoost/mongoose/issues/964
+                        for(var key in docData) {
+                            if(docData.hasOwnProperty(key)) {
+                                doc[key] = docData[key];
+                            }
                         }
+                        doc.save(function (err) {
+                            if(err) {
+                                logger.error(err, 'Trying to save for API PUT for %s', apiType);
+                                next(err);
+                            } else {
+                                logger.info('API PUT OK');
+                                res.json(model);
+                            }
+                        });
                     }
                 });
             }
@@ -160,20 +183,15 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.warn('Cannot DELETE for this url. It should contain an id');
                 next();
             } else {
-                logger.info('Removing %s with id [%s]', collection, itemId);
+                logger.info('Removing %s with id [%s]', modelName, itemId);
                 Model.findByIdAndRemove(itemId, function (err) {
                     if (err) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('Deleted successfully');
+                        logger.info('API DELETE OK');
                         res.statusCode = 204;
                         res.send();
-
-                        //emit events
-                        if(collection === collectionMap.pages.collection) {
-                            self.emit(consts.events.PAGES_UPDATED);
-                        }
                     }
                 });
             }

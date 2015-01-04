@@ -1,0 +1,59 @@
+
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MediaItemController', function($scope, $rootScope, $location, $routeParams, mediaService) {
+        $rootScope.pageTitle = 'Media';
+
+        $scope.isImage = mediaService.isImage;
+        $scope.isText = mediaService.isText;
+        $scope.humanFileSize = mediaService.humanFileSize;
+
+        var mediaId = $routeParams.mediaId;
+
+        $scope.deleteItem = function(item) {
+            var really = window.confirm('Really delete the item, ' + item.name + '?');
+            if(really) {
+                mediaService.deleteItem(item._id).success(function() {
+                    $location.path('/media');
+                    $rootScope.showInfo("Media: " + item.name + " removed.");
+                }).error(function(err) {
+                    $rootScope.showError("Error deleting page", err);
+                });
+            }
+        };
+
+
+        $scope.cancel = function() {
+            $location.path('/media');
+        };
+
+        mediaService.getItem(mediaId).then(function(res) {
+            $scope.item = res.data;
+            return mediaService.isText(res.data) ? mediaService.getItemText(res.data) : null;
+        }).then(function(res) {
+            if(res) {
+                $scope.editorOpts = {
+                    mode: 'xml'
+                };
+                $scope.itemText = res.data;
+            }
+        }).catch(function(err) {
+            $rootScope.showError('Error getting media item', err);
+        });
+
+        $scope.updateItemText = function() {
+            mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
+                $rootScope.showSuccess('Media item updated');
+                $location.path('/media');
+            }).error(function(err) {
+                $rootScope.showError('Could not update text media', err);
+            });
+        };
+    });
+
+})();

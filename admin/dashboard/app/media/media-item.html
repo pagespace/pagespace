@@ -1,0 +1,34 @@
+<div class="row">
+    <div class="col-sm-8">
+        <h3>{{item.name}}</h3>
+        <p>{{item.description}}</p>
+        <div ng-show="isImage(item)" class="media-item-full">
+            <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
+        </div>
+        <div ng-show="isText(item)" class="media-item-full">
+
+           <form role="form" ng-submit="updateItemText(itemTextForm)" name="itemTextForm" class="form-horizontal" novalidate >
+                <textarea ui-codemirror ng-model="itemText"
+                          ui-codemirror-opts="editorOpts"></textarea>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <h3>Details</h3>
+        <dl>
+            <dt>Url</dt>
+            <dd><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></dd>
+            <dt>Type</dt>
+            <dd>{{item.type}}</dd>
+            <dt>Filesize</dt>
+            <dd>{{humanFileSize(item.size)}}</dd>
+        </dl>
+
+        <button type="button" class="btn btn-danger" ng-click="deleteItem(item)">Delete</button>
+    </div>
+</div>

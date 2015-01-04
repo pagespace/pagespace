@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{title}}</title>
-        <script src="/bower_components/headjs/dist/1.0.0/head.load.min.js"></script>
+        <title>{{site.name}} - {{page.name}}</title>
+        <meta name="foo" value="{{template.foo}}">
+        <script src="/_static/bower_components/headjs/dist/1.0.0/head.load.min.js"></script>
         {{> adminbar}}
     </head>
     <body>
-        <div class="edit-bar">
-            <p>Dashboard</p>
-        </div>
         <p>I am a template A</p>
 
-        {{#A}}
-            {{> A}}
-        {{/A}}
+        {{#Sidebar}}
+            {{> Sidebar}}
+        {{/Sidebar}}
 
         {{#Main}}
             {{> Main}}
@@ -22,5 +20,9 @@
         {{#C}}
             {{> C}}
         {{/C}}
+
+        <script>
+            {{{site.analytics}}}
+        </script>
     </body>
 </html>

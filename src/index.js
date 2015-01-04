@@ -1,41 +1,41 @@
-"use strict";
+/**
+ * Copyright © 2015, Philip Mander
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ *
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-//core
-var url = require('url');
+'use strict';
 
-//support
-var mongoose = require('mongoose');
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var RememberMeStrategy = require('passport-remember-me').Strategy;
+var url = require('url'),
+    path = require('path'),
 
-var async = require('async');
-var bunyan = require('bunyan');
-var Acl = require("./misc/acl");
-var BluebirdPromise = require('bluebird');
+    mongoose = require('mongoose'),
+    passport = require('passport'),
+    LocalStrategy = require('passport-local').Strategy,
+    RememberMeStrategy = require('passport-remember-me').Strategy,
+    async = require('async'),
+    bunyan = require('bunyan'),
+    mkdirp = require('mkdirp'),
+    //not working with mongoose 3.8: https://github.com/cayasso/mongoose-cachebox/issues/1
+    //mongooseCachebox = require('mongoose-cachebox'),
 
-//models
-var Page = require('./models/page');
-var Part = require('./models/part');
-var User = require('./models/user');
-
-//factories
-var createPageResolver = require('./misc/page-resolver');
-var createPageHandler = require('./request-handlers/page-handler');
-var createApiHandler = require('./request-handlers/api-handler');
-var createAdminHandler = require('./request-handlers/admin-handler');
-var createDataHandler = require('./request-handlers/data-handler');
-var createLoginHandler = require('./request-handlers/login-handler');
-var createLogoutHandler = require('./request-handlers/logout-handler');
-
-//util
-var util = require('./misc/util');
-var consts = require('./app-constants');
-var path = require('path');
-var logger =  bunyan.createLogger({ name: "index" });
-logger.level('debug');
-
-var TAB = '\t';
+    consts = require('./app-constants'),
+    Acl = require('./misc/acl'),
+    createDbSupport = require('./misc/db-support'),
+    createDataSetup = require('./misc/data-setup'),
+    createViewEngine = require('./misc/view-engine'),
+    createPartResolver = require('./misc/part-resolver');
 
 /**
  * The App
@@ -47,20 +47,26 @@ var Index = function() {
 
     //dependencies
     this.mongoose = mongoose;
-    this.Page = Page;
-    this.Part = Part;
-    this.User = User;
+    //mongooseCachebox(mongoose, {
+    //    ttl: 60
+    //});
+    this.viewEngine = createViewEngine();
+    this.dbSupport = null;
+    this.dataSetup = null;
+
+    //request handlers
+    this.requestHandlers = {};
 };
 
 /**
  * Resets the middleware
  */
 Index.prototype.reset = function() {
-    this.urlsToResolve = [];
+
     this.appState = consts.appStates.NOT_READY;
 };
 
-//export an new instance
+//export a new instance
 module.exports = new Index();
 
 /**
@@ -70,60 +76,103 @@ Index.prototype.init = function(options) {
 
     var self = this;
 
-    logger.info("Initializing the middleware");
-
-    this.parts = {};
-
-    var dbConnection = options.dbConnection;
-    if(!dbConnection) {
-        throw new Error('You must specify a db connection string');
+    if(!options || typeof options !== 'object') {
+        throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
     }
 
-    this.mongoose.connect(dbConnection);
-    var db = this.mongoose.connection;
-    db.on('error', function(err) {
-        logger.error(err, 'connection error');
+    //count requests;
+    this.userBasePath = path.dirname(module.parent.filename);
+
+    //logger setup
+    var logStreams = options.logStreams instanceof Array || [];
+    this.logger =  bunyan.createLogger({
+        name: 'pagespace',
+        streams: [{
+            level: options.logLevel || 'info',
+            stream: process.stdout
+        }].concat(logStreams)
     });
-    db.once('open', function callback () {
-        logger.info("Db connection established");
+    var logger = this.logger.child();
 
-        var readyPromises = [];
-        readyPromises.push(self.loadPageUrls());
-        readyPromises.push(self.loadPartModules());
-        readyPromises.push(self.createFirstAdminUser());
+    logger.info('Initializing the middleware...');
 
-        //once everything is ready
-        BluebirdPromise.all(readyPromises).then(function() {
-            self.appState = consts.appStates.READY;
+    //this resolves part modules
+    this.partResolver = this.partResolver || createPartResolver({
+        logger: logger,
+        userBasePath: this.userBasePath
+    });
+
+    //define where to save media uploads
+    if(options.mediaDir) {
+        this.mediaDir = options.mediaDir;
+    } else {
+        this.mediaDir = path.join(this.userBasePath, 'media-uploads');
+        logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
+        var dir = mkdirp.sync(this.mediaDir);
+        if(dir) {
+            logger.info('New media directory created at %s', dir);
+        }
+    }
+
+    //initialize db
+    if(!options.db) {
+        throw new Error('You must specify a db connection string');
+    }
+    this.mongoose.connect(options.db);
+    this.dbSupport = this.dbSupport || createDbSupport({
+        logger: logger,
+        mongoose: this.mongoose
+    });
+    this.dbSupport.initModels();
+
+    var db = this.mongoose.connection;
+    db.once('open', function() {
+        logger.info('DB connection established');
+        self.dataSetup = self.dataSetup || createDataSetup({
+            logger: logger,
+            dbSupport: self.dbSupport
+        });
+        self.dataSetup.runSetup().spread(function(partModules, site) {
+
+            //pre-resolve part modules (
+            logger.info('Resolving part modules...');
+            if (!partModules.length) {
+                logger.info('There are no registered part modules. Add some via the dashboard');
+            }
+            partModules.forEach(function (partModule) {
+                //requires and caches part modules for later page requests
+                self.partResolver.require(partModule.module);
+            });
+
+            //general support instances supplied to all request handlers
+            self.requestHandlerSupport = {
+                logger: logger,
+                viewEngine: self.viewEngine,
+                dbSupport: self.dbSupport,
+                partResolver: self.partResolver,
+                site: site.toObject(),
+                mediaDir: self.mediaDir,
+                userBasePath: self.userBasePath
+            };
 
             logger.info('Initialized, waiting for requests');
 
-            //set up page handlers
-            self.pageHandler = createPageHandler(createPageResolver(), self.parts);
-            self.apiHandler = createApiHandler();
-            self.adminHandler = createAdminHandler();
-            self.dataHandler = createDataHandler(self.parts);
-            self.loginHandler = createLoginHandler();
-            self.logoutHandler = createLogoutHandler();
-
-            //handler events
-            self.apiHandler.on(consts.events.PAGES_UPDATED, function() {
-                self.loadPageUrls();
-            });
+            //app state is now ready
+            self.appState = consts.appStates.READY;
         }).catch(function(e) {
             logger.error(e, 'Initialization error');
         });
     });
 
     //auth and acl setup
-    this.acl = this.configureAuth();
+    this.acl = this._configureAuth();
 
     //handle requests
     return function(req, res, next) {
-        logger.debug('Request received for ' + req.url);
 
         if(self.appState === consts.appStates.READY) {
             req.url = url.parse(req.url).pathname;
+            //run all requests through passport first
             async.series([
                 function (callback) {
                     passport.initialize()(req, res, callback);
@@ -132,90 +181,18 @@ Index.prototype.init = function(options) {
                     passport.session()(req, res, callback);
                 },
                 function () {
-                    self.doRequest(req, res, next);
+                    self._doRequest(req, res, next);
                 }
-            ]);
+            ], function(err) {
+                return next(err);
+            });
         } else {
-            logger.info("Request received before middleware is ready");
+            logger.warn('Request received before middleware is ready (%s)', req.url);
             var notReadyErr = new Error();
             notReadyErr.status = 503;
             return next(notReadyErr);
         }
     };
-};
-
-/**
- * Gets all the page urls from the db that the middleware should listen for
- * @returns {*}
- */
-Index.prototype.loadPageUrls = function() {
-
-    var self = this;
-
-    //get all pages to resolve
-    var query = Page.find({});
-    var getPages = BluebirdPromise.promisify(query.exec, query);
-    getPages().then(function (pages) {
-        logger.debug("Urls to resolve are:");
-        self.urlsToResolve = pages.map(function (page) {
-            logger.debug(TAB + page.url);
-            return page.url;
-        });
-    });
-    return getPages;
-};
-
-/**
- * Preloads the parts modules
- * @returns {*}
- */
-Index.prototype.loadPartModules = function() {
-
-    var self = this;
-
-    //cache part modules
-    var query = Part.find({});
-    var getParts = BluebirdPromise.promisify(query.exec, query);
-    getParts().then(function (parts) {
-        logger.debug('Loading part modules');
-        parts.forEach(function (part) {
-            logger.debug(TAB + part.module);
-            var partModule = require(part.module);
-            partModule.init();
-            self.parts[part._id] = partModule;
-        });
-    });
-
-    return getParts;
-};
-
-/**
- * If there is no admin user, this is the first one and a default one is created
- * @returns {*}
- */
-Index.prototype.createFirstAdminUser = function() {
-
-    //create an admin user on first run
-    var query = User.find({ role: 'admin'}, 'username');
-    var createAdminUser = BluebirdPromise.promisify(query.exec, query);
-    createAdminUser().then(function(users) {
-        if(users.length === 0) {
-            logger.info("Admin user created with default admin password");
-            var defaultAdmin = new User({
-                username: "admin",
-                password: "admin",
-                role: "admin"
-            });
-            defaultAdmin.save(function(err) {
-                if(err) {
-                    logger.error(err, 'Trying to save the default admin user');
-                } else {
-                    logger.info("Admin user created successfully");
-                }
-            });
-        }
-    });
-    return createAdminUser;
 };
 
 /**
@@ -225,38 +202,26 @@ Index.prototype.createFirstAdminUser = function() {
  * @param next
  * @returns {*}
  */
-Index.prototype.doRequest = function(req, res, next) {
-    var requestHandler, urlType;
-    var user = req.user || User.createGuestUser();
+Index.prototype._doRequest = function(req, res, next) {
+
+    var logger = this.logger;
+
+    var requestHandler, requestType;
+    var user = req.user || {
+        username: 'guest',
+        role: 'guest'
+    };
+    logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-        var debugMsg =
-            "User with role [" + user.role + "] is not allowed to access " + req.url + ". Redirecting to login";
-        logger.debug(debugMsg);
+        var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
+        logger.debug(debugMsg, user.role, req.url);
         req.session.loginToUrl = req.url;
-        urlType = consts.requestTypes.LOGIN;
+        requestType = consts.requests.LOGIN;
     } else {
-        urlType = this.getUrlType(req.url);
+        requestType = this._getRequestType(req.url);
     }
-
-    if(urlType === consts.requestTypes.PAGE) {
-        requestHandler = this.pageHandler;
-    } else if(urlType === consts.requestTypes.API) {
-        requestHandler = this.apiHandler;
-    } else if(urlType === consts.requestTypes.ADMIN) {
-        requestHandler = this.adminHandler;
-    } else if(urlType === consts.requestTypes.DATA) {
-        requestHandler = this.dataHandler;
-    } else if(urlType === consts.requestTypes.LOGIN) {
-        requestHandler = this.loginHandler;
-    } else if(urlType === consts.requestTypes.LOGOUT) {
-        requestHandler = this.logoutHandler;
-    } else {
-        var notFoundErr = new Error();
-        notFoundErr.status = 404;
-        return next(notFoundErr);
-    }
+    requestHandler = this._getRequestHandler(requestType);
     return requestHandler.doRequest(req, res, next);
-
 };
 
 /**
@@ -264,42 +229,59 @@ Index.prototype.doRequest = function(req, res, next) {
  * @param url
  * @returns {*}
  */
-Index.prototype.getUrlType = function(url) {
+Index.prototype._getRequestType = function(url) {
 
     var type;
+    for(var requestKey in consts.requests) {
+        if(consts.requests.hasOwnProperty(requestKey)) {
+            if(consts.requests[requestKey].regex && consts.requests[requestKey].regex.test(url)) {
+                type = consts.requests[requestKey];
+                break;
+            }
+        }
+    }
 
-    if(this.urlsToResolve.indexOf(url) >= 0) {
-        type = consts.requestTypes.PAGE;
-    } else if(consts.requestRegex.API.test(url)) {
-        type = consts.requestTypes.API;
-    } else if (consts.requestRegex.ADMIN.test(url)) {
-        type = consts.requestTypes.ADMIN;
-    } else if (consts.requestRegex.DATA.test(url)) {
-        type = consts.requestTypes.DATA;
-    } else if (consts.requestRegex.LOGIN.test(url)) {
-        type = consts.requestTypes.LOGIN;
-    } else if (consts.requestRegex.LOGOUT.test(url)) {
-        type = consts.requestTypes.LOGOUT;
-    } else {
-        type = consts.requestTypes.OTHER;
+    if(!type) {
+        type = consts.requests.PAGE;
     }
 
     return type;
 };
 
 /**
+ * Maps a url to a page type
+ * @param url
+ * @returns {*}
+ */
+Index.prototype._getRequestHandler = function(requestType) {
+
+    var instance = this.requestHandlers[requestType.key];
+    if(!instance) {
+        instance = requestType.handler(this.requestHandlerSupport);
+        this.requestHandlers[requestType.key] = instance;
+    }
+    return instance;
+};
+
+/**
  * Passport configuration
  */
-Index.prototype.configureAuth = function() {
+Index.prototype._configureAuth = function() {
+
+    var self = this;
 
     //setup acl
     var acl = new Acl();
-    acl.allow(["guest", "admin"], ".*", ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestRegex.LOGIN, ["GET", "POST"]);
-    acl.allow(["guest", "admin"], consts.requestRegex.LOGOUT, ["GET", "POST"]);
-    acl.allow(["admin"], consts.requestRegex.API, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestRegex.ADMIN, ["GET", "POST", "PUT", "DELETE"]);
-    acl.allow(["admin"], consts.requestRegex.DATA, ["GET", "POST", "PUT", "DELETE"]);
+
+    //rules later in the list take precedence
+    acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
+    acl.allow(['admin'], consts.requests.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+    acl.allow(['admin'], consts.requests.CACHE.regex, ['GET', 'POST', 'PUT', 'DELETE']);
+
 
     //setup passport/authentication
     passport.serializeUser(function(user, done) {
@@ -310,12 +292,14 @@ Index.prototype.configureAuth = function() {
     });
 
     passport.deserializeUser(function(userProps, done) {
+        var User = self.dbSupport.getModel('User');
         var user = new User(userProps);
         done(null, user);
     });
 
     passport.use(new LocalStrategy(
         function(username, password, done) {
+            var User = self.dbSupport.getModel('User');
             User.findOne({ username: username }, function(err, user) {
                 if (err) {
                     return done(err);
@@ -335,6 +319,7 @@ Index.prototype.configureAuth = function() {
     ));
     passport.use(new RememberMeStrategy(
         function(token, done) {
+            var User = self.dbSupport.getModel('User');
             User.findOne({ rememberToken: token }, function(err, user) {
                 if(err) {
                     return done(err);
@@ -361,10 +346,9 @@ Index.prototype.configureAuth = function() {
     return acl;
 };
 
-Index.prototype.getAdminDir = function() {
-    return path.join(__dirname, '/../admin-app');
-};
-
 Index.prototype.getViewDir = function() {
     return path.join(__dirname, '/../views');
+};
+Index.prototype.getViewEngine = function() {
+    return this.viewEngine.__express;
 };

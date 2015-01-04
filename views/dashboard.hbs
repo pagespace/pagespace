@@ -1,59 +1,86 @@
-<!doctype html>
+<!DOCTYPE html>
 <html ng-app="adminApp">
 <head>
-    <title>Dashboard</title>
-    <link href="{{appRoot}}/static/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{appRoot}}/static/styles/slickmap/slickmap.css" rel="stylesheet">
-    <link href="{{appRoot}}/bower_components/angular-carousel/dist/angular-carousel.css" rel="stylesheet">
-    <link href="{{appRoot}}/static/styles/styles.css" rel="stylesheet">
+    <title>Dashboard :: Pagespace</title>
+    <meta charset="utf-8">
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
+    <link href="/_static/bower_components/angular-carousel/dist/angular-carousel.css" rel="stylesheet">
+    <link href="/_static/bower_components/codemirror/lib/codemirror.css" rel="stylesheet" >
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
 
-    <script>
-        window._appRoot = '{{appRoot}}';
-        window._powerMode = {{powerMode}};
-    </script>
+    <script src="/_static/bower_components/fabric/dist/fabric.min.js"></script>
+    <script src="/_static/bower_components/async/lib/async.js"></script>
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
+    <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/_static/bower_components/angular-touch/angular-touch.min.js"></script>
+    <script src="/_static/bower_components/angular-carousel/dist/angular-carousel.min.js"></script>
+    <script src="/_static/bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/xml/xml.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/_static/bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
 
-    <script src="{{appRoot}}/bower_components/fabric/dist/fabric.min.js"></script>
-    <script src="{{appRoot}}/bower_components/async/lib/async.js"></script>
-    <script src="{{appRoot}}/bower_components/angular/angular.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-resource/angular-resource.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-route/angular-route.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-touch/angular-touch.min.js"></script>
-    <script src="{{appRoot}}/bower_components/angular-carousel/dist/angular-carousel.min.js"></script>
-
-    <script src="{{appRoot}}/static/js/app.js"></script>
-    <script src="{{appRoot}}/static/js/page-service.js"></script>
-    <script src="{{appRoot}}/static/js/template-service.js"></script>
-    <script src="{{appRoot}}/static/js/part-service.js"></script>
-    <script src="{{appRoot}}/static/js/sitemap-controller.js"></script>
-    <script src="{{appRoot}}/static/js/page-controller.js"></script>
-    <script src="{{appRoot}}/static/js/template-list-controller.js"></script>
-    <script src="{{appRoot}}/static/js/template-controller.js"></script>
-    <script src="{{appRoot}}/static/js/part-list-controller.js"></script>
-    <script src="{{appRoot}}/static/js/part-controller.js"></script>
-    <script src="{{appRoot}}/static/js/notifications-controller.js"></script>
+    <script src="/_static/dashboard/build/admin-app.js"></script>
 </head>
 <body>
 
 <div class="container-fluid">
     <div class="row full-height">
-        <header class="col-sm-2">
-            <h1>Dashboard</h1>
+        <header id="sidebar" class="col-sm-2">
+            <h1>Pagespace</h1>
+
+            <ul class="nav" style="text-align: center">
+                <li>
+                    <h3>Welcome {{username}}</h3>
+                </li>
+            </ul>
+
             <ul class="nav">
                 <li><a href="#/">Sitemap</a></li>
-                <li><a href="#/macros">Macros</a></li>
+                <!--<li><a href="#/macros">Macros</a></li>-->
+                <li><a href="#/media">Media</a></li>
+                <li><a href="#/publishing">Publishing</a></li>
                 <li><a href="#/templates">Templates</a></li>
                 <li><a href="#/parts">Page Parts</a></li>
+                <li><a href="#/users">Users</a></li>
             </ul>
-            <ul class="nav" style="margin-top: 3em">
+            <ul class="nav" style="margin-top: 1em">
                 <li><a href="/_logout">Logout</a></li>
             </ul>
+            <ul class="nav" style="margin-top: 1em">
+                <li style="text-align: left">
+                    <span data-color="#cbcbcb"></span>
+                    <span data-color="#ff005a"></span>
+                    <span data-color="#00D6F3"></span>
+                    <span data-color="#faa129"></span>
+                    <span data-color="#29f38f"></span>
+                </li>
+            </ul>
+            <p style="text-align: center"><br>Pagespace &copy; 2014</p>
         </header>
         <div class="col-sm-10">
-           <div ng-include="'{{appRoot}}/static/partials/notifications.html'"></div>
+           <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
            <div ng-view></div>
         </div>
     </div>
 </div>
+<script>
+    (function() {
+        //change the sidebar color stuff
+        var sidebarColor = window.localStorage.getItem('sidebarColor');
+        if(sidebarColor) {
+            document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+        }
+        document.body.addEventListener('click', function (e) {
+            if (e.target.getAttribute('data-color')) {
+                sidebarColor = e.target.getAttribute('data-color');
+                window.localStorage.setItem('sidebarColor', sidebarColor);
+                document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+            }
+        });
+    })();
 
+</script>
 </body>
 </html>
