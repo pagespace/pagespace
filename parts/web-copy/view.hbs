@@ -1,6 +1,7 @@
-<div ng-non-bindable class="web-copy-part" >
+<div ng-non-bindable class="web-copy-part {{data.wrapperClass}}" >
     {{#if edit}}
-        <div class="ps-edit-box" id="{{region}}" ng-controller="WebCopyController" ng-init="region='{{region}}'; pageId='{{pageId}}'">
+        <div class="ps-edit-box" id="{{region}}" ng-controller="WebCopyController"
+             ng-init="region='{{region}}'; pageId='{{pageId}}'; wrapperClass='{{data.wrapperClass}}'">
             <div ps-wysihtml class="wysihtml-editor">
                 <div class="toolbar" class="hidden">
                     <button data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command" >

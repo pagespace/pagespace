@@ -45,12 +45,11 @@ BUGS
 * Dashboard errors wrapped in html doc
 
 PRODUCTION CHECKLIST
-* Full code review
-* Logging review
-* Caching
+✓ Full code review
+✓ Logging review
+✓ Caching
+✓ unit tests
 * OTT
 * Test perf (jmeter)
-* More caching
-* unit tests
 * Publish npm
 * Security checks
