@@ -1,7 +1,7 @@
 <div ng-non-bindable class="web-copy-aggregator">
-    {{#data.htmlItems}}
-        <div class="{{data.wrapperClass}}">
-            {{{.}}}
+    {{#each data.htmlItems}}
+        <div class="{{../data.wrapperClass}}">
+            {{{this}}}
         </div>
-    {{/data.htmlItems}}
+    {{/each}}
 </div>

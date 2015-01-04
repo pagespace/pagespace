@@ -1,6 +1,6 @@
 'use strict';
 
-var BluebirdPromise = require('bluebird');
+var Promise = require('bluebird');
 var util = require('util');
 
 module.exports = {
@@ -32,7 +32,7 @@ module.exports = {
 
         //query pages
         var query = support.PageModel.find(pageQuery).sort(sortField);
-        var findPage = BluebirdPromise.promisify(query.exec, query);
+        var findPage = Promise.promisify(query.exec, query);
         return findPage().then(function(pages) {
             templateData.htmlItems = pages.reduce(function(html, page) {
                 for(var i = 0; i < page.regions.length; i++) {
@@ -44,7 +44,15 @@ module.exports = {
                 return html;
             }, []);
 
+            if(templateData.htmlItems.length === 0) {
+                var defaultEmptyMessage =
+                    '<!-- There are no items to display (use "emptyHtml" to customize this message-->';
+                templateData.htmlItems.push([ data.emptyHtml || defaultEmptyMessage]);
+            }
+
             return templateData;
+        }).catch(function(err) {
+            templateData.htmlItems.push([ err ]);
         });
     }
 };
