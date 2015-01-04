@@ -61,7 +61,7 @@ ViewEngine.prototype.__express = function(filename, locals, cb) {
         }
 
         var template = handleBarsInstance.compile(str);
-        if (locals.cache) {
+        if (cache) {
             cache[filename] = template;
         }
 

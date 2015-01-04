@@ -80,7 +80,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var filter = {
         url: urlPath
     };
-    var query = Page.findOne(filter).populate('template redirect regions.part');
+    var query = Page.findOne(filter).populate('template redirect regions.part')//.cache(true, 60);
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
 
@@ -158,7 +158,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             var page = args.shift();
             var adminBar = args.shift();
 
-            self.viewEngine.registerPartial('adminbar', adminBar);
+            self.viewEngine.registerPartial('adminbar', adminBar, urlPath);
 
             var pageData = {};
             pageData.site = self.site;
@@ -184,7 +184,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     };
 
                     var partModule = self.partResolver.get(region.part ? region.part.module : null);
-                    self.viewEngine.registerPartial(region.name, partModule.viewPartial || '');
+                    self.viewEngine.registerPartial(region.name, partModule.viewPartial || '', urlPath);
                 }
             });
 
@@ -194,6 +194,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             if(!/\.hbs$/.test(templateSrc)) {
                 templateSrc += '.hbs';
             }
+            pageData.__template = urlPath;
             res.render(templateSrc, pageData, function(err, html) {
                 if(err) {
                     logger.error(err, 'Trying to render page');
@@ -202,12 +203,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     logger.info('Page request OK');
                     res.send(html);
                 }
-                //clean up
-                page.regions.forEach(function (region) {
-                    if (region.part) {
-                        self.viewEngine.unregisterPartial(region.name);
-                    }
-                });
             });
         } else if(redirectStatuses.indexOf(status) >= 0) {
             //redirects
