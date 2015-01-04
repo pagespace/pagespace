@@ -30,6 +30,8 @@
                     <button data-behavior="showSource" title="Show HTML" class="action" >
                         <svg class="icon icon-bold"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-embed2"></use></svg>
                     </button>
+                    <button class="command" style="border-left: 4px solid #fff"
+                            ng-click="save()">Save <span ng-show="changed == true">*</span></button>
                     <div data-wysihtml5-dialog="createLink" style="display: none;">
                         <label>
                             Link:
@@ -49,9 +51,6 @@
                 <div class="editor">{{{data.html}}}</div>
                 <div class="source hidden">
                     <textarea name="editor-source" rows="10"></textarea>
-                </div>
-                <div class="edit-actions">
-                    <button ng-click="save()">Save <span ng-show="changed == true">*</span></button>
                 </div>
             </div>
         </div>
