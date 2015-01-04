@@ -1,6 +1,7 @@
 'use strict';
 
 var Promise = require('bluebird');
+var mongoose = require('mongoose');
 var util = require('util');
 
 module.exports = {
@@ -14,6 +15,7 @@ module.exports = {
             wrapperClass: data.wrapperClass || ''
         };
 
+        var parent = data.parent;
         var regionName = data.regionName || null;
         if(!regionName) {
             templateData.htmlItems = [ '<p>No part name to aggregate specified</p>' ];
@@ -22,7 +24,10 @@ module.exports = {
 
         //configure query
         var sortField = data.sort || '-createdAt';
-        var pageQuery = data.query || {};
+        var pageQuery = {};
+        if(parent) {
+            pageQuery.parent = new mongoose.Types.ObjectId(parent);
+        }
         pageQuery.status = pageQuery.status || 200;
         if(data.expired) {
             pageQuery.expiresAt = {"$lte": Date.now() }

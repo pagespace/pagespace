@@ -35,7 +35,11 @@
     ✓ html (blog)
     * navigation
     ✓ html include
-* quick pages
+* select template as dropdown
+* links on sitemap
+* populate part data with predefined
+* add developer role
+* hide advanced config from non dev roles
 * docs
 
 * Select media image from ck picker
