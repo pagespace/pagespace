@@ -41,15 +41,13 @@ if (app.get('env') === 'development') {
         res.status(err.status || 500);
         var resData = {
             message: err.message,
-            error: err
+            status: err.status
         };
         if(req.headers.accept.indexOf('application/json') === -1) {
             res.render('error.hbs', resData);
         } else {
             res.json(resData)
-
         }
-
     });
 }
 
