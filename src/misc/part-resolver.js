@@ -46,7 +46,6 @@ PartResolver.prototype.require = function(partModuleId) {
         //this whole part is a bit convoluted. Assumes module paths starting with ./ or ../
         //should be resolved relative to the express app using this middleware.
         var partModulePath = this._resolveModulePath(partModuleId);
-        logger.info('Loading part module from %s...', partModulePath);
 
         try {
             partModule = require(partModulePath);
