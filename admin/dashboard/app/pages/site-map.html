@@ -7,8 +7,12 @@
             <span class="glyphicon glyphicon-plus"></span>
         </button>
 
-        <a href="#/pages/{{page._id}}" ng-if="!page.redirect">{{page.name}}<span ng-show="page.draft"><b>*</b></span></a>
-        <a href="#/pages/{{page.redirect._id}}" ng-if="page.redirect">Redirect to {{page.redirect.name}}</a>
+        <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="{{page.name}}">
+            <span ng-show="page.draft"><b>*</b></span>{{page.name}}
+        </a>
+        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="{{page.name}} &gt; {{page.redirect.name}}">
+            {{page.name}} &gt; {{page.redirect.name}}
+        </a>
 
     </div>
     <ul ng-if="page.children.length">

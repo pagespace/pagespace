@@ -122,6 +122,9 @@ adminApp.controller("PageController",
         if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
         }
+        if(page.redirect && page.redirect._id) {
+            page.redirect = page.redirect._id;
+        }
         page.regions = page.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
