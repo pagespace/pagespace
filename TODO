@@ -35,21 +35,23 @@
     ✓ html (blog)
     * navigation
     ✓ html include
+* quick pages
 * docs
-* macros.
+
 * Select media image from ck picker
 * archiving
 ✓ Dashboard color switcher
 
 BUGS
-* Dashboard errors wrapped in html doc
+* Save button in web copy
+* edit link in web copy
 
 PRODUCTION CHECKLIST
 ✓ Full code review
 ✓ Logging review
 ✓ Caching
 ✓ unit tests
-* OTT
-* Test perf (jmeter)
+✓ OTT
+✓ Test perf (jmeter)
 * Publish npm
 * Security checks
