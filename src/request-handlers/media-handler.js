@@ -79,7 +79,7 @@ MediaHandler.prototype._serve = function(req, res, next, logger) {
 
             // forward non-404 errors
             stream.on('error', function error(err) {
-                logger.warning('Error streaming media for %s (%s)', req.url, model.path);
+                logger.warn('Error streaming media for %s (%s)', req.url, model.path);
                 next(err.status === 404 ? null : err);
             });
 
