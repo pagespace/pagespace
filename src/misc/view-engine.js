@@ -24,7 +24,6 @@ var fs = require('fs'),
 
 //TODO: add debug logging
 function ViewEngine() {
-    this.cache = {};
     this.handlebarsInstances = {};
 }
 
@@ -39,38 +38,37 @@ ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
 
     if(!this.handlebarsInstances[instanceId]) {
         this.handlebarsInstances[instanceId] = handlebars.create();
+        this.handlebarsInstances[instanceId].templateCache = {};
     }
     return this.handlebarsInstances[instanceId];
 };
 
-ViewEngine.prototype.__express = function(filename, locals, cb) {
+ViewEngine.prototype.__express = function(filename, locals, done) {
 
     locals = locals || {};
-    var cache = instance.cache;
     var handleBarsInstance = instance.getHandlebarsInstance(locals.__template);
 
     // cached?
-    var template = cache[filename];
+    //template cache not working with multi instances
+    var template = handleBarsInstance.templateCache[filename];
     if (template) {
-        return cb(null, template(locals));
+        return done(null, template(locals));
     }
 
-    fs.readFile(filename, 'utf8', function(err, str){
+    fs.readFile(filename, 'utf8', function(err, file){
         if (err) {
-            return cb(err);
+            return done(err);
         }
 
-        var template = handleBarsInstance.compile(str);
-        if (cache) {
-            cache[filename] = template;
-        }
+        var template = handleBarsInstance.compile(file);
+        handleBarsInstance.templateCache[filename] = template;
 
         try {
             var res = template(locals);
-            cb(null, res);
+            done(null, res);
         } catch (err) {
             err.message = filename + ': ' + err.message;
-            cb(err);
+            done(err);
         }
     });
 };
