@@ -40,8 +40,8 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         if(err.message) {
             message += ': ' + err.message;
         }
-        if(err.error && err.error.status) {
-            message += ' (' + err.error.status + ')';
+        if(err.status) {
+            message += ' (' + err.status + ')';
         }
         showMessage(message, 'danger');
     };

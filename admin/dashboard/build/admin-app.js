@@ -433,8 +433,8 @@ adminApp.controller("notificationsController", function($scope, $rootScope) {
         if(err.message) {
             message += ': ' + err.message;
         }
-        if(err.error && err.error.status) {
-            message += ' (' + err.error.status + ')';
+        if(err.status) {
+            message += ' (' + err.status + ')';
         }
         showMessage(message, 'danger');
     };
@@ -625,6 +625,9 @@ adminApp.controller("PageController",
         page.template = $scope.template._id;
         if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
+        }
+        if(page.redirect && page.redirect._id) {
+            page.redirect = page.redirect._id;
         }
         page.regions = page.regions.filter(function(region) {
             return typeof region === 'object';
@@ -859,6 +862,12 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             var pageMap = {};
             allPages = allPages.filter(function(page) {
                 return page.status < 400;
+            }).sort(function(a, b) {
+                if (a.order < b.order)
+                    return -1;
+                if (a.order > b.order)
+                    return 1;
+                return 0;
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
@@ -871,12 +880,6 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     currentPage.children = allPages.filter(function(childCandidate) {
                         var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
                         return currentPage._id === candidateParentId;
-                    }).sort(function(a, b) {
-                        if (a.order < b.order)
-                            return -1;
-                        if (a.order > b.order)
-                            return 1;
-                        return 0;
                     });
                     if(currentPage.children.length > 0) {
                         populateChildren(currentPage.children);

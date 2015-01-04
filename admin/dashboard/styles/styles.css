@@ -111,6 +111,7 @@ header ul.nav li {
 .media-item-wrap {
     width: 200px;
     height: 200px;
+    overflow: hidden;
 }
 .media-item-wrap img {
     max-width: 100%;
