@@ -9,6 +9,13 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $rootScope.pageTitle = "Sitemap";
 
+    var VIEW_MODE_STORAGE_KEY = 'sitemapViewMode';
+    $scope.viewMode = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'view';
+    $scope.setViewMode = function(mode) {
+        $scope.viewMode = mode;
+        sessionStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    };
+
     var getSite = function() {
         siteService.getSite().success(function(site) {
             $scope.site = site;
@@ -95,6 +102,59 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
     $scope.removePage = function(page) {
 
         $location.path('/pages/delete/' + page._id);
+    };
+
+    $scope.movePage = function(page, direction) {
+        var silbingQuery = {
+            order: page.order + direction
+        };
+        if(page.parent) {
+            silbingQuery.parent = parent.page;
+        } else if(page.root) {
+            silbingQuery.root = page.root;
+        }
+
+        pageService.getPages(silbingQuery).success(function(siblings) {
+            var siblingPage = siblings[0];
+            if(!siblingPage) {
+                //$rootScope.showInfo('Couldn\'t re-order pages');
+                return;
+            }
+            async.parallel([
+                function(callback) {
+                    pageService.updatePage(page._id, {
+                        order: page.order + direction
+                    }).success(function() {
+                        callback(null)
+                    }).error(function(err) {
+                        callback(err);
+                    });
+                },
+                function(callback) {
+                    pageService.updatePage(siblingPage._id, {
+                        order: siblingPage.order - direction
+                    }).success(function() {
+                        callback(null)
+                    }).error(function(err) {
+                        callback(err);
+                    });
+                }
+            ], function(err) {
+                if(err) {
+                    $rootScope.showError('Problem re-ordering pages', err);
+                } else {
+                    getPages();
+                }
+            })
+        });
+        //should tidy this code up with async
+    };
+
+    $scope.moveBack = function(page) {
+        $scope.movePage(page, -1);
+    };
+    $scope.moveForward = function(page) {
+        $scope.movePage(page, 1);
     };
 });
 

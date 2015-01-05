@@ -19,7 +19,9 @@ header h1,
 header .nav {
     text-align: right;
 }
-
+a {
+    cursor: pointer;
+}
 header ul.nav li {
     font-size: 18px;
     border-radius: 3px;
@@ -68,6 +70,9 @@ header ul.nav li {
     background: white;
     cursor: inherit;
     display: block;
+}
+.btn {
+    border-radius: 4px;
 }
 .btn:hover, .btn:focus {
     color: #D80000;

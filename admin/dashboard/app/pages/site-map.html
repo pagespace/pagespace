@@ -6,9 +6,17 @@
         <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add page">
             <span class="glyphicon glyphicon-plus"></span>
         </button>
+        <button class="btn btn-sm sitemap-back" ng-click="moveBack(page)" title="Move back" ng-hide="$first">
+            <span class="glyphicon glyphicon-chevron-left order-horizontal"></span>
+            <span class="glyphicon glyphicon-chevron-up order-vertical"></span>
+        </button>
+        <button class="btn btn-sm sitemap-forward" ng-click="moveForward(page)" title="Move forward" ng-hide="$last">
+            <span class="glyphicon glyphicon-chevron-right order-horizontal"></span>
+            <span class="glyphicon glyphicon-chevron-down order-vertical"></span>
+        </button>
 
         <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="{{page.name}}">
-            <span ng-show="page.draft"><b>*</b></span>{{page.name}}
+            <span ng-show="page.draft"><b>*</b></span>{{page.name}}{{$index}}
         </a>
         <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="{{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}
@@ -20,7 +28,13 @@
     </ul>
 </script>
 <div class="col-sm-10">
-    <div class="sitemap">
+    <ul class="nav nav-pills">
+        <li role="presentation" ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View pages</a></li>
+        <li role="presentation" ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
+        <li role="presentation" ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
+    </ul>
+
+    <div class="sitemap" ng-class="viewMode">
         <ul class="sitemap-primary col{{pages.length}}">
             <li class="sitemap-home">
                 <div class="sitemap-node clearfix">

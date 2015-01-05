@@ -100,6 +100,9 @@ a:visited:before {
 
 /* --------	Second Level --------- */
 
+.sitemap-primary li ul {
+    padding-left: 0;
+}
 .sitemap-primary li li {
 	width: 100%;
 	clear: left;
@@ -205,10 +208,42 @@ a:visited:before {
     color: #0074ff;
 }
 .sitemap-add {
+    display: none;
     float: right;
 }
 .sitemap-remove {
+    display: none;
     float: left;
+}
+.addremove .sitemap-add {
+    display: block;
+}
+.addremove .sitemap-remove {
+    display: block;
+}
+.sitemap-back {
+    display: none;
+    float: left;
+}
+.sitemap-forward {
+    display: none;
+    float: right;
+}
+.order .sitemap-back {
+    display: block;
+}
+.order .sitemap-forward {
+    display: block;
+}
+/* choose left/right or down/up arrows */
+.order-vertical {
+    display: none;
+}
+.sitemap li li .order-horizontal {
+    display: none;
+}
+.sitemap li li .order-vertical {
+    display: block;
 }
 .sitemap .ghost {
     opacity: 0.5;
