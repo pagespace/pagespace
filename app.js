@@ -20,7 +20,7 @@ app.engine('hbs', pagespace.getViewEngine());
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
     mediaDir: path.join(__dirname, 'media-uploads'),
-    logLevel: "debug"
+    //logLevel: "debug"
 }));
 
 /// catch 404 and forwarding to error handler
@@ -43,7 +43,7 @@ if (app.get('env') === 'development') {
             message: err.message,
             status: err.status
         };
-        if(req.headers.accept.indexOf('application/json') === -1) {
+        if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
             res.render('error.hbs', resData);
         } else {
             res.json(resData)
