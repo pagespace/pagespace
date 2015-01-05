@@ -19,14 +19,7 @@
 
 'use strict';
 
-var entityMap = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    '\'': '&#39;',
-    '/': '&#x2F;'
-};
+var handlebars = require('handlebars');
 
 module.exports = {
 
@@ -49,25 +42,10 @@ module.exports = {
         }
     },
 
-    /**
-     * Simple escape html function (take from Mustache)
-     * @param value
-     * @returns {*}
-     */
-    escapeHtml: function escapeHtml(value) {
-        if(typeof value === 'string') {
-            return value.replace(/[&<>"'\/]/g, function (s) {
-                return entityMap[s];
-            });
-        } else {
-            return value;
-        }
-    },
-
     htmlStringify: function htmlStringify(obj) {
         var html =
             '<pre style="font-family: Consolas, \'Courier New\'">' +
-                this.escapeHtml(JSON.stringify(obj, null, 4)) +
+                handlebars.escapeExpression(JSON.stringify(obj, null, 4)) +
             '</pre>';
         return html;
     },
