@@ -69,4 +69,9 @@ angular.module('webCopyApp', [])
             $scope.changed = false;
         });
     };
+    $scope.$watch('changed', function(val) {
+        if(val) {
+            $scope.save();
+        }
+    });
 });
