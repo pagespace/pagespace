@@ -39,6 +39,7 @@ ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
     if(!this.handlebarsInstances[instanceId]) {
         this.handlebarsInstances[instanceId] = handlebars.create();
         this.handlebarsInstances[instanceId].templateCache = {};
+        this.handlebarsInstances[instanceId].regsiteredPartials = {};
     }
     return this.handlebarsInstances[instanceId];
 };
@@ -78,7 +79,13 @@ ViewEngine.prototype.registerHelper = function(name, helper, template) {
 };
 
 ViewEngine.prototype.registerPartial = function (name, partial, template) {
-    this.getHandlebarsInstance(template).registerPartial(name, partial);
+    var handlebarsInstance = this.getHandlebarsInstance(template)
+    handlebarsInstance.regsiteredPartials[name] = handlebarsInstance.regsiteredPartials[name] || null;
+    if(handlebarsInstance.regsiteredPartials[name] !== partial) {
+        //only recompiles if partial value has changed
+        handlebarsInstance.registerPartial(name, partial);
+        handlebarsInstance.regsiteredPartials[name] = partial;
+    }
 };
 
 ViewEngine.prototype.unregisterHelper = function(name, template) {
