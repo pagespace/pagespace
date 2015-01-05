@@ -27,8 +27,6 @@ var url = require('url'),
     async = require('async'),
     bunyan = require('bunyan'),
     mkdirp = require('mkdirp'),
-    //not working with mongoose 3.8: https://github.com/cayasso/mongoose-cachebox/issues/1
-    //mongooseCachebox = require('mongoose-cachebox'),
 
     consts = require('./app-constants'),
     Acl = require('./misc/acl'),
@@ -47,9 +45,6 @@ var Index = function() {
 
     //dependencies
     this.mongoose = mongoose;
-    //mongooseCachebox(mongoose, {
-    //    ttl: 60
-    //});
     this.viewEngine = createViewEngine();
     this.dbSupport = null;
     this.dataSetup = null;

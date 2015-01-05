@@ -41,6 +41,7 @@ var PageHandler = function(support) {
     this.site = support.site;
     this.partResolver = support.partResolver;
     this.reqCount = 0;
+    this.findPagePromises = {};
 };
 
 module.exports = function(support) {
@@ -77,12 +78,17 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
-    var filter = {
-        url: urlPath
-    };
-    var query = Page.findOne(filter).populate('template redirect regions.part')//.cache(true, 60);
-    var findPage = Promise.promisify(query.exec, query);
-    findPage().then(function(page) {
+
+    if(!this.findPagePromises[urlPath]) {
+        var filter = {
+            url: urlPath
+        };
+        var query = Page.findOne(filter).populate('template redirect regions.part');
+        var findPage = Promise.promisify(query.exec, query);
+        this._setFindPagePromise(urlPath, findPage());
+    }
+
+    this.findPagePromises[urlPath].then(function(page) {
 
         logger.debug('Page retrieved');
 
@@ -224,4 +230,14 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         logger.error(err);
         next(err);
     });
+};
+
+PageHandler.prototype._setFindPagePromise = function(path, promise) {
+    var self = this;
+    this.findPagePromises[path] = promise;
+
+    //simple cache expiration. nice to be a lru impl...
+    setTimeout(function() {
+        delete self.findPagePromises[path];
+    },60 * 1000);
 };

@@ -63,10 +63,10 @@ PartResolver.prototype.get = function(partModuleId) {
     var module = this.cache[partModuleId] || null;
 
     //TODO: this is not for production, need to remove
-    if(module) {
+/*    if(module) {
         var partModulePath = this._resolveModulePath(partModuleId);
         this.initPartModule(partModulePath, module);
-    }
+    }*/
 
     return module;
 };
