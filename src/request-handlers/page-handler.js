@@ -73,7 +73,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var showAdminBar = req.user && req.user.role === 'admin';
     var editMode = sessionValueSwitch(req, '_edit', 'edit');
     var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
-    logger.info('New page %s page request', (stagingMode ? 'staging' : 'live'));
+    logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
@@ -200,7 +200,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     logger.error(err, 'Trying to render page');
                     next(err);
                 } else {
-                    logger.info('Page request OK');
+                    logger.info('Page request processed OK in %s ms', Date.now() - req.startTime);
                     res.send(html);
                 }
             });

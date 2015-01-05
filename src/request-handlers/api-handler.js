@@ -109,7 +109,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                     logger.error(err, 'Error trying API GET for %s', apiType);
                     return next(err);
                 } else {
-                    logger.info('API request OK');
+                    logger.info('API request OK in %s ms', Date.now() - req.startTime);
                     results =  itemId ? results[0] : results;
                     if(req.headers.accept.indexOf('application/json') === -1) {
                         var html = psUtil.htmlStringify(results);
@@ -138,7 +138,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('API post OK');
+                        logger.info('API post OK in %s ms', Date.now() - req.startTime);
                         res.json(model);
                     }
                 });
@@ -171,7 +171,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                                 logger.error(err, 'Trying to save for API PUT for %s', apiType);
                                 next(err);
                             } else {
-                                logger.info('API PUT OK');
+                                logger.info('API PUT OK in %s ms', Date.now() - req.startTime);
                                 res.json(model);
                             }
                         });
@@ -189,7 +189,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         logger.error(err, 'Trying to do API DELETE for %s', apiType);
                         next(err);
                     } else {
-                        logger.info('API DELETE OK');
+                        logger.info('API DELETE OK in %s ms', Date.now() - req.startTime);
                         res.statusCode = 204;
                         res.send();
                     }

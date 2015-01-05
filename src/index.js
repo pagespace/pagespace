@@ -171,6 +171,7 @@ Index.prototype.init = function(options) {
     return function(req, res, next) {
 
         if(self.appState === consts.appStates.READY) {
+            req.startTime = Date.now();
             req.url = url.parse(req.url).pathname;
             //run all requests through passport first
             async.series([
