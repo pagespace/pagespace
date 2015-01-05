@@ -9,9 +9,7 @@ var session = require("express-session");
 var app = express();
 
 app.use(favicon(__dirname + '/favicon.ico'));
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(session({secret: 'keyboard cat'}));
+app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: 'keyboard cat'})]);
 
 // view engine setup
 app.set('views', [ pagespace.getViewDir() ]);
