@@ -24,13 +24,19 @@ var fs = require('fs'),
 
 //TODO: add debug logging
 function ViewEngine() {
+    this.handlebarsOpts = {};
     this.handlebarsInstances = {};
 }
 
 var instance = new ViewEngine();
 
 module.exports = function() {
+
     return instance;
+};
+
+ViewEngine.prototype.setOpts = function(handlebarsOpts) {
+    this.handlebarsOpts = handlebarsOpts || {};
 };
 
 ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
@@ -61,7 +67,7 @@ ViewEngine.prototype.__express = function(filename, locals, done) {
             return done(err);
         }
 
-        var template = handleBarsInstance.compile(file);
+        var template = handleBarsInstance.compile(file, instance.handlebarsOpts);
         handleBarsInstance.templateCache[filename] = template;
 
         try {
@@ -79,7 +85,7 @@ ViewEngine.prototype.registerHelper = function(name, helper, template) {
 };
 
 ViewEngine.prototype.registerPartial = function (name, partial, template) {
-    var handlebarsInstance = this.getHandlebarsInstance(template)
+    var handlebarsInstance = this.getHandlebarsInstance(template);
     handlebarsInstance.regsiteredPartials[name] = handlebarsInstance.regsiteredPartials[name] || null;
     if(handlebarsInstance.regsiteredPartials[name] !== partial) {
         //only recompiles if partial value has changed

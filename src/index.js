@@ -114,6 +114,12 @@ Index.prototype.init = function(options) {
         }
     }
 
+    //configure the view engine
+    var viewOpts = options.viewOpts || {};
+    //default handlbars data option to false
+    viewOpts.data = viewOpts.data !== 'boolean';
+    this.viewEngine.setOpts(viewOpts);
+
     //initialize db
     if(!options.db) {
         throw new Error('You must specify a db connection string');
