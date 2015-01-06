@@ -70,6 +70,15 @@ function generateSchema() {
         }
     });
 
+    userSchema.set('toJSON', {
+        transform: function(doc, user, options) {
+            delete user.rememberToken;
+            delete user.updatePassword;
+            delete user.password;
+            return user;
+        }
+    });
+
     userSchema.pre('save', function (next) {
         var user = this;
 

@@ -105,6 +105,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
     };
 
     $scope.movePage = function(page, direction) {
+
         var silbingQuery = {
             order: page.order + direction
         };
@@ -115,6 +116,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         }
 
         pageService.getPages(silbingQuery).success(function(siblings) {
+
             var siblingPage = siblings[0];
             if(!siblingPage) {
                 //$rootScope.showInfo('Couldn\'t re-order pages');

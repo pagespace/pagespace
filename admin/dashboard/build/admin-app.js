@@ -609,7 +609,6 @@ adminApp.controller("PageController",
                 });
             });
         }
-
     };
 
     $scope.$watch('page.name', function() {

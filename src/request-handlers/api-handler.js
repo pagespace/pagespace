@@ -51,7 +51,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     //fields to auto populate when making queries to these collcetions (the keys)
     var populationsMap = {
         sites: '',
-        pages: 'parent template regions.part redirect',
+        pages: 'parent template regions.part redirect createdBy updatedBy',
         parts: '',
         templates: '',
         users: '',
@@ -60,12 +60,14 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
 
     //don't send these fields to client
     var defaultRestrictedFields = [ '__v'];
+
+    //TODO: remove restricted fields, move to schemas
     var restrictedFields = {
         sites: [],
-        pages: [],
+        pages: [ ],
         parts: [],
         templates: [],
-        users: [ 'password', 'updatePassword', 'rememberToken' ],
+        users: [],
         media: [ 'path' ]
     };
 
@@ -94,7 +96,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
 
             //create a filter from the query string
             for(var p in req.query) {
-                if(req.query.hasOwnProperty(p)) {
+                if(req.query.hasOwnProperty(p) && p.indexOf('__') !== 0) {
                     filter[p] = psUtil.typeify(req.query[p]);
                 }
             }
@@ -103,7 +105,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
             var restricted = restrictedFields[apiType].concat(defaultRestrictedFields).map(function(field) {
                 return '-' + field;
             }).join(' ');
-            var populations = populationsMap[apiType];
+            var populations = psUtil.typeify(req.query.__nopop) ? '' : populationsMap[apiType];
             Model.find(filter, restricted).populate(populations).sort('-createdAt').exec(function(err, results) {
                 if(err) {
                     logger.error(err, 'Error trying API GET for %s', apiType);
@@ -111,7 +113,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 } else {
                     logger.info('API request OK in %s ms', Date.now() - req.startTime);
                     results =  itemId ? results[0] : results;
-                    if(req.headers.accept.indexOf('application/json') === -1) {
+                    if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
                         var html = psUtil.htmlStringify(results);
                         return res.send(html, {
                             'Content-Type' : 'text/html'
@@ -132,6 +134,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
 
                 docData = req.body;
                 docData.createdBy = req.user._id;
+                docData.updatedBy = req.user._id;
                 var model = new Model(docData);
                 model.save(function(err, model) {
                     if(err) {

@@ -289,7 +289,8 @@ Index.prototype._configureAuth = function() {
     passport.serializeUser(function(user, done) {
         done(null, {
             username: user.username,
-            role: user.role
+            role: user.role,
+            _id: user._id.toString()
         });
     });
 
