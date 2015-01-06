@@ -581,6 +581,11 @@ adminApp.controller("PageController",
     async.series(getPageFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
+        } else {
+            //if there's only one template choose it automatically
+            if(!$scope.page.template && $scope.templates.length === 1) {
+                $scope.template = $scope.templates[0];
+            }
         }
     });
 
@@ -595,12 +600,16 @@ adminApp.controller("PageController",
     $scope.selectTemplate = function(template) {
         $scope.template = template;
 
-        template.regions.forEach(function(region) {
-           $scope.page.regions.push({
-               name: region
+        if($scope.page && template) {
+            $scope.page.regions = [];
+            template.regions.forEach(function(region) {
+                $scope.page.regions.push({
+                    name: region
 
-           });
-        });
+                });
+            });
+        }
+
     };
 
     $scope.$watch('page.name', function() {
@@ -688,41 +697,48 @@ adminApp.controller("PageController",
 adminApp.directive('viewTemplate', function() {
 
     function link(scope, element, attrs) {
-        element.html('<canvas width="550" height="400"></canvas>');
-        var canvas = new fabric.Canvas(element.find('canvas')[0]);
-        canvas.backgroundColor = '#ddd';
 
-        scope.template.regions.forEach(function(region, i) {
-
-            var canvasData = scope.template.regionData[i];
-
-            if(canvasData) {
-                canvasData.stroke = '#000';
-                canvasData.strokeWidth = 1;
-                canvasData.fill = '#fff';
-                var rect = new fabric.Rect(canvasData);
-                var text = new fabric.Text(region, {
-                    fontSize: 16,
-                    fontFamily: 'Arial',
-                    top: canvasData.top + 5,
-                    left: canvasData.left + 5
-                });
-
-                var group = new fabric.Group([ rect, text ], {
-                    left: canvasData.left,
-                    top: canvasData.top,
-                    hasControls: false,
-                    lockMovementX: true,
-                    lockMovementY: true
-                });
-                group.on('selected', function() {
-                    scope.selectedRegionIndex = i;
-                    scope.$apply();
-                });
-                canvas.add(group);
-                canvas.sendToBack(group);
-            }
+        scope.$watch('template', function(){
+           drawTemplate();
         });
+
+        function drawTemplate() {
+            element.html('<canvas width="550" height="400"></canvas>');
+            var canvas = new fabric.Canvas(element.find('canvas')[0]);
+            canvas.backgroundColor = '#ddd';
+
+            scope.template.regions.forEach(function(region, i) {
+
+                var canvasData = scope.template.regionData[i];
+
+                if(canvasData) {
+                    canvasData.stroke = '#000';
+                    canvasData.strokeWidth = 1;
+                    canvasData.fill = '#fff';
+                    var rect = new fabric.Rect(canvasData);
+                    var text = new fabric.Text(region, {
+                        fontSize: 16,
+                        fontFamily: 'Arial',
+                        top: canvasData.top + 5,
+                        left: canvasData.left + 5
+                    });
+
+                    var group = new fabric.Group([ rect, text ], {
+                        left: canvasData.left,
+                        top: canvasData.top,
+                        hasControls: false,
+                        lockMovementX: true,
+                        lockMovementY: true
+                    });
+                    group.on('selected', function() {
+                        scope.selectedRegionIndex = i;
+                        scope.$apply();
+                    });
+                    canvas.add(group);
+                    canvas.sendToBack(group);
+                }
+            });
+        }
     }
 
     return {
@@ -957,6 +973,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
     };
 
     $scope.movePage = function(page, direction) {
+
         var silbingQuery = {
             order: page.order + direction
         };
@@ -967,6 +984,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         }
 
         pageService.getPages(silbingQuery).success(function(siblings) {
+
             var siblingPage = siblings[0];
             if(!siblingPage) {
                 //$rootScope.showInfo('Couldn\'t re-order pages');
@@ -999,7 +1017,6 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 }
             })
         });
-        //should tidy this code up with async
     };
 
     $scope.moveBack = function(page) {

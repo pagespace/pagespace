@@ -37,73 +37,62 @@
             </div>
 
             <!-- Select template -->
-            <div ng-if="template == null">
-                <h3>Select a template</h3>
-                <div rn-carousel rn-carousel-control="true" rn-carousel-index="selectedTemplateIndex">
-                    <div ng-repeat="template in templates">
-                        <h4>{{template.name}}</h4>
-                        <view-template></view-template>
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-primary"
-                                    ng-click="selectTemplate(template)">Next</button>
-                            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-<!--                <div class="form-group">
+            <div ng-if="page.template == null && templates.length > 1" bs-has-error="template">
+                <div class="form-group">
                     <label class="col-sm-2 control-label">Select a template</label>
                     <div class="col-sm-7">
-                        <select ng-model="page.regions[$index].part"
-                                ng-options="part as part.name for part in parts track by part._id" class="form-control"
-                                ng-change="setDefaultPartData()">
-                            <option value="" disabled selected>Select a part type</option>
+                        <select ng-model="template" name="template" required
+                                ng-options="template as template.name for template in templates"
+                                ng-change="selectTemplate(template)"
+                                class="form-control">
+                            <option value="" disabled selected>Choose a template</option>
                         </select>
                     </div>
-                </div>-->
+                </div>
             </div>
 
             <div ng-if="template != null">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Edit template ({{template.name}})</label>
+                    <div class="col-sm-7">
+                        <view-template></view-template>
 
-                <h3>Template</h3>
-                <h4>{{template.name}}</h4>
-                <view-template></view-template>
+                        <div ng-repeat="region in template.regions track by $index">
+                            <div ng-show="selectedRegionIndex == $index">
+                                <h4>Populate region: <b>{{template.regions[$index]}}</b></h4>
 
-                <div ng-repeat="region in template.regions track by $index">
-                    <div ng-show="selectedRegionIndex == $index">
-                        <h3>Populate region: <b>{{template.regions[$index]}}</b></h3>
-
-                        <div class="form-group">
-                            <label class="col-sm-2 control-label">Part type</label>
-                            <div class="col-sm-7">
-                                <select ng-model="page.regions[$index].part"
-                                        ng-options="part as part.name for part in parts track by part._id" class="form-control"
-                                        ng-change="setDefaultPartData()">
-                                    <option value="" disabled selected>Select a part type</option>
-                                </select>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Part type</label>
+                                    <div class="col-sm-10">
+                                        <select ng-model="page.regions[$index].part"
+                                                ng-options="part as part.name for part in parts track by part._id" class="form-control"
+                                                ng-change="setDefaultPartData()">
+                                            <option value="" disabled selected>Select a part type</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Raw data</label>
+                                    <div class="col-sm-10">
+                                        <textarea ng-model="page.regions[$index].data"
+                                                  ui-codemirror
+                                                  ui-codemirror-opts="editorOpts"
+                                                  class="form-control"
+                                                  name="regiondata_{{$index}}"
+                                                  placeholder="Edit raw part data (for advanced users)"></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="col-sm-2 control-label">Raw data</label>
-                            <div class="col-sm-7">
-                                <textarea ng-model="page.regions[$index].data"
-                                          ui-codemirror
-                                          ui-codemirror-opts="editorOpts"
-                                          class="form-control"
-                                          name="regiondata_{{$index}}"
-                                        placeholder="Edit raw part data (for advanced users)"></textarea>
-                            </div>
+                        <div ng-show="selectedRegionIndex == -1">
+                            <p>Select a region to populate it with a page part</p>
                         </div>
                     </div>
                 </div>
-                <div ng-show="selectedRegionIndex == -1">
-                    <h3>Populate regions</h3>
-                    <p>Select a region to populate it with a page part</p>
-                </div>
-
             </div>
 
-            <div class="action-buttons" ng-show="template != null">
-                <button type="submit" class="btn btn-primary">Save</button>
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
                 <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
             </div>
         </form>
