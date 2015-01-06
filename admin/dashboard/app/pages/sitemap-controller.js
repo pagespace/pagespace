@@ -147,7 +147,6 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 }
             })
         });
-        //should tidy this code up with async
     };
 
     $scope.moveBack = function(page) {
