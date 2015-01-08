@@ -71,7 +71,7 @@ function generateSchema() {
     });
 
     userSchema.set('toJSON', {
-        transform: function(doc, user, options) {
+        transform: function(doc, user) {
             delete user.rememberToken;
             delete user.updatePassword;
             delete user.password;

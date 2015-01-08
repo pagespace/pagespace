@@ -74,7 +74,16 @@ function generateSchema() {
         next();
     });
 
+    mediaSchema.set('toJSON', {
+        transform: function(doc, media) {
+            delete media.path;
+            return media;
+        }
+    });
+
     return mediaSchema;
 }
+
+
 
 module.exports = generateSchema;

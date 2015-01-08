@@ -58,19 +58,6 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         media: ''
     };
 
-    //don't send these fields to client
-    var defaultRestrictedFields = [ '__v'];
-
-    //TODO: remove restricted fields, move to schemas
-    var restrictedFields = {
-        sites: [],
-        pages: [ ],
-        parts: [],
-        templates: [],
-        users: [],
-        media: [ 'path' ]
-    };
-
     var apiInfo = consts.requests.API.regex.exec(req.url);
     var apiType = apiInfo[1];
     var itemId = apiInfo[2];
@@ -96,17 +83,14 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
 
             //create a filter from the query string
             for(var p in req.query) {
+                //use __ prefix to stop special query params being included in filter
                 if(req.query.hasOwnProperty(p) && p.indexOf('__') !== 0) {
                     filter[p] = psUtil.typeify(req.query[p]);
                 }
             }
 
-            //create addtional restricted fields
-            var restricted = restrictedFields[apiType].concat(defaultRestrictedFields).map(function(field) {
-                return '-' + field;
-            }).join(' ');
             var populations = psUtil.typeify(req.query.__nopop) ? '' : populationsMap[apiType];
-            Model.find(filter, restricted).populate(populations).sort('-createdAt').exec(function(err, results) {
+            Model.find(filter, '-__v').populate(populations).sort('-createdAt').exec(function(err, results) {
                 if(err) {
                     logger.error(err, 'Error trying API GET for %s', apiType);
                     return next(err);
