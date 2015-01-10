@@ -95,7 +95,7 @@ function generateSchema(modifier) {
         },
         expiresAt: {
             type: Date,
-            default: new Date(Date.now + 1000 * 60 * 60 * 24 * 365 * 50) //50 years default!
+            default: new Date(Date.now + 1000 * 60 * 60 * 24 * 365 * 5) //5 years default!
         }
     });
 
