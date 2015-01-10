@@ -3,7 +3,7 @@
         <button class="btn btn-sm sitemap-remove" ng-show="page.children.length == 0" ng-click="removePage(page)" title="Remove page">
             <span class="glyphicon glyphicon-remove"></span>
         </button>
-        <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add page">
+        <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add sub page">
             <span class="glyphicon glyphicon-plus"></span>
         </button>
         <button class="btn btn-sm sitemap-back" ng-click="moveBack(page)" title="Move back" ng-hide="$first">
@@ -15,12 +15,13 @@
             <span class="glyphicon glyphicon-chevron-down order-vertical"></span>
         </button>
 
-        <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="{{page.name}}">
+        <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="Edit {{page.name}}">
             <span ng-show="page.draft"><b>*</b></span>{{page.name}}{{$index}}
         </a>
-        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="{{page.name}} &gt; {{page.redirect.name}}">
+        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="Edit {{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}
         </a>
+        <a ng-href="{{page.url}}" class="page-link" target="_blank" title="Go to {{page.name}}">{{page.url}}</a>
 
     </div>
     <ul ng-if="page.children.length">

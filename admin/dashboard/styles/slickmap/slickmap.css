@@ -62,10 +62,14 @@
 .sitemap-primary .sitemap-home .sitemap-node {
     background-color: #faa129
 }
+.sitemap-primary .sitemap-home  a {
+    height: 50px;
+    line-height: 50px;
+}
 .sitemap-primary a {
     display: block;
-    height: 40px;
-    line-height: 40px;
+    height: 34px;
+    line-height:34px;
     overflow: hidden;
     color: #004EA3;
 }
@@ -97,7 +101,16 @@ a:visited:before {
 .sitemap-primary li a:visited:before {
 	
 }
-
+.sitemap-primary a.page-link {
+    font-weight: normal;
+    font-size: 14px;
+    height: 22px;
+    line-height: 22px;
+    background: rgba(0, 0, 0, 0.1);
+}
+.sitemap-primary a.page-link:hover {
+    text-decoration: underline;
+}
 /* --------	Second Level --------- */
 
 .sitemap-primary li ul {
@@ -201,8 +214,9 @@ a:visited:before {
     border: 1px solid #004EA3;
     color: #004EA3;
     border-radius: 4px;
-    margin: 6px;
+    margin: 6px 6px 0 6px;
     padding: 3px 6px;
+    font-size: 10px;
 }
 .sitemap-primary button:hover {
     color: #0074ff;
