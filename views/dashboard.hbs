@@ -32,7 +32,7 @@
 
             <ul class="nav" style="text-align: center">
                 <li>
-                    <h3>Welcome {{username}}</h3>
+                    <h3>Hello {{displayName}}</h3>
                 </li>
             </ul>
 
@@ -41,9 +41,13 @@
                 <!--<li><a href="#/macros">Macros</a></li>-->
                 <li><a href="#/media">Media</a></li>
                 <li><a href="#/publishing">Publishing</a></li>
-                <li><a href="#/templates">Templates</a></li>
-                <li><a href="#/parts">Page Parts</a></li>
-                <li><a href="#/users">Users</a></li>
+                {{#allowTemplatesAndParts}}
+                    <li><a href="#/templates">Templates</a></li>
+                    <li><a href="#/parts">Page Parts</a></li>
+                {{/allowTemplatesAndParts}}
+                {{#allowUsers}}
+                    <li><a href="#/users">Users</a></li>
+                {{/allowUsers}}
             </ul>
             <ul class="nav" style="margin-top: 1em">
                 <li><a href="/_logout">Logout</a></li>

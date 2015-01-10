@@ -12,6 +12,12 @@
         $scope.userId = userId;
 
         $scope.roles = [{
+            name: "editor",
+            label: "Editor"
+        },{
+            name: "developer",
+            label: "Developer"
+        },{
             name: "admin",
             label: "Admin"
         }];

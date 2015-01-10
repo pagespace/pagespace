@@ -48,15 +48,24 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 var data = {
                     badCredentials: psUtil.typeify(req.query.badCredentials) || false
                 };
-                return res.render('login.hbs', data, function(err, html) {
-                    if(err) {
-                        logger.error(err, 'Trying to render login');
-                        next(err);
-                    } else {
-                        logger.info('Sending login page');
-                        res.send(html);
-                    }
-                });
+                if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
+                    return res.render('login.hbs', data, function(err, html) {
+                        if(err) {
+                            logger.error(err, 'Trying to render login');
+                            next(err);
+                        } else {
+                            logger.info('Sending login page');
+                            res.send(html);
+                        }
+                    });
+                } else {
+                    return res.json({
+                        message: res.status === 403 ?
+                            'You are not authorized to access this resource' :
+                            'You must login to access this resource'
+                    });
+
+                }
             }
         };
 

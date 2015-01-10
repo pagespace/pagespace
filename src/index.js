@@ -29,9 +29,9 @@ var url = require('url'),
     mkdirp = require('mkdirp'),
 
     consts = require('./app-constants'),
-    Acl = require('./misc/acl'),
     createDbSupport = require('./misc/db-support'),
-    createDataSetup = require('./misc/data-setup'),
+    createDataSetup = require('./setup/data-setup'),
+    createAclSetup = require('./setup/acl-setup'),
     createViewEngine = require('./misc/view-engine'),
     createPartResolver = require('./misc/part-resolver');
 
@@ -166,7 +166,8 @@ Index.prototype.init = function(options) {
     });
 
     //auth and acl setup
-    this.acl = this._configureAuth();
+    this.acl = createAclSetup().runSetup();
+    this._configureAuth();
 
     //handle requests
     return function(req, res, next) {
@@ -217,6 +218,7 @@ Index.prototype._doRequest = function(req, res, next) {
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
+        res.status(user.role === 'guest' ? 401 : 403);
         req.session.loginToUrl = req.url;
         requestType = consts.requests.LOGIN;
     } else {
@@ -272,24 +274,12 @@ Index.prototype._configureAuth = function() {
 
     var self = this;
 
-    //setup acl
-    var acl = new Acl();
-
-    //rules later in the list take precedence
-    acl.allow(['guest', 'admin'], '.*', ['GET', 'POST']);
-    acl.allow(['admin'], consts.requests.MEDIA.regex, ['POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requests.DATA.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requests.API.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requests.PUBLISH.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requests.DASHBOARD.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-    acl.allow(['admin'], consts.requests.CACHE.regex, ['GET', 'POST', 'PUT', 'DELETE']);
-
-
     //setup passport/authentication
     passport.serializeUser(function(user, done) {
         done(null, {
             username: user.username,
             role: user.role,
+            name: user.name,
             _id: user._id.toString()
         });
     });
@@ -345,8 +335,6 @@ Index.prototype._configureAuth = function() {
             });
         }
     ));
-
-    return acl;
 };
 
 Index.prototype.getViewDir = function() {

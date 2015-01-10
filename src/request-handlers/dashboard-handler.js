@@ -48,8 +48,10 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
     logger.info('New dashboard request from %s', req.user.username);
 
     var pageData = {
-        role: req.user.role,
-        username: req.user.username
+        username: req.user.username,
+        displayName: req.user.name,
+        allowUsers: req.user.role === 'admin',
+        allowTemplatesAndParts: req.user.role === 'developer' || req.user.role === 'admin'
     };
 
     return res.render('dashboard.hbs', pageData, function(err, html) {

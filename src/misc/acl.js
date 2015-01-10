@@ -20,17 +20,53 @@
 'use strict';
 
 var Acl = function() {
-    this.permissions = [];
+    this.rules = [];
 };
 
+module.exports.acl = function() {
+    return new Acl();
+};
 
-Acl.prototype.allow = function(roles, resource, actions) {
+module.exports.middleware = function(acl) {
+    return function(req, res, next) {
+        var isAllowed = false;
+        var err;
+        if(req.user && req.user.role) {
+            isAllowed = acl.isAllowed(req.user.role, req.pathname, req.method);
+            if(isAllowed) {
+                return next();
+            } else {
+                err = new Error('User is not authorized');
+                err.status = 403;
+            }
+        } else {
+            err = new Error('User must authenticate');
+            err.status = 401;
+        }
+        return next(err);
+    }
+};
 
-    this.permissions.push({
-        roles: roles,
-        resourcePattern: new RegExp(resource),
-        actions: actions
-    });
+/**
+ * Add a new rule, starting with the resource to match
+ * @param resource
+ * @param actions
+ * @returns {{thenOnlyAllow: thenOnlyAllow}}
+ */
+Acl.prototype.match = function(resource, actions) {
+
+    var self = this;
+
+    //TODO: find same rules and update if already defined
+    return {
+        thenOnlyAllow: function(roles) {
+            self.rules.push({
+                roles: roles,
+                resourcePattern: resource,
+                actions: actions
+            });
+        }
+    }
 };
 
 /**
@@ -43,16 +79,54 @@ Acl.prototype.allow = function(roles, resource, actions) {
  */
 Acl.prototype.isAllowed = function(role, resource, action) {
 
-    var permission, i;
-    for(i = this.permissions.length - 1; i >= 0; i--) {
-        permission = this.permissions[i];
-        if(permission.resourcePattern.test(resource) && permission.actions.indexOf(action) > -1) {
-            return permission.roles.indexOf(role) > -1;
+    //test rules in reverse order. last defined have highest priority
+    var rule, i;
+    for(i = this.rules.length - 1; i >= 0; i--) {
+        rule = this.rules[i];
+
+        //test if regex, or, otherwise, startsWith
+        var matchResource = rule.resourcePattern instanceof RegExp ?
+            rule.resourcePattern.test(resource) : resource.indexOf(rule.resourcePattern) === 0;
+
+        //string star will match any otherwise find match in actions array
+        var matchAction = rule.actions === '*' || rule.actions.indexOf(action) > -1;
+
+        //if the resource + action is match then allow or deny, given the role
+        if(matchResource && matchAction) {
+            return rule.roles === '*' || rule.roles.indexOf(role) > -1;
         }
     }
 
+    //deny by default
     return false;
 };
 
+Acl.prototype.serialize = function() {
 
-module.exports = Acl;
+    //temp patch regex tojson method
+    var orignalRegexToJson = RegExp.prototype.toJSON;
+    RegExp.prototype.toJSON = RegExp.prototype.toString;
+
+    var serialized = JSON.stringify(this.rules);
+    RegExp.prototype.toJSON = orignalRegexToJson;
+    return serialized;
+};
+
+Acl.prototype.deserialize = function(rules) {
+
+    if(typeof rules === 'string') {
+        rules = JSON.parse(rules);
+    }
+
+    var isRegexPattern = new RegExp('^\/(.*)\/$');
+    rules.forEach(function(rule) {
+        if(typeof rule.resourcePattern === 'string') {
+            var isRegex = isRegexPattern.exec(rule.resourcePattern);
+            if(isRegex) {
+                rule.resourcePattern = isRegex[1];
+            }
+        }
+    });
+
+    this.rules = rules;
+};
