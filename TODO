@@ -35,12 +35,12 @@
     ✓ html (blog)
     * navigation
     ✓ html include
-* select template as dropdown
-* links on sitemap
+✓ select template as dropdown
+✓ links on sitemap
 ✓ re-order pages
 ✓ populate part data with predefined
-* add developer & editor role
-* hide advanced config from non dev roles
+✓ add developer & editor role
+✓ hide advanced config from non dev roles
 * docs
 
 * Select media image from ck picker
@@ -48,7 +48,6 @@
 ✓ Dashboard color switcher
 
 BUGS
-* Save button in web copy
 * edit link in web copy
 * can edit in live mode
 
@@ -61,3 +60,6 @@ PRODUCTION CHECKLIST
 ✓ Test perf (jmeter)
 ✓ Publish npm
 * Security checks
+
+✓ When selecting a part, pop in template, populate the default data
+✓ Do same in page

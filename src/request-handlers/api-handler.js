@@ -53,7 +53,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
         sites: '',
         pages: 'parent template regions.part redirect createdBy updatedBy',
         parts: '',
-        templates: '',
+        templates: 'regions.part',
         users: '',
         media: ''
     };
@@ -150,7 +150,7 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                         //https://github.com/LearnBoost/mongoose/issues/964
                         for(var key in docData) {
                             if(docData.hasOwnProperty(key)) {
-                                doc[key] = docData[key];
+                                doc.set(key, docData[key]);
                             }
                         }
                         doc.save(function (err) {

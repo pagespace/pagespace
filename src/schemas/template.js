@@ -26,14 +26,24 @@ function generateSchema() {
     var templateSchema = Schema({
         name: {
             type: String,
-            required: true
+            required: true,
+            unique: true
         },
         src: {
             type: String,
-            unique: true,
             required: true
         },
-        regions: [ String ],
+        regions: [{
+            name: {
+                type: String,
+                required: true
+            },
+            data: Schema.Types.Mixed,
+            part: {
+                type: Schema.Types.ObjectId,
+                ref: 'Part'
+            }
+        }],
         regionData: [ Schema.Types.Mixed ],
         properties: [{
             name: String,

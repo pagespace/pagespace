@@ -524,6 +524,13 @@ adminApp.controller("PageController",
     $scope.editorOpts = {
         mode: 'application/json'
     };
+
+    $scope.editRegions = false;
+    $scope.toggleEditRegions = function() {
+        $scope.editRegions = !$scope.editRegions;
+    };
+
+
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
@@ -555,7 +562,7 @@ adminApp.controller("PageController",
 
                 page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
-                    region.dataFromServer = !!region.data
+                    region.dataFromServer = !!region.data;
                     return region;
                 });
 
@@ -603,10 +610,7 @@ adminApp.controller("PageController",
         if($scope.page && template) {
             $scope.page.regions = [];
             template.regions.forEach(function(region) {
-                $scope.page.regions.push({
-                    name: region
-
-                });
+                $scope.page.regions.push(region);
             });
         }
     };
@@ -616,17 +620,6 @@ adminApp.controller("PageController",
             $scope.updateUrl();
         }
     });
-
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.page.regions.forEach(function(region, index) {
-            var dataField = $scope.pageForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
-    };
 
     $scope.save = function(form) {
 
@@ -695,7 +688,7 @@ adminApp.controller("PageController",
 
 adminApp.directive('viewTemplate', function() {
 
-    function link(scope, element, attrs) {
+    function link(scope, element) {
 
         scope.$watch('template', function(){
            drawTemplate();
@@ -715,7 +708,7 @@ adminApp.directive('viewTemplate', function() {
                     canvasData.strokeWidth = 1;
                     canvasData.fill = '#fff';
                     var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region, {
+                    var text = new fabric.Text(region.name, {
                         fontSize: 16,
                         fontFamily: 'Arial',
                         top: canvasData.top + 5,
@@ -1342,7 +1335,8 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window, templateService) {
+adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window,
+                                                   templateService, partService) {
 
     $rootScope.pageTitle = 'Template';
 
@@ -1356,9 +1350,19 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         regionData: []
     };
 
+    partService.getParts().success(function(parts) {
+        $scope.parts = parts;
+    });
+
     if(templateId) {
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;
+
+            template.regions.map(function(region) {
+                region.data = stringifyData(region.data);
+                region.dataFromServer = !!region.data
+                return region;
+            });
         }).error(function(err) {
             $rootScope.showError('Error getting template', err);
         });
@@ -1394,6 +1398,17 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         }
     };
 
+    $scope.setDefaultPartData = function() {
+        //this will check all parts that have not had data explicitly set and set the default part data
+        //for the selected part
+        $scope.template.regions.forEach(function(region, index) {
+            var dataField = $scope.templateForm['regiondata_' + index];
+            if(region.part && dataField.$pristine && !region.dataFromServer) {
+                region.data = region.part.defaultData || "";
+            }
+        });
+    };
+
     $scope.cancel = function() {
         $location.path('/templates');
     };
@@ -1406,13 +1421,28 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
             return;
         }
 
+        var template = $scope.template;
+
         //remove any empty properties
-        for(var i = $scope.template.properties.length - 1; i >= 0; i--) {
-            var prop = $scope.template.properties[i];
+        for(var i = template.properties.length - 1; i >= 0; i--) {
+            var prop = template.properties[i];
             if(!prop.name) {
-                $scope.template.properties.splice(i, 1);
+                template.properties.splice(i, 1);
             }
         }
+
+        //depopulate parts
+        template.regions = template.regions.filter(function(region) {
+            return typeof region === 'object';
+        }).map(function(region) {
+            if(region.part) {
+                region.part = region.part._id;
+            }
+            if(isJson(region.data)) {
+                region.data = JSON.parse(region.data);
+            }
+            return region;
+        });
 
         if(templateId) {
             templateService.updateTemplate(templateId, $scope.template).success(function() {
@@ -1439,6 +1469,20 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
             $rootScope.showError('Error deleting template', err);
         });
     };
+
+
+    function stringifyData(val) {
+        return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
+    }
+
+    function isJson(str) {
+        try {
+            JSON.parse(str);
+        } catch(e) {
+            return false;
+        }
+        return true;
+    }
 });
 
 adminApp.directive('drawTemplate', function() {

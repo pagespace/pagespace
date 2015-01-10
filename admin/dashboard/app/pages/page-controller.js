@@ -20,6 +20,13 @@ adminApp.controller("PageController",
     $scope.editorOpts = {
         mode: 'application/json'
     };
+
+    $scope.editRegions = false;
+    $scope.toggleEditRegions = function() {
+        $scope.editRegions = !$scope.editRegions;
+    };
+
+
     $scope.selectedRegionIndex = -1;
     $scope.selectedTemplateIndex = 0;
     $scope.template = null;
@@ -51,7 +58,7 @@ adminApp.controller("PageController",
 
                 page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
-                    region.dataFromServer = !!region.data
+                    region.dataFromServer = !!region.data;
                     return region;
                 });
 
@@ -99,10 +106,7 @@ adminApp.controller("PageController",
         if($scope.page && template) {
             $scope.page.regions = [];
             template.regions.forEach(function(region) {
-                $scope.page.regions.push({
-                    name: region
-
-                });
+                $scope.page.regions.push(region);
             });
         }
     };
@@ -112,17 +116,6 @@ adminApp.controller("PageController",
             $scope.updateUrl();
         }
     });
-
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.page.regions.forEach(function(region, index) {
-            var dataField = $scope.pageForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
-    };
 
     $scope.save = function(form) {
 
@@ -191,7 +184,7 @@ adminApp.controller("PageController",
 
 adminApp.directive('viewTemplate', function() {
 
-    function link(scope, element, attrs) {
+    function link(scope, element) {
 
         scope.$watch('template', function(){
            drawTemplate();
@@ -211,7 +204,7 @@ adminApp.directive('viewTemplate', function() {
                     canvasData.strokeWidth = 1;
                     canvasData.fill = '#fff';
                     var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region, {
+                    var text = new fabric.Text(region.name, {
                         fontSize: 16,
                         fontFamily: 'Arial',
                         top: canvasData.top + 5,
