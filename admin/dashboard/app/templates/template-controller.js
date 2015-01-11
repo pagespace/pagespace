@@ -132,12 +132,15 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     };
 
     $scope.remove = function() {
-        templateService.deleteTemplate($scope.template._id).success(function (res) {
-            console.log('Template deleted');
-            $location.path('/templates');
-        }).error(function(err) {
-            $rootScope.showError('Error deleting template', err);
-        });
+        var really = window.confirm('Really delete this template?');
+        if(really) {
+            templateService.deleteTemplate($scope.template._id).success(function (res) {
+                console.log('Template deleted');
+                $location.path('/templates');
+            }).error(function (err) {
+                $rootScope.showError('Error deleting template', err);
+            });
+        }
     };
 
 

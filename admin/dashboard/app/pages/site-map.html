@@ -16,7 +16,7 @@
         </button>
 
         <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="Edit {{page.name}}">
-            <span ng-show="page.draft"><b>*</b></span>{{page.name}}{{$index}}
+            <span ng-show="page.draft"><b>*</b></span>{{page.name}}
         </a>
         <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="Edit {{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}

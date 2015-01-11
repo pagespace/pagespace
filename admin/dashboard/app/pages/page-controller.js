@@ -28,7 +28,6 @@ adminApp.controller("PageController",
 
 
     $scope.selectedRegionIndex = -1;
-    $scope.selectedTemplateIndex = 0;
     $scope.template = null;
 
     var getPageFunctions = [];
@@ -87,7 +86,7 @@ adminApp.controller("PageController",
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
-                $scope.template = $scope.templates[0];
+                $scope.selectTemplate($scope.templates[0]);
             }
         }
     });
@@ -101,6 +100,12 @@ adminApp.controller("PageController",
     };
 
     $scope.selectTemplate = function(template) {
+
+        template.regions = template.regions.map(function(region) {
+            region.data = typeof data !== 'string' ? stringifyData(region.data) : region.data;
+            return region;
+        });
+
         $scope.template = template;
 
         if($scope.page && template) {
@@ -132,6 +137,10 @@ adminApp.controller("PageController",
         }
 
         //unpopulate
+        delete page.createdBy;
+        delete page.updatedBy;
+        delete page.createdAt;
+        delete page.updatedAt;
         page.template = $scope.template._id;
         if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
