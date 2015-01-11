@@ -38,6 +38,12 @@
             query = '?' + params.join('&');
             window.location.replace(path + query + hash);
         }
+
+        //change the sidebar color stuff
+        var sidebarColor = window.localStorage.getItem('sidebarColor');
+        if(sidebarColor) {
+            document.getElementById('adminbar').style.backgroundColor = sidebarColor;
+        }
     }
 
 })();

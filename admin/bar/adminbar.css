@@ -1,8 +1,14 @@
+html {
+    margin-top: 60px;
+}
 .adminbar {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 60px;
     padding: 10px;
-    background-color: #F1FF52;
+    background-color: #cbcbcb;
     font-family: Consolas, "courier new", monospace;
     font-size: 18px;
     line-height: 35px;
@@ -38,7 +44,7 @@
     background: #d3d3d3;
 }
 .adminbar .switch.on {
-    background: #00e5a3;
+    background: #00EC03;
     cursor: default;
 }
 
