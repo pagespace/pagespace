@@ -1,12 +1,13 @@
 .adminbar {
     position: relative;
-    height: 35px;
+    height: 60px;
     padding: 10px;
     background-color: #F1FF52;
     font-family: Consolas, "courier new", monospace;
     font-size: 18px;
     line-height: 35px;
 }
+.adminbar,
 .adminbar > * {
     box-sizing: border-box;
 }
