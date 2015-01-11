@@ -66,12 +66,15 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
     };
 
     $scope.remove = function() {
-        partService.deletePart($scope.part._id).success(function (res) {
-            $rootScope.showInfo("Part removed", err);
-            $location.path("/parts");
-        }).error(function(err) {
-            $rootScope.showError("Error deleting part", err);
-        });
+        var really = window.confirm('Really delete this part?');
+        if(really) {
+            partService.deletePart($scope.part._id).success(function (res) {
+                $rootScope.showInfo("Part removed", err);
+                $location.path("/parts");
+            }).error(function (err) {
+                $rootScope.showError("Error deleting part", err);
+            });
+        }
     };
 });
 
