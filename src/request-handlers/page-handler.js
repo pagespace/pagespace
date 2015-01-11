@@ -72,23 +72,28 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     }
 
     var showAdminBar = req.user && req.user.role === 'admin';
-    var editMode = sessionValueSwitch(req, '_edit', 'edit');
     var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
+    var editMode = stagingMode ? sessionValueSwitch(req, '_edit', 'edit') : false;
     logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
+    var pageQueryCachKey = urlPath + '_' + modelModifier
 
-    if(!this.findPagePromises[urlPath]) {
+    ///clear cache if in staging mode
+    if(stagingMode) {
+        this.findPagePromises[pageQueryCachKey] = null;
+    }
+    if(!this.findPagePromises[pageQueryCachKey]) {
         var filter = {
             url: urlPath
         };
         var query = Page.findOne(filter).populate('template redirect regions.part');
         var findPage = Promise.promisify(query.exec, query);
-        this._setFindPagePromise(urlPath, findPage());
+        this._setFindPagePromise(pageQueryCachKey, findPage());
     }
 
-    this.findPagePromises[urlPath].then(function(page) {
+    this.findPagePromises[pageQueryCachKey].then(function(page) {
 
         logger.debug('Page retrieved');
 
@@ -129,6 +134,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     var partPromise = partModule.process(regionData, {
                         basePath: self.userBasePath,
                         PageModel: Page,
+                        req: req,
                         logger: logger.child({part: region.part.name})
                     });
                     promises.push(partPromise);
@@ -232,12 +238,12 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     });
 };
 
-PageHandler.prototype._setFindPagePromise = function(path, promise) {
+PageHandler.prototype._setFindPagePromise = function(key, promise) {
     var self = this;
-    this.findPagePromises[path] = promise;
+    this.findPagePromises[key] = promise;
 
     //simple cache expiration. nice to be a lru impl...
     setTimeout(function() {
-        delete self.findPagePromises[path];
-    },60 * 1000);
+        delete self.findPagePromises[key];
+    }, 60 * 1000);
 };
