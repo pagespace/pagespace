@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{site.name}} - {{page.name}}</title>
+        <meta name="foo" value="{{template.foo}}">
+        <script src="/_static/bower_components/headjs/dist/1.0.0/head.load.min.js"></script>
+        {{> adminbar}}
+        <style>
+            html {
+                box-sizing: border-box;
+            }
+            *, *:before, *:after {
+                box-sizing: inherit;
+            }
+            body {
+                background: #0086b3;
+            }
+            .wrap {
+                width: 1000px;
+                margin: 0 auto 0 auto;
+                font-family: sans-serif;
+                background: #fff;
+            }
+            .header {
+                padding: 20px;
+            }
+            .sidebar {
+                float: left;
+                width: 200px;
+                padding: 20px;
+            }
+            .main {
+                float: left;
+                width: 800px;
+                padding: 20px;
+            }
+            .footer {
+                clear: both;
+                padding: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="header">
+                <h1>{{page.name}}</h1>
+            </div>
+
+            <div class="sidebar">
+                {{#Sidebar}}
+                    {{> Sidebar}}
+                {{/Sidebar}}
+            </div>
+
+            <div class="main">
+                {{#Main}}
+                    {{> Main}}
+                {{/Main}}
+            </div>
+
+            <div class="footer">
+                {{#Footer}}
+                    {{> Footer}}
+                {{/Footer}}
+            </div>
+        </div>
+        <script>
+            {{{site.analytics}}}
+        </script>
+    </body>
+</html>
