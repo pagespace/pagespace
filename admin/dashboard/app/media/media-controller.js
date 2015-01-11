@@ -65,11 +65,21 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
     mediaService.getItems().success(function(items) {
         $scope.mediaItems = items;
         updateFilter();
-        $scope.availableTags = items.reduce(function(allTags, item) {
+
+        //combine all tags into one
+        var availableTags = items.reduce(function(allTags, item) {
             return allTags.concat(item.tags.filter(function(tag) {
-                return tag.text;
+                return tag.text; //only return tags with text property
             }));
         }, []);
+
+        //remove dups
+        var seen = {};
+        availableTags = availableTags.filter(function(tag) {
+            return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
+        });
+        console.log($scope.availableTags);
+        $scope.availableTags = availableTags;
     }).error(function(err) {
         $rootScope.showError("Error getting media items", err);
     });
