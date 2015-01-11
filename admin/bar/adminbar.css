@@ -17,6 +17,9 @@ html {
 .adminbar > * {
     box-sizing: border-box;
 }
+.adminbar a {
+    color: #fff;
+}
 .adminbar .adminbar-links {
     float: left;
 }
@@ -41,10 +44,10 @@ html {
     cursor: pointer;
     font-family: Consolas, "courier new", monospace;
     font-size: 18px;
-    background: #d3d3d3;
+    background: #B0B0B0;
 }
 .adminbar .switch.on {
-    background: #00EC03;
+    background: #00C328;
     cursor: default;
 }
 
