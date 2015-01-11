@@ -95,6 +95,12 @@ header ul.nav li {
     font-weight: normal;
 }
 
+.sitemap-controls {
+    border-bottom: 1px solid lightgrey;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
 /**
  * Media
  */

@@ -29,11 +29,13 @@
     </ul>
 </script>
 <div class="col-sm-10">
-    <ul class="nav nav-pills">
-        <li role="presentation" ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View pages</a></li>
-        <li role="presentation" ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
-        <li role="presentation" ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
-    </ul>
+    <div class="sitemap-controls">
+        <ul class="nav nav-pills">
+            <li role="presentation" ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View pages</a></li>
+            <li role="presentation" ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
+            <li role="presentation" ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
+        </ul>
+    </div>
 
     <div class="sitemap" ng-class="viewMode">
         <ul class="sitemap-primary col{{pages.length}}">
