@@ -1,6 +1,6 @@
 {
   "name": "pagespace",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/philmander/pagespace",
   "author": "Phil Mander <philip.mander@gamil.com>",
   "description": "Manageable and versatile web sites powered by Node.js",
