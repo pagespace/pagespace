@@ -101,7 +101,20 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.removePage = function(page) {
 
-        $location.path('/pages/delete/' + page._id);
+        if(page.published) {
+            $location.path('/pages/delete/' + page._id);
+        } else {
+            var really = window.confirm('Really delete this page?');
+            if(really) {
+                pageService.deletePage(page).success(function() {
+                    window.location.reload();
+                    $rootScope.showInfo("Page: " + page.name + " removed.");
+                }).error(function(err) {
+                    $rootScope.showError("Error deleting page", err);
+                });
+            }
+        }
+
     };
 
     $scope.movePage = function(page, direction) {
