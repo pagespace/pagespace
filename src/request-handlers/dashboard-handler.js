@@ -51,7 +51,8 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
         username: req.user.username,
         displayName: req.user.name,
         allowUsers: req.user.role === 'admin',
-        allowTemplatesAndParts: req.user.role === 'developer' || req.user.role === 'admin'
+        allowTemplatesAndParts: req.user.role === 'developer' || req.user.role === 'admin',
+        year: new Date().toISOString().substr(0, 4)
     };
 
     return res.render('dashboard.hbs', pageData, function(err, html) {
