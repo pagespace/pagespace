@@ -2,7 +2,7 @@
     var adminApp = angular.module('adminApp', [
         'ngRoute',
         'ngResource',
-        'angular-carousel',
+        'ngTagsInput',
         'ui.codemirror'
     ]);
 

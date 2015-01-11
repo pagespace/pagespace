@@ -17,7 +17,7 @@ app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
-    mediaDir: path.join(__dirname, 'media-uploads'),
+    mediaDir: path.join(__dirname, 'media-uploads')
     //logLevel: "debug"
 }));
 

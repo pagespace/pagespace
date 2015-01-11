@@ -5,10 +5,30 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, $window, mediaService) {
+adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $location, $http, $window, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
+
+    var availableTags = [];
+    mediaService.getItems().success(function(items) {
+        availableTags = items.reduce(function(allTags, item) {
+            return allTags.concat(item.tags.filter(function(tag) {
+                return tag.text;
+            }));
+        }, []);
+    });
+
+    $scope.getMatchingTags = function(text) {
+        text = text.toLowerCase();
+        var promise = $q(function(resolve) {
+            availableTags.filter(function(tag) {
+                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+            });
+            resolve(availableTags)
+        });
+        return promise;
+    };
 
     $scope.setFiles = function(files) {
         $scope.media.file = files[0];
@@ -38,7 +58,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $locat
         mediaService.uploadItem($scope.media.file, {
            name: $scope.media.name,
            description: $scope.media.description,
-           tags: $scope.media.tags
+           tags: JSON.stringify($scope.media.tags)
         }).success(function() {
             $location.path('/media');
             $rootScope.showSuccess('Upload successful');

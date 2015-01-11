@@ -140,17 +140,12 @@ MediaHandler.prototype._upload = function(req, res, next, logger) {
         //save media
         form.parse(req, function(err, fields, files) {
             logger.info('Media item saved to: %s', files.file.path);
-            var tags = [];
-            if(fields.tags) {
-                tags = fields.tags.split(',').map(function(tag) {
-                    return tag.trim();
-                });
-            }
+            var tags = fields.tags ? JSON.parse(fields.tags) : [];
 
             var Media = self.dbSupport.getModel('Media');
             var media = new Media({
                 name: fields.name,
-                description: fields.description,
+                description: fields.description || '',
                 tags: tags,
                 type: files.file.type,
                 path: files.file.path,

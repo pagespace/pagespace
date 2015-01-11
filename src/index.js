@@ -19,6 +19,7 @@
 
 var url = require('url'),
     path = require('path'),
+    fs = require('fs'),
 
     mongoose = require('mongoose'),
     passport = require('passport'),
@@ -103,6 +104,8 @@ Index.prototype.init = function(options) {
     } else {
         this.mediaDir = path.join(this.userBasePath, 'media-uploads');
         logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
+    }
+    if(!fs.existsSync(this.mediaDir)) {
         var dir = mkdirp.sync(this.mediaDir);
         if(dir) {
             logger.info('New media directory created at %s', dir);

@@ -3,7 +3,7 @@
         <form role="form" ng-submit="upload(uploadForm)" name="uploadForm" class="form-horizontal" novalidate ">
 
             <div class="form-intro">
-                <p>Upload an image or other type of file
+                <p>Upload an image or another type of file
                 <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
             </div>
 
@@ -21,7 +21,10 @@
                 <label class="col-sm-2 control-label">Name</label>
                 <div class="col-sm-7">
                     <input type="text" class="form-control input-medium" ng-model="media.name" name="name"
-                           placeholder="Our Office (required)" required>
+                           placeholder="e.g. Our Office" required>
+                </div>
+                <div class="col-sm-3">
+                    <p class="form-control-static text-muted"><i>required</i></p>
                 </div>
             </div>
 
@@ -29,15 +32,18 @@
                 <label class="col-sm-2 control-label">Description</label>
                 <div class="col-sm-9">
                     <textarea class="form-control input-medium" ng-model="media.description" name="description"
-                              placeholder="Picture of our office for the contact page"></textarea>
+                              placeholder="e.g. Picture of our office for the contact page"></textarea>
                 </div>
             </div>
 
             <div class="form-group" bs-has-error="tags">
                 <label class="col-sm-2 control-label">Tags</label>
                 <div class="col-sm-9">
-                    <input type="text" class="form-control input-medium" ng-model="media.tags" name="tags"
-                           placeholder="Add tags to help manage your files">
+
+                    <tags-input ng-model="media.tags" name="tags"
+                                placeholder="Add tags to help manage your files">
+                        <auto-complete source="getMatchingTags($query)"></auto-complete>
+                                </tags-input>
                 </div>
             </div>
 

@@ -2,7 +2,7 @@
     var adminApp = angular.module('adminApp', [
         'ngRoute',
         'ngResource',
-        'angular-carousel',
+        'ngTagsInput',
         'ui.codemirror'
     ]);
 
@@ -199,13 +199,65 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
     $scope.isImage = mediaService.isImage;
     $scope.getMimeClass = mediaService.getMimeClass;
+    $scope.mediaItems = [];
+    $scope.availableTags = [];
+    $scope.selectedTags = [];
 
     $scope.showItem = function(item) {
         $location.path('/media/' + item._id);
     };
 
+    $scope.toggleTag = function(tag) {
+        if(tag.on) {
+            deselectTag(tag);
+        } else {
+            selectTag(tag);
+        }
+    };
+
+    function selectTag(newTag) {
+        newTag.on = true;
+        var alreadyExists = $scope.selectedTags.some(function(tag) {
+            return newTag.text === tag.text;
+        });
+        if(!alreadyExists) {
+            $scope.selectedTags.push(newTag);
+        }
+        updateFilter();
+    }
+
+    function deselectTag(oldTag) {
+        oldTag.on = false;
+        $scope.selectedTags = $scope.selectedTags.filter(function(tag) {
+            return oldTag.text !== tag.text;
+        });
+        updateFilter();
+    }
+
+    function updateFilter() {
+
+        if($scope.selectedTags.length === 0) {
+            $scope.filteredItems = $scope.mediaItems;
+            return;
+        }
+
+        $scope.filteredItems = $scope.mediaItems.filter(function(item) {
+            return item.tags.some(function(tag) {
+                return $scope.selectedTags.some(function(selectedTag) {
+                    return selectedTag.text === tag.text;
+                });
+            });
+        });
+    }
+
     mediaService.getItems().success(function(items) {
         $scope.mediaItems = items;
+        updateFilter();
+        $scope.availableTags = items.reduce(function(allTags, item) {
+            return allTags.concat(item.tags.filter(function(tag) {
+                return tag.text;
+            }));
+        }, []);
     }).error(function(err) {
         $rootScope.showError("Error getting media items", err);
     });
@@ -346,10 +398,30 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('MediaUploadController', function($scope, $rootScope, $location, $http, $window, mediaService) {
+adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $location, $http, $window, mediaService) {
     $rootScope.pageTitle = 'Upload new media';
 
     $scope.media = {};
+
+    var availableTags = [];
+    mediaService.getItems().success(function(items) {
+        availableTags = items.reduce(function(allTags, item) {
+            return allTags.concat(item.tags.filter(function(tag) {
+                return tag.text;
+            }));
+        }, []);
+    });
+
+    $scope.getMatchingTags = function(text) {
+        text = text.toLowerCase();
+        var promise = $q(function(resolve) {
+            availableTags.filter(function(tag) {
+                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+            });
+            resolve(availableTags)
+        });
+        return promise;
+    };
 
     $scope.setFiles = function(files) {
         $scope.media.file = files[0];
@@ -379,7 +451,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $locat
         mediaService.uploadItem($scope.media.file, {
            name: $scope.media.name,
            description: $scope.media.description,
-           tags: $scope.media.tags
+           tags: JSON.stringify($scope.media.tags)
         }).success(function() {
             $location.path('/media');
             $rootScope.showSuccess('Upload successful');
@@ -532,7 +604,6 @@ adminApp.controller("PageController",
 
 
     $scope.selectedRegionIndex = -1;
-    $scope.selectedTemplateIndex = 0;
     $scope.template = null;
 
     var getPageFunctions = [];
@@ -591,7 +662,7 @@ adminApp.controller("PageController",
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
-                $scope.template = $scope.templates[0];
+                $scope.selectTemplate($scope.templates[0]);
             }
         }
     });
@@ -605,6 +676,12 @@ adminApp.controller("PageController",
     };
 
     $scope.selectTemplate = function(template) {
+
+        template.regions = template.regions.map(function(region) {
+            region.data = typeof data !== 'string' ? stringifyData(region.data) : region.data;
+            return region;
+        });
+
         $scope.template = template;
 
         if($scope.page && template) {
@@ -636,6 +713,10 @@ adminApp.controller("PageController",
         }
 
         //unpopulate
+        delete page.createdBy;
+        delete page.updatedBy;
+        delete page.createdAt;
+        delete page.updatedAt;
         page.template = $scope.template._id;
         if(page.parent && page.parent._id) {
             page.parent = page.parent._id;
@@ -961,7 +1042,20 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
     $scope.removePage = function(page) {
 
-        $location.path('/pages/delete/' + page._id);
+        if(page.published) {
+            $location.path('/pages/delete/' + page._id);
+        } else {
+            var really = window.confirm('Really delete this page?');
+            if(really) {
+                pageService.deletePage(page).success(function() {
+                    window.location.reload();
+                    $rootScope.showInfo("Page: " + page.name + " removed.");
+                }).error(function(err) {
+                    $rootScope.showError("Error deleting page", err);
+                });
+            }
+        }
+
     };
 
     $scope.movePage = function(page, direction) {
@@ -1088,12 +1182,15 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
     };
 
     $scope.remove = function() {
-        partService.deletePart($scope.part._id).success(function (res) {
-            $rootScope.showInfo("Part removed", err);
-            $location.path("/parts");
-        }).error(function(err) {
-            $rootScope.showError("Error deleting part", err);
-        });
+        var really = window.confirm('Really delete this part?');
+        if(really) {
+            partService.deletePart($scope.part._id).success(function (res) {
+                $rootScope.showInfo("Part removed", err);
+                $location.path("/parts");
+            }).error(function (err) {
+                $rootScope.showError("Error deleting part", err);
+            });
+        }
     };
 });
 
@@ -1269,7 +1366,9 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
         });
 
         pageService.getPages().success(function(pages) {
-            $scope.pages = pages;
+            $scope.pages = pages.filter(function(page) {
+                return page.status === 200;
+            });
         });
 
         $scope.cancel = function() {
@@ -1462,12 +1561,15 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     };
 
     $scope.remove = function() {
-        templateService.deleteTemplate($scope.template._id).success(function (res) {
-            console.log('Template deleted');
-            $location.path('/templates');
-        }).error(function(err) {
-            $rootScope.showError('Error deleting template', err);
-        });
+        var really = window.confirm('Really delete this template?');
+        if(really) {
+            templateService.deleteTemplate($scope.template._id).success(function (res) {
+                console.log('Template deleted');
+                $location.path('/templates');
+            }).error(function (err) {
+                $rootScope.showError('Error deleting template', err);
+            });
+        }
     };
 
 

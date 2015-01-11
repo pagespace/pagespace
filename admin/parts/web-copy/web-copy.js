@@ -47,12 +47,11 @@ angular.module('webCopyApp', [])
             });*/
             editor.on("interaction", function() {
                 scope.webcopy = editor.getValue();
-            });
-            editor.on("change", function() {
                 scope.changed = true;
-                scope.$apply();
             });
-
+            editor.on("aftercommand", function() {
+                scope.changed = true;
+            });
         }
     }
 })
@@ -60,18 +59,26 @@ angular.module('webCopyApp', [])
     $scope.changed = false;
     $scope.save = function() {
         var htmlVal = $scope.webcopy;
-        $http.put('/_data/' + $scope.pageId + '/' + $scope.region, {
+        return $http.put('/_data/' + $scope.pageId + '/' + $scope.region, {
             data: {
                 wrapperClass: $scope.wrapperClass || '',
                 html: htmlVal
             }
-        }).success(function() {
-            $scope.changed = false;
-        });
+        })
     };
-    $scope.$watch('changed', function(val) {
-        if(val) {
-            $scope.save();
-        }
-    });
+
+     function saveOnChange() {
+         setTimeout(function() {
+             if($scope.changed) {
+                 console.log('Saving web copy change');
+                 $scope.save().success(function() {
+                     $scope.changed = false;
+                     saveOnChange();
+                 });
+             } else {
+                 saveOnChange();
+             }
+         }, 200);
+     }
+     saveOnChange();
 });

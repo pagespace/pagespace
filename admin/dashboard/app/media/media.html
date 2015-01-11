@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-sm-9">
-        <div class="media-item" ng-repeat="item in mediaItems" ng-click="showItem(item)">
+        <div class="media-item" ng-repeat="item in filteredItems" ng-click="showItem(item)">
             <h3>{{item.name}}</h3>
             <p>{{item.type}}</p>
             <div  class="media-item-wrap" ng-class="getMimeClass(item)">
@@ -8,11 +8,22 @@
                     <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
                 </div>
             </div>
+            <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
         </div>
     </div>
     <div class="col-sm-3">
         <ul class="nav nav-pills nav-stacked">
             <li><a href="#/media/upload">Upload  &raquo;</a></li>
+        </ul>
+
+        <h3>Filter by tag</h3>
+
+        <ul class="nav nav-pills nav-stacked">
+            <div ng-repeat="availableTag in availableTags track by $index">
+                <li style="margin-bottom: 4px">
+                    <button class="btn" ng-class="{'btn-primary': availableTag.on}"
+                            ng-click="toggleTag(availableTag)">{{availableTag.text}}</button></li>
+            </div>            
         </ul>
     </div>
 </div>

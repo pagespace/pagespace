@@ -50,7 +50,7 @@ function generateSchema() {
             type: String
         },
         tags: [{
-            type: String
+            type: Schema.Types.Mixed
         }],
         createdAt: {
             type: Date,

@@ -101,22 +101,28 @@ header ul.nav li {
 .media-item {
     float: left;
     border: 1px solid #cccccc;
-    padding: 20px;
+    padding: 15px;
     margin-right: 40px;
     margin-bottom: 40px;
     cursor: pointer;
     width: 240px;
+    overflow: hidden;
 
 }
 .media-item h3 {
     margin-top: 0;
     height: 1.2em;
     overflow: hidden;
+    white-space: nowrap;
+}
+.media-item p {
+    white-space: nowrap;
 }
 .media-item-wrap {
     width: 200px;
     height: 200px;
     overflow: hidden;
+    margin-bottom: 1em;
 }
 .media-item-wrap img {
     max-width: 100%;
