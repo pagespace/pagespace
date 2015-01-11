@@ -15,7 +15,9 @@
         });
 
         pageService.getPages().success(function(pages) {
-            $scope.pages = pages;
+            $scope.pages = pages.filter(function(page) {
+                return page.status === 200;
+            });
         });
 
         $scope.cancel = function() {
