@@ -61,6 +61,7 @@
                 '/_static/parts/web-copy/web-copy.js',
                 '/_static/parts/web-copy/web-copy-editor.css'], function() {
                 angular.element(document).ready(function() {
+                    console.log('Bootstrapping web copy app');
                     angular.bootstrap(document.getElementById('{{region}}'), ['webCopyApp']);
                 });
             });
