@@ -340,6 +340,33 @@ Index.prototype._configureAuth = function() {
     ));
 };
 
+Index.prototype.addRequestHandler = function(rule) {
+
+    //validate
+    if(typeof rule.key !== 'string') {
+        throw new Error('Your request handler must have a valid key');
+    }
+    if(rule.regex instanceof RegExp === false) {
+        throw new Error('Your request handler must have a valid regex pattern');
+    }
+    if(typeof rule.handler !== 'object') {
+        throw new Error('You must supply a valid handler instance');
+    }
+    if(typeof rule.handler.doRequest !== 'function') {
+        throw new Error('Your handler must implement a doRequest method');
+    }
+
+    consts.requests[rule.key] = rule;
+};
+
+Index.prototype.addRuleToAcl = function(rule) {
+    this.acl.addRuleToAcl(rule);
+};
+
+Index.prototype.addRulesToAcl = function(rules) {
+    this.acl.addRulesToAcl(rules);
+};
+
 Index.prototype.getViewDir = function() {
     return path.join(__dirname, '/../views');
 };

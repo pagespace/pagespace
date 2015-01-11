@@ -78,7 +78,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
-    var pageQueryCachKey = urlPath + '_' + modelModifier
+    var pageQueryCachKey = urlPath + '_' + modelModifier;
 
     ///clear cache if in staging mode
     if(stagingMode) {

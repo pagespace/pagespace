@@ -44,7 +44,7 @@ module.exports.middleware = function(acl) {
             err.status = 401;
         }
         return next(err);
-    }
+    };
 };
 
 /**
@@ -60,12 +60,41 @@ Acl.prototype.match = function(resource, actions) {
     //TODO: find same rules and update if already defined
     return {
         thenOnlyAllow: function(roles) {
-            self.rules.push({
+            var rule = {
                 roles: roles,
                 resourcePattern: resource,
                 actions: actions
-            });
+            };
+            self.addRule(rule);
+            return rule;
         }
+    };
+};
+
+/**
+ * Add a single rule
+ * @param rule
+ */
+Acl.prototype.addRule = function(rule) {
+
+    if(!rule.roles || !rule.resourcePattern || !rule.actions) {
+        throw new Error('Cannot add acl rule, this is not a valid rule');
+    }
+
+    this.rules.push(rule);
+};
+
+/**
+ * Combine add either a single acl object or an array of rules
+ * @param rules
+ */
+Acl.prototype.addRules = function(rules) {
+    if(rules instanceof Acl) {
+        this.rules.concat(rules.rules);
+    } else if(rules instanceof Array) {
+        this.rules.concat(rules);
+    } else {
+        throw new Error('You used invalid rules');
     }
 };
 
@@ -105,10 +134,10 @@ Acl.prototype.serialize = function() {
 
     //temp patch regex tojson method
     var orignalRegexToJson = RegExp.prototype.toJSON;
-    RegExp.prototype.toJSON = RegExp.prototype.toString;
+    RegExp.prototype.toJSON = RegExp.prototype.toString; // jshint ignore:line
 
     var serialized = JSON.stringify(this.rules);
-    RegExp.prototype.toJSON = orignalRegexToJson;
+    RegExp.prototype.toJSON = orignalRegexToJson; // jshint ignore:line
     return serialized;
 };
 
