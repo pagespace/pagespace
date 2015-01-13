@@ -154,7 +154,7 @@ Index.prototype.init = function(options) {
                 viewEngine: self.viewEngine,
                 dbSupport: self.dbSupport,
                 partResolver: self.partResolver,
-                site: site.toObject(),
+                site: site,
                 mediaDir: self.mediaDir,
                 userBasePath: self.userBasePath
             };
