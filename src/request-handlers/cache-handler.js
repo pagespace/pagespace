@@ -24,14 +24,21 @@ var consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
 
-var CacheHandler = function(support) {
+var CacheHandler = function() {
+};
+
+module.exports = new CacheHandler();
+
+CacheHandler.prototype.init = function(support) {
+
     this.partResolver = support.partResolver;
     this.logger = support.logger;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new CacheHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 CacheHandler.prototype.doRequest = function(req, res, next) {

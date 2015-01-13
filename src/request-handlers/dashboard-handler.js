@@ -25,13 +25,20 @@ var psUtil = require('../misc/pagespace-util');
  *
  * @constructor
  */
-var DashboardHandler = function(support) {
-    this.logger = support.logger;
-    this.reqCount = 0;
+var DashboardHandler = function() {
 };
 
-module.exports = function(support) {
-    return new DashboardHandler(support);
+module.exports = new DashboardHandler();
+
+DashboardHandler.prototype.init = function(support) {
+
+    this.logger = support.logger;
+    this.reqCount = 0;
+
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 /**

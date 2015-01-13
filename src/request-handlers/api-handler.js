@@ -22,14 +22,20 @@
 var consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
-var ApiHandler = function(support) {
+var ApiHandler = function() {};
+
+module.exports = new ApiHandler();
+
+ApiHandler.prototype.init = function(support) {
+
     this.logger = support.logger;
     this.dbSupport = support.dbSupport;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new ApiHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 ApiHandler.prototype.doRequest = function(req, res, next) {

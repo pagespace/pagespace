@@ -23,16 +23,23 @@ var serveStatic = require('serve-static'),
     consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
-var StaticHandler = function(support) {
+var StaticHandler = function() {
+};
+
+module.exports = new StaticHandler();
+
+StaticHandler.prototype.init = function(support) {
+
     this.logger = support.logger;
     this.adminStaticServe = serveStatic(__dirname + '/../../admin', {
         index: false
     });
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new StaticHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 StaticHandler.prototype.doRequest = function(req, res, next) {

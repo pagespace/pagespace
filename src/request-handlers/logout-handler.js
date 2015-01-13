@@ -21,13 +21,19 @@
 
 var psUtil = require('../misc/pagespace-util');
 
-var LogoutHandler = function(support) {
+var LogoutHandler = function() { };
+
+module.exports = new LogoutHandler();
+
+LogoutHandler.prototype.init = function(support) {
+
     this.logger = support.logger;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new LogoutHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 LogoutHandler.prototype.doRequest = function(req, res) {

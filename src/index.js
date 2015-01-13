@@ -228,7 +228,7 @@ Index.prototype._doRequest = function(req, res, next) {
         requestType = this._getRequestType(req.url);
     }
     requestHandler = this._getRequestHandler(requestType);
-    return requestHandler.doRequest(req, res, next);
+    return requestHandler(req, res, next);
 };
 
 /**
@@ -262,12 +262,12 @@ Index.prototype._getRequestType = function(url) {
  */
 Index.prototype._getRequestHandler = function(requestType) {
 
-    var instance = this.requestHandlers[requestType.key];
-    if(!instance) {
-        instance = requestType.handler(this.requestHandlerSupport);
-        this.requestHandlers[requestType.key] = instance;
+    var middleware = this.requestHandlers[requestType.key];
+    if(!middleware) {
+        middleware = requestType.handler.init(this.requestHandlerSupport);
+        this.requestHandlers[requestType.key] = middleware;
     }
-    return instance;
+    return middleware;
 };
 
 /**
@@ -340,7 +340,7 @@ Index.prototype._configureAuth = function() {
     ));
 };
 
-Index.prototype.addRequestHandler = function(rule) {
+Index.prototype.use = function(rule) {
 
     //validate
     if(typeof rule.key !== 'string') {

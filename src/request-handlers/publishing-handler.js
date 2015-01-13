@@ -23,14 +23,21 @@
 var Promise = require('bluebird'),
     psUtil = require('../misc/pagespace-util');
 
-var PublishingHandler = function(support) {
+var PublishingHandler = function() {
+};
+
+module.exports = new PublishingHandler();
+
+PublishingHandler.prototype.init = function(support) {
+
     this.logger = support.logger;
     this.dbSupport = support.dbSupport;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new PublishingHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 /**

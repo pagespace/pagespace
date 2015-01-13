@@ -32,7 +32,12 @@ var redirectStatuses = [ 301, 302, 303, 307 ];
 var readFileAsync = Promise.promisify(fs.readFile);
 var adminbarFilePromise = null;
 
-var PageHandler = function(support) {
+var PageHandler = function() {
+};
+
+module.exports = new PageHandler();
+
+PageHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
     this.viewEngine = support.viewEngine;
@@ -42,10 +47,11 @@ var PageHandler = function(support) {
     this.partResolver = support.partResolver;
     this.reqCount = 0;
     this.findPagePromises = {};
-};
 
-module.exports = function(support) {
-    return new PageHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 /**

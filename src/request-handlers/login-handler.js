@@ -25,13 +25,20 @@ var passport = require('passport'),
     psUtil = require('../misc/pagespace-util');
 
 
-var LoginHandler = function(support) {
-    this.logger = support.logger;
-    this.reqCount = 0;
+var LoginHandler = function() {
 };
 
-module.exports = function(support) {
-    return new LoginHandler(support);
+module.exports = new LoginHandler();
+
+LoginHandler.prototype.init = function(support) {
+
+    this.logger = support.logger;
+    this.reqCount = 0;
+
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 LoginHandler.prototype.doRequest = function(req, res, next) {

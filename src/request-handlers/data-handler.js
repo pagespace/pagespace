@@ -24,16 +24,22 @@ var Promise = require('bluebird'),
     consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
-var DataHandler = function(support) {
+var DataHandler = function() {
+};
+
+module.exports =  new DataHandler();
+
+DataHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
     this.partResolver = support.partResolver;
     this.dbSupport = support.dbSupport;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new DataHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 /**

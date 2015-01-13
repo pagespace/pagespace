@@ -28,15 +28,22 @@ var fs = require('fs'),
     psUtil = require('../misc/pagespace-util');
 
 
-var MediaHandler = function(support) {
+var MediaHandler = function() {
+};
+
+module.exports = new MediaHandler();
+
+MediaHandler.prototype.init = function(support) {
+
     this.logger = support.logger;
     this.dbSupport = support.dbSupport;
     this.mediaDir = support.mediaDir;
     this.reqCount = 0;
-};
 
-module.exports = function(support) {
-    return new MediaHandler(support);
+    var self = this;
+    return function(req, res, next) {
+        return self.doRequest(req, res, next);
+    };
 };
 
 /**
