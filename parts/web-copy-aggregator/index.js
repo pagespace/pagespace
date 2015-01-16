@@ -5,10 +5,6 @@ var mongoose = require('mongoose');
 var util = require('util');
 
 module.exports = {
-    viewPartial: null,
-    init: function(viewPartial) {
-        this.viewPartial = viewPartial;
-    },
     process: function(data, support) {
 
         var templateData = {

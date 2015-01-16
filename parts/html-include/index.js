@@ -10,10 +10,6 @@ var readFileAsync = BluebirdPromise.promisify(fs.readFile)
 var cache = {};
 
 module.exports = {
-    viewPartial: null,
-    init: function(viewPartial) {
-        this.viewPartial = viewPartial;
-    },
     reset: function(key) {
         if(key) {
             delete cache[key];

@@ -82,8 +82,7 @@ PartResolver.prototype.initPartModule = function(partModulePath, partModule) {
 
     //load the part view
     logger.debug('Loading part view partial from %s...', partViewPath);
-    var view = fs.readFileSync(partViewPath, 'utf8');
-    partModule.init(view);
+    partModule.__viewPartial = fs.readFileSync(partViewPath, 'utf8');
 };
 
 PartResolver.prototype._resolveModulePath = function(modulePath) {

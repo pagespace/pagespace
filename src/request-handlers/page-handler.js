@@ -202,7 +202,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     };
 
                     var partModule = self.partResolver.get(region.part ? region.part.module : null);
-                    self.viewEngine.registerPartial(region.name, partModule.viewPartial || '', urlPath);
+                    self.viewEngine.registerPartial(region.name, partModule.__viewPartial || '', urlPath);
                 }
             });
 
