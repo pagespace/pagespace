@@ -415,11 +415,14 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
 
     var availableTags = [];
     mediaService.getItems().success(function(items) {
+        var seen = {};
         availableTags = items.reduce(function(allTags, item) {
             return allTags.concat(item.tags.filter(function(tag) {
                 return tag.text;
             }));
-        }, []);
+        }, []).filter(function(tag) {
+            return seen.hasOwnProperty(tag) ? false : (seen[tag] = true);
+        });
     });
 
     $scope.getMatchingTags = function(text) {
@@ -635,7 +638,9 @@ adminApp.controller("PageController",
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
-                page.expiresAt = new Date(page.expiresAt);
+                if(page.expiresAt) {
+                    page.expiresAt = new Date(page.expiresAt);
+                }
 
                 $scope.template = $scope.templates.filter(function(template) {
                     return page.template && page.template._id === template._id;
