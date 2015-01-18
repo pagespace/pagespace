@@ -40,21 +40,26 @@
         }
 
         //change the sidebar color stuff
-        var sidebarColor = window.localStorage.getItem('sidebarColor');
-        if(sidebarColor) {
-            document.getElementById('adminbar').style.backgroundColor = sidebarColor;
+        try {
+            var sidebarColor = window.localStorage.getItem('sidebarColor');
+            if(sidebarColor) {
+                document.getElementById('adminbar').style.backgroundColor = sidebarColor;
 
-            var styleSheetsArray = Array.prototype.slice.call(document.styleSheets);
-            var styleSheet= styleSheetsArray.filter(function(styleSheet) {
-                return styleSheet.href && styleSheet.href.indexOf('adminbar.css');
-            })[0];
-            var cssRules = styleSheet.cssRules;
-            var cssRulesArray = Array.prototype.slice.call(cssRules);
-            var cssRule = cssRulesArray.filter(function(rule) {
-                return rule.selectorText === '.ps-edit-box';
-            })[0];
-            cssRule.style.outlineColor = sidebarColor;
+                var styleSheetsArray = Array.prototype.slice.call(document.styleSheets);
+                var styleSheet= styleSheetsArray.filter(function(styleSheet) {
+                    return styleSheet.href && styleSheet.href.indexOf('adminbar.css') > -1;
+                })[0];
+                var cssRules = styleSheet.cssRules;
+                var cssRulesArray = Array.prototype.slice.call(cssRules);
+                var cssRule = cssRulesArray.filter(function(rule) {
+                    return rule.selectorText === '.ps-edit-box';
+                })[0];
+                cssRule.style.outlineColor = sidebarColor;
+            }
+        } catch(e) {
+            console.warn(e);
         }
+
     }
 
 })();

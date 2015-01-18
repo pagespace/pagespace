@@ -29,6 +29,7 @@ html {
 .adminbar .adminbar-actions > div {
     float: right;
     margin-left: 20px;
+    height: 40px;
 }
 
 .adminbar .switch-group {
@@ -39,7 +40,8 @@ html {
     border-width: 0;
     box-sizing: border-box;
     padding: 10px;
-    height: 35px;
+    height: 40px;
+    line-height: 25px;
     color: #fff;
     cursor: pointer;
     font-family: Consolas, "courier new", monospace;
