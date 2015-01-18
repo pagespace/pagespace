@@ -12,11 +12,14 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
 
     var availableTags = [];
     mediaService.getItems().success(function(items) {
+        var seen = {};
         availableTags = items.reduce(function(allTags, item) {
             return allTags.concat(item.tags.filter(function(tag) {
                 return tag.text;
             }));
-        }, []);
+        }, []).filter(function(tag) {
+            return seen.hasOwnProperty(tag) ? false : (seen[tag] = true);
+        });
     });
 
     $scope.getMatchingTags = function(text) {

@@ -62,6 +62,10 @@ function generateSchema(modifier) {
             type: Number,
             default: -1
         },
+        useInNav: {
+            type: Boolean,
+            default: true
+        },
         draft: {
             type: Boolean,
             default: true
@@ -95,7 +99,7 @@ function generateSchema(modifier) {
         },
         expiresAt: {
             type: Date,
-            default: new Date(Date.now + 1000 * 60 * 60 * 24 * 365 * 5) //5 years default!
+            default: null
         }
     });
 

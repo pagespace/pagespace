@@ -66,7 +66,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     function sessionValueSwitch(req, queryParam, sessionKey) {
         if(req.query[queryParam]) {
-            if(req.user && req.user.role === 'admin' && psUtil.typeify(req.query[queryParam]) === true) {
+            if(req.user && req.user.role !== 'guest' && psUtil.typeify(req.query[queryParam]) === true) {
                 logger.debug('Switching %s on', sessionKey);
                 req.session[sessionKey] = true;
             } else if(psUtil.typeify(req.query[queryParam]) === false) {
@@ -77,7 +77,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         return req.session[sessionKey] || false;
     }
 
-    var showAdminBar = req.user && req.user.role === 'admin';
+    var showAdminBar = req.user && req.user.role !== 'guest';
     var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
     var editMode = stagingMode ? sessionValueSwitch(req, '_edit', 'edit') : false;
     logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
@@ -202,7 +202,16 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                     };
 
                     var partModule = self.partResolver.get(region.part ? region.part.module : null);
-                    self.viewEngine.registerPartial(region.name, partModule.__viewPartial || '', urlPath);
+                    var viewPartial;
+                    if(!partModule) {
+                        viewPartial = '<!-- Region: ' + region.name + ' -->';
+                        if(region.part) {
+                            self.logger.warn('The view partial for %s could not be resolved', partModule);
+                        }
+                    } else {
+                        viewPartial = partModule.__viewPartial;
+                    }
+                    self.viewEngine.registerPartial(region.name, viewPartial, urlPath);
                 }
             });
 

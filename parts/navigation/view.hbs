@@ -1,0 +1,9 @@
+<ul ng-non-bindable class="{{data.navClass}}">
+    {{#each data.pages}}
+        {{#if this.active}}
+            <li class="{{data.navItemClass}} active"><a href="{{this.url}}">{{this.name}}</a></li>
+        {{else}}
+            <li class="{{data.navItemClass}}"><a href="{{this.url}}">{{this.name}}</a></li>
+        {{/if}}
+    {{/each}}
+</ul>

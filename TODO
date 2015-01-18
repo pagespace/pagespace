@@ -63,3 +63,11 @@ PRODUCTION CHECKLIST
 
 ✓ When selecting a part, pop in template, populate the default data
 ✓ Do same in page
+
+CACHE POINTS
+- development:
+    - change a template
+    - change a part view
+
+- editor
+    - change part module data

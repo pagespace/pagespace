@@ -20,6 +20,8 @@
 var url = require('url'),
     path = require('path'),
     fs = require('fs'),
+    EventEmitter = require('events').EventEmitter,
+    util = require('util'),
 
     mongoose = require('mongoose'),
     passport = require('passport'),
@@ -44,6 +46,8 @@ var Index = function() {
 
     this.reset();
 
+    this.devMode = false;
+
     //dependencies
     this.mongoose = mongoose;
     this.viewEngine = createViewEngine();
@@ -53,6 +57,8 @@ var Index = function() {
     //request handlers
     this.requestHandlers = {};
 };
+
+util.inherits(Index, EventEmitter);
 
 /**
  * Resets the middleware
@@ -88,14 +94,24 @@ Index.prototype.init = function(options) {
             stream: process.stdout
         }].concat(logStreams)
     });
+    this.logger.on('error', function (err) {
+        self.emit('error', err);
+    });
     var logger = this.logger.child();
 
     logger.info('Initializing the middleware...');
 
+    //mode
+    this.devMode = options.env === 'development';
+    if(this.devMode) {
+        logger.warn('Running in development mode');
+    }
+
     //this resolves part modules
     this.partResolver = this.partResolver || createPartResolver({
         logger: logger,
-        userBasePath: this.userBasePath
+        userBasePath: this.userBasePath,
+        devMode: this.devMode ? 'development' : null
     });
 
     //define where to save media uploads
@@ -117,6 +133,13 @@ Index.prototype.init = function(options) {
     //default handlbars data option to false
     viewOpts.data = viewOpts.data !== 'boolean';
     this.viewEngine.setOpts(viewOpts);
+    //dev mode (no caching
+    if(this.devMode) {
+        this.viewEngine.enableDevMode();
+    }
+    //common locals for all templates
+    var commonViewLocals = options.commonViewLocals || {};
+    this.viewEngine.setCommonLocals(commonViewLocals);
 
     //initialize db
     if(!options.db) {

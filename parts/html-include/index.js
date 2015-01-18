@@ -65,6 +65,6 @@ module.exports = {
             return data.html;
         }
 
-        return '<p>No data specified</p>';
+        return '<!-- HTML Include (No data to include) -->';
     }
 };

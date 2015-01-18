@@ -26,17 +26,26 @@ var fs = require('fs'),
 function ViewEngine() {
     this.handlebarsOpts = {};
     this.handlebarsInstances = {};
+    this.commonLocals = {};
+    this.devMode = false;
 }
 
 var instance = new ViewEngine();
 
 module.exports = function() {
-
     return instance;
 };
 
 ViewEngine.prototype.setOpts = function(handlebarsOpts) {
     this.handlebarsOpts = handlebarsOpts || {};
+};
+
+ViewEngine.prototype.enableDevMode = function() {
+    this.devMode = true;
+};
+
+ViewEngine.prototype.setCommonLocals = function(commonLocals) {
+    this.commonLocals = commonLocals;
 };
 
 ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
@@ -53,12 +62,19 @@ ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
 ViewEngine.prototype.__express = function(filename, locals, done) {
 
     locals = locals || {};
+
+    for(var commonLocal in instance.commonLocals) {
+        if(!locals.hasOwnProperty(commonLocal)) {
+            locals[commonLocal] = instance.commonLocals[commonLocal];
+        }
+    }
+
     var handleBarsInstance = instance.getHandlebarsInstance(locals.__template);
 
     // cached?
     //template cache not working with multi instances
     var template = handleBarsInstance.templateCache[filename];
-    if (template) {
+    if (template && !instance.devMode) {
         return done(null, template(locals));
     }
 

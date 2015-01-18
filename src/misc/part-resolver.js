@@ -27,6 +27,7 @@ var PartResolver = function(opts) {
     this.logger = opts.logger;
     this.userBasePath = opts.userBasePath;
     this.cache = {};
+    this.devMode = opts.devMode || false;
 };
 
 module.exports = function(opts) {
@@ -62,11 +63,10 @@ PartResolver.prototype.require = function(partModuleId) {
 PartResolver.prototype.get = function(partModuleId) {
     var module = this.cache[partModuleId] || null;
 
-    //TODO: this is not for production, need to remove
-/*    if(module) {
+    if(module && this.devMode) {
         var partModulePath = this._resolveModulePath(partModuleId);
         this.initPartModule(partModulePath, module);
-    }*/
+    }
 
     return module;
 };
