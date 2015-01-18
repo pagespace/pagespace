@@ -24,8 +24,8 @@
                     </div>
 
                     <h4 class="list-group-item-heading">{{page.name}}
-                        <small ng-show="!page.published"><i><b>new</b></i></small>
-                        <small ng-show="page.published && page.status == 200"><i><b>new</b></i></small>
+                        <small ng-show="!page.published && page.status == 200"><i><b>new</b></i></small>
+                        <small ng-show="page.published && page.status == 200"><i><b>update</b></i></small>
                         <small ng-show="page.status != 200 && page.url != '/'"><i><b>delete</b></i></small>
                     </h4>
                     <p class="list-group-item-text">
