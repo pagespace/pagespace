@@ -49,7 +49,9 @@ adminApp.controller("PageController",
             pageService.getPage(pageId).success(function(page) {
                 $scope.page = page;
 
-                page.expiresAt = new Date(page.expiresAt);
+                if(page.expiresAt) {
+                    page.expiresAt = new Date(page.expiresAt);
+                }
 
                 $scope.template = $scope.templates.filter(function(template) {
                     return page.template && page.template._id === template._id;
