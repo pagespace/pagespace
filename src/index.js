@@ -86,7 +86,7 @@ Index.prototype.init = function(options) {
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
-    var logStreams = options.logStreams instanceof Array || [];
+    var logStreams = options.logStreams instanceof Array ? options.logStreams : [];
     this.logger =  bunyan.createLogger({
         name: 'pagespace',
         streams: [{
