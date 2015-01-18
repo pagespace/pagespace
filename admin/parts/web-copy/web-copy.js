@@ -9,6 +9,13 @@ angular.module('webCopyApp', [])
             var sourceEl = element[0].querySelector('.source');
             var toolbarEl = element[0].querySelector('.toolbar');
 
+            //fix toolbar height
+            var $toolbar = angular.element(toolbarEl);
+            $toolbar.css('display', 'block');
+            var toolbarHeight = (parseInt( toolbarEl.offsetHeight, 10) * -1);
+            $toolbar.css('top', toolbarHeight + 'px');
+            $toolbar.css('display', '');
+
             angular.element(sourceEl).addClass('hidden');
 
             var editor = new wysihtml5.Editor(editorEl, {

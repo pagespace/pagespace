@@ -19,7 +19,16 @@
     position: relative;
 }
 .wysihtml-editor .toolbar {
-    position: absolute; top: -34px;
+    display: none;
+    padding: 40px 40px 0 40px;
+    position: absolute;
+    top: -72px;
+    left: -40px;
+}
+.wysihtml-editor:hover .toolbar {
+    display: block;
+}
+.wysihtml-editor .toolbar-buttons {
     background: #d3d3d3;
 }
 .wysihtml-editor .editor[contenteditable="true"]:active,
@@ -36,7 +45,7 @@
     display: none;
 }
 .wysihtml-editor .editor {
-    min-height: 100px;
+    min-height: 1em;
 }
 .wysihtml-editor .source textarea{
     width: 100%;
