@@ -1,11 +1,11 @@
 'use strict';
-var BluebirdPromise = require('bluebird');
+var Promise = require('bluebird');
 var path = require('path');
 var fs = require('fs');
 var url = require('url');
 var http = require('http')
 
-var readFileAsync = BluebirdPromise.promisify(fs.readFile)
+var readFileAsync = Promise.promisify(fs.readFile)
 
 var cache = {};
 
@@ -30,6 +30,9 @@ module.exports = {
             var promise = readFileAsync(filePath, 'utf8');
             promise.then(function(val) {
                 cache[data.file] = val;
+                return val;
+            }).catch(function() {
+                return '<!-- Unable to resolve html include -->';
             });
             return promise;
         } else if(data && data.href) {
@@ -41,7 +44,7 @@ module.exports = {
                 method: 'GET'
             };
 
-            return new BluebirdPromise(function(resolve, reject) {
+            return new Promise(function(resolve, reject) {
                 var req = http.request(requestOpts, function(res) {
                     var body = '';
 
@@ -60,6 +63,8 @@ module.exports = {
                 });
 
                 req.end();
+            }).catch(function() {
+                return '<!-- Unable to resolve html include -->';
             });
         } else if(data && data.html) {
             return data.html;
