@@ -22,7 +22,7 @@
                 <label class="col-sm-2 control-label">Url</label>
                 <div class="col-sm-7">
                     <div class="input-group">
-                        <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]+$/" name="url"
+                        <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]*$/" name="url"
                                ng-model="page.url" placeholder="e.g. /contact-us" required>
                         <span class="input-group-btn">
                             <button type="button" class="btn btn-primary btn" title="Regenerate Url" ng-click="updateUrl()">
