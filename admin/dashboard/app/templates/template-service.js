@@ -5,13 +5,15 @@
         function TemplateService() {
             this.pageCache = [];
         }
+        TemplateService.prototype.getTemplateSources = function() {
+            return $http.get('/_misc/templates');
+        };
         TemplateService.prototype.getTemplates = function() {
             return $http.get('/_api/templates');
         };
         TemplateService.prototype.getTemplate = function(templateId) {
             return $http.get('/_api/templates/' + templateId);
         };
-
         TemplateService.prototype.createTemplate = function(templateData) {
             return $http.post('/_api/templates', templateData);
         };

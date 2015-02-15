@@ -24,6 +24,10 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         $scope.parts = parts;
     });
 
+    templateService.getTemplateSources().success(function(templateSources) {
+        $scope.templateSources = templateSources;
+    });
+
     if(templateId) {
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;

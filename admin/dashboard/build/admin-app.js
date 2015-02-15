@@ -1468,6 +1468,10 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         $scope.parts = parts;
     });
 
+    templateService.getTemplateSources().success(function(templateSources) {
+        $scope.templateSources = templateSources;
+    });
+
     if(templateId) {
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;
@@ -1746,13 +1750,15 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
         function TemplateService() {
             this.pageCache = [];
         }
+        TemplateService.prototype.getTemplateSources = function() {
+            return $http.get('/_misc/templates');
+        };
         TemplateService.prototype.getTemplates = function() {
             return $http.get('/_api/templates');
         };
         TemplateService.prototype.getTemplate = function(templateId) {
             return $http.get('/_api/templates/' + templateId);
         };
-
         TemplateService.prototype.createTemplate = function(templateData) {
             return $http.post('/_api/templates', templateData);
         };

@@ -18,8 +18,11 @@
             <div class="form-group" bs-has-error="src">
                 <label class="col-sm-2 control-label">Source</label>
                 <div class="col-sm-7">
-                    <input type="text" class="form-control input-medium" name="src" required
-                           ng-model="template.src" placeholder="three-columns.hbs (required)">
+                    <select ng-model="template.src"
+                            ng-options="template as template for template in templateSources"
+                            class="form-control">
+                        <option value="" disabled selected>Select a template</option>
+                    </select>
                 </div>
             </div>
             <div class="form-group">

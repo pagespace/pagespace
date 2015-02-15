@@ -6,6 +6,7 @@
 
         document.body.innerHTML = adminbarHtml + document.body.innerHTML;
 
+        //listen for clicks that bubble in up in the admin bar
         document.body.addEventListener('click', function (e) {
 
             var match = e.target.className && /(^|\s)switch(\s|$)/.test(e.target.className);
@@ -38,6 +39,8 @@
             query = '?' + params.join('&');
             window.location.replace(path + query + hash);
         }
+
+        //
 
         //change the sidebar color stuff
         try {
