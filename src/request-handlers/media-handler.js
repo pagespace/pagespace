@@ -55,13 +55,13 @@ MediaHandler.prototype.doRequest = function(req, res, next) {
 
     if(req.method === 'POST') {
         logger.info('New media upload request');
-        return this._upload(req, res, next, logger);
+        return this.doUploadResource(req, res, next, logger);
     } else if(req.method === 'GET') {
         logger.debug('New media serve request');
-        return this._serve(req, res, next, logger);
+        return this.doServeResource(req, res, next, logger);
     } else if(req.method === 'PUT') {
         logger.info('New media update request');
-        return this._update(req, res, next, logger);
+        return this.doUpdateResource(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -69,7 +69,7 @@ MediaHandler.prototype.doRequest = function(req, res, next) {
     }
 };
 
-MediaHandler.prototype._serve = function(req, res, next, logger) {
+MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
@@ -97,7 +97,7 @@ MediaHandler.prototype._serve = function(req, res, next, logger) {
     });
 };
 
-MediaHandler.prototype._update = function(req, res, next, logger) {
+MediaHandler.prototype.doUpdateResource = function(req, res, next, logger) {
 
 
 
@@ -127,7 +127,7 @@ MediaHandler.prototype._update = function(req, res, next, logger) {
 
 };
 
-MediaHandler.prototype._upload = function(req, res, next, logger) {
+MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
 
     var self = this;
 

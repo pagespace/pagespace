@@ -78,7 +78,8 @@ ViewEngine.prototype.__express = function(filename, locals, done) {
         return done(null, template(locals));
     }
 
-    fs.readFile(filename, 'utf8', function(err, file){
+    fs.readFile(filename, 'utf8', function(err, file) {
+
         if (err) {
             return done(err);
         }

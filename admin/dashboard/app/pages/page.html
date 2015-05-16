@@ -80,32 +80,41 @@
 
             <div ng-if="template != null">
                 <div class="form-group">
-                    <label class="col-sm-2 control-label">Modify template</label>
+                    <label class="col-sm-2 control-label">Template</label>
                     <div class="col-sm-7">
 
                         <p class="form-control-static">{{template.name}}
-                            <a ng-click="toggleEditRegions()">Edit regions</a></p>
+                            <a ng-click="toggleEditRegions()" ng-show="page.regions.length">Edit regions</a></p>
 
                         <div ng-show="editRegions">
-                            <view-template></view-template>
+
+                            <div class="form-group" ng-show="page.regions.length">
+                                <div class="col-sm-9">
+                                    <select ng-model="selectedRegionIndex"
+                                            ng-options="page.regions.indexOf(region) as region.name for region in page.regions"
+                                            class="form-control">
+                                        <option value="" disabled>Select a region</option>
+                                    </select>
+                                </div>
+                            </div>
 
                             <div ng-repeat="region in page.regions track by $index">
                                 <div ng-show="selectedRegionIndex == $index">
-                                    <h4>Populate region: <b>{{region.name}}</b></h4>
-
                                     <div class="form-group">
-                                        <label class="col-sm-2 control-label">Part type</label>
-                                        <div class="col-sm-10">
-                                            <select ng-model="region.part"
-                                                    ng-options="part as part.name for part in parts track by part._id" class="form-control">
+                                        <label class="col-sm-2 control-label">Default part</label>
+                                        <div class="col-sm-7">
+                                            <select ng-model="template.regions[$index].part"
+                                                    ng-options="part as part.name for part in parts track by part._id"
+                                                    ng-change="setDefaultPartData()"
+                                                    class="form-control">
                                                 <option value="" disabled selected>Select a part type</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="col-sm-2 control-label">Raw data</label>
-                                        <div class="col-sm-10">
-                                            <textarea ng-model="region.data"
+                                        <label class="col-sm-2 control-label">Default data</label>
+                                        <div class="col-sm-7">
+                                            <textarea ng-model="template.regions[$index].data"
                                                       ui-codemirror
                                                       ui-codemirror-opts="editorOpts"
                                                       class="form-control"
@@ -114,9 +123,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div ng-show="selectedRegionIndex == -1">
-                                <p>Select a region to populate it with a page part</p>
                             </div>
                         </div>
                     </div>

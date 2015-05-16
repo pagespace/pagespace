@@ -11,7 +11,7 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
 
     $scope.templates = [];
 
-    templateService.getTemplates().success(function(templates) {
+    templateService.doGetAvailableTemplates().success(function(templates) {
         $scope.templates = templates;
     }).error(function(err) {
         $rootScope.showError("Error getting templates", err);

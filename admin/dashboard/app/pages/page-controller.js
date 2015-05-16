@@ -32,7 +32,7 @@ adminApp.controller("PageController",
 
     var getPageFunctions = [];
     getPageFunctions.push(function getTemplates(callback) {
-        templateService.getTemplates().success(function(templates) {
+        templateService.doGetAvailableTemplates().success(function(templates) {
             $scope.templates = templates;
             callback()
         });

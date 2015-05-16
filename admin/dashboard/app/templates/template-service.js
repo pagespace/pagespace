@@ -6,9 +6,16 @@
             this.pageCache = [];
         }
         TemplateService.prototype.getTemplateSources = function() {
-            return $http.get('/_misc/templates');
+            return $http.get('/_templates/available');
         };
-        TemplateService.prototype.getTemplates = function() {
+        TemplateService.prototype.getTemplateRegions = function(templateSrc) {
+            return $http.get('/_templates/template-regions', {
+                params: {
+                    templateSrc: templateSrc
+                }
+            });
+        };
+        TemplateService.prototype.doGetAvailableTemplates = function() {
             return $http.get('/_api/templates');
         };
         TemplateService.prototype.getTemplate = function(templateId) {

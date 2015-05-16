@@ -17,8 +17,10 @@
                      ng-click="page.queued = !page.queued" style="cursor: pointer">
                     <div class="pull-right">
                         <div class="checkbox">
-                            <label for="toggle-{{page._id}}">
-                            <input id="toggle-{{page._id}}" type="checkbox" ng-model="page.queued">
+                            <label>
+                            <input type="checkbox"
+                                   ng-click="page.queued = !page.queued"
+                                   ng-model="page.queued">
                                 Queue to publish </label>
                         </div>
                     </div>

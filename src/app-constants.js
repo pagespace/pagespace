@@ -81,10 +81,10 @@ consts.requests = {
         regex: new RegExp('^/_cache/(parts)'),
         handler: require('./request-handlers/cache-handler')
     },
-    MISC: {
-        key: 'MISC',
-        regex: new RegExp('^/_misc/(templates)'),
-        handler: require('./request-handlers/misc-handler')
+    TEMPLATES: {
+        key: 'TEMPLATES',
+        regex: new RegExp('^/_templates/(available|template-regions|test|preview)'),
+        handler: require('./request-handlers/templates-handler')
     },
     OTHER: {
         key: 'OTHER',

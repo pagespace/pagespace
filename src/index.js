@@ -82,7 +82,6 @@ Index.prototype.init = function(options) {
         throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
     }
 
-    //count requests;
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
@@ -122,9 +121,9 @@ Index.prototype.init = function(options) {
         logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
     }
     if(!fs.existsSync(this.mediaDir)) {
-        var dir = mkdirp.sync(this.mediaDir);
-        if(dir) {
-            logger.info('New media directory created at %s', dir);
+        var mediaDir = mkdirp.sync(this.mediaDir);
+        if(mediaDir) {
+            logger.info('New media directory created at %s', mediaDir);
         }
     }
 

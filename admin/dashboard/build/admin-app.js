@@ -621,7 +621,7 @@ adminApp.controller("PageController",
 
     var getPageFunctions = [];
     getPageFunctions.push(function getTemplates(callback) {
-        templateService.getTemplates().success(function(templates) {
+        templateService.doGetAvailableTemplates().success(function(templates) {
             $scope.templates = templates;
             callback()
         });
@@ -1472,6 +1472,25 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         $scope.templateSources = templateSources;
     });
 
+    $scope.$watch('template.src', function(val) {
+
+        if(val) {
+            templateService.getTemplateRegions(val).success(function(regions) {
+
+                if(!$scope.template.regions.length) {
+                    $scope.template.regions = regions.map(function(region) {
+                        return {
+                            name: region
+                        };
+                    });
+                }
+
+            }).error(function(err) {
+                $rootScope.showError('Error getting template', err);
+            });
+        }
+    });
+
     if(templateId) {
         templateService.getTemplate(templateId).success(function(template) {
             $scope.template = template;
@@ -1525,6 +1544,18 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
                 region.data = region.part.defaultData || "";
             }
         });
+    };
+
+    $scope.getTemplatePreviewUrl = function() {
+        if($scope.template) {
+            var templateSrc = encodeURIComponent($scope.template.src);
+            var regionOutlineColor = encodeURIComponent(localStorage.getItem('sidebarColor'));
+
+            return '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+        } else {
+            return null;
+        }
+
     };
 
     $scope.cancel = function() {
@@ -1606,120 +1637,6 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     }
 });
 
-adminApp.directive('drawTemplate', function() {
-
-    function link(scope, element, attrs) {
-
-        var grid = 10;
-
-        element.html('<canvas width="550" height="400"></canvas>');
-        var canvas = new fabric.Canvas(element.find('canvas')[0]);
-        canvas.backgroundColor = '#ddd';
-
-        canvas.on('object:selected', function() {
-            var obj = canvas.getActiveObject();
-            canvas.bringToFront(obj);
-        });
-
-        canvas.on('object:moving', function(e){
-            var obj = e.target;
-
-            //keep in canvas bounds
-            if(obj.top < 0 || obj.left < 0){
-                obj.top = Math.max(obj.top, 0)
-                obj.left = Math.max(obj.left , 0);
-            }
-            if(obj.left + obj.width > canvas.width || obj.top + obj.height > canvas.height) {
-                obj.left = Math.min(obj.left, canvas.width - obj.width);
-                obj.top = Math.min(obj.top, canvas.height - obj.height);
-            }
-
-            //snap to grid
-            obj.set({
-                left: Math.round(obj.left / grid) * grid,
-                top: Math.round(obj.top / grid) * grid
-            });
-        });
-        canvas.on('object:scaling', function(e) {
-            var obj = e.target;
-
-            //fix stroke scaling
-            if(obj.item(0)) {
-                var rect = obj.item(0);
-                if(rect.getHeight() > rect.getWidth()) {
-                    rect.strokeWidth = 1 / obj.scaleY;
-                } else {
-                    rect.strokeWidth = 1 / obj.scaleX;
-                }
-                rect.set('strokeWidth', rect.strokeWidth);
-            }
-
-            //stop text scaling
-            if(obj.item(1)) {
-                var text = obj.item(1);
-                text.scaleX = 1 / obj.scaleX;
-                text.scaleY = 1 / obj.scaleY;
-            }
-        });
-
-        scope.$watch(attrs.regions, function(regions) {
-
-            canvas.clear();
-
-            for(var i = regions.length - 1; i >= 0; i--) {
-                (function (region, i) {
-                    var canvasData = scope.template.regionData[i] || {
-                        top: 10,
-                        left: 10,
-                        width: 100,
-                        height: 100
-                    };
-
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasRotatingPoint: false
-                    });
-
-                    group.on('modified', function () {
-                        var regionData = {
-                            top: this.top,
-                            left: this.left,
-                            width: this.getWidth(),
-                            height: this.getHeight()
-                        };
-                        scope.template.regionData[i] = regionData;
-                    });
-                    group.on('selected', function () {
-                        console.log(this);
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                })(regions[i], i);
-            }
-        }, true);
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
-});
-
 })();
 (function() {
 
@@ -1734,7 +1651,7 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
 
     $scope.templates = [];
 
-    templateService.getTemplates().success(function(templates) {
+    templateService.doGetAvailableTemplates().success(function(templates) {
         $scope.templates = templates;
     }).error(function(err) {
         $rootScope.showError("Error getting templates", err);
@@ -1751,9 +1668,16 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
             this.pageCache = [];
         }
         TemplateService.prototype.getTemplateSources = function() {
-            return $http.get('/_misc/templates');
+            return $http.get('/_templates/available');
         };
-        TemplateService.prototype.getTemplates = function() {
+        TemplateService.prototype.getTemplateRegions = function(templateSrc) {
+            return $http.get('/_templates/template-regions', {
+                params: {
+                    templateSrc: templateSrc
+                }
+            });
+        };
+        TemplateService.prototype.doGetAvailableTemplates = function() {
             return $http.get('/_api/templates');
         };
         TemplateService.prototype.getTemplate = function(templateId) {

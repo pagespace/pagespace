@@ -21,7 +21,7 @@
                     <select ng-model="template.src"
                             ng-options="template as template for template in templateSources"
                             class="form-control">
-                        <option value="" disabled selected>Select a template</option>
+                        <option value="" disabled>Select a template</option>
                     </select>
                 </div>
             </div>
@@ -49,55 +49,53 @@
                 </div>
             </div>
 
-            <h3>Draw template</h3>
+            <div class="form-group" ng-show="template">
+                <h3>Preview</h3>
+                <div class="col-sm-12">
+                    <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 100%">
+                </div>
 
-            <div class="form-group">
-                <div class="col-sm-9">
-                    <draw-template regions="template.regions"></draw-template>
-                </div>
-                <div class="col-sm-3">
-                    <button type="button" class="btn" ng-click="addRegion()">
-                        <span class="glyphicon glyphicon-plus"></span> Add region
-                    </button>
-                </div>
             </div>
 
+            <div ng-show="template.regions && template.regions.length">
 
-            <h3>Selected region</h3>
-            <div ng-repeat="region in template.regions track by $index">
-                <div ng-show="selectedRegionIndex == $index">
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Region ID</label>
-                        <div class="col-sm-7">
-                            <input type="text" class="form-control input-medium"
-                                   ng-model="template.regions[$index].name" placeholder="Region name">
+                <h3>Regions</h3>
+
+                <div class="form-group">
+                    <div class="col-sm-9">
+                        <select ng-model="selectedRegionIndex"
+                                ng-options="template.regions.indexOf(region) as region.name for region in template.regions"
+                                class="form-control">
+                            <option value="" disabled>Select a region</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div ng-repeat="region in template.regions track by $index">
+                    <div ng-show="selectedRegionIndex == $index">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Default part</label>
+                            <div class="col-sm-7">
+                                <select ng-model="template.regions[$index].part"
+                                        ng-options="part as part.name for part in parts track by part._id"
+                                        ng-change="setDefaultPartData()"
+                                        class="form-control">
+                                    <option value="" disabled selected>Select a part type</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Default data</label>
+                            <div class="col-sm-7">
+                                <textarea ng-model="template.regions[$index].data"
+                                          ui-codemirror
+                                          ui-codemirror-opts="editorOpts"
+                                          class="form-control"
+                                          name="regiondata_{{$index}}"
+                                          placeholder="Edit raw part data (for advanced users)"></textarea>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Default part</label>
-                        <div class="col-sm-7">
-                            <select ng-model="template.regions[$index].part"
-                                    ng-options="part as part.name for part in parts track by part._id"
-                                    ng-change="setDefaultPartData()"
-                                    class="form-control">
-                                <option value="" disabled selected>Select a part type</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Default data</label>
-                        <div class="col-sm-7">
-                            <textarea ng-model="template.regions[$index].data"
-                                      ui-codemirror
-                                      ui-codemirror-opts="editorOpts"
-                                      class="form-control"
-                                      name="regiondata_{{$index}}"
-                                      placeholder="Edit raw part data (for advanced users)"></textarea>
-                        </div>
-                    </div>
-                    <button type="button" class="btn" ng-click="removeRegion(region)">
-                        <span class="glyphicon glyphicon-minus"></span> Remove region
-                    </button>
                 </div>
             </div>
 
