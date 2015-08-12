@@ -79,7 +79,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     var showAdminBar = req.user && req.user.role !== 'guest';
     var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
-    var editMode = stagingMode ? sessionValueSwitch(req, '_edit', 'edit') : false;
     logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
 
     var modelModifier = !stagingMode ? 'live' : null;
@@ -181,8 +180,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             var pageData = {};
             pageData.site = self.site;
             pageData.page = page.toObject();
-            pageData.edit = editMode;
-            pageData.preview = !editMode;
             pageData.staging = stagingMode;
             pageData.live = !stagingMode;
 

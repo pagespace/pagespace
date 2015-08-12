@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Copy Editor</title>
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/wysihtml/dist/wysihtml5x-toolbar.min.js"></script>
+    <script src="/_static/parts/web-copy/parser-rules.js"></script>
+    <script src="/_static/parts/web-copy/web-copy.js"></script>
+    <script src="/_static/parts/web-copy/web-copy-editor.css"></script>
+</head>
+<body ng-app="webCopyApp">
+<div class="ps-edit-box" ng-controller="WebCopyController"
+     ng-init="region='{{region}}'; pageId='{{pageId}}'; wrapperClass='{{data.wrapperClass}}'">
+    <div ps-wysihtml class="wysihtml-editor">
+        <div class="toolbar" class="hidden">
+            <div class="toolbar-buttons">
+                <button data-wysihtml5-command="undo" title="Undo" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-undo"></use></svg>
+                </button>
+                <button data-wysihtml5-command="redo" title="Redo" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-redo"></use></svg>
+                </button>
+                <button data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-bold"></use></svg>
+                </button>
+                <button data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-italic"></use></svg>
+                </button>
+                <button data-wysihtml5-command="insertUnorderedList" title="Insert an unordered list" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-list"></use></svg>
+                </button>
+                <button data-wysihtml5-command="insertOrderedList" title="Insert an ordered list" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-list-numbered"></use></svg>
+                </button>
+                <button data-wysihtml5-command="createLink" title="Insert a link" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-link"></use></svg>
+                </button>
+                <button data-wysihtml5-command="insertImage" title="Insert an image" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-image"></use></svg>
+                </button>
+                <button data-wysihtml5-command="justifyLeft" title="Align left" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-paragraph-left"></use></svg>
+                </button>
+                <button data-wysihtml5-command="justifyCenter" title="Align center" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-paragraph-center"></use></svg>
+                </button>
+                <button data-wysihtml5-command="justifyRight" title="Align right" class="command" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-paragraph-right"></use></svg>
+                </button>
+
+                <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command" >h1</button>
+                <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command" >h2</button>
+                <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3" title="Insert headline 3" class="command" >h3</button>
+                <button data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="p" title="Insert paragraph" class="command" >p</button>
+                <button data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"  style="display: none;"></button>
+                <button data-behavior="showSource" title="Show HTML" class="action" >
+                    <svg class="icon"><use xlink:href="/_static/parts/web-copy/toolbar.svg#icon-embed2"></use></svg>
+                </button>
+
+                <div data-wysihtml5-dialog="createLink" style="display: none;">
+                    <label>
+                        Link:
+                        <input data-wysihtml5-dialog-field="href" value="">
+                    </label>
+                    <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+                </div>
+                <div data-wysihtml5-dialog="insertImage" style="display: none;">
+                    <label>
+                        Image:
+                        <input data-wysihtml5-dialog-field="src" value="">
+                    </label>
+                    <label>Align:
+                        <select data-wysihtml5-dialog-field="className">
+                            <option value="">default</option>
+                            <option value="wysiwyg-float-left">left</option>
+                            <option value="wysiwyg-float-right">right</option>
+                        </select>
+                    </label>
+                    <a data-wysihtml5-dialog-action="save" style="cursor: pointer">OK</a>&nbsp;
+                    <a data-wysihtml5-dialog-action="cancel" style="cursor: pointer">Cancel</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor">{{{data.html}}}</div>
+        <div class="source hidden">
+            <textarea name="editor-source" rows="10"></textarea>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

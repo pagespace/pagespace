@@ -1,4 +1,8 @@
 {
     "name" : "html include part",
-    "main" : "./index.js"
+    "main" : "./index.js",
+    "implements" : "pagespace/part",
+    "editable" : true,
+    "edit" : "/path"
+
 }

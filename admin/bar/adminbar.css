@@ -55,7 +55,30 @@ html {
 }
 
 .ps-edit-box {
+    position: relative;
+    outline: 1px solid #cbcbcb;
+    min-height: 24px;
+}
+.ps-edit-box:hover {
     outline: 2px solid #cbcbcb;
+
+}
+.ps-edit-box .ps-edit {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    box-sizing: border-box;
+    border: none;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    background: #cbcbcb;
+    cursor: pointer;
+
+}
+.ps-edit-box:hover .ps-edit {
+    display: block;
 }
 .ps-btn {
     cursor: pointer;

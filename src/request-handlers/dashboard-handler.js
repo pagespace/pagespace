@@ -19,7 +19,8 @@
 
 'use strict';
 
-var psUtil = require('../misc/pagespace-util');
+var psUtil = require('../misc/pagespace-util'),
+    consts = require('../app-constants');
 
 /**
  *
@@ -33,6 +34,9 @@ module.exports = new DashboardHandler();
 DashboardHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
+    this.viewEngine = support.viewEngine;
+    this.userBasePath = support.userBasePath;
+
     this.reqCount = 0;
 
     var self = this;
@@ -50,8 +54,25 @@ DashboardHandler.prototype.init = function(support) {
  */
 DashboardHandler.prototype.doRequest = function(req, res, next) {
 
-    var logger = psUtil.getRequestLogger(this.logger, req, 'dashboard', ++this.reqCount);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'templates', ++this.reqCount);
 
+    var reqInfo = consts.requests.DASHBOARD.regex.exec(req.url);
+    var reqType = reqInfo[1];
+
+    if(!reqType && req.method === 'GET') {
+        logger.info('New dashboard request');
+        return this.doDashboard(req, res, next, logger);
+    } else if (reqType === 'region' && req.method === 'GET') {
+        logger.info('New part editor request');
+        return this.doRegion(req, res, next, logger);
+    } else {
+        var err = new Error('Unrecognized method');
+        err.status = 405;
+        next(err);
+    }
+};
+
+DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
     logger.info('New dashboard request from %s', req.user.username);
 
     var pageData = {
@@ -70,5 +91,71 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
             logger.info('Dashboard request OK');
             res.send(html);
         }
+    });
+};
+
+DashboardHandler.prototype.doRegion = function(req, res, next, logger) {
+
+    var self = this;
+
+    logger.info('New dashboard request from %s', req.user.username);
+
+    //get page id
+    var pageId = req.query.pageId;
+
+    //get region id
+    var regionId = req.query.regionId;
+
+    //lookup page
+    var Page = this.dbSupport.getModel('Page', null);
+    var filter = {
+        _id: pageId
+    };
+    var query = Page.findOne(filter).populate('template redirect regions.part');
+    var findPage = Promise.promisify(query.exec, query);
+    findPage().then(function(page) {
+
+        var region = page.regions.filter(function(region) {
+            return region._id === regionId;
+        })[0];
+
+        var partModule = self.partResolver.require(region.part ? region.part.module : null);
+        if(partModule && typeof partModule.process === 'function') {
+            var regionData = region.data || {};
+
+            var regionDataResult = partModule.process(regionData , {
+                basePath: self.userBasePath,
+                PageModel: Page,
+                req: req,
+                logger: logger.child({part: region.part.name})
+            });
+
+            return [ partModule, region.name, regionDataResult ];
+        } else {
+            var noPartError = new Error('Could not find the part of region at page %s/$s', pageId, regionId);
+            noPartError.status = 404;
+            throw noPartError;
+        }
+    }).spread(function(partModule, regionName, regionData) {
+
+        var rendarData = {
+            data: regionData,
+            region: regionName,
+            pageId: pageId,
+            regionId: regionId,
+            __template: 'region'
+        };
+
+        self.viewEngine.registerPartial('region', partModule.__editPartial, 'region');
+
+        return res.render('edit-region.hbs', rendarData, function(err, html) {
+            if(err) {
+                logger.error(err, 'Error trying to render region editor, %s', req.url);
+                next(err);
+            } else {
+                logger.info('Region editor request OK');
+                res.send(html);
+            }
+        });
     });
 };

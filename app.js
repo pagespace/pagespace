@@ -17,8 +17,8 @@ app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
-    mediaDir: path.join(__dirname, 'media-uploads')
-    //logLevel: "debug"
+    mediaDir: path.join(__dirname, 'media-uploads'),
+    logLevel: "debug"
 }));
 
 /// catch 404 and forwarding to error handler
@@ -59,6 +59,8 @@ if (app.get('env') === 'development') {
     });
 });*/
 
-app.listen(9999);
+var port = 9999;
+console.log('Pagespace test app running on http://localhost:%s', port)
+app.listen(port);
 
 module.exports = app;

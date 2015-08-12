@@ -78,11 +78,18 @@ PartResolver.prototype.initPartModule = function(partModulePath, partModule) {
     //resolve part view
     //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
     var partViewDir = path.extname(partModulePath) ? path.dirname(partModulePath) : partModulePath;
-    var partViewPath = path.join(partViewDir, 'view.hbs');
 
     //load the part view
+    var partViewPath = path.join(partViewDir, 'index.hbs');
     logger.debug('Loading part view partial from %s...', partViewPath);
     partModule.__viewPartial = fs.readFileSync(partViewPath, 'utf8');
+
+
+
+    //load the part view
+    var editViewPath = path.join(partViewDir, 'edit.hbs');
+    logger.debug('Loading part edit partial from %s...', editViewPath);
+    partModule.__editPartial = fs.readFileSync(editViewPath, 'utf8');
 };
 
 PartResolver.prototype._resolveModulePath = function(modulePath) {
