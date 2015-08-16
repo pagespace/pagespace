@@ -89,3 +89,20 @@ html {
     padding: 10px;
     border: none;
 }
+.ps-part-editor {
+    position: absolute;
+    z-index: 100;
+    transition: 300ms linear;
+    box-shadow: #636363 0 3px 53px 16px;
+}
+.ps-part-editor-close {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: -20px;
+    right: -20px;
+    padding: 0;
+    background: #000;
+    border-radius: 4px;
+    box-shadow: #636363 0 3px 16px 5px
+}
