@@ -2,15 +2,15 @@
 <html>
 <head>
     <title>Web Copy Editor</title>
+    <link href="/_static/parts/web-copy/web-copy-editor.css" type="text/css" rel="stylesheet">
     <script src="/_static/bower_components/angular/angular.min.js"></script>
     <script src="/_static/bower_components/wysihtml/dist/wysihtml5x-toolbar.min.js"></script>
     <script src="/_static/parts/web-copy/parser-rules.js"></script>
     <script src="/_static/parts/web-copy/web-copy.js"></script>
-    <script src="/_static/parts/web-copy/web-copy-editor.css"></script>
 </head>
 <body ng-app="webCopyApp">
 <div class="ps-edit-box" ng-controller="WebCopyController"
-     ng-init="region='{{region}}'; pageId='{{pageId}}'; wrapperClass='{{data.wrapperClass}}'">
+     ng-init="region='{{region}}'; pageId='{{pageId}}'">
     <div ps-wysihtml class="wysihtml-editor">
         <div class="toolbar" class="hidden">
             <div class="toolbar-buttons">
@@ -84,7 +84,7 @@
 
         <div class="editor">{{{data.html}}}</div>
         <div class="source hidden">
-            <textarea name="editor-source" rows="10"></textarea>
+            <textarea name="editor-source" rows="10"    ></textarea>
         </div>
     </div>
 </div>

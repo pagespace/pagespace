@@ -41,13 +41,17 @@
 ✓ populate part data with predefined
 ✓ add developer & editor role
 ✓ hide advanced config from non dev roles
+
 * docs
 
 * Select media image from ck picker
 * archiving
 ✓ Dashboard color switcher
+* Simplify templating
 * Auto determine template regions
 * Multiple parts per region
+* Redo parts
+
 
 BUGS
 * edit link in web copy

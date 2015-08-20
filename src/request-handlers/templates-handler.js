@@ -95,8 +95,9 @@ TemplatesHandler.prototype.doRequest = function(req, res, next) {
  */
 TemplatesHandler.prototype.doGetAvailableTemplates = function(req, res, next, logger) {
 
+    var views = null;
     try {
-        var views = getViewDirs(req);
+        views = getViewDirs(req);
     } catch(e) {
         return next(e);
     }
@@ -144,7 +145,7 @@ function walkFiles (directory, baseDirectory) {
  * @param logger
  * @returns {*}
  */
-TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next, logger) {
+TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next) {
     var templateSrc = req.query.templateSrc;
 
     var err;
@@ -154,8 +155,9 @@ TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next, lo
         next(err);
     }
 
+    var viewDirs = null;
     try {
-        var viewDirs = getViewDirs(req);
+        viewDirs = getViewDirs(req);
     } catch(e) {
         return next(e);
     }
@@ -251,9 +253,9 @@ TemplatesHandler.prototype.doGetTemplatePreview = function(req, res, next, logge
                 logger.info('Page opened with status: %s', status);
                 if(status === 'success') {
                     page.viewportSize = { width: 1920, height: 1080 };
-                    logger.info('Save screenshot of page...')
+                    logger.info('Save screenshot of page...');
                     page.render(templateShotFile, function() {
-                        logger.info('Screenshot saved. Exiting phantom...')
+                        logger.info('Screenshot saved. Exiting phantom...');
                         phantom.exit();
 
                         logger.info('Sending %s to client', templateShotFile);
@@ -302,8 +304,9 @@ TemplatesHandler.prototype.doTemplateTest = function(req, res, next, logger) {
         next(err);
     }
 
+    var viewDirs = null;
     try {
-        var viewDirs = getViewDirs(req);
+        viewDirs = getViewDirs(req);
     } catch(e) {
         return next(e);
     }

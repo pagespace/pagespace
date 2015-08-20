@@ -19,11 +19,7 @@
     position: relative;
 }
 .wysihtml-editor .toolbar {
-    display: none;
-    padding: 40px 40px 0 40px;
-    position: absolute;
-    top: -72px;
-    left: -40px;
+
 }
 .wysihtml-editor:hover .toolbar {
     display: block;
@@ -37,9 +33,6 @@
     outline:none;
 }
 .wysihtml-editor .edit-actions {
-    position: absolute;
-    bottom: -34px;
-    right: 0;
 }
 .wysihtml-editor .hidden {
     display: none;
@@ -47,7 +40,7 @@
 .wysihtml-editor .editor {
     min-height: 1em;
 }
-.wysihtml-editor .source textarea{
+.wysihtml-editor .source textarea {
     width: 100%;
     font-size: 12px;
     font-family: Consolas, "courier new", monospace;

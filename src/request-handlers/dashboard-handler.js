@@ -19,7 +19,9 @@
 
 'use strict';
 
-var psUtil = require('../misc/pagespace-util'),
+var Promise = require('bluebird'),
+
+    psUtil = require('../misc/pagespace-util'),
     consts = require('../app-constants');
 
 /**
@@ -36,6 +38,8 @@ DashboardHandler.prototype.init = function(support) {
     this.logger = support.logger;
     this.viewEngine = support.viewEngine;
     this.userBasePath = support.userBasePath;
+    this.dbSupport = support.dbSupport;
+    this.partResolver = support.partResolver;
 
     this.reqCount = 0;
 
@@ -104,19 +108,19 @@ DashboardHandler.prototype.doRegion = function(req, res, next, logger) {
     var pageId = req.query.pageId;
 
     //get region id
-    var regionId = req.query.regionId;
+    var regionName = req.query.region;
 
     //lookup page
     var Page = this.dbSupport.getModel('Page', null);
     var filter = {
         _id: pageId
     };
-    var query = Page.findOne(filter).populate('template redirect regions.part');
+    var query = Page.findOne(filter).populate('regions regions.part'); //clean up
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
 
         var region = page.regions.filter(function(region) {
-            return region._id === regionId;
+            return region.name === regionName;
         })[0];
 
         var partModule = self.partResolver.require(region.part ? region.part.module : null);
@@ -132,7 +136,7 @@ DashboardHandler.prototype.doRegion = function(req, res, next, logger) {
 
             return [ partModule, region.name, regionDataResult ];
         } else {
-            var noPartError = new Error('Could not find the part of region at page %s/$s', pageId, regionId);
+            var noPartError = new Error('Could not find the part of region at page %s/$s', pageId, regionName);
             noPartError.status = 404;
             throw noPartError;
         }
@@ -142,7 +146,6 @@ DashboardHandler.prototype.doRegion = function(req, res, next, logger) {
             data: regionData,
             region: regionName,
             pageId: pageId,
-            regionId: regionId,
             __template: 'region'
         };
 
@@ -157,5 +160,8 @@ DashboardHandler.prototype.doRegion = function(req, res, next, logger) {
                 res.send(html);
             }
         });
+    }).catch(function(err) {
+        logger.error(err);
+        next(err);
     });
 };

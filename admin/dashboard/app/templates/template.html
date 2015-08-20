@@ -33,7 +33,7 @@
                             <input type="text" class="form-control input-medium" ng-model="prop.name" placeholder="Name">
                         </div>
                         <div class="col-xs-4">
-                            <input type="text" class="form-control input-medium" ng-model="prop.value" placeholder="Name">
+                            <input type="text" class="form-control input-medium" ng-model="prop.value" Pre="Name">
                         </div>
                         <div class="col-xs-2">
                             <button type="button"  class="btn" ng-click="removeProperty(prop)">
@@ -49,12 +49,9 @@
                 </div>
             </div>
 
-            <div class="form-group" ng-show="template">
+            <div ng-show="template">
                 <h3>Preview</h3>
-                <div class="col-sm-12">
-                    <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 100%">
-                </div>
-
+                <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 100%">
             </div>
 
             <div ng-show="template.regions && template.regions.length">
@@ -85,7 +82,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-2 control-label">Default data</label>
+                            <label class="col-sm-2 control-label">Global data</label>
                             <div class="col-sm-7">
                                 <textarea ng-model="template.regions[$index].data"
                                           ui-codemirror

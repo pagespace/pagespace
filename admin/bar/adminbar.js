@@ -73,17 +73,19 @@
 
     function decorateParts() {
 
-        function createEditButton(regionId) {
+        function createEditButton(pageId, region) {
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerText = 'e';
-            editButton.setAttribute('data-target-region', regionId);
+            editButton.setAttribute('data-target-page-id', pageId);
+            editButton.setAttribute('data-target-region', region);
             editButton.classList.add('ps-edit');
             return editButton;
         }
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
-            var button = createEditButton(region.getAttribute('data-region'));
+            //TODO: less intrusive way of getting page id
+            var button = createEditButton(region.getAttribute('data-page-id'), region.getAttribute('data-region'));
             region.insertBefore(button, region.firstChild);
             region.classList.add('ps-edit-box');
         });
@@ -114,14 +116,15 @@
 
     function launchPartEditor(evSrc) {
 
-        var regionId = evSrc.getAttribute('data-target-region');
+        var pageId = evSrc.getAttribute('data-target-page-id');
+        var region = evSrc.getAttribute('data-target-region');
 
         //create the editor frame
         var editor = document.createElement('div');
         editor.id = 'part-editor';
         editor.className = 'ps-part-editor';
 
-        var regionNode = document.querySelectorAll('[data-region=' + regionId + ']')[0]
+        var regionNode = document.querySelectorAll('[data-region=' + region + ']')[0];
         var regionPos = getAbsolutePosition(regionNode);
         editor.style.top = regionPos.top + 'px';
         editor.style.left = regionPos.left + 'px';
@@ -132,7 +135,7 @@
 
         //create the iframe
         var iframe = document.createElement('iframe');
-        iframe.src = 'http://localhost:9999/_dashboard';
+        iframe.src = '/_dashboard/region?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
         iframe.width = '100%';
         iframe.height = '100%';
         iframe.seamlesss = true;
@@ -146,6 +149,7 @@
         editor.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
             editor.parentNode.removeChild(editor);
+            window.location.reload();
         });
 
         //animate to size
@@ -154,7 +158,7 @@
             editor.style.left = ((window.innerWidth - 800) / 2) + 'px';
             editor.style.width = 800 + 'px';
             editor.style.height = (window.innerHeight - 100) + 'px';
-        }, 100);
+        }, 300);
 
     }
 

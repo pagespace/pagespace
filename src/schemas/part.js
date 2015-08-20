@@ -33,10 +33,6 @@ function generateSchema() {
             unique: true,
             required: true
         },
-        defaultData: {
-            type: Schema.Types.Mixed,
-            default: {}
-        },
         createdAt: {
             type: Date,
             default: Date.now()

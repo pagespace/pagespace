@@ -108,6 +108,26 @@
                 controller: 'SitemapController'
             });
     }]);
+
+    if(window.bunyan) {
+        adminApp.config(function($provide) {
+            $provide.decorator('$log', function($delegate) {
+                $delegate = bunyan.createLogger({
+                    name: 'pagespace',
+                    streams: [
+                        {
+                            level: localStorage.getItem('pagespace:logLevel') || 'info',
+                            stream: new bunyan.ConsoleFormattedStream(),
+                            type: 'raw'
+                        }
+                    ]
+                });
+
+                return $delegate;
+            });
+        });
+    }
+
 })();
 
 (function() {
@@ -595,8 +615,10 @@ adminApp.controller("DeletePageController",
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
-    function($scope, $rootScope, $routeParams, $location, $timeout,
+    function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
+
+    $log.info('Showiing page view.');
 
     $rootScope.clearNotification();
     $rootScope.pageTitle = "Page";
@@ -615,27 +637,34 @@ adminApp.controller("PageController",
         $scope.editRegions = !$scope.editRegions;
     };
 
-
     $scope.selectedRegionIndex = -1;
     $scope.template = null;
 
-    var getPageFunctions = [];
-    getPageFunctions.push(function getTemplates(callback) {
+    var pageSetupFunctions = [];
+    pageSetupFunctions.push(function getTemplates(callback) {
+        $log.info('Fetching available templates...');
         templateService.doGetAvailableTemplates().success(function(templates) {
+            $log.info('Got available templates.');
             $scope.templates = templates;
             callback()
         });
     });
-    getPageFunctions.push(function getParts(callback) {
+    pageSetupFunctions.push(function getParts(callback) {
+        $log.debug('Fetching available parts...');
         partService.getParts().success(function(parts) {
+            $log.debug('Got available parts.');
             $scope.parts = parts;
             callback()
         });
     });
+
     if(pageId) {
+        $log.debug('Fetching page data for: %s', pageId);
         $scope.pageId = pageId;
-        getPageFunctions.push(function getPage(callback) {
+        pageSetupFunctions.push(function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
                 $scope.page = page;
 
                 if(page.expiresAt) {
@@ -646,7 +675,7 @@ adminApp.controller("PageController",
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
-                page.regions.map(function(region) {
+                page.regions = page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
                     region.dataFromServer = !!region.data;
                     return region;
@@ -660,7 +689,7 @@ adminApp.controller("PageController",
             regions: []
         };
         if(parentPageId) {
-            getPageFunctions.push(function getParentPage(callback) {
+            pageSetupFunctions.push(function getParentPage(callback) {
                 pageService.getPage(parentPageId).success(function(page) {
                     $scope.page.parent = page;
                     callback();
@@ -671,7 +700,7 @@ adminApp.controller("PageController",
         }
     }
 
-    async.series(getPageFunctions, function(err) {
+    async.parallel(pageSetupFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
         } else {
@@ -752,17 +781,25 @@ adminApp.controller("PageController",
         });
 
         if(pageId) {
+            $log.info('Update page: %s...', pageId);
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.updatePage(pageId, page).success(function(res) {
+                $log.info('Page successfully updated');
                 $rootScope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error saving page", err);
+                $log.error(err, 'Error updating page');
+                $rootScope.showError("Error updating page", err);
             });
         } else {
-            pageService.createPage($scope.page).success(function() {
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            pageService.createPage(page).success(function() {
+                $log.info('Page successfully created');
                 $rootScope.showSuccess("Page: " + page.name + " created.");
                 $location.path("");
             }).error(function(err) {
+                $log.error(err, 'Error creating page');
                 $rootScope.showError("Error adding new page", err);
             });
         }
@@ -780,60 +817,6 @@ adminApp.controller("PageController",
         }
         return true;
     }
-});
-
-adminApp.directive('viewTemplate', function() {
-
-    function link(scope, element) {
-
-        scope.$watch('template', function(){
-           drawTemplate();
-        });
-
-        function drawTemplate() {
-            element.html('<canvas width="550" height="400"></canvas>');
-            var canvas = new fabric.Canvas(element.find('canvas')[0]);
-            canvas.backgroundColor = '#ddd';
-
-            scope.template.regions.forEach(function(region, i) {
-
-                var canvasData = scope.template.regionData[i];
-
-                if(canvasData) {
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasControls: false,
-                        lockMovementX: true,
-                        lockMovementY: true
-                    });
-                    group.on('selected', function() {
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                }
-            });
-        }
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
 });
 
 })();
@@ -1449,10 +1432,13 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window,
+adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
                                                    templateService, partService) {
 
+    $log.info('Showing Template View');
+
     $rootScope.pageTitle = 'Template';
+
 
     var templateId = $routeParams.templateId;
     $scope.templateId = templateId;
@@ -1475,8 +1461,9 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.$watch('template.src', function(val) {
 
         if(val) {
+            $log.debug('Fetching regions for template src: %s...', val);
             templateService.getTemplateRegions(val).success(function(regions) {
-
+                $log.debug('Got regions: %s', regions);
                 if(!$scope.template.regions.length) {
                     $scope.template.regions = regions.map(function(region) {
                         return {
@@ -1492,7 +1479,9 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     });
 
     if(templateId) {
+        $log.debug('Fetching template data for id: %s...', templateId);
         templateService.getTemplate(templateId).success(function(template) {
+            $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
 
             template.regions.map(function(region) {
@@ -1501,6 +1490,7 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
                 return region;
             });
         }).error(function(err) {
+            $log.error(err, 'Error getting template');
             $rootScope.showError('Error getting template', err);
         });
     }
@@ -1550,8 +1540,9 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         if($scope.template) {
             var templateSrc = encodeURIComponent($scope.template.src);
             var regionOutlineColor = encodeURIComponent(localStorage.getItem('sidebarColor'));
-
-            return '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            $log.debug('Template preview url is: %s', templatePreviewUrl);
+            return templatePreviewUrl;
         } else {
             return null;
         }
@@ -1563,6 +1554,8 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     };
 
     $scope.save = function(form) {
+
+
 
         if(form.$invalid) {
             $window.scrollTo(0,0);
@@ -1594,17 +1587,25 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         });
 
         if(templateId) {
+            $log.info('Updating template: %s...', templateId);
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.updateTemplate(templateId, $scope.template).success(function() {
+                $log.info('Template updated successfully');
                 $rootScope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
+                $log.error(err, 'Error updating template');
                 $rootScope.showError('Error updating template', err);
             });
         } else {
+            $log.info('Creating new template...');
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.createTemplate($scope.template).success(function() {
+                $log.info('Template created successfully');
                 $rootScope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {
+                $log.error(err, 'Error creating template');
                 $rootScope.showError('Error creating template', err);
             });
         }
@@ -1613,15 +1614,16 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.remove = function() {
         var really = window.confirm('Really delete this template?');
         if(really) {
+            $log.info('Deleting template: %s...', $scope.template._id);
             templateService.deleteTemplate($scope.template._id).success(function (res) {
-                console.log('Template deleted');
+                $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {
+                $log.error(err, 'Could not delete template');
                 $rootScope.showError('Error deleting template', err);
             });
         }
     };
-
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;

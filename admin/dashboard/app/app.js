@@ -108,4 +108,24 @@
                 controller: 'SitemapController'
             });
     }]);
+
+    if(window.bunyan) {
+        adminApp.config(function($provide) {
+            $provide.decorator('$log', function($delegate) {
+                $delegate = bunyan.createLogger({
+                    name: 'pagespace',
+                    streams: [
+                        {
+                            level: localStorage.getItem('pagespace:logLevel') || 'info',
+                            stream: new bunyan.ConsoleFormattedStream(),
+                            type: 'raw'
+                        }
+                    ]
+                });
+
+                return $delegate;
+            });
+        });
+    }
+
 })();

@@ -48,7 +48,7 @@ consts.requests = {
     },
     DASHBOARD: {
         key: 'DASHBOARD',
-        regex: new RegExp('^/_dashboard(/region)?'),
+        regex: new RegExp('^/_dashboard/?(region)?'),
         handler: require('./request-handlers/dashboard-handler')
     },
     API: {

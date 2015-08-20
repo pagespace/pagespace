@@ -56,7 +56,6 @@ html {
 
 .ps-edit-box {
     position: relative;
-    outline: 1px solid #cbcbcb;
     min-height: 24px;
 }
 .ps-edit-box:hover {
@@ -94,6 +93,7 @@ html {
     z-index: 100;
     transition: 300ms linear;
     box-shadow: #636363 0 3px 53px 16px;
+    background: #fff;
 }
 .ps-part-editor-close {
     position: absolute;
