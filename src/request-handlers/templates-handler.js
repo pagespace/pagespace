@@ -24,6 +24,7 @@ var fs = require('fs'),
     util = require('util'),
     path = require('path'),
 
+    VError = require('verror'),
     send = require('send'),
     Promise = require('bluebird'),
 
@@ -31,6 +32,8 @@ var fs = require('fs'),
     psUtil = require('../misc/pagespace-util');
 
 var readFileAsync = Promise.promisify(fs.readFile);
+
+var DEFAULT_VIEW_DIR = '/pagespace-views';
 
 var reqTypes  = {
     TEMPLATES: 'available',
@@ -98,6 +101,7 @@ TemplatesHandler.prototype.doGetAvailableTemplates = function(req, res, next, lo
     var views = null;
     try {
         views = getViewDirs(req);
+        logger.debug('Using the following dirs as possible template locations: %s', views.join(', '));
     } catch(e) {
         return next(e);
     }
@@ -145,12 +149,13 @@ function walkFiles (directory, baseDirectory) {
  * @param logger
  * @returns {*}
  */
-TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next) {
+TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next, logger) {
     var templateSrc = req.query.templateSrc;
 
     var err;
     if(!templateSrc) {
         err = new Error('No template url given');
+        logger.warn(err);
         err.status = 404;
         next(err);
     }
@@ -163,7 +168,12 @@ TemplatesHandler.prototype.doGetRegionsForTemplate = function(req, res, next) {
     }
 
     this.getRegionsForTemplate(templateSrc, viewDirs).then(function(regions) {
+        logger.debug('Found the following regions for: %s (%s)', templateSrc, viewDirs.join(', '));
         return res.json(regions);
+    }).catch(function(err) {
+        err = new VError(err, 'Could not find template: "%s"', templateSrc);
+        err.status = 404;
+        return next(err);
     });
 };
 
@@ -210,6 +220,12 @@ function getViewDirs(req) {
     if(typeof views === 'string') {
         views = [ views ];
     }
+
+    views = views.filter(function(view) {
+        //strip default pagespace view dir from available template directories
+        return view.indexOf(DEFAULT_VIEW_DIR) === -1;
+    });
+
     return views;
 }
 
@@ -250,6 +266,11 @@ TemplatesHandler.prototype.doGetTemplatePreview = function(req, res, next, logge
             logger.info('Opening url [%s]...', templatePreviewUrl);
 
             page.open(templatePreviewUrl,  function(err, status) {
+
+                if(err) {
+                    return next(err);
+                }
+
                 logger.info('Page opened with status: %s', status);
                 if(status === 'success') {
                     page.viewportSize = { width: 1920, height: 1080 };
@@ -348,5 +369,9 @@ TemplatesHandler.prototype.doTemplateTest = function(req, res, next, logger) {
                 res.send(html);
             }
         });
+    }).catch(function(err) {
+        err = new VError(err, 'Could not find template: "%s"', templateSrc);
+        err.status = 404;
+        return next(err);
     });
 };

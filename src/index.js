@@ -239,7 +239,7 @@ Index.prototype._doRequest = function(req, res, next) {
         username: 'guest',
         role: 'guest'
     };
-    logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
+    logger.trace('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
@@ -390,7 +390,10 @@ Index.prototype.addRulesToAcl = function(rules) {
 };
 
 Index.prototype.getViewDir = function() {
-    return path.join(__dirname, '/../views');
+    return path.join(__dirname, '/../pagespace-views');
+};
+Index.prototype.getDefaultTemplateDir = function() {
+    return path.join(__dirname, '/../templates');
 };
 Index.prototype.getViewEngine = function() {
     return this.viewEngine.__express;
