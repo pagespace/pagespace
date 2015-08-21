@@ -12,7 +12,7 @@ app.use(favicon(__dirname + '/favicon.ico'));
 app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: 'keyboard cat'})]);
 
 // view engine setup
-app.set('views', [ pagespace.getViewDir() ]);
+app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
@@ -60,7 +60,15 @@ if (app.get('env') === 'development') {
 });*/
 
 var port = 9999;
-console.log('Pagespace test app running on http://localhost:%s', port)
-app.listen(port);
+
+app.listen(port, function() {
+    console.log('Pagespace dev app now running on http://localhost:%s', port)
+}).on('error', function(err) {
+    if(err.code === 'EADDRINUSE') {
+        console.error('Cannot start Pagespace. Something is already running on port %s.', port);
+    } else {
+        console.error(err, 'Couldn\'t start pagespace :(');
+    }
+});
 
 module.exports = app;
