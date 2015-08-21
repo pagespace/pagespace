@@ -49,9 +49,9 @@
                 </div>
             </div>
 
-            <div ng-show="template">
+            <div ng-show="template && template.src">
                 <h3>Preview</h3>
-                <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 100%">
+                <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 66%">
             </div>
 
             <div ng-show="template.regions && template.regions.length">
