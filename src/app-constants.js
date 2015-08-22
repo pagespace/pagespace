@@ -73,7 +73,12 @@ consts.requests = {
     },
     STATIC: {
         key: 'STATIC',
-        regex: new RegExp('^/_static/(dashboard|bar|bower_components|parts)/(.*)'),
+        regex: new RegExp('^/_static/(dashboard|bar|bower_components|part)/(.*)'),
+        handler: require('./request-handlers/static-handler')
+    },
+    PART_STATIC: {
+        key: 'PART_STATIC',
+        regex: new RegExp('^/_parts/(.+)/static/(.*)'),
         handler: require('./request-handlers/static-handler')
     },
     CACHE: {

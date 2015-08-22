@@ -79,17 +79,25 @@ PartResolver.prototype.initPartModule = function(partModulePath, partModule) {
     //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
     var partViewDir = path.extname(partModulePath) ? path.dirname(partModulePath) : partModulePath;
 
+    partModule.__dir = partViewDir;
+
     //load the part view
     var partViewPath = path.join(partViewDir, 'index.hbs');
     logger.debug('Loading part view partial from %s...', partViewPath);
-    partModule.__viewPartial = fs.readFileSync(partViewPath, 'utf8');
-
-
+    try {
+        partModule.__viewPartial = fs.readFileSync(partViewPath, 'utf8');
+    } catch(err) {
+        logger.warn('Cannot find an index template (index.hbs) for the  part module for [%s]', partModulePath);
+    }
 
     //load the part view
     var editViewPath = path.join(partViewDir, 'edit.hbs');
     logger.debug('Loading part edit partial from %s...', editViewPath);
-    partModule.__editPartial = fs.readFileSync(editViewPath, 'utf8');
+    try {
+        partModule.__editPartial = fs.readFileSync(editViewPath, 'utf8');
+    } catch(err) {
+        logger.warn('Cannot find an editing template (edit.hbs) for the  part module for [%s]', partModulePath);
+    }
 };
 
 PartResolver.prototype._resolveModulePath = function(modulePath) {

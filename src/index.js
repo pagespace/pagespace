@@ -167,7 +167,7 @@ Index.prototype.init = function(options) {
             }
             partModules.forEach(function (partModule) {
                 //requires and caches part modules for later page requests
-                self.partResolver.require(partModule.module);
+                self.partResolver.require(partModule);
             });
 
             //general support instances supplied to all request handlers
@@ -390,7 +390,7 @@ Index.prototype.addRulesToAcl = function(rules) {
 };
 
 Index.prototype.getViewDir = function() {
-    return path.join(__dirname, '/../pagespace-views');
+    return path.join(__dirname, '/../views');
 };
 Index.prototype.getDefaultTemplateDir = function() {
     return path.join(__dirname, '/../templates');

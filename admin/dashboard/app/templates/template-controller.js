@@ -98,17 +98,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         }
     };
 
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.template.regions.forEach(function(region, index) {
-            var dataField = $scope.templateForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
-    };
-
     $scope.getTemplatePreviewUrl = function() {
         if($scope.template && $scope.template.src) {
             var templateSrc = encodeURIComponent($scope.template.src);

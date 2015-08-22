@@ -75,7 +75,6 @@
                             <div class="col-sm-7">
                                 <select ng-model="template.regions[$index].part"
                                         ng-options="part as part.name for part in parts track by part._id"
-                                        ng-change="setDefaultPartData()"
                                         class="form-control">
                                     <option value="" disabled selected>Select a part type</option>
                                 </select>
