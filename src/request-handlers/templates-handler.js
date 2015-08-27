@@ -33,7 +33,7 @@ var fs = require('fs'),
 
 var readFileAsync = Promise.promisify(fs.readFile);
 
-var DEFAULT_VIEW_DIR = '/pagespace-views';
+var DEFAULT_VIEW_DIR = '/views/pagespace';
 
 var reqTypes  = {
     TEMPLATES: 'available',
@@ -54,7 +54,7 @@ TemplatesHandler.prototype.init = function(support) {
     this.viewEngine = support.viewEngine;
     this.reqCount = 0;
 
-    this.templateShotsDir = path.join(support.userBasePath, '/template-shots');
+    this.templateShotsDir = path.join(support.userBasePath, 'tmp/template-shots');
 
     var self = this;
     return function(req, res, next) {
