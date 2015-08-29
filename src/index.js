@@ -390,10 +390,10 @@ Index.prototype.addRulesToAcl = function(rules) {
 };
 
 Index.prototype.getViewDir = function() {
-    return path.join(__dirname, '/../views');
+    return path.join(__dirname, '/../views/pagespace');
 };
 Index.prototype.getDefaultTemplateDir = function() {
-    return path.join(__dirname, '/../templates');
+    return path.join(__dirname, '/../views/templates');
 };
 Index.prototype.getViewEngine = function() {
     return this.viewEngine.__express;

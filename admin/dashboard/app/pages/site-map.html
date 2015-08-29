@@ -15,28 +15,37 @@
             <span class="glyphicon glyphicon-chevron-down order-vertical"></span>
         </button>
 
-        <a href="#/pages/{{page._id}}" ng-if="!page.redirect" title="Edit {{page.name}}">
-            <span ng-show="page.draft"><b>*</b></span>{{page.name}}
+        <a class="btn btn-sm sitemap-edit" href="#/pages/basic/{{page._id}}" title="Edit page">
+            <span class="glyphicon glyphicon-cog"></span>
         </a>
-        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="Edit {{page.name}} &gt; {{page.redirect.name}}">
+
+        <a ng-if="!page.redirect" href="{{page.url}}?_staging=true" class="sitemap-node-title" target="_blank" title="Go to {{page.name}}">{{page.name}}</a>
+
+        <a ng-if="page.redirect" href="{{page.url}}?_staging=true" class="sitemap-node-title" target="_blank" title="Go to {{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}
         </a>
-        <a ng-href="{{page.url}}?_staging=true" class="page-link" target="_blank" title="Go to {{page.name}}">{{page.url}}</a>
+<!--
+        <a  ng-if="!page.redirect" title="Edit {{page.name}}" class="page-link">
+            <span ng-show="page.draft"><b>*</b></span>Edit {{page.name}}
+        </a>
+        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="Edit {{page.name}} &gt; {{page.redirect.name}}" class="page-link">
+            Edit {{page.name}} &gt; {{page.redirect.name}}
+        </a>-->
+
 
     </div>
     <ul ng-if="page.children.length">
         <li ng-repeat="page in page.children" ng-include="'page-item'"></li>
     </ul>
 </script>
+<nav class="side-nav col-sm-2">
+    <ul class="nav nav-pills nav-stacked">
+        <li ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View pages</a></li>
+        <li ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
+        <li ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
+    </ul>
+</nav>
 <div class="col-sm-10">
-    <div class="sitemap-controls">
-        <ul class="nav nav-pills">
-            <li role="presentation" ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View pages</a></li>
-            <li role="presentation" ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
-            <li role="presentation" ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
-        </ul>
-    </div>
-
     <div class="sitemap" ng-class="viewMode">
         <ul class="sitemap-primary col{{pages.length}}">
             <li class="sitemap-home">
@@ -44,7 +53,7 @@
                     <button class="btn btn-sm sitemap-add" ng-click="addPage()" title="Add page">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
-                    <a href="#/site">{{site.name}}</a>
+                    <a href="#/pages/site">{{site.name}}</a>
                 </div>
             </li>
             <li ng-repeat="page in pages" ng-include="'page-item'"></li>

@@ -121,15 +121,16 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
             promises.push(page);
 
-            if(showAdminBar) {
+/*            if(showAdminBar) {
                 var adminBarLocation = path.join(__dirname, '/../../views/adminbar.hbs');
                 logger.debug('Showing admin bar (from: %s) ', adminBarLocation);
                 adminbarFilePromise = adminbarFilePromise || readFileAsync(adminBarLocation, 'utf8');
                 promises.push(adminbarFilePromise);
             } else {
                 //push empty promise, so spread args are still right
-                promises.push('');
-            }
+
+            }*/
+            promises.push('');
 
             //read data for each part
             page.regions.forEach(function (region) {
@@ -173,9 +174,9 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var status = args.shift();
         if(status === 200) {
             var page = args.shift();
-            var adminBar = args.shift();
+/*            var adminBar = args.shift();
 
-            self.viewEngine.registerPartial('adminbar', adminBar, urlPath);
+            self.viewEngine.registerPartial('adminbar', adminBar, urlPath);*/
 
             var pageData = {};
             pageData.site = self.site;

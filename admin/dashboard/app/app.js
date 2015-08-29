@@ -22,6 +22,10 @@
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/pages/:section/:pageId/', {
+                templateUrl: '/_static/dashboard/app/pages/page.html',
+                controller: 'PageController'
+            }).
             when('/pages/delete/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
@@ -69,7 +73,7 @@
             }).
 
             //site
-            when('/site', {
+            when('/pages/site', {
                 templateUrl: '/_static/dashboard/app/site/sitesettings.html',
                 controller: 'SiteSettingsController'
             }).
@@ -102,6 +106,11 @@
                 controller: 'UserController'
             }).
 
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+
             //default to sitemap
             otherwise({
                 templateUrl: '/_static/dashboard/app/pages/site-map.html',
@@ -127,5 +136,12 @@
             });
         });
     }
+
+    adminApp.controller("MainController", function($scope, $location) {
+        $scope.menuClass = function(page) {
+            var current = $location.path().indexOf(page) === 0;
+            return current ? "active" : "";
+        };
+    });
 
 })();

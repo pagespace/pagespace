@@ -72,6 +72,7 @@
     line-height:34px;
     overflow: hidden;
     color: #004EA3;
+    height: 50px;     line-height: 50px;
 }
 .sitemap-primary li {
 	float: left;
@@ -208,15 +209,22 @@ a:visited:before {
     margin-bottom: 3px;
 }
 
+.sitemap-node-title {
+    margin: 0 36px;
+}
 /* Buttons */
-.sitemap-primary button {
-    background-color: transparent;
-    border: 1px solid #004EA3;
+.sitemap-primary .btn,
+.sitemap-primary .btn {
+    background-color: rgba(160, 160, 160, 0.41);
+    /* border: 1px solid #004EA3; */
     color: #004EA3;
     border-radius: 4px;
-    margin: 6px 6px 0 6px;
+    /* margin: 6px 6px 0 6px; */
     padding: 3px 6px;
-    font-size: 10px;
+    font-size: 14px;
+    height: 50px;
+    line-height: 50px;
+    width: 36px;
 }
 .sitemap-primary button:hover {
     color: #0074ff;
@@ -248,6 +256,14 @@ a:visited:before {
 }
 .order .sitemap-forward {
     display: block;
+}
+
+.sitemap-edit {
+    float: left;
+}
+.order .sitemap-edit,
+.addremove .sitemap-edit {
+    display: none;
 }
 /* choose left/right or down/up arrows */
 .order-vertical {

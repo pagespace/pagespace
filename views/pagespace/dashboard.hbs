@@ -3,6 +3,7 @@
 <head>
     <title>Dashboard :: Pagespace</title>
     <meta charset="utf-8">
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
     <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
     <link href="/_static/bower_components/ng-tags-input/ng-tags-input.min.css" rel="stylesheet">
@@ -25,64 +26,57 @@
     <script src="/_static/dashboard/build/admin-app.js"></script>
 
 </head>
-<body>
+<body ng-controller="MainController">
 
 <div class="container-fluid">
-    <div class="row full-height">
-        <header id="sidebar" class="col-sm-2">
-            <h1>Pagespace</h1>
-
-            <ul class="nav" style="text-align: center">
-                <li>
-                    <h3>Hello {{displayName}}</h3>
-                </li>
-            </ul>
-
-            <ul class="nav">
-                <li><a href="#/">Sitemap</a></li>
+    <header class="row">
+        <div class="col-sm-2">
+            <div class="logo">
+                <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
+            </div>
+        </div>
+        <nav class="header-nav col-sm-8">
+            <ul class="nav nav-pills">
+                <li ng-class="menuClass('/pages')"><a href="#/pages">Pages</a></li>
                 <!--<li><a href="#/macros">Macros</a></li>-->
-                <li><a href="#/media">Media</a></li>
-                <li><a href="#/publishing">Publishing</a></li>
+                <li ng-class="menuClass('/media')"><a href="#/media">Media</a></li>
+                <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publishing</a></li>
                 {{#allowTemplatesAndParts}}
-                    <li><a href="#/templates">Templates</a></li>
-                    <li><a href="#/parts">Page Parts</a></li>
+                    <li ng-class="menuClass('/templates')"><a href="#/templates">Templates</a></li>
+                    <li ng-class="menuClass('/parts')"><a href="#/parts">Page Parts</a></li>
                 {{/allowTemplatesAndParts}}
                 {{#allowUsers}}
-                    <li><a href="#/users">Users</a></li>
+                    <li ng-class="menuClass('/users')"><a href="#/users">Users</a></li>
                 {{/allowUsers}}
             </ul>
-            <ul class="nav" style="margin-top: 1em">
-                <li><a href="/_logout">Logout</a></li>
-            </ul>
-            <ul class="nav" style="margin-top: 1em">
-                <li style="text-align: left">
-                    <span data-color="#cbcbcb"></span>
-                    <span data-color="#ff005a"></span>
-                    <span data-color="#00D6F3"></span>
-                    <span data-color="#faa129"></span>
-                    <span data-color="#29f38f"></span>
-                </li>
-            </ul>
-            <p style="text-align: center"><br>Pagespace &copy; {{year}}</p>
-        </header>
-        <div class="col-sm-10">
-           <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
-           <div ng-view></div>
+        </nav>
+        <div class="header-utils col-sm-2">
+            <p>Hello <b>{{displayName}}</b> | <a href="/_logout">Logout</a></p>
         </div>
+    </header>
+    <div class="row">
+        <div ng-view></div>
     </div>
+    <footer class="row">
+        <div class="sm-col-2">
+        </div>
+        <div class="sm-col-10">
+            <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
+        </div>
+    </footer>
 </div>
 <script>
     (function() {
         //change the sidebar color stuff
-        var sidebarColor = window.localStorage.getItem('sidebarColor');
-        if(sidebarColor) {
-            document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+        var headerColor = window.localStorage.getItem('specialColor');
+        if(headerColor) {
+            document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
         }
         document.body.addEventListener('click', function (e) {
             if (e.target.getAttribute('data-color')) {
-                sidebarColor = e.target.getAttribute('data-color');
-                window.localStorage.setItem('sidebarColor', sidebarColor);
-                document.getElementById('sidebar').style.backgroundColor = sidebarColor;
+                headerColor = e.target.getAttribute('data-color');
+                window.localStorage.setItem('specialColor', headerColor);
+                document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
             }
         });
     })();

@@ -1,64 +1,62 @@
-<div class="row">
-    <div class="col-sm-6">
-        <form role="form" ng-submit="upload(uploadForm)" name="uploadForm" class="form-horizontal" novalidate ">
-
-            <div class="form-intro">
-                <p>Upload an image or another type of file
-                <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
-            </div>
-
-            <div class="form-group" bs-has-error="file">
-                <label class="col-sm-2 control-label">Select a file</label>
-                <div class="col-sm-7">
-                    <div class="btn btn-primary btn-file">
-                        <span ng-show="!fileSrc">Choose...</span><span ng-show="fileSrc">Choose again...</span>
-                        <input type="file" name="file" onchange="angular.element(this).scope().setFiles(this.files)" required>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="name">
-                <label class="col-sm-2 control-label">Name</label>
-                <div class="col-sm-7">
-                    <input type="text" class="form-control input-medium" ng-model="media.name" name="name"
-                           placeholder="e.g. Our Office" required>
-                </div>
-                <div class="col-sm-3">
-                    <p class="form-control-static text-muted"><i>required</i></p>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="description">
-                <label class="col-sm-2 control-label">Description</label>
-                <div class="col-sm-9">
-                    <textarea class="form-control input-medium" ng-model="media.description" name="description"
-                              placeholder="e.g. Picture of our office for the contact page"></textarea>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="tags">
-                <label class="col-sm-2 control-label">Tags</label>
-                <div class="col-sm-9">
-
-                    <tags-input ng-model="media.tags" name="tags"
-                                placeholder="Add tags to help manage your files">
-                        <auto-complete source="getMatchingTags($query)"></auto-complete>
-                                </tags-input>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary">Upload</button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-            </div>
-        </form>
+<nav class="side-nav col-sm-2">
+    <div ng-show="fileName">
+        <h4>Preview</h4>
+        <h5>{{fileName}}</h5>
+        <p ng-show="fileName && !fileSrc ">No preview available</p>
+        <img src="{{fileSrc}}" alt="{{fileName}}" ng-show="fileSrc" style="max-width: 100%; max-height: 500px">
     </div>
-    <div class="col-sm-6">
-        <div ng-show="fileName">
-            <h3>Preview</h3>
-            <h4>{{fileName}}</h4>
-            <p ng-show="fileName && !fileSrc ">No preview available</p>
-            <img src="{{fileSrc}}" alt="{{fileName}}" ng-show="fileSrc" style="max-height: 300px">
+</nav>
+<main class="main col-sm-6">
+    <form role="form" ng-submit="upload(uploadForm)" name="uploadForm" class="form-horizontal" novalidate ">
+
+        <div class="form-intro">
+            <p>Upload an image or another type of file
+            <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
-    </div>
-</div>
+
+        <div class="form-group" bs-has-error="file">
+            <label class="col-sm-2 control-label">Select a file</label>
+            <div class="col-sm-7">
+                <div class="btn btn-primary btn-file">
+                    <span ng-show="!fileSrc">Choose...</span><span ng-show="fileSrc">Choose again...</span>
+                    <input type="file" name="file" onchange="angular.element(this).scope().setFiles(this.files)" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="name">
+            <label class="col-sm-2 control-label">Name</label>
+            <div class="col-sm-7">
+                <input type="text" class="form-control input-medium" ng-model="media.name" name="name"
+                       placeholder="e.g. Our Office" required>
+            </div>
+            <div class="col-sm-3">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="description">
+            <label class="col-sm-2 control-label">Description</label>
+            <div class="col-sm-9">
+                <textarea class="form-control input-medium" ng-model="media.description" name="description"
+                          placeholder="e.g. Picture of our office for the contact page"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="tags">
+            <label class="col-sm-2 control-label">Tags</label>
+            <div class="col-sm-9">
+
+                <tags-input ng-model="media.tags" name="tags"
+                            placeholder="Add tags to help manage your files">
+                    <auto-complete source="getMatchingTags($query)"></auto-complete>
+                            </tags-input>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary">Upload</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</main>
