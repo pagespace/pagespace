@@ -1,45 +1,44 @@
-<div class="row">
-    <div class="col-sm-6">
-        <form role="form" ng-submit="publish()">
-
-            <div class="list-group" >
-
-            </div>
-            <div class="form-intro">
-                <p ng-show="drafts.length == 0">There is nothing to publish</p>
-                <p ng-show="drafts.length > 0">Select pages to publish:</p>
-                <p ng-show="submitted" class="text-danger">Please select one or more pages to publish</p>
-            </div>
-            <div class="list-group" ng-show="drafts.length > 0">
-                <div ng-repeat="page in drafts"
-                     class="list-group-item"
-                     ng-class="{'list-group-item-success': page.queued && (page.status == 200 || page.url == '/'), 'list-group-item-danger': page.queued && (page.status != 200 && page.url != '/')}"
-                     ng-click="page.queued = !page.queued" style="cursor: pointer">
-                    <div class="pull-right">
-                        <div class="checkbox">
-                            <label>
-                            <input type="checkbox"
-                                   ng-click="page.queued = !page.queued"
-                                   ng-model="page.queued">
-                                Queue to publish </label>
-                        </div>
-                    </div>
-
-                    <h4 class="list-group-item-heading">{{page.name}}
-                        <small ng-show="!page.published && page.status == 200"><i><b>new</b></i></small>
-                        <small ng-show="page.published && page.status == 200"><i><b>update</b></i></small>
-                        <small ng-show="page.status != 200 && page.url != '/'"><i><b>delete</b></i></small>
-                    </h4>
-                    <p class="list-group-item-text">
-                        <small><a href="{{page.url}}" target="_blank">{{page.url}}</a></small>
-                    </p>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary">Publish</button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-            </div>
-        </form>
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>Publish pages</h3>
     </div>
-</div>
+</nav>
+<main class="main col-sm-6">
+    <form role="form" ng-submit="publish()">
+        <div class="notification-bar">
+            <p ng-show="drafts.length == 0">There is nothing to publish</p>
+            <p ng-show="drafts.length > 0">Select pages to publish:</p>
+            <p ng-show="submitted" class="text-danger">Please select one or more pages to publish</p>
+        </div>
+        <div class="list-group" ng-show="drafts.length > 0">
+            <div ng-repeat="page in drafts"
+                 class="list-group-item"
+                 ng-class="{'list-group-item-success': page.queued && (page.status == 200 || page.url == '/'), 'list-group-item-danger': page.queued && (page.status != 200 && page.url != '/')}"
+                 ng-click="page.queued = !page.queued" style="cursor: pointer">
+                <div class="pull-right">
+                    <div class="checkbox">
+                        <label>
+                        <input type="checkbox"
+                               ng-click="page.queued = !page.queued"
+                               ng-model="page.queued">
+                            Queue to publish </label>
+                    </div>
+                </div>
+
+                <h4 class="list-group-item-heading">{{page.name}}
+                    <small ng-show="!page.published && page.status == 200"><i><b>new</b></i></small>
+                    <small ng-show="page.published && page.status == 200"><i><b>update</b></i></small>
+                    <small ng-show="page.status != 200 && page.url != '/'"><i><b>delete</b></i></small>
+                </h4>
+                <p class="list-group-item-text">
+                    <small><a href="{{page.url}}" target="_blank">{{page.url}}</a></small>
+                </p>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary">Publish</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</main>

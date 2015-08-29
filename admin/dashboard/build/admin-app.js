@@ -9,6 +9,12 @@
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
 
+            //site
+            when('/pages/site', {
+                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
+                controller: 'SiteSettingsController'
+            }).
+
             //pages
             when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
@@ -21,6 +27,14 @@
             when('/pages/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
+            }).
+            when('/pages/:section/:pageId/', {
+                templateUrl: '/_static/dashboard/app/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/view/:env/:url*', {
+                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                controller: 'ViewPageController'
             }).
             when('/pages/delete/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
@@ -68,12 +82,6 @@
                 controller: 'MacrosController'
             }).
 
-            //site
-            when('/site', {
-                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
-                controller: 'SiteSettingsController'
-            }).
-
             //templates
             when('/templates', {
                 templateUrl: '/_static/dashboard/app/templates/template-list.html',
@@ -102,6 +110,11 @@
                 controller: 'UserController'
             }).
 
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+
             //default to sitemap
             otherwise({
                 templateUrl: '/_static/dashboard/app/pages/site-map.html',
@@ -127,6 +140,13 @@
             });
         });
     }
+
+    adminApp.controller("MainController", function($scope, $location) {
+        $scope.menuClass = function(page) {
+            var current = $location.path().indexOf(page) === 0;
+            return current ? "active" : "";
+        };
+    });
 
 })();
 
@@ -564,8 +584,6 @@ adminApp.controller("DeletePageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
-    $rootScope.pageTitle = "Delete page";
-
     var pageId = $routeParams.pageId;
     $scope.status = 410;
 
@@ -620,10 +638,12 @@ adminApp.controller("PageController",
 
     $log.info('Showiing page view.');
 
+    $scope.section = $routeParams.section || 'basic';
+
     $rootScope.clearNotification();
-    $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
+
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
@@ -700,7 +720,7 @@ adminApp.controller("PageController",
         }
     }
 
-    async.parallel(pageSetupFunctions, function(err) {
+    async.series(pageSetupFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
         } else {
@@ -737,7 +757,7 @@ adminApp.controller("PageController",
     };
 
     $scope.$watch('page.name', function() {
-        if($scope.pageForm.url.$pristine && !pageId) {
+        if($scope.pageForm && $scope.pageForm.url.$pristine && !pageId) {
             $scope.updateUrl();
         }
     });
@@ -805,6 +825,10 @@ adminApp.controller("PageController",
         }
     };
 
+
+});
+
+
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
     }
@@ -817,8 +841,6 @@ adminApp.controller("PageController",
         }
         return true;
     }
-});
-
 })();
 (function() {
     var adminApp = angular.module('adminApp');
@@ -1119,6 +1141,75 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
+adminApp.controller("ViewPageController",
+    function($scope, $rootScope, $routeParams) {
+
+    var env = $routeParams.env;
+    var url = $routeParams.url;
+
+    $scope.getPageUrl = function() {
+        var staging = env === 'preview';
+        return url + '?_preview=' + staging;
+    };
+});
+
+adminApp.directive('pageHolder', function() {
+    return {
+        restrict: 'E',
+        transclude: true,
+        replace: true,
+        template: '<div class="my-div" ng-transclude></div>',
+        link: function link(scope, element, attrs) {
+
+            //sizing
+            function getWindowHeight() {
+                return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+            }
+
+            element.css('clear', 'both');
+            element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+
+            window.addEventListener('resize', function() {
+                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+            });
+
+            //injection
+            var adminStyles = document.createElement('link');
+            adminStyles.id =
+            adminStyles.setAttribute('type', 'text/css');
+            adminStyles.setAttribute('rel', 'stylesheet');
+            adminStyles.setAttribute('href', '/_static/bar/adminbar.css');
+
+            var adminScript = document.createElement('script');
+            adminScript.src = '/_static/bar/adminbar.js';
+
+            var pageFrame = element.find('iframe')[0];
+
+            pageFrame.addEventListener('load', function() {
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName("head")[0];
+                frameHead.appendChild(adminStyles);
+                frameHead.appendChild(adminScript);
+
+                adminScript.onload = function() {
+                    pageFrame.contentWindow.pagespace.setupAdminMode();
+                };
+
+            });
+
+
+
+        }
+    };
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
 adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, $window, partService) {
 
     $rootScope.pageTitle = "Page Part";
@@ -1355,7 +1446,6 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
      */
     var adminApp = angular.module('adminApp');
     adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
-        $rootScope.pageTitle = "Site settings";
 
         $scope.defaultPage = null;
 
@@ -1523,17 +1613,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 $scope.template.regions.splice(i, 1);
             }
         }
-    };
-
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.template.regions.forEach(function(region, index) {
-            var dataField = $scope.templateForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
     };
 
     $scope.getTemplatePreviewUrl = function() {

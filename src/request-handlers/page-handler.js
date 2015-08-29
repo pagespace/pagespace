@@ -29,9 +29,6 @@ var fs = require('fs'),
 
 var redirectStatuses = [ 301, 302, 303, 307 ];
 
-var readFileAsync = Promise.promisify(fs.readFile);
-var adminbarFilePromise = null;
-
 var PageHandler = function() {
 };
 
@@ -77,9 +74,8 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         return req.session[sessionKey] || false;
     }
 
-    var showAdminBar = req.user && req.user.role !== 'guest';
-    var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
-    logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
+    var stagingMode = sessionValueSwitch(req, '_preview', 'staging');
+    logger.info('New %s page request', (stagingMode ? 'preview' : 'live'));
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
@@ -120,16 +116,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             logger.debug('Page found (200) for %s: %s', urlPath, page.id);
 
             promises.push(page);
-
-            if(showAdminBar) {
-                var adminBarLocation = path.join(__dirname, '/../../views/adminbar.hbs');
-                logger.debug('Showing admin bar (from: %s) ', adminBarLocation);
-                adminbarFilePromise = adminbarFilePromise || readFileAsync(adminBarLocation, 'utf8');
-                promises.push(adminbarFilePromise);
-            } else {
-                //push empty promise, so spread args are still right
-                promises.push('');
-            }
 
             //read data for each part
             page.regions.forEach(function (region) {
@@ -173,9 +159,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var status = args.shift();
         if(status === 200) {
             var page = args.shift();
-            var adminBar = args.shift();
-
-            self.viewEngine.registerPartial('adminbar', adminBar, urlPath);
 
             var pageData = {};
             pageData.site = self.site;

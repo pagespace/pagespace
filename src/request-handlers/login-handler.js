@@ -56,7 +56,7 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                     badCredentials: psUtil.typeify(req.query.badCredentials) || false
                 };
                 if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
-                    return res.render('login.hbs', data, function(err, html) {
+                    return res.render('pagespace/login.hbs', data, function(err, html) {
                         if(err) {
                             logger.error(err, 'Trying to render login');
                             next(err);

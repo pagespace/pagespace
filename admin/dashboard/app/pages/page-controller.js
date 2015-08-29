@@ -11,10 +11,12 @@ adminApp.controller("PageController",
 
     $log.info('Showiing page view.');
 
+    $scope.section = $routeParams.section || 'basic';
+
     $rootScope.clearNotification();
-    $rootScope.pageTitle = "Page";
 
     var pageId = $routeParams.pageId;
+
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
@@ -91,7 +93,7 @@ adminApp.controller("PageController",
         }
     }
 
-    async.parallel(pageSetupFunctions, function(err) {
+    async.series(pageSetupFunctions, function(err) {
         if(err) {
             $rootScope.showError(err);
         } else {
@@ -128,7 +130,7 @@ adminApp.controller("PageController",
     };
 
     $scope.$watch('page.name', function() {
-        if($scope.pageForm.url.$pristine && !pageId) {
+        if($scope.pageForm && $scope.pageForm.url.$pristine && !pageId) {
             $scope.updateUrl();
         }
     });
@@ -196,6 +198,10 @@ adminApp.controller("PageController",
         }
     };
 
+
+});
+
+
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
     }
@@ -208,6 +214,4 @@ adminApp.controller("PageController",
         }
         return true;
     }
-});
-
 })();

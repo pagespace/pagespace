@@ -6,7 +6,6 @@
      */
     var adminApp = angular.module('adminApp');
     adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
-        $rootScope.pageTitle = "Site settings";
 
         $scope.defaultPage = null;
 

@@ -9,6 +9,12 @@
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
 
+            //site
+            when('/pages/site', {
+                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
+                controller: 'SiteSettingsController'
+            }).
+
             //pages
             when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
@@ -21,6 +27,14 @@
             when('/pages/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
+            }).
+            when('/pages/:section/:pageId/', {
+                templateUrl: '/_static/dashboard/app/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/pages/view/:env/:url*', {
+                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                controller: 'ViewPageController'
             }).
             when('/pages/delete/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
@@ -68,12 +82,6 @@
                 controller: 'MacrosController'
             }).
 
-            //site
-            when('/site', {
-                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
-                controller: 'SiteSettingsController'
-            }).
-
             //templates
             when('/templates', {
                 templateUrl: '/_static/dashboard/app/templates/template-list.html',
@@ -102,6 +110,11 @@
                 controller: 'UserController'
             }).
 
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+
             //default to sitemap
             otherwise({
                 templateUrl: '/_static/dashboard/app/pages/site-map.html',
@@ -127,5 +140,12 @@
             });
         });
     }
+
+    adminApp.controller("MainController", function($scope, $location) {
+        $scope.menuClass = function(page) {
+            var current = $location.path().indexOf(page) === 0;
+            return current ? "active" : "";
+        };
+    });
 
 })();

@@ -1,20 +1,12 @@
 (function() {
 
-    document.addEventListener("DOMContentLoaded", function setupEditMode() {
-
+   window.pagespace = window.pagespace || {};
+   window.pagespace.setupAdminMode = function() {
         //adds various admin functionality to a page
-        addAdminBar();
         handleAdminEvents();
         syncColors();
         decorateParts();
-    });
-
-
-    function addAdminBar() {
-
-        var adminbarHtml = document.getElementById('adminbar-html').innerHTML;
-        document.body.innerHTML = adminbarHtml + document.body.innerHTML;
-    }
+    };
 
     function handleAdminEvents() {
 
@@ -40,8 +32,6 @@
         try {
             var sidebarColor = window.localStorage.getItem('sidebarColor');
             if(sidebarColor) {
-                document.getElementById('adminbar').style.backgroundColor = sidebarColor;
-
                 var styleSheetsArray = Array.prototype.slice.call(document.styleSheets);
                 var styleSheet= styleSheetsArray.filter(function(styleSheet) {
                     return styleSheet.href && styleSheet.href.indexOf('adminbar.css') > -1;
