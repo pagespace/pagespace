@@ -96,7 +96,10 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
                 return next(err);
             }
             if (!user) {
-                return res.redirect('/_login?badCredentials=true');
+                res.status(401);
+                return res.json({
+                    badCredentials: true
+                });
             }
             async.series([
                 function(callback) {
