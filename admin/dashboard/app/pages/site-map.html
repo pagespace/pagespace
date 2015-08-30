@@ -19,10 +19,14 @@
             <span class="glyphicon glyphicon-cog"></span>
         </a>
 
-        <a ng-if="!page.redirect" href="#/pages/view/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}}">{{page.name}}<span ng-show="page.draft"><b>*</b></span></a>
+        <a class="btn btn-sm sitemap-publish" href="#/publishing/{{page._id}}" title="Publish" ng-show="page.draft">
+            <span class="glyphicon glyphicon-play"></span>
+        </a>
 
-        <a ng-if="page.redirect" href="#/pages/view/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}} &gt; {{page.redirect.name}}">
-            {{page.name}} &gt; {{page.redirect.name}}<span ng-show="page.draft"><b>*</b></span>
+        <a ng-if="!page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}}">{{page.name}}</a>
+
+        <a ng-if="page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}} &gt; {{page.redirect.name}}">
+            {{page.name}} &gt; {{page.redirect.name}}</span>
         </a>
 <!--
         <a  ng-if="!page.redirect" title="Edit {{page.name}}" class="page-link">
@@ -51,7 +55,7 @@
 <main class="main col-sm-10">
 
     <div class="notification-bar">
-        <p>This is the sitemap. Here you can manage the pages of your website.</p>
+        <p>Manage pages.</p>
     </div>
 
     <div class="sitemap" ng-class="viewMode">
@@ -67,6 +71,4 @@
             <li ng-repeat="page in pages" ng-include="'page-item'"></li>
         </ul>
     </div>
-
-    <p style="clear: both;"><small>* Page in draft, awaiting publishing</small></p>
 </main>

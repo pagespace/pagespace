@@ -20,9 +20,9 @@
             if(really) {
                 mediaService.deleteItem(item._id).success(function() {
                     $location.path('/media');
-                    $rootScope.showInfo("Media: " + item.name + " removed.");
+                    $scope.showInfo("Media: " + item.name + " removed.");
                 }).error(function(err) {
-                    $rootScope.showError("Error deleting page", err);
+                    $scope.showError("Error deleting page", err);
                 });
             }
         };
@@ -43,15 +43,15 @@
                 $scope.itemText = res.data;
             }
         }).catch(function(err) {
-            $rootScope.showError('Error getting media item', err);
+            $scope.showError('Error getting media item', err);
         });
 
         $scope.updateItemText = function() {
             mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
-                $rootScope.showSuccess('Media item updated');
+                $scope.showSuccess('Media item updated');
                 $location.path('/media');
             }).error(function(err) {
-                $rootScope.showError('Could not update text media', err);
+                $scope.showError('Could not update text media', err);
             });
         };
     });

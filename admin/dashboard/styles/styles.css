@@ -7,7 +7,9 @@ h1,
     margin-bottom: 40px;
 }
 header {
+    position: relative;
     background-color: #F3F3F3;
+    z-index: 1;
 }
 header h1,
 header .nav {
@@ -112,7 +114,26 @@ header > nav {
     line-height: 50px;
     font-size: 18px;
     margin: 0;
-    margin: 0;
+}
+
+.alert {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    padding: 6px 12px 6px 12px;
+    min-width: 350px;
+    max-height: 300px;
+    overflow: auto;
+    transition: max-height linear 1s;
+}
+.alert.ng-hide {
+    display: block !important;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height linear 1s
+}
+.alert .close {
+    margin-left: 12px;
 }
 
 .section-heading {

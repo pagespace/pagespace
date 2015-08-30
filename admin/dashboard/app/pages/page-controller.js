@@ -13,7 +13,7 @@ adminApp.controller("PageController",
 
     $scope.section = $routeParams.section || 'basic';
 
-    $rootScope.clearNotification();
+    $scope.clearNotification();
 
     var pageId = $routeParams.pageId;
 
@@ -95,7 +95,7 @@ adminApp.controller("PageController",
 
     async.series(pageSetupFunctions, function(err) {
         if(err) {
-            $rootScope.showError(err);
+            $scope.showError(err);
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
@@ -109,7 +109,7 @@ adminApp.controller("PageController",
     };
 
     $scope.cancel = function() {
-        $location.path("");
+        $location.path("/pages");
     };
 
     $scope.selectTemplate = function(template) {
@@ -178,22 +178,22 @@ adminApp.controller("PageController",
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.updatePage(pageId, page).success(function(res) {
                 $log.info('Page successfully updated');
-                $rootScope.showSuccess("Page: " + page.name + " saved.");
+                $scope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
             }).error(function(err) {
                 $log.error(err, 'Error updating page');
-                $rootScope.showError("Error updating page", err);
+                $scope.showError("Error updating page", err);
             });
         } else {
             $log.info('Creating page...');
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.createPage(page).success(function() {
                 $log.info('Page successfully created');
-                $rootScope.showSuccess("Page: " + page.name + " created.");
+                $scope.showSuccess("Page: " + page.name + " created.");
                 $location.path("");
             }).error(function(err) {
                 $log.error(err, 'Error creating page');
-                $rootScope.showError("Error adding new page", err);
+                $scope.showError("Error adding new page", err);
             });
         }
     };

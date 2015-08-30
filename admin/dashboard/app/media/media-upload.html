@@ -5,7 +5,7 @@
 
     <div ng-show="fileName">
         <h4>Preview</h4>
-        <h5>{{fileName}}</h5>
+        <p>{{fileName}}</p>
         <p ng-show="fileName && !fileSrc ">No preview available</p>
         <img src="{{fileSrc}}" alt="{{fileName}}" ng-show="fileSrc" style="max-width: 100%; max-height: 500px">
     </div>

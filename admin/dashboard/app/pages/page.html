@@ -9,5 +9,14 @@
     </ul>
 </nav>
 <main class="main col-sm-6">
-    <div ng-include="'/_static/dashboard/app/pages/includes/' + section + '.html'"></div>
+    <div class="notification-bar">
+        <p ng-show="!pageId && page.root == 'primary'">Create a new top level page</p>
+        <p ng-show="!pageId && page.parent">Create a sub page of <b>{{page.parent.name}}</b></p>
+        <p ng-show="pageId">Update the page:  <b>{{page.name}}</b></p>
+        <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
+    </div>
+
+    <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
+        <div ng-include="'/_static/dashboard/app/pages/includes/' + section + '.html'"></div>
+    </form>
 </main>

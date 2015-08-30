@@ -30,8 +30,8 @@
     function syncColors() {
         //sync colors
         try {
-            var sidebarColor = window.localStorage.getItem('sidebarColor');
-            if(sidebarColor) {
+            var specialColor = window.localStorage.getItem('specialColor');
+            if(specialColor) {
                 var styleSheetsArray = Array.prototype.slice.call(document.styleSheets);
                 var styleSheet= styleSheetsArray.filter(function(styleSheet) {
                     return styleSheet.href && styleSheet.href.indexOf('adminbar.css') > -1;
@@ -43,18 +43,18 @@
                 var boxHoverRule = cssRulesArray.filter(function(rule) {
                     return rule.selectorText === '.ps-edit-box:hover';
                 })[0];
-                boxHoverRule.style.outlineColor = sidebarColor
+                boxHoverRule.style.outlineColor = specialColor
 
                 //edit button rules
                 var editButtonRule = cssRulesArray.filter(function(rule) {
                     return rule.selectorText === '.ps-edit-box .ps-edit';
                 })[0];
-                editButtonRule.style.backgroundColor = sidebarColor;
+                editButtonRule.style.backgroundColor = specialColor;
 
                 var closeEditButton = cssRulesArray.filter(function(rule) {
                     return rule.selectorText === '.ps-part-editor-close';
                 })[0];
-                closeEditButton.style.backgroundColor = sidebarColor;
+                closeEditButton.style.backgroundColor = specialColor;
             }
         } catch(e) {
             console.warn(e);
@@ -66,7 +66,9 @@
         function createEditButton(pageId, region) {
             //add edit buttons
             var editButton = document.createElement('button');
-            editButton.innerText = 'e';
+            editButton.innerHTML =
+                '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Part" title="Edit Part"' +
+                'data-target-page-id=' + pageId + ' data-target-region=' + region + '>';
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.classList.add('ps-edit');
@@ -135,7 +137,8 @@
         var closeBtn = document.createElement('button');
         closeBtn.classList.add('ps-part-editor-close');
         closeBtn.classList.add('ps-btn');
-        closeBtn.innerText = 'x';
+        closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close title=Close>';
+
         editor.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
             editor.parentNode.removeChild(editor);

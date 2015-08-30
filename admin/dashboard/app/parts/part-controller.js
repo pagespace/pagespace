@@ -23,15 +23,15 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         partService.getPart(partId).success(function(part) {
             $scope.part = part;
         }).error(function(err) {
-            $rootScope.showError("Error getting part", err);
+            $scope.showError("Error getting part", err);
         });
     }
 
     $scope.reset = function() {
         partService.resetPart($scope.part).success(function() {
-            $rootScope.showSuccess("Cache cleared");
+            $scope.showSuccess("Cache cleared");
         }).error(function(err) {
-            $rootScope.showError("Error getting part", err);
+            $scope.showError("Error getting part", err);
         })
     };
 
@@ -49,18 +49,18 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         if(partId) {
             partService.updatePart(partId, $scope.part).success(function(res) {
                 console.log("Part saved");
-                $rootScope.showSuccess("Part updated.");
+                $scope.showSuccess("Part updated.");
                 $location.path("/parts");
             }).error(function(err) {
-                $rootScope.showError("Error updating part", err);
+                $scope.showError("Error updating part", err);
             });
         } else {
             partService.createPart($scope.part).success(function(res) {
                 console.log("Part created");
-                $rootScope.showSuccess("Part created.");
+                $scope.showSuccess("Part created.");
                 $location.path("/parts");
             }).error(function(err) {
-                $rootScope.showError("Error saving part", err);
+                $scope.showError("Error saving part", err);
             });
         }
     };
@@ -69,10 +69,10 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         var really = window.confirm('Really delete this part?');
         if(really) {
             partService.deletePart($scope.part._id).success(function (res) {
-                $rootScope.showInfo("Part removed", err);
+                $scope.showInfo("Part removed", err);
                 $location.path("/parts");
             }).error(function (err) {
-                $rootScope.showError("Error deleting part", err);
+                $scope.showError("Error deleting part", err);
             });
         }
     };

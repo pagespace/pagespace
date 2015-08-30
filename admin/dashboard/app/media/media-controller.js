@@ -81,7 +81,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         console.log($scope.availableTags);
         $scope.availableTags = availableTags;
     }).error(function(err) {
-        $rootScope.showError("Error getting media items", err);
+        $scope.showError("Error getting media items", err);
     });
 });
 

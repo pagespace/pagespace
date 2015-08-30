@@ -149,12 +149,11 @@ a:visited:before {
 }
 .sitemap-primary li li li {
 	background: url(images/l3-center.png) left center no-repeat;
-	padding: 5px 0;
 }
 .sitemap-primary li li li .sitemap-node {
 	background-color: #FFFF8B;
 	font-size: 16px;
-	padding: 5px 0;
+	/* padding: 5px 0; */
 	width: 80%;
 	float: right;
 }
@@ -261,10 +260,18 @@ a:visited:before {
 .sitemap-edit {
     float: left;
 }
+.sitemap-publish {
+    float: right;
+}
 .order .sitemap-edit,
-.addremove .sitemap-edit {
+.addremove .sitemap-edit,
+.order .sitemap-publish,
+.addremove .sitemap-publish {
     display: none;
 }
+
+
+
 /* choose left/right or down/up arrows */
 .order-vertical {
     display: none;

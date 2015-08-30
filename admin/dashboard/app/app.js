@@ -32,7 +32,7 @@
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/pages/view/:env/:url*', {
+            when('/view-page/:env/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
@@ -58,6 +58,10 @@
 
             //publishing
             when('/publishing', {
+                templateUrl: '/_static/dashboard/app/publishing/publishing.html',
+                controller: 'PublishingController'
+            }).
+            when('/publishing/:pageId', {
                 templateUrl: '/_static/dashboard/app/publishing/publishing.html',
                 controller: 'PublishingController'
             }).
@@ -141,11 +145,72 @@
         });
     }
 
-    adminApp.controller("MainController", function($scope, $location) {
+    adminApp.controller("MainController", function($scope, $location, $timeout) {
         $scope.menuClass = function(page) {
-            var current = $location.path().indexOf(page) === 0;
-            return current ? "active" : "";
+
+            //default page
+            var path = $location.path();
+            if(path === '/') {
+                path = '/pages';
+            }
+            var match = path.indexOf(page) === 0;
+            return match ? "active" : "";
         };
+
+        //notications
+        $scope.message = null;
+
+        function showMessage(text, type) {
+            $scope.message = {
+                type: type,
+                text: text
+            };
+        }
+
+        $scope.showSuccess = function(text) {
+            console.log(text);
+            showMessage(text, 'success');
+        };
+
+        $scope.showInfo = function(text) {
+            console.log(text);
+            showMessage(text, 'info');
+        };
+
+        $scope.showWarning = function(text) {
+            console.warn(text);
+            showMessage(text, 'warning');
+        };
+
+        $scope.showError = function(text, err) {
+            console.error(text);
+            if(err) {
+                console.error(err);
+            }
+            var message = text;
+            if(err.message) {
+                message += ': ' + err.message;
+            }
+            if(err.status) {
+                message += ' (' + err.status + ')';
+            }
+            showMessage(message, 'danger');
+        };
+
+        $scope.clearNotification = function() {
+            $scope.message = null;
+        };
+        $scope.clear = function() {
+            $scope.message = null;
+        };
+
+        var hideTimeout = null;
+        $scope.$watch('message', function() {
+            $timeout.cancel(hideTimeout);
+            hideTimeout = $timeout(function() {
+                $scope.message = null;
+            }, 1000 * 10)
+        })
     });
 
 })();

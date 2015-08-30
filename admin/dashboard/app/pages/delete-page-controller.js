@@ -18,12 +18,12 @@ adminApp.controller("DeletePageController",
         //default delete status
         page.status = 410;
     }).error(function(err) {
-        $rootScope.showError('Couldn\'t find a page to delete', err);
+        $scope.showError('Couldn\'t find a page to delete', err);
     });
     pageService.getPages().success(function(pages) {
         $scope.pages = pages;
     }).error(function(err) {
-        $rootScope.showError('Couldn\'t get pages', err);
+        $scope.showError('Couldn\'t get pages', err);
     });
 
     $scope.cancel = function() {
@@ -42,9 +42,9 @@ adminApp.controller("DeletePageController",
 
         pageService.deletePage(page).success(function() {
             $location.path("");
-            $rootScope.showInfo("Page: " + page.name + " removed.");
+            $scope.showInfo("Page: " + page.name + " removed.");
         }).error(function(err) {
-            $rootScope.showError("Error deleting page", err);
+            $scope.showError("Error deleting page", err);
         });
     }
 });

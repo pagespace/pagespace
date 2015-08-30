@@ -46,7 +46,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 }
 
             }).error(function(err) {
-                $rootScope.showError('Error getting template', err);
+                $scope.showError('Error getting template', err);
             });
         }
     });
@@ -64,7 +64,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             });
         }).error(function(err) {
             $log.error(err, 'Error getting template');
-            $rootScope.showError('Error getting template', err);
+            $scope.showError('Error getting template', err);
         });
     }
 
@@ -153,22 +153,22 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.updateTemplate(templateId, $scope.template).success(function() {
                 $log.info('Template updated successfully');
-                $rootScope.showSuccess('Template updated.');
+                $scope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
                 $log.error(err, 'Error updating template');
-                $rootScope.showError('Error updating template', err);
+                $scope.showError('Error updating template', err);
             });
         } else {
             $log.info('Creating new template...');
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.createTemplate($scope.template).success(function() {
                 $log.info('Template created successfully');
-                $rootScope.showSuccess('Template created.');
+                $scope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {
                 $log.error(err, 'Error creating template');
-                $rootScope.showError('Error creating template', err);
+                $scope.showError('Error creating template', err);
             });
         }
     };
@@ -182,7 +182,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 $location.path('/templates');
             }).error(function (err) {
                 $log.error(err, 'Could not delete template');
-                $rootScope.showError('Error deleting template', err);
+                $scope.showError('Error deleting template', err);
             });
         }
     };

@@ -27,48 +27,47 @@
 </div>
 <div class="row">
     <div class="col-sm-12">
-        <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
-            <h3>Regions</h3>
 
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Select a region</label>
-                 <div class="col-sm-7" ng-show="page.regions.length">
-                    <select ng-model="selectedRegionIndex"
-                            ng-options="page.regions.indexOf(region) as region.name for region in page.regions"
-                            class="form-control">
-                        <option value="" disabled>Select a region</option>
-                    </select>
-                </div>
+        <h3>Regions</h3>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Select a region</label>
+             <div class="col-sm-7" ng-show="page.regions.length">
+                <select ng-model="selectedRegionIndex"
+                        ng-options="page.regions.indexOf(region) as region.name for region in page.regions"
+                        class="form-control">
+                    <option value="" disabled>Select a region</option>
+                </select>
             </div>
-            <div ng-repeat="region in page.regions track by $index">
-                <div ng-show="selectedRegionIndex == $index">
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Part</label>
-                        <div class="col-sm-7">
-                            <select ng-model="page.regions[$index].part"
-                                    ng-options="part as part.name for part in parts track by part._id"
-                                    class="form-control">
-                                <option value="" disabled selected>Select a part type</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Data</label>
-                        <div class="col-sm-7">
-                            <textarea ng-model="page.regions[$index].data"
-                                      ui-codemirror
-                                      ui-codemirror-opts="editorOpts"
-                                      class="form-control"
-                                      name="regiondata_{{$index}}"
-                                      placeholder="Edit raw part data (for advanced users)"></textarea>
-                        </div>
+        </div>
+        <div ng-repeat="region in page.regions track by $index">
+            <div ng-show="selectedRegionIndex == $index">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Part</label>
+                    <div class="col-sm-7">
+                        <select ng-model="page.regions[$index].part"
+                                ng-options="part as part.name for part in parts track by part._id"
+                                class="form-control">
+                            <option value="" disabled selected>Select a part type</option>
+                        </select>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Data</label>
+                    <div class="col-sm-7">
+                        <textarea ng-model="page.regions[$index].data"
+                                  ui-codemirror
+                                  ui-codemirror-opts="editorOpts"
+                                  class="form-control"
+                                  name="regiondata_{{$index}}"
+                                  placeholder="Edit raw part data (for advanced users)"></textarea>
+                    </div>
+                </div>
             </div>
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-            </div>
-        </form>
+        </div>
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
     </div>
 </div>

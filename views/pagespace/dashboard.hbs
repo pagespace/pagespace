@@ -37,7 +37,7 @@
         </div>
         <nav class="header-nav col-sm-8">
             <ul class="nav nav-pills">
-                <li ng-class="menuClass('/pages')"><a href="#/pages">Pages</a></li>
+                <li ng-class="menuClass('/pages', '/')"><a href="#/pages">Pages</a></li>
                 <!--<li><a href="#/macros">Macros</a></li>-->
                 <li ng-class="menuClass('/media')"><a href="#/media">Media</a></li>
                 <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publishing</a></li>
@@ -56,17 +56,11 @@
                     <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout" alt="Logout" style="vertical-align: baseline">
                 </a></p>
         </div>
+        <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
     </header>
     <div class="row">
         <div ng-view></div>
     </div>
-    <footer class="row">
-        <div class="sm-col-2">
-        </div>
-        <div class="sm-col-10">
-            <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
-        </div>
-    </footer>
 </div>
 <script>
     (function() {

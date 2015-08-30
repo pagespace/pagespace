@@ -41,17 +41,17 @@
             var user = $scope.user;
             if(userId) {
                 userService.updateUser(userId, user).success(function() {
-                    $rootScope.showSuccess('User updated.');
+                    $scope.showSuccess('User updated.');
                     $location.path('/users');
                 }).error(function(err) {
-                    $rootScope.showError('Error updating user', err);
+                    $scope.showError('Error updating user', err);
                 });
             } else {
                 userService.createUser(user).success(function() {
-                    $rootScope.showSuccess('User created.');
+                    $scope.showSuccess('User created.');
                     $location.path('/users');
                 }).error(function(err) {
-                    $rootScope.showError('Error creating user', err);
+                    $scope.showError('Error creating user', err);
                 });
             }
         };
@@ -61,7 +61,7 @@
                 console.log('User removed');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error deleting template', err);
+                $scope.showError('Error deleting template', err);
             });
         };
     });
