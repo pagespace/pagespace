@@ -40,7 +40,6 @@ var reqTypes  = {
     TEMPLATE_REGIONS: 'template-regions',
     TEMPLATE_TEST: 'test',
     TEMPLATE_PREVIEW: 'preview'
-
 };
 
 var TemplatesHandler = function() {
