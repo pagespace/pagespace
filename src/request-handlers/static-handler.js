@@ -31,11 +31,7 @@ module.exports = new StaticHandler();
 StaticHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
-    this.partResolver = support.partResolver;
-
-    //a collection of static servers for admin directories and page-part directories
-    this.staticServers = {};
-    this.staticServers.admin = serveStatic(__dirname + '/../../admin', {
+    this.adminStaticServe = serveStatic(__dirname + '/../../admin', {
         index: false
     });
     this.reqCount = 0;
@@ -50,48 +46,16 @@ StaticHandler.prototype.doRequest = function(req, res, next) {
 
     var logger = psUtil.getRequestLogger(this.logger, req, 'static', ++this.reqCount);
 
-    logger.trace('Processing static request for %s', req.url);
+    logger.debug('Processing static request for %s', req.url);
 
-    //serve admin static resources (/_static/dashboard/foo)
-    var adminStaticInfo, partStaticInfo;
-    if(adminStaticInfo = consts.requests.STATIC.regex.exec(req.url)) { // jshint ignore:line
-        var staticType = adminStaticInfo[1];
-        var adminStaticPath = adminStaticInfo[2];
-        req.url = '/' + staticType + '/' + adminStaticPath;
-        this.staticServers.admin(req, res, function (e) {
-            req.url = req.originalUrl;
-            next(e);
-        });
+    var apiInfo = consts.requests.STATIC.regex.exec(req.url);
+    var staticType = apiInfo[1];
+    var staticPath = apiInfo[2];
 
-    //serves static assets of part modules
-    } else if(partStaticInfo = consts.requests.PART_STATIC.regex.exec(req.url)) { // jshint ignore:line
+    req.url = '/' + staticType + '/' + staticPath;
+    this.adminStaticServe(req, res, function(e) {
+        req.url = req.originalUrl;
+        next(e);
+    });
 
-        var partModuleId = partStaticInfo[1];
-        var partStaticPath = partStaticInfo[2];
-        if(!this.staticServers[partModuleId]) {
-
-            //TODO: this is a workaround while parts are not resolved as separate node modules
-            var partModuleLookupId = './parts/' + partModuleId;
-            var partModule = this.partResolver.require(partModuleLookupId);
-            if(!partModule) {
-                var err = new Error('Cannot resolve part module for %s', partModuleId);
-                err.url = req.url;
-                err.status = 404;
-                return next();
-            }
-            this.staticServers[partModuleId] = serveStatic(partModule.__dir, {
-                index: false
-            });
-        }
-        req.url = '/static/' + partStaticPath;
-        this.staticServers[partModuleId](req, res, function (e) {
-            req.url = req.originalUrl;
-            next(e);
-        });
-    } else {
-        var err = new Error('Could not find static resource');
-        err.url = req.url;
-        err.status = 404;
-        return next(err);
-    }
 };

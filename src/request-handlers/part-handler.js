@@ -20,21 +20,29 @@
 'use strict';
 
 //support
-var Promise = require('bluebird'),
+var serveStatic = require('serve-static'),
+    Promise = require('bluebird'),
     consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
-var DataHandler = function() {
+var reqTypes  = {
+    STATIC: 'static',
+    DATA: 'data'
 };
 
-module.exports =  new DataHandler();
+var PartHandler = function() {
+};
 
-DataHandler.prototype.init = function(support) {
+module.exports =  new PartHandler();
+
+PartHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
     this.partResolver = support.partResolver;
     this.dbSupport = support.dbSupport;
     this.reqCount = 0;
+
+    this.staticServers = {};
 
     var self = this;
     return function(req, res, next) {
@@ -45,16 +53,37 @@ DataHandler.prototype.init = function(support) {
 /**
  * Process a valid request
  */
-DataHandler.prototype.doRequest = function(req, res, next) {
+PartHandler.prototype.doRequest = function(req, res, next) {
+
+
+    var logger = psUtil.getRequestLogger(this.logger, req, 'parts', ++this.reqCount);
+
+    var reqInfo = consts.requests.PARTS.regex.exec(req.url);
+    var reqType = reqInfo[1];
+
+    if(reqType === reqTypes.DATA && req.method === 'GET') {
+        logger.info('New part data request');
+        return this.doData(req, res, next, logger);
+    } else if (reqType === reqTypes.STATIC && req.method === 'GET') {
+        logger.info('New part static request');
+        var moduleId = reqInfo[2];
+        var staticPath = reqInfo[3];
+        return this.doStatic(req, res, next, logger, moduleId, staticPath);
+    } else {
+        var err = new Error('Unrecognized method');
+        err.status = 405;
+        next(err);
+    }
+};
+
+PartHandler.prototype.doData = function(req, res, next, logger) {
 
     var self = this;
-    var logger = psUtil.getRequestLogger(this.logger, req, 'data', ++this.reqCount);
 
     logger.info('New data request from %s', req.user.username);
 
-    var dataInfo = consts.requests.DATA.regex.exec(req.url);
-    var pageId = dataInfo[1];
-    var regionId = dataInfo[2];
+    var pageId = req.query.pageId;
+    var regionId = req.query.regionId;
 
     var filter = {
         _id: pageId
@@ -106,5 +135,29 @@ DataHandler.prototype.doRequest = function(req, res, next) {
     }).catch(function(err) {
         logger.error(err, 'Data request failed');
         next(new Error(err));
+    });
+};
+
+PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) {
+
+    if(!this.staticServers[partModuleId]) {
+
+        //TODO: this is a workaround while parts are not resolved as separate node modules
+        var partModuleLookupId = './parts/' + partModuleId;
+        var partModule = this.partResolver.require(partModuleLookupId);
+        if(!partModule) {
+            var err = new Error('Cannot resolve part module for %s', partModuleId);
+            err.url = req.url;
+            err.status = 404;
+            return next();
+        }
+        this.staticServers[partModuleId] = serveStatic(partModule.__dir, {
+            index: false
+        });
+    }
+    req.url = '/static/' + partStaticPath;
+    this.staticServers[partModuleId](req, res, function (e) {
+        req.url = req.originalUrl;
+        next(e);
     });
 };

@@ -66,7 +66,7 @@ angular.module('webCopyApp', [])
     $scope.changed = false;
     $scope.save = function() {
         var htmlVal = $scope.webcopy;
-        return $http.put('/_data/' + $scope.pageId + '/' + $scope.region, {
+        return $http.put('/_parts/data?pageId=' + $scope.pageId + '&region=' + $scope.region, {
             data: {
                 wrapperClass: $scope.wrapperClass || '',
                 html: htmlVal

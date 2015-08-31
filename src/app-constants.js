@@ -56,11 +56,6 @@ consts.requests = {
         regex: new RegExp('^/_api/(sites|pages|parts|templates|users|media)/?(.*)'),
         handler: require('./request-handlers/api-handler')
     },
-    DATA: {
-        key: 'DATA',
-        regex: new RegExp('^/_data/(.+)/(.+)'),
-        handler: require('./request-handlers/data-handler')
-    },
     MEDIA: {
         key: 'MEDIA',
         regex: new RegExp('^/_media/?(.*)'),
@@ -76,10 +71,10 @@ consts.requests = {
         regex: new RegExp('^/_static/(dashboard|bar|bower_components|part)/(.*)'),
         handler: require('./request-handlers/static-handler')
     },
-    PART_STATIC: {
-        key: 'PART_STATIC',
-        regex: new RegExp('^/_parts/(.+)/static/(.*)'),
-        handler: require('./request-handlers/static-handler')
+    PARTS: {
+        key: 'PARTS',
+        regex: new RegExp('^/_parts/(static|data)/?([A-z0-9-_]*)/?(.*)'),
+        handler: require('./request-handlers/part-handler')
     },
     CACHE: {
         key: 'CACHE',
