@@ -71,5 +71,8 @@ module.exports = {
         }
 
         return '<!-- HTML Include (No data to include) -->';
+    },
+    defaultData: {
+        html: '<p>I am an HTML include</p>'
     }
 };

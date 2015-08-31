@@ -55,6 +55,10 @@ function generateSchema() {
         next();
     });
 
+    partSchema.virtual('defaultData').get(function () {
+        return require('../misc/part-resolver').require(this.module).defaultData || {};
+    });
+
     return partSchema;
 }
 
