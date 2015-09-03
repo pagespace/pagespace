@@ -61,7 +61,7 @@ PartHandler.prototype.doRequest = function(req, res, next) {
     var reqInfo = consts.requests.PARTS.regex.exec(req.url);
     var reqType = reqInfo[1];
 
-    if(reqType === reqTypes.DATA && req.method === 'GET') {
+    if(reqType === reqTypes.DATA && (req.method === 'GET' || req.method === 'PUT')) {
         logger.info('New part data request');
         return this.doData(req, res, next, logger);
     } else if (reqType === reqTypes.STATIC && req.method === 'GET') {
@@ -83,7 +83,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
     logger.info('New data request from %s', req.user.username);
 
     var pageId = req.query.pageId;
-    var regionId = req.query.regionId;
+    var regionName = req.query.region;
 
     var filter = {
         _id: pageId
@@ -95,7 +95,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
     findPage().then(function(page) {
         //get data for region
         var region = page.regions.filter(function(region) {
-            return region.name === regionId;
+            return region.name === regionName;
         })[0];
 
         var partPromise = null;
@@ -103,7 +103,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 
         if(partModule) {
             if(req.method === 'GET') {
-                partPromise = partModule.process(region.data);
+                partPromise = partModule.process === 'function' ? partModule.process(region.data) : region.data;
             } else if(req.method === 'PUT') {
                 partPromise = req.body;
             } else {
@@ -116,7 +116,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
         return [ page, region, partPromise ];
     }).spread(function(page, region, partData) {
         if(req.method === 'PUT') {
-            region.data = partData.data;
+            region.data = partData;
             page.draft = true;
             page.save(function (err) {
                 if (err) {
@@ -141,10 +141,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) {
 
     if(!this.staticServers[partModuleId]) {
-
-        //TODO: this is a workaround while parts are not resolved as separate node modules
-        var partModuleLookupId = './parts/' + partModuleId;
-        var partModule = this.partResolver.require(partModuleLookupId);
+        var partModule = this.partResolver.require(partModuleId);
         if(!partModule) {
             var err = new Error('Cannot resolve part module for %s', partModuleId);
             err.url = req.url;

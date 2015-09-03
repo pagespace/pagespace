@@ -120,14 +120,20 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             //read data for each part
             page.regions.forEach(function (region) {
                 var partModule = self.partResolver.require(region.part ? region.part.module : null);
-                if(partModule && typeof partModule.process === 'function') {
+                if(partModule) {
                     var regionData = region.data || {};
-                    var partPromise = partModule.process(regionData, {
-                        basePath: self.userBasePath,
-                        PageModel: Page,
-                        req: req,
-                        logger: logger.child({part: region.part.name})
-                    });
+                    var partPromise;
+                    if(typeof partModule.process === 'function') {
+                        partPromise = partModule.process(regionData, {
+                            basePath: self.userBasePath,
+                            PageModel: Page,
+                            req: req,
+                            logger: logger.child({part: region.part.name})
+                        });
+                    } else {
+                        partPromise = regionData;
+                    }
+
                     promises.push(partPromise);
                 } else {
                     promises.push(null);

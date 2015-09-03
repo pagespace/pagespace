@@ -22,6 +22,8 @@
 var fs = require('fs'),
     path = require('path');
 
+var instance = null;
+
 var PartResolver = function(opts) {
 
     this.logger = opts.logger;
@@ -31,7 +33,12 @@ var PartResolver = function(opts) {
 };
 
 module.exports = function(opts) {
-    return new PartResolver(opts);
+
+    if(!instance) {
+        instance = new PartResolver(opts);
+    }
+
+    return instance;
 };
 
 PartResolver.prototype.require = function(partModuleId) {
@@ -51,7 +58,7 @@ PartResolver.prototype.require = function(partModuleId) {
         try {
             partModule = require(partModulePath);
 
-            this.initPartModule(partModulePath, partModule);
+            this.initPartModule(partModule, partModulePath);
             this.cache[partModuleId] = partModule;
         } catch(e) {
             logger.error(e, 'A part module could not be resolved');
@@ -71,41 +78,28 @@ PartResolver.prototype.get = function(partModuleId) {
     return module;
 };
 
-PartResolver.prototype.initPartModule = function(partModulePath, partModule) {
+PartResolver.prototype.initPartModule = function(partModule, partModulePath) {
 
     var logger = this.logger;
 
-    //resolve part view
-    //part views are also loaded from the same directory as the part module, using naming convention 'view.hbs'
-    var partViewDir = path.extname(partModulePath) ? path.dirname(partModulePath) : partModulePath;
-
-    partModule.__dir = partViewDir;
+    partModule.__dir = partModulePath;
 
     //load the part view
-    var partViewPath = path.join(partViewDir, 'index.hbs');
+    var partViewPath = path.join(partModulePath, 'index.hbs');
     logger.debug('Loading part view partial from %s...', partViewPath);
     try {
         partModule.__viewPartial = fs.readFileSync(partViewPath, 'utf8');
     } catch(err) {
         logger.warn('Cannot find an index template (index.hbs) for the  part module for [%s]', partModulePath);
     }
-
-    //load the part view
-    var editViewPath = path.join(partViewDir, 'edit.hbs');
-    logger.debug('Loading part edit partial from %s...', editViewPath);
-    try {
-        partModule.__editPartial = fs.readFileSync(editViewPath, 'utf8');
-    } catch(err) {
-        logger.warn('Cannot find an editing template (edit.hbs) for the  part module for [%s]', partModulePath);
-    }
 };
 
-PartResolver.prototype._resolveModulePath = function(modulePath) {
+PartResolver.prototype._resolveModulePath = function(module) {
 
     //resolve relative module paths to the app calling this middlware module
-    if(modulePath.indexOf('./') === 0 || modulePath.indexOf('../') === 0) {
-        return path.resolve(this.userBasePath, modulePath);
+    if(module.indexOf('./') === 0 || module.indexOf('../') === 0) {
+        return path.resolve(this.userBasePath, module);
     } else {
-        return modulePath;
+        return path.dirname(require.resolve(module));
     }
 };

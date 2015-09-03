@@ -8,6 +8,40 @@
         decorateParts();
     };
 
+    function getPartInterface(part, pageId, region) {
+        var query = '?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
+        return {
+            getData: function() {
+                console.info('Pagespace getting data for %s', part);
+                return fetch('/_parts/data' + query, {
+                    credentials: 'same-origin'
+                }). then(function(res) {
+                    return res.json();
+                });
+            },
+            setData: function(data) {
+                console.info('Pagespace setting data for %s', part);
+                return fetch('/_parts/data' + query, {
+                    method: 'put',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                }).then(function() {
+                    return {
+                        status: 'ok'
+                    }
+                })
+            },
+            close: function() {
+                console.info('Pagespace closing part editor for %s', part);
+                window.parent.location.reload();
+            }
+        };
+    }
+
     function handleAdminEvents() {
 
         //listen for clicks that bubble in up in the admin bar
@@ -63,12 +97,13 @@
 
     function decorateParts() {
 
-        function createEditButton(pageId, region) {
+        function createEditButton(part, pageId, region) {
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerHTML =
                 '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Part" title="Edit Part"' +
-                'data-target-page-id=' + pageId + ' data-target-region=' + region + '>';
+                'data-target-part=' + part + ' data-target-page-id=' + pageId + ' data-target-region=' + region + '>';
+            editButton.setAttribute('data-target-part', part);
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.classList.add('ps-edit');
@@ -77,7 +112,7 @@
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
             //TODO: less intrusive way of getting page id
-            var button = createEditButton(region.getAttribute('data-page-id'), region.getAttribute('data-region'));
+            var button = createEditButton(region.getAttribute('data-part'), region.getAttribute('data-page-id'), region.getAttribute('data-region'));
             region.insertBefore(button, region.firstChild);
             region.classList.add('ps-edit-box');
         });
@@ -108,6 +143,7 @@
 
     function launchPartEditor(evSrc) {
 
+        var part = evSrc.getAttribute('data-target-part');
         var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
 
@@ -127,11 +163,17 @@
 
         //create the iframe
         var iframe = document.createElement('iframe');
-        iframe.src = '/_dashboard/region?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
+        iframe.name = region + '_' + part;
+        //iframe.src = '/_dashboard/region?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
+        iframe.src = '/_parts/static/' + part + '/edit.html';
         iframe.width = '100%';
         iframe.height = '100%';
         iframe.seamlesss = true;
         editor.appendChild(iframe);
+
+        //inject part interface
+        //iframe.contentWindow.window.pagesapce = getPartInterface(part, pageId, region);;
+        iframe.contentWindow.window.pagespace = getPartInterface(part, pageId, region);
 
         //close button
         var closeBtn = document.createElement('button');
@@ -142,7 +184,6 @@
         editor.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
             editor.parentNode.removeChild(editor);
-            window.location.reload();
         });
 
         //animate to size

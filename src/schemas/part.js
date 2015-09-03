@@ -56,7 +56,8 @@ function generateSchema() {
     });
 
     partSchema.virtual('defaultData').get(function () {
-        return require('../misc/part-resolver').require(this.module).defaultData || {};
+        var partResolver = require('../misc/part-resolver')();
+        return partResolver.require(this.module).defaultData || {};
     });
 
     return partSchema;

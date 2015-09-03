@@ -101,7 +101,7 @@ html {
     height: 20px;
     top: -20px;
     right: -20px;
-    padding: 0;
+    padding: 4px;
     background: #000;
     border-radius: 4px;
     box-shadow: #636363 0 3px 16px 5px
