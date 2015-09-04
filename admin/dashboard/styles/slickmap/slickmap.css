@@ -54,7 +54,7 @@
 .sitemap-primary .sitemap-home {
 	display: block;
 	float: none;
-	background: #f3f3f3 url(images/l1-left.png) center bottom no-repeat;
+	background: #E5E7EA url(images/l1-left.png) center bottom no-repeat;
 	position: relative;
 	z-index: 2;
 	padding: 0 0 30px 0;
@@ -145,7 +145,7 @@ a:visited:before {
 	width: 100%;
 	float: right;
 	padding: 9px 0 0 0;
-	background: #f3f3f3 url(images/l3-ul-top.png) center top no-repeat;
+	background: #E5E7EA url(images/l3-ul-top.png) center top no-repeat;
 }
 .sitemap-primary li li li {
 	background: url(images/l3-center.png) left center no-repeat;

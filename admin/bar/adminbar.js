@@ -188,10 +188,10 @@
 
         //animate to size
         window.setTimeout(function() {
-            editor.style.top = 50 + 'px';
-            editor.style.left = ((window.innerWidth - 800) / 2) + 'px';
-            editor.style.width = 800 + 'px';
-            editor.style.height = (window.innerHeight - 100) + 'px';
+            editor.style.top = 30 + 'px';
+            editor.style.left = ((window.innerWidth - 1000) / 2) + 'px';
+            editor.style.width = 1000 + 'px';
+            editor.style.height = (window.innerHeight - 60) + 'px';
         }, 300);
 
     }
