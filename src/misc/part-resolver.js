@@ -82,6 +82,13 @@ PartResolver.prototype.initPartModule = function(partModule, partModulePath) {
 
     var logger = this.logger;
 
+    var partConfigPath = path.join(partModulePath, 'package.json');
+    try {
+        partModule.__config = require(partConfigPath);
+    } catch(err) {
+        logger.warn('Couldn\'t load part config at %s', partModulePath)
+    }
+
     partModule.__dir = partModulePath;
 
     //load the part view

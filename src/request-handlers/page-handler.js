@@ -19,7 +19,8 @@
 
 'use strict';
 
-var  url = require('url'),
+var util = require('util'),
+    url = require('url'),
 
     Promise = require('bluebird'),
 
@@ -187,13 +188,14 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
                     var partModule = self.partResolver.get(region.part ? region.part.module : null);
                     var viewPartial;
-                    if(!partModule) {
+                    if(partModule) {
+                        viewPartial = util.format('<div data-part="%s" data-page-id="%s" data-region="%s">\n%s\n</div>',
+                                                   partModule.__config.name, page._id, region.name, partModule.__viewPartial);
+                    } else {
                         viewPartial = '<!-- Region: ' + region.name + ' -->';
                         if(region.part) {
                             self.logger.warn('The view partial for %s could not be resolved', partModule);
                         }
-                    } else {
-                        viewPartial = partModule.__viewPartial;
                     }
                     self.viewEngine.registerPartial(region.name, viewPartial, urlPath);
                 }

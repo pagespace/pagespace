@@ -1,16 +1,14 @@
 (function() {
 
-   var pageId = document.getElementsByTagName('html')[0].getAttribute('data-page-id');
-
-   window.pagespace = window.pagespace || {};
-   window.pagespace.setupAdminMode = function() {
+    window.pagespace = window.pagespace || {};
+    window.pagespace.setupAdminMode = function() {
         //adds various admin functionality to a page
         handleAdminEvents();
         syncColors();
         decorateParts();
     };
 
-    function getPartInterface(part, region) {
+    function getPartInterface(part, pageId, region) {
         var query = '?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
         return {
             getData: function() {
@@ -99,13 +97,14 @@
 
     function decorateParts() {
 
-        function createEditButton(part, region) {
+        function createEditButton(part, pageId, region) {
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerHTML =
                 '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Part" title="Edit Part"' +
-                'data-target-part=' + part + ' data-target-region=' + region + '>';
+                'data-target-part=' + part + ' data-target-page-id=' + pageId + ' data-target-region=' + region + '>';
             editButton.setAttribute('data-target-part', part);
+            editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.classList.add('ps-edit');
             return editButton;
@@ -113,7 +112,7 @@
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
             //TODO: less intrusive way of getting page id
-            var button = createEditButton(region.getAttribute('data-part'), region.getAttribute('data-region'));
+            var button = createEditButton(region.getAttribute('data-part'), region.getAttribute('data-page-id'), region.getAttribute('data-region'));
             region.insertBefore(button, region.firstChild);
             region.classList.add('ps-edit-box');
         });
@@ -145,6 +144,7 @@
     function launchPartEditor(evSrc) {
 
         var part = evSrc.getAttribute('data-target-part');
+        var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
 
         //create the editor frame
@@ -164,6 +164,7 @@
         //create the iframe
         var iframe = document.createElement('iframe');
         iframe.name = region + '_' + part;
+        //iframe.src = '/_dashboard/region?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
         iframe.src = '/_parts/static/' + part + '/edit.html';
         iframe.width = '100%';
         iframe.height = '100%';
@@ -171,7 +172,8 @@
         editor.appendChild(iframe);
 
         //inject part interface
-        iframe.contentWindow.window.pagespace = getPartInterface(part, region);
+        //iframe.contentWindow.window.pagesapce = getPartInterface(part, pageId, region);;
+        iframe.contentWindow.window.pagespace = getPartInterface(part, pageId, region);
 
         //close button
         var closeBtn = document.createElement('button');
