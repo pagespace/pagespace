@@ -64,11 +64,15 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
            tags: JSON.stringify($scope.media.tags)
         }).success(function() {
             $location.path('/media');
-            $rootScope.showSuccess('Upload successful');
+            $scope.showSuccess('Upload successful');
         }).error(function(err) {
-            $rootScope.showError('Error uploading file', err);
+            $scope.showError('Error uploading file', err);
         });
-        $rootScope.showInfo('Upload in progress...');
+        $scope.showInfo('Upload in progress...');
+    };
+
+    $scope.cancel = function() {
+        $location.path("/media");
     };
 });
 

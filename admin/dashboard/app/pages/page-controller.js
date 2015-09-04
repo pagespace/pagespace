@@ -6,13 +6,17 @@
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
-    function($scope, $rootScope, $routeParams, $location, $timeout,
+    function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
-    $rootScope.clearNotification();
-    $rootScope.pageTitle = "Page";
+    $log.info('Showiing page view.');
+
+    $scope.section = $routeParams.section || 'basic';
+
+    $scope.clearNotification();
 
     var pageId = $routeParams.pageId;
+
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
@@ -26,27 +30,34 @@ adminApp.controller("PageController",
         $scope.editRegions = !$scope.editRegions;
     };
 
-
     $scope.selectedRegionIndex = -1;
     $scope.template = null;
 
-    var getPageFunctions = [];
-    getPageFunctions.push(function getTemplates(callback) {
-        templateService.getTemplates().success(function(templates) {
+    var pageSetupFunctions = [];
+    pageSetupFunctions.push(function getTemplates(callback) {
+        $log.info('Fetching available templates...');
+        templateService.doGetAvailableTemplates().success(function(templates) {
+            $log.info('Got available templates.');
             $scope.templates = templates;
             callback()
         });
     });
-    getPageFunctions.push(function getParts(callback) {
+    pageSetupFunctions.push(function getParts(callback) {
+        $log.debug('Fetching available parts...');
         partService.getParts().success(function(parts) {
+            $log.debug('Got available parts.');
             $scope.parts = parts;
             callback()
         });
     });
+
     if(pageId) {
+        $log.debug('Fetching page data for: %s', pageId);
         $scope.pageId = pageId;
-        getPageFunctions.push(function getPage(callback) {
+        pageSetupFunctions.push(function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
                 $scope.page = page;
 
                 if(page.expiresAt) {
@@ -57,7 +68,7 @@ adminApp.controller("PageController",
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
-                page.regions.map(function(region) {
+                page.regions = page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
                     region.dataFromServer = !!region.data;
                     return region;
@@ -71,7 +82,7 @@ adminApp.controller("PageController",
             regions: []
         };
         if(parentPageId) {
-            getPageFunctions.push(function getParentPage(callback) {
+            pageSetupFunctions.push(function getParentPage(callback) {
                 pageService.getPage(parentPageId).success(function(page) {
                     $scope.page.parent = page;
                     callback();
@@ -82,9 +93,9 @@ adminApp.controller("PageController",
         }
     }
 
-    async.series(getPageFunctions, function(err) {
+    async.series(pageSetupFunctions, function(err) {
         if(err) {
-            $rootScope.showError(err);
+            $scope.showError(err);
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
@@ -98,7 +109,7 @@ adminApp.controller("PageController",
     };
 
     $scope.cancel = function() {
-        $location.path("");
+        $location.path("/pages");
     };
 
     $scope.selectTemplate = function(template) {
@@ -119,7 +130,7 @@ adminApp.controller("PageController",
     };
 
     $scope.$watch('page.name', function() {
-        if($scope.pageForm.url.$pristine && !pageId) {
+        if($scope.pageForm && $scope.pageForm.url.$pristine && !pageId) {
             $scope.updateUrl();
         }
     });
@@ -163,21 +174,33 @@ adminApp.controller("PageController",
         });
 
         if(pageId) {
+            $log.info('Update page: %s...', pageId);
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.updatePage(pageId, page).success(function(res) {
-                $rootScope.showSuccess("Page: " + page.name + " saved.");
+                $log.info('Page successfully updated');
+                $scope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error saving page", err);
+                $log.error(err, 'Error updating page');
+                $scope.showError("Error updating page", err);
             });
         } else {
-            pageService.createPage($scope.page).success(function() {
-                $rootScope.showSuccess("Page: " + page.name + " created.");
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            pageService.createPage(page).success(function() {
+                $log.info('Page successfully created');
+                $scope.showSuccess("Page: " + page.name + " created.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error adding new page", err);
+                $log.error(err, 'Error creating page');
+                $scope.showError("Error adding new page", err);
             });
         }
     };
+
+
+});
+
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
@@ -191,60 +214,4 @@ adminApp.controller("PageController",
         }
         return true;
     }
-});
-
-adminApp.directive('viewTemplate', function() {
-
-    function link(scope, element) {
-
-        scope.$watch('template', function(){
-           drawTemplate();
-        });
-
-        function drawTemplate() {
-            element.html('<canvas width="550" height="400"></canvas>');
-            var canvas = new fabric.Canvas(element.find('canvas')[0]);
-            canvas.backgroundColor = '#ddd';
-
-            scope.template.regions.forEach(function(region, i) {
-
-                var canvasData = scope.template.regionData[i];
-
-                if(canvasData) {
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasControls: false,
-                        lockMovementX: true,
-                        lockMovementY: true
-                    });
-                    group.on('selected', function() {
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                }
-            });
-        }
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
-});
-
 })();

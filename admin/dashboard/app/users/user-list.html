@@ -1,17 +1,19 @@
-<div class="row">
-    <div class="col-sm-6">
-        <div class="list-group" ng-show="users.length == 0">
-            <p>There are no templates</p>
-        </div>
-        <div class="list-group" ng-show="users.length > 0">
-            <a href="#/users/{{user._id}}" ng-repeat="user in users" class="list-group-item">
-                <h4 class="list-group-item-heading">{{user.username}}</h4>
-                <p class="list-group-item-text"><small>{{user.role}}</small></p>
-            </a>
-        </div>
-
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>Users</h3>
     </div>
-    <div class="col-sm-3">
-        <a class="btn" type="button" href="#/users/new">Create new user</a>
+    <ul class="nav nav-pills nav-stacked">
+        <li ng-class="menuClass('/users/new')"><a href="#/users/new">Create new user</a></li>
+    </ul>
+</nav>
+<main class="main col-sm-6">
+    <div class="notification-bar">
+        <p ng-show="users.length == 0">There are no users</p>
     </div>
-</div>
+    <div class="list-group" ng-show="users.length > 0">
+        <a href="#/users/{{user._id}}" ng-repeat="user in users" class="list-group-item">
+            <h4 class="list-group-item-heading">{{user.username}}</h4>
+            <p class="list-group-item-text"><small>{{user.role}}</small></p>
+        </a>
+    </div>
+</main>

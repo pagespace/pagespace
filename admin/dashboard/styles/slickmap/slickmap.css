@@ -54,7 +54,7 @@
 .sitemap-primary .sitemap-home {
 	display: block;
 	float: none;
-	background: #f3f3f3 url(images/l1-left.png) center bottom no-repeat;
+	background: #E5E7EA url(images/l1-left.png) center bottom no-repeat;
 	position: relative;
 	z-index: 2;
 	padding: 0 0 30px 0;
@@ -72,6 +72,7 @@
     line-height:34px;
     overflow: hidden;
     color: #004EA3;
+    height: 50px;     line-height: 50px;
 }
 .sitemap-primary li {
 	float: left;
@@ -144,16 +145,15 @@ a:visited:before {
 	width: 100%;
 	float: right;
 	padding: 9px 0 0 0;
-	background: #f3f3f3 url(images/l3-ul-top.png) center top no-repeat;
+	background: #E5E7EA url(images/l3-ul-top.png) center top no-repeat;
 }
 .sitemap-primary li li li {
 	background: url(images/l3-center.png) left center no-repeat;
-	padding: 5px 0;
 }
 .sitemap-primary li li li .sitemap-node {
 	background-color: #FFFF8B;
 	font-size: 16px;
-	padding: 5px 0;
+	/* padding: 5px 0; */
 	width: 80%;
 	float: right;
 }
@@ -208,15 +208,22 @@ a:visited:before {
     margin-bottom: 3px;
 }
 
+.sitemap-node-title {
+    margin: 0 36px;
+}
 /* Buttons */
-.sitemap-primary button {
-    background-color: transparent;
-    border: 1px solid #004EA3;
+.sitemap-primary .btn,
+.sitemap-primary .btn {
+    background-color: rgba(160, 160, 160, 0.41);
+    /* border: 1px solid #004EA3; */
     color: #004EA3;
     border-radius: 4px;
-    margin: 6px 6px 0 6px;
+    /* margin: 6px 6px 0 6px; */
     padding: 3px 6px;
-    font-size: 10px;
+    font-size: 14px;
+    height: 50px;
+    line-height: 50px;
+    width: 36px;
 }
 .sitemap-primary button:hover {
     color: #0074ff;
@@ -249,6 +256,22 @@ a:visited:before {
 .order .sitemap-forward {
     display: block;
 }
+
+.sitemap-edit {
+    float: left;
+}
+.sitemap-publish {
+    float: right;
+}
+.order .sitemap-edit,
+.addremove .sitemap-edit,
+.order .sitemap-publish,
+.addremove .sitemap-publish {
+    display: none;
+}
+
+
+
 /* choose left/right or down/up arrows */
 .order-vertical {
     display: none;

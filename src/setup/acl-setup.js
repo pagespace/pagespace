@@ -55,7 +55,7 @@ AclSetup.prototype.runSetup = function() {
 
     //common actions requiring auth
     acl.match(consts.requests.MEDIA.regex, [ POST, PUT ]).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.DATA.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(consts.requests.PARTS.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.PUBLISH.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.DASHBOARD.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.CACHE.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);

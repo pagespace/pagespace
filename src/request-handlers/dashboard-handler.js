@@ -19,7 +19,8 @@
 
 'use strict';
 
-var psUtil = require('../misc/pagespace-util');
+var psUtil = require('../misc/pagespace-util'),
+    consts = require('../app-constants');
 
 /**
  *
@@ -33,7 +34,14 @@ module.exports = new DashboardHandler();
 DashboardHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
+    this.viewEngine = support.viewEngine;
+    this.userBasePath = support.userBasePath;
+    this.dbSupport = support.dbSupport;
+    this.partResolver = support.partResolver;
+
     this.reqCount = 0;
+
+    this.staticServers = {};
 
     var self = this;
     return function(req, res, next) {
@@ -50,8 +58,25 @@ DashboardHandler.prototype.init = function(support) {
  */
 DashboardHandler.prototype.doRequest = function(req, res, next) {
 
-    var logger = psUtil.getRequestLogger(this.logger, req, 'dashboard', ++this.reqCount);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'templates', ++this.reqCount);
 
+    var reqInfo = consts.requests.DASHBOARD.regex.exec(req.url);
+    var reqType = reqInfo[1];
+
+    if(!reqType && req.method === 'GET') {
+        logger.info('New dashboard request');
+        return this.doDashboard(req, res, next, logger);
+    } else if (reqType === 'region' && req.method === 'GET') {
+        logger.info('New part editor request');
+        return this.doRegion(req, res, next, logger);
+    } else {
+        var err = new Error('Unrecognized method');
+        err.status = 405;
+        next(err);
+    }
+};
+
+DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
     logger.info('New dashboard request from %s', req.user.username);
 
     var pageData = {

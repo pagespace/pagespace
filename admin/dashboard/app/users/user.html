@@ -1,69 +1,70 @@
-<div class="row">
-    <div class="col-sm-6">
-        <form role="form" name="userForm" class="form-horizontal" novalidate ng-submit="save(userForm)" >
-
-            <div class="form-intro">
-                <p ng-show="!userId">Create a new user</p>
-                <p ng-show="userId">Update details for <b>{{user.username}}</b></p>
-                <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
-            </div>
-
-            <div class="form-group" bs-has-error="username">
-                <label class="col-sm-2 control-label">Username</label>
-                <div class="col-sm-7">
-                    <input type="text" class="form-control input-medium"  ng-pattern="/^[a-zA-Z0-9-]+$/"
-                           ng-readonly="userId" name="username" ng-model="user.username" placeholder="geoffcapes (required)" required>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="name">
-                <label class="col-sm-2 control-label">Display Name</label>
-                <div class="col-sm-7">
-                    <input type="text" class="form-control input-medium"
-                        name="name" ng-model="user.name" placeholder="Geoff Capes (required)" required>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="email">
-                <label class="col-sm-2 control-label">Email</label>
-                <div class="col-sm-7">
-                    <input type="email" class="form-control input-medium" name="email"
-                           ng-model="user.email" placeholder="geoffcapes@gmail.com">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Role</label>
-                <div class="col-sm-7">
-                    <select ng-model="user.role" ng-options="role.name as role.label for role in roles"
-                            class="form-control">
-                        <option value="" disabled selected>Select a role</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="password">
-                <label class="col-sm-2 control-label">Password</label>
-                <div class="col-sm-7">
-                    <input type="password" class="form-control input-medium" ng-model="user.password"
-                           name="password" ng-required="!userId" ng-minlength="6" placeholder="Password (at least 6 characters)">
-                </div>
-            </div>
-
-            <div class="form-group" bs-has-error="repeatPassword">
-                <label class="col-sm-2 control-label"><span class="ng-hide">Repeat password</span></label>
-                <div class="col-sm-7">
-                    <input type="password" class="form-control input-medium" ng-model="repeatPassword"
-                       name="repeatPassword" ps-field-match="password" ng-required="!userId" placeholder="Repeat password">
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary">Save</button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-            </div>
-        </form>
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>User</h3>
     </div>
-    <div class="col-sm-4">
-    </div>
-</div>
+</nav>
+<main class="main col-sm-6">
+    <form role="form" name="userForm" class="form-horizontal" novalidate ng-submit="save(userForm)" >
+
+        <div class="notification-bar">
+            <p ng-show="!userId">Create a new user</p>
+            <p ng-show="userId">Update details for <b>{{user.username}}</b></p>
+            <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
+        </div>
+
+        <div class="form-group" bs-has-error="username">
+            <label class="col-sm-2 control-label">Username</label>
+            <div class="col-sm-7">
+                <input type="text" class="form-control input-medium"  ng-pattern="/^[a-zA-Z0-9-]+$/"
+                       ng-readonly="userId" name="username" ng-model="user.username" placeholder="geoffcapes (required)" required>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="name">
+            <label class="col-sm-2 control-label">Display Name</label>
+            <div class="col-sm-7">
+                <input type="text" class="form-control input-medium"
+                    name="name" ng-model="user.name" placeholder="Geoff Capes (required)" required>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="email">
+            <label class="col-sm-2 control-label">Email</label>
+            <div class="col-sm-7">
+                <input type="email" class="form-control input-medium" name="email"
+                       ng-model="user.email" placeholder="geoffcapes@gmail.com">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Role</label>
+            <div class="col-sm-7">
+                <select ng-model="user.role" ng-options="role.name as role.label for role in roles"
+                        class="form-control">
+                    <option value="" disabled selected>Select a role</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="password">
+            <label class="col-sm-2 control-label">Password</label>
+            <div class="col-sm-7">
+                <input type="password" class="form-control input-medium" ng-model="user.password"
+                       name="password" ng-required="!userId" ng-minlength="6" placeholder="Password (at least 6 characters)">
+            </div>
+        </div>
+
+        <div class="form-group" bs-has-error="repeatPassword">
+            <label class="col-sm-2 control-label"><span class="ng-hide">Repeat password</span></label>
+            <div class="col-sm-7">
+                <input type="password" class="form-control input-medium" ng-model="repeatPassword"
+                   name="repeatPassword" ps-field-match="password" ng-required="!userId" placeholder="Repeat password">
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</main>

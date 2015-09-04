@@ -44,7 +44,6 @@ function generateSchema() {
                 ref: 'Part'
             }
         }],
-        regionData: [ Schema.Types.Mixed ],
         properties: [{
             name: String,
             value: String

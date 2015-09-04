@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{status}} Error</title>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="row">
+            <div class="col-sm-2">
+                <div class="logo">
+                    <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
+                </div>
+            </div>
+            <nav class="header-nav col-sm-10" style="height: 60px">
+            </nav>
+        </header>
+        <div class="row">
+            <nav class="side-nav col-sm-2">
+                <div class="section-heading">
+                    <h2>{{status}} Error</h2>
+                </div>
+            </nav>
+            <main class="main col-sm-4">
+                <p>{{error}}
+                <p>{{message}}
+                <p>{{#stack}}{{stack}}{{/stack}}</p>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

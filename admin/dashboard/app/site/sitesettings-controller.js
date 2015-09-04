@@ -6,7 +6,6 @@
      */
     var adminApp = angular.module('adminApp');
     adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
-        $rootScope.pageTitle = "Site settings";
 
         $scope.defaultPage = null;
 
@@ -61,15 +60,15 @@
                         }
                     }
                 ], function(err) {
-                    $rootScope.showError('Unable to set default page', err);
+                    $scope.showError('Unable to set default page', err);
                 });
             }
 
             siteService.updateSite(site).success(function() {
-                $rootScope.showSuccess('Site updated.');
+                $scope.showSuccess('Site updated.');
                 $location.path('/');
             }).error(function(err) {
-                $rootScope.showError('Error updating site', err);
+                $scope.showError('Error updating site', err);
             });
 
         };

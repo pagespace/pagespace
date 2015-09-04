@@ -82,7 +82,6 @@ Index.prototype.init = function(options) {
         throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
     }
 
-    //count requests;
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
@@ -122,9 +121,9 @@ Index.prototype.init = function(options) {
         logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
     }
     if(!fs.existsSync(this.mediaDir)) {
-        var dir = mkdirp.sync(this.mediaDir);
-        if(dir) {
-            logger.info('New media directory created at %s', dir);
+        var mediaDir = mkdirp.sync(this.mediaDir);
+        if(mediaDir) {
+            logger.info('New media directory created at %s', mediaDir);
         }
     }
 
@@ -168,7 +167,7 @@ Index.prototype.init = function(options) {
             }
             partModules.forEach(function (partModule) {
                 //requires and caches part modules for later page requests
-                self.partResolver.require(partModule.module);
+                self.partResolver.require(partModule);
             });
 
             //general support instances supplied to all request handlers
@@ -240,7 +239,7 @@ Index.prototype._doRequest = function(req, res, next) {
         username: 'guest',
         role: 'guest'
     };
-    logger.debug('Request received for url [%s] with user role [%s]', req.url, user.role);
+    logger.trace('Request received for url [%s] with user role [%s]', req.url, user.role);
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
@@ -391,7 +390,10 @@ Index.prototype.addRulesToAcl = function(rules) {
 };
 
 Index.prototype.getViewDir = function() {
-    return path.join(__dirname, '/../views');
+    return path.join(__dirname, '/../views/pagespace');
+};
+Index.prototype.getDefaultTemplateDir = function() {
+    return path.join(__dirname, '/../views/templates');
 };
 Index.prototype.getViewEngine = function() {
     return this.viewEngine.__express;

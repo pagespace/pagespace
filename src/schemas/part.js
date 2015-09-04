@@ -33,10 +33,6 @@ function generateSchema() {
             unique: true,
             required: true
         },
-        defaultData: {
-            type: Schema.Types.Mixed,
-            default: {}
-        },
         createdAt: {
             type: Date,
             default: Date.now()
@@ -57,6 +53,11 @@ function generateSchema() {
     partSchema.pre('save', function (next) {
         this.updatedAt = Date.now();
         next();
+    });
+
+    partSchema.virtual('defaultData').get(function () {
+        var partResolver = require('../misc/part-resolver')();
+        return partResolver.require(this.module).defaultData || {};
     });
 
     return partSchema;

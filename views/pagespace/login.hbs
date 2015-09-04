@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html ng-app="adminApp">
+<head>
+    <title>Pagespace :: Login</title>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
+
+    <script src="/_static/dashboard/login/login-controller.js"></script>
+</head>
+<body ng-controller="loginController">
+
+
+<div class="container-fluid">
+    <header class="row">
+        <div class="col-sm-2">
+            <div class="logo">
+                <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
+            </div>
+        </div>
+        <nav class="header-nav col-sm-10" style="height: 60px">
+        </nav>
+    </header>
+    <div class="row">
+        <nav class="side-nav col-sm-2">
+            <div class="section-heading">
+                <h3>Login</h3>
+            </div>
+        </nav>
+        <main class="main col-sm-4">
+            <div class="notification-bar">
+                <p class="text-danger"><span ng-show="badCredentials">Your username or password was incorrect</span></p>
+            </div>
+
+            <form role="form" ng-submit="submit()" class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Username</label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control" id="username" placeholder="geoffcapes" ng-model="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Password</label>
+                    <div class="col-sm-7">
+                        <input type="password" class="form-control" id="password" placeholder="Password" ng-model="password">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-7">
+                        <label style="font-weight: normal">
+                            <input type="checkbox" ng-model="remember_me"> Don't forget me
+                        </label>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+</body>
+</html>

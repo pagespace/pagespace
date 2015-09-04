@@ -12,13 +12,13 @@ app.use(favicon(__dirname + '/favicon.ico'));
 app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: 'keyboard cat'})]);
 
 // view engine setup
-app.set('views', [ pagespace.getViewDir() ]);
+app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
-    mediaDir: path.join(__dirname, 'media-uploads')
-    //logLevel: "debug"
+    mediaDir: path.join(__dirname, 'media-uploads'),
+    logLevel: "debug"
 }));
 
 /// catch 404 and forwarding to error handler
@@ -32,14 +32,14 @@ app.use(function(req, res, next) {
 
 // development error handler
 // will print stacktrace
-//TODO: send according to request accept
 if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);
         var resData = {
             message: err.message,
-            status: err.status
+            status: err.status,
+            stack: err.stack || ''
         };
         if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
             res.render('error.hbs', resData);
@@ -47,18 +47,28 @@ if (app.get('env') === 'development') {
             res.json(resData)
         }
     });
+} else {
+    // production error handler
+    // no stacktraces leaked to user
+    app.use(function(err, req, res, next) {
+        res.status(err.status || 500);
+        res.render('error', {
+            message: err.message,
+            status: err.status,
+            error: {}
+        });
+    });
 }
 
-// production error handler
-// no stacktraces leaked to user
-/*app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-        message: err.message,
-        error: {}
-    });
-});*/
-
-app.listen(9999);
+var port = 9999;
+app.listen(port, function() {
+    console.log('Pagespace dev app now running on http://localhost:%s', port)
+}).on('error', function(err) {
+    if(err.code === 'EADDRINUSE') {
+        console.error('Cannot start Pagespace. Something is already running on port %s.', port);
+    } else {
+        console.error(err, 'Couldn\'t start pagespace :(');
+    }
+});
 
 module.exports = app;

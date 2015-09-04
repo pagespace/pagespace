@@ -1,0 +1,70 @@
+<div class="row">
+    <div class="col-sm-4">
+        <dl>
+            <dt>Created on</dt>
+            <dd>{{page.createdAt | date:'MMM d, yyyy'}} at {{page.createdAt | date:'HH:mm'}}</dd>
+            <dt>by</dt>
+            <dd>{{page.createdBy.name}}</dd>
+        </dl>
+    </div>
+    <div class="col-sm-4">
+        <dl nf-show="page.updateAt">
+            <dt>Last updated on</dt>
+            <dd>{{page.updatedAt | date:'MMM d, yyyy'}} at {{page.updatedAt | date:'HH:mm'}}</dd>
+            <dt>by</dt>
+            <dd>{{page.updatedBy.name}}</dd>
+        </dl>
+    </div>
+    <div class="col-sm-4">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a href="{{page.url}}?_staging=true" target="_blank">Go to page &raquo;</a></li>
+            <li><a href="/_api/pages/{{page._id}}" target="_blank">Go to json &raquo;</a></li>
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+
+        <h3>Regions</h3>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Select a region</label>
+             <div class="col-sm-7" ng-show="page.regions.length">
+                <select ng-model="selectedRegionIndex"
+                        ng-options="page.regions.indexOf(region) as region.name for region in page.regions"
+                        class="form-control">
+                    <option value="" disabled>Select a region</option>
+                </select>
+            </div>
+        </div>
+        <div ng-repeat="region in page.regions track by $index">
+            <div ng-show="selectedRegionIndex == $index">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Part</label>
+                    <div class="col-sm-7">
+                        <select ng-model="page.regions[$index].part"
+                                ng-options="part as part.name for part in parts track by part._id"
+                                class="form-control">
+                            <option value="" disabled selected>Select a part type</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Data</label>
+                    <div class="col-sm-7">
+                        <textarea ng-model="page.regions[$index].data"
+                                  ui-codemirror
+                                  ui-codemirror-opts="editorOpts"
+                                  class="form-control"
+                                  name="regiondata_{{$index}}"
+                                  placeholder="Edit raw part data (for advanced users)"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </div>
+</div>

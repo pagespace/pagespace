@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html ng-app="adminApp">
+<head>
+    <title>Pagespace :: Dashboard</title>
+    <meta charset="utf-8">
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
+    <link href="/_static/bower_components/ng-tags-input/ng-tags-input.min.css" rel="stylesheet">
+    <link href="/_static/bower_components/ng-tags-input/ng-tags-input.bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/bower_components/codemirror/lib/codemirror.css" rel="stylesheet" >
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+
+    <script src="/_static/bower_components/browser-bunyan/dist/browser-bunyan.min.js"></script>
+    <script src="/_static/bower_components/async/lib/async.js"></script>
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
+    <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/_static/bower_components/angular-touch/angular-touch.min.js"></script>
+    <script src="/_static/bower_components/ng-tags-input/ng-tags-input.min.js"></script>
+    <script src="/_static/bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/xml/xml.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/_static/bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
+
+    <script src="/_static/dashboard/build/admin-app.js"></script>
+</head>
+<body ng-controller="MainController">
+
+<div class="container-fluid">
+    <header class="row">
+        <div class="col-sm-2">
+            <div class="logo">
+                <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
+            </div>
+        </div>
+        <nav class="header-nav col-sm-8">
+            <ul class="nav nav-pills">
+                <li ng-class="menuClass('/pages', '/')"><a href="#/pages">Pages</a></li>
+                <!--<li><a href="#/macros">Macros</a></li>-->
+                <li ng-class="menuClass('/media')"><a href="#/media">Media</a></li>
+                <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publishing</a></li>
+                {{#allowTemplatesAndParts}}
+                    <li ng-class="menuClass('/templates')"><a href="#/templates">Templates</a></li>
+                    <li ng-class="menuClass('/parts')"><a href="#/parts">Page Parts</a></li>
+                {{/allowTemplatesAndParts}}
+                {{#allowUsers}}
+                    <li ng-class="menuClass('/users')"><a href="#/users">Users</a></li>
+                {{/allowUsers}}
+            </ul>
+        </nav>
+        <div class="header-utils col-sm-2">
+            <p>Hello <b>{{displayName}}</b>&nbsp;
+                <a href="/_logout">
+                    <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout" alt="Logout" style="vertical-align: baseline">
+                </a></p>
+        </div>
+        <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
+    </header>
+    <div class="row">
+        <div ng-view></div>
+    </div>
+</div>
+<script>
+    (function() {
+        //change the sidebar color stuff
+        var headerColor = window.localStorage.getItem('specialColor');
+        if(headerColor) {
+            document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+        }
+        document.body.addEventListener('click', function (e) {
+            if (e.target.getAttribute('data-color')) {
+                headerColor = e.target.getAttribute('data-color');
+                window.localStorage.setItem('specialColor', headerColor);
+                document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+            }
+        });
+    })();
+
+</script>
+</body>
+</html>

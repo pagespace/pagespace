@@ -20,7 +20,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         siteService.getSite().success(function(site) {
             $scope.site = site;
         }).error(function(err) {
-            $rootScope.showError("Error getting site", err);
+            $scope.showError("Error getting site", err);
         });
     };
 
@@ -62,7 +62,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             $scope.pages = primaryRoots;
         }).error(function(err) {
-            $rootScope.showError("Error getting pages", err);
+            $scope.showError("Error getting pages", err);
         });
     };
 
@@ -83,7 +83,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 root: 'primary'
             }
         }
-        $rootScope.showInfo('Preparing new page...');
+        $scope.showInfo('Preparing new page...');
         //get future siblings
         pageService.getPages(siblingsQuery).success(function(pages) {
 
@@ -95,7 +95,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             highestOrder++;
             $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
         }).error(function(err) {
-            $rootScope.showError('Unable to determine order of new page', err);
+            $scope.showError('Unable to determine order of new page', err);
         });
     };
 
@@ -108,9 +108,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             if(really) {
                 pageService.deletePage(page).success(function() {
                     window.location.reload();
-                    $rootScope.showInfo("Page: " + page.name + " removed.");
+                    $scope.showInfo("Page: " + page.name + " removed.");
                 }).error(function(err) {
-                    $rootScope.showError("Error deleting page", err);
+                    $scope.showError("Error deleting page", err);
                 });
             }
         }
@@ -132,7 +132,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var siblingPage = siblings[0];
             if(!siblingPage) {
-                //$rootScope.showInfo('Couldn\'t re-order pages');
+                //$scope.showInfo('Couldn\'t re-order pages');
                 return;
             }
             async.parallel([
@@ -156,7 +156,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 }
             ], function(err) {
                 if(err) {
-                    $rootScope.showError('Problem re-ordering pages', err);
+                    $scope.showError('Problem re-ordering pages', err);
                 } else {
                     getPages();
                 }

@@ -1,19 +1,15 @@
 html,
-body,
-body > .container-fluid,
-body > .container-fluid > .full-height,
-header {
-    height: 100%;
-}
 body {
-    background: #f3f3f3;
+    background: #E5E7EA;
 }
 h1,
 .h1 {
     margin-bottom: 40px;
 }
 header {
-    background-color: #CBCBCB;
+    position: relative;
+    z-index: 1;
+    background-color: rgb(203, 203, 203);
 }
 header h1,
 header .nav {
@@ -22,12 +18,132 @@ header .nav {
 a {
     cursor: pointer;
 }
-header ul.nav li {
+
+/**
+ * Layout
+ */
+header > div,
+header > nav {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+
+/**
+ * Logo
+ */
+.holder {
+    margin: auto;
+    width: 800px;
+}
+.logo {
+    font-family: 'Raleway', sans-serif;
+    font-weigh: normal;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 60px;
+    height: 60px;
+    font-size: 36px;
+    color: #cbcbcb;
+    letter-spacing: 6px;
+    /*background: linear-gradient(135deg, rgba(254,255,255,1) 0%,rgba(242,242,242,1) 100%); */
+    background: linear-gradient(135deg, rgba(254,255,255,1) 0%,rgba(229, 229, 229, 1) 37%,rgba(253, 253, 253, 1) 100%);
+}
+.logo span {
+    cursor: default;
+}
+.p {
+    color: #ff005a
+}
+.a {
+    color: #00D6F3;
+}
+.g {
+    color: #faa129;
+}
+.e {
+    color: #29f38f;
+}
+
+/**
+ * Main nav 
+ */
+.header-nav ul {
+    padding: 0;
+}
+.header-nav a {
+    height: 60px;
+    line-height: 60px;
+    border: none;
+    outline: none;
+    padding: 0 20px !important;
+    font-size: 22px;
+    color: #000;
+}
+
+.header-nav .active a {
+    background: #f3f3f3 !important;
+    color: #000 !important;
+}
+
+.main {
+    padding: 18px;
     font-size: 18px;
-    border-radius: 3px;
-    border: 1px solid #f3f3f3;
-    margin-bottom: 4px;
-    background-color: rgba(255,255,255, 0.7);
+}
+
+.side-nav {
+    /* min-height: 200px; */
+    /* padding-bottom: 110px; */
+    padding: 18px;
+    padding-bottom: 150px;
+    background-image: linear-gradient(to bottom, #CBCBCB 0%, #E5E7EA 100%);
+}
+.side-nav a {
+    font-size: 18px;
+}
+.side-nav .active a {
+    background: #f3f3f3 !important;
+    color: #999 !important;
+}
+.header-utils {
+    padding-right: 22px !important;
+    text-align: right;
+}
+.header-utils p {
+    line-height: 50px;
+    font-size: 18px;
+    margin: 0;
+}
+
+.alert {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    padding: 6px 12px 6px 12px;
+    min-width: 350px;
+    max-height: 300px;
+    overflow: auto;
+    transition: max-height linear 1s;
+}
+.alert.ng-hide {
+    display: block !important;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height linear 1s
+}
+.alert .close {
+    margin-left: 12px;
+}
+
+.section-heading {
+    margin-bottom: 1em;
+}
+.section-heading h2,
+.section-heading h3 {
+    margin: 0;
+}
+.notification-bar {
+    margin-bottom: 1em;
 }
 
 /**
@@ -35,16 +151,16 @@ header ul.nav li {
  */
 /* form intro */
 .form-intro {
-    border-bottom: 1px solid lightgrey;
+    /* border-bottom: 1px solid lightgrey; */
     margin-bottom: 30px;
 }
 
 /* action buttons */
 .action-buttons {
-    height: 80px;
+    min-height: 80px;
     padding-top: 1em;
     margin-top: 50px;
-    border-top: 1px solid lightgrey;
+    box-shadow: 4px -18px 49px -27px #999;
 }
 .action-buttons button {
     float: right;
@@ -81,9 +197,16 @@ header ul.nav li {
 .selected-template {
     border: 2px solid #afff00;
 }
-
+.form-horizontal .control-label {
+    font-size: 18px;
+    font-weight: normal;
+    border: none;
+}
 .form-control {
     border-radius: 3px;
+    /* box-shadow: 0px 0px 20px -5px #999; */
+    font-size: 18px;
+    border: none;
 }
 .well-sm {
     border-radius: 3px;
@@ -143,29 +266,4 @@ header ul.nav li {
 }
 .media-html {
     background: url(types/html.png) no-repeat center center;
-}
-
-/* Colors */
-span[data-color] {
-    float: left;
-    width: 20%;
-    height: 30px;
-    cursor: pointer;
-    border-radius: 3px;
-    border: 1px solid #f3f3f3;
-}
-span[data-color="#cbcbcb"] {
-    background-color: #cbcbcb;
-}
-span[data-color="#ff005a"] {
-    background-color: #ff005a;
-}
-span[data-color="#00D6F3"] {
-    background-color: #00D6F3;
-}
-span[data-color="#faa129"] {
-    background-color: #faa129;
-}
-span[data-color="#29f38f"] {
-    background-color: #29f38f;
 }

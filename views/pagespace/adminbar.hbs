@@ -1,0 +1,14 @@
+<link type="text/css" rel="stylesheet" href="/_static/bar/adminbar.css">
+<script src="/_static/bar/adminbar.js"></script>
+<script type="text/html" id="adminbar-html">
+    <div id="adminbar" class="adminbar">
+        <div class="adminbar-links">
+            <a href="/_dashboard">Dashboard</a>
+        </div>
+        <div class="adminbar-actions">
+            <div class="switch-group">
+                <button name="_staging" value="true" class="switch {{#staging}}on{{/staging}}">Preview</button><button name="_staging" value="false"  class="switch {{#live}}on{{/live}}">Live</button>
+            </div>
+        </div>
+    </div>
+</script>

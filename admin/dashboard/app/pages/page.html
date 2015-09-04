@@ -1,154 +1,22 @@
-<div class="row">
-    <div class="col-sm-7">
-        <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
-            <div class="form-intro">
-                <p ng-show="!pageId && page.root == 'primary'">Create a new top level page</p>
-                <p ng-show="!pageId && page.parent">Create a sub page of <b>{{page.parent.name}}</b></p>
-                <p ng-show="pageId">Update the page:  <b>{{page.name}}</b></p>
-                <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
-            </div>
-
-            <div class="form-group" bs-has-error="name">
-                <label class="col-sm-2 control-label">Title</label>
-                <div class="col-sm-7">
-                    <input type="text" class="form-control" name="name"
-                           ng-model="page.name" placeholder="e.g. Contact us" required>
-                </div>
-                <div class="col-sm-3">
-                    <p class="form-control-static text-muted"><i>required</i></p>
-                </div>
-            </div>
-            <div class="form-group" bs-has-error="url">
-                <label class="col-sm-2 control-label">Url</label>
-                <div class="col-sm-7">
-                    <div class="input-group">
-                        <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]+$/" name="url"
-                               ng-model="page.url" placeholder="e.g. /contact-us" required>
-                        <span class="input-group-btn">
-                            <button type="button" class="btn btn-primary btn" title="Regenerate Url" ng-click="updateUrl()">
-                                <span class="glyphicon glyphicon-repeat"></span>
-                            </button>
-                        </span>
-                    </div>
-                </div>
-                <div class="col-sm-3">
-                    <p class="form-control-static text-muted"><i>required</i></p>
-                </div>
-            </div>
-            <div class="form-group" bs-has-error="useInNav">
-                <label class="col-sm-2 control-label">Use in navigation</label>
-                <div class="col-sm-7">
-                    <label style="display:block; margin-top: 12px">
-                        <input type="checkbox"  name="useInNav" ng-model="page.useInNav">
-                    </label>
-                </div>
-            </div>
-            <div class="form-group" bs-has-error="expiresAt">
-                <label class="col-sm-2 control-label">Expires</label>
-                <div class="col-sm-3">
-                    <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
-                </div>
-                <div class="col-sm-3">
-                    <p class="form-control-static text-muted"><i>optional</i></p>
-                </div>
-            </div>
-
-            <!-- Select template -->
-            <div ng-if="page.template == null && templates.length > 1" bs-has-error="template">
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Select template</label>
-                    <div class="col-sm-7">
-                        <select ng-model="template" name="template" required
-                                ng-options="template as template.name for template in templates"
-                                ng-change="selectTemplate(template)"
-                                class="form-control">
-                            <option value="" disabled selected>Choose a template</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div ng-if="page.template == null && templates.length === 0" >
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Select template</label>
-                    <div class="col-sm-7">
-                        <p class="form-control-static text-warning">
-                            There are no templates to select. Ask your developer to add some.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div ng-if="template != null">
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">Modify template</label>
-                    <div class="col-sm-7">
-
-                        <p class="form-control-static">{{template.name}}
-                            <a ng-click="toggleEditRegions()">Edit regions</a></p>
-
-                        <div ng-show="editRegions">
-                            <view-template></view-template>
-
-                            <div ng-repeat="region in page.regions track by $index">
-                                <div ng-show="selectedRegionIndex == $index">
-                                    <h4>Populate region: <b>{{region.name}}</b></h4>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Part type</label>
-                                        <div class="col-sm-10">
-                                            <select ng-model="region.part"
-                                                    ng-options="part as part.name for part in parts track by part._id" class="form-control">
-                                                <option value="" disabled selected>Select a part type</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Raw data</label>
-                                        <div class="col-sm-10">
-                                            <textarea ng-model="region.data"
-                                                      ui-codemirror
-                                                      ui-codemirror-opts="editorOpts"
-                                                      class="form-control"
-                                                      name="regiondata_{{$index}}"
-                                                      placeholder="Edit raw part data (for advanced users)"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div ng-show="selectedRegionIndex == -1">
-                                <p>Select a region to populate it with a page part</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-            </div>
-        </form>
+<nav class="side-nav col-sm-2">
+    <div class="section-heading" ng-cloak>
+        <h3 ng-show="!page._id">Create a page</i></h3>
+        <h3 ng-show="page._id">Edit page</h3>
     </div>
-    <div class="col-sm-2">
-        <div ng-show="page._id">
-            <dl>
-                <dt>Created on</dt>
-                <dd>{{page.createdAt | date:'MMM d, yyyy'}} at {{page.createdAt | date:'HH:mm'}}</dd>
-                <dt>by</dt>
-                <dd>{{page.createdBy.name}}</dd>
-            </dl>
-            <dl nf-show="page.updateAt">
-                <dt>Last updated on</dt>
-                <dd>{{page.updatedAt | date:'MMM d, yyyy'}} at {{page.updatedAt | date:'HH:mm'}}</dd>
-                <dt>by</dt>
-                <dd>{{page.updatedBy.name}}</dd>
-            </dl>
-
-            <ul class="nav nav-pills nav-stacked">
-                <li><a href="{{page.url}}?_staging=true" target="_blank">Go to page &raquo;</a></li>
-                <li><a href="/_api/pages/{{page._id}}" target="_blank">Go to json &raquo;</a></li>
-            </ul>
-        </div>
-
+    <ul class="nav nav-pills nav-stacked" ng-show="page._id">
+        <li ng-class="menuClass('/pages/basic')"><a ng-href="{{'#/pages/basic/' + page._id }}">Basic Settings</a></li>
+        <li ng-class="menuClass('/pages/advanced')"><a ng-href="{{'#/pages/advanced/' + page._id}}">Advanced</a></li>
+    </ul>
+</nav>
+<main class="main col-sm-6">
+    <div class="notification-bar">
+        <p ng-show="!pageId && page.root == 'primary'">Create a new top level page</p>
+        <p ng-show="!pageId && page.parent">Create a sub page of <b>{{page.parent.name}}</b></p>
+        <p ng-show="pageId">Update the page:  <b>{{page.name}}</b></p>
+        <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
     </div>
-</div>
+
+    <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
+        <div ng-include="'/_static/dashboard/app/pages/includes/' + section + '.html'"></div>
+    </form>
+</main>

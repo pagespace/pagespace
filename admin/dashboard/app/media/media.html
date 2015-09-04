@@ -1,29 +1,34 @@
-<div class="row">
-    <div class="col-sm-9">
-        <div class="media-item" ng-repeat="item in filteredItems" ng-click="showItem(item)">
-            <h3>{{item.name}}</h3>
-            <p>{{item.type}}</p>
-            <div  class="media-item-wrap" ng-class="getMimeClass(item)">
-                <div ng-show="isImage(item)">
-                    <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
-                </div>
-            </div>
-            <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>Available media</h3>
+    </div>
+
+    <ul class="nav nav-pills nav-stacked">
+        <li><a href="#/media/upload">Upload</a></li>
+    </ul>
+
+    <h4>Filter by tag</h4>
+
+    <ul class="nav nav-pills nav-stacked">
+        <div ng-repeat="availableTag in availableTags track by $index">
+            <li style="margin-bottom: 4px">
+                <button class="btn" ng-class="{'btn-primary': availableTag.on}"
+                        ng-click="toggleTag(availableTag)">{{availableTag.text}}</button></li>
         </div>
+    </ul>
+</nav>
+<main class="main col-sm-10">
+    <div class="notification-bar">
+        <p>Images and other media available to use in pages.</p>
     </div>
-    <div class="col-sm-3">
-        <ul class="nav nav-pills nav-stacked">
-            <li><a href="#/media/upload">Upload  &raquo;</a></li>
-        </ul>
-
-        <h3>Filter by tag</h3>
-
-        <ul class="nav nav-pills nav-stacked">
-            <div ng-repeat="availableTag in availableTags track by $index">
-                <li style="margin-bottom: 4px">
-                    <button class="btn" ng-class="{'btn-primary': availableTag.on}"
-                            ng-click="toggleTag(availableTag)">{{availableTag.text}}</button></li>
-            </div>            
-        </ul>
+    <div class="media-item" ng-repeat="item in filteredItems" ng-click="showItem(item)">
+        <h3>{{item.name}}</h3>
+        <p>{{item.type}}</p>
+        <div  class="media-item-wrap" ng-class="getMimeClass(item)">
+            <div ng-show="isImage(item)">
+                <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
+            </div>
+        </div>
+        <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
     </div>
-</div>
+</main>

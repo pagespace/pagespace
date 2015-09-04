@@ -14,7 +14,7 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
     partService.getParts().success(function(parts) {
         $scope.parts = parts;
     }).error(function(err) {
-        $rootScope.showError("Error getting parts", err);
+        $scope.showError("Error getting parts", err);
     });
 
 });

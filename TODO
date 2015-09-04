@@ -27,13 +27,11 @@
 ✓ rename _admin to _dashboard
 ✓ site settings
 ✓ serve statics
-* orange tea
-
 ✓ Custom user starter parts?
 ✓ Starter parts
     ✓ html (in page)
     ✓ html (blog)
-    * navigation
+    ✓ navigation
     ✓ html include
 ✓ select template as dropdown
 ✓ links on sitemap
@@ -41,15 +39,37 @@
 ✓ populate part data with predefined
 ✓ add developer & editor role
 ✓ hide advanced config from non dev roles
-* docs
-
-* Select media image from ck picker
-* archiving
 ✓ Dashboard color switcher
+✓ Simplify templating
+✓ Auto determine template regions
+✓ When selecting a part, pop in template, populate the default data
+✓ Do same in page
+* Multiple parts per region
+* Redo parts as external editiable plugins
+    ✓ html (in page)
+    * html (blog)
+    * navigation
+    ✓ html include
+* Move pageId to html tag
+* Select media image from ck picker
+* REST tests
+* tidy up test app
+* externalize ACL
+* parts to plugins?
+* cli, plugin generator
+* archiving
+
+
+Cache points
+- development:
+    - change a template
+    - change a part view
+
+OTT
+
 
 BUGS
 * edit link in web copy
-✓ can edit in live mode
 
 PRODUCTION CHECKLIST
 ✓ Full code review
@@ -60,14 +80,3 @@ PRODUCTION CHECKLIST
 ✓ Test perf (jmeter)
 ✓ Publish npm
 * Security checks
-
-✓ When selecting a part, pop in template, populate the default data
-✓ Do same in page
-
-CACHE POINTS
-- development:
-    - change a template
-    - change a part view
-
-- editor
-    - change part module data

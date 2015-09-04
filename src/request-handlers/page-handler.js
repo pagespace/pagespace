@@ -19,18 +19,14 @@
 
 'use strict';
 
-var fs = require('fs'),
+var util = require('util'),
     url = require('url'),
-    path = require('path'),
 
     Promise = require('bluebird'),
 
     psUtil = require('../misc/pagespace-util');
 
 var redirectStatuses = [ 301, 302, 303, 307 ];
-
-var readFileAsync = Promise.promisify(fs.readFile);
-var adminbarFilePromise = null;
 
 var PageHandler = function() {
 };
@@ -77,10 +73,8 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         return req.session[sessionKey] || false;
     }
 
-    var showAdminBar = req.user && req.user.role !== 'guest';
-    var stagingMode = sessionValueSwitch(req, '_staging', 'staging');
-    var editMode = stagingMode ? sessionValueSwitch(req, '_edit', 'edit') : false;
-    logger.info('New %s page request', (stagingMode ? 'staging' : 'live'));
+    var stagingMode = sessionValueSwitch(req, '_preview', 'staging');
+    logger.info('New %s page request', (stagingMode ? 'preview' : 'live'));
 
     var modelModifier = !stagingMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
@@ -122,27 +116,23 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
             promises.push(page);
 
-            if(showAdminBar) {
-                var adminBarLocation = path.join(__dirname, '/../../views/adminbar.hbs');
-                logger.debug('Showing admin bar (from: %s) ', adminBarLocation);
-                adminbarFilePromise = adminbarFilePromise || readFileAsync(adminBarLocation, 'utf8');
-                promises.push(adminbarFilePromise);
-            } else {
-                //push empty promise, so spread args are still right
-                promises.push('');
-            }
-
             //read data for each part
             page.regions.forEach(function (region) {
                 var partModule = self.partResolver.require(region.part ? region.part.module : null);
-                if(partModule && typeof partModule.process === 'function') {
+                if(partModule) {
                     var regionData = region.data || {};
-                    var partPromise = partModule.process(regionData, {
-                        basePath: self.userBasePath,
-                        PageModel: Page,
-                        req: req,
-                        logger: logger.child({part: region.part.name})
-                    });
+                    var partPromise;
+                    if(typeof partModule.process === 'function') {
+                        partPromise = partModule.process(regionData, {
+                            basePath: self.userBasePath,
+                            PageModel: Page,
+                            req: req,
+                            logger: logger.child({part: region.part.name})
+                        });
+                    } else {
+                        partPromise = regionData;
+                    }
+
                     promises.push(partPromise);
                 } else {
                     promises.push(null);
@@ -174,15 +164,10 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var status = args.shift();
         if(status === 200) {
             var page = args.shift();
-            var adminBar = args.shift();
-
-            self.viewEngine.registerPartial('adminbar', adminBar, urlPath);
 
             var pageData = {};
             pageData.site = self.site;
             pageData.page = page.toObject();
-            pageData.edit = editMode;
-            pageData.preview = !editMode;
             pageData.staging = stagingMode;
             pageData.live = !stagingMode;
 
@@ -203,13 +188,14 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
                     var partModule = self.partResolver.get(region.part ? region.part.module : null);
                     var viewPartial;
-                    if(!partModule) {
+                    if(partModule) {
+                        viewPartial = util.format('<div data-part="%s" data-page-id="%s" data-region="%s">\n%s\n</div>',
+                                                   partModule.__config.name, page._id, region.name, partModule.__viewPartial);
+                    } else {
                         viewPartial = '<!-- Region: ' + region.name + ' -->';
                         if(region.part) {
                             self.logger.warn('The view partial for %s could not be resolved', partModule);
                         }
-                    } else {
-                        viewPartial = partModule.__viewPartial;
                     }
                     self.viewEngine.registerPartial(region.name, viewPartial, urlPath);
                 }
@@ -237,7 +223,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             if(redirectPage && redirectPage.url) {
                 res.redirect(status, redirectPage.url);
             } else {
-                logger('Page to redirect to is not set. Sending 404');
+                logger.warn('Page to redirect to is not set. Sending 404');
                 err = new Error('Page not found for ' + urlPath);
                 err.status = 404;
                 throw err;

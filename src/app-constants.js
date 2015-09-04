@@ -48,18 +48,13 @@ consts.requests = {
     },
     DASHBOARD: {
         key: 'DASHBOARD',
-        regex: new RegExp('^/_(dashboard)'),
+        regex: new RegExp('^/_dashboard/?(region)?'),
         handler: require('./request-handlers/dashboard-handler')
     },
     API: {
         key: 'API',
         regex: new RegExp('^/_api/(sites|pages|parts|templates|users|media)/?(.*)'),
         handler: require('./request-handlers/api-handler')
-    },
-    DATA: {
-        key: 'DATA',
-        regex: new RegExp('^/_data/(.+)/(.+)'),
-        handler: require('./request-handlers/data-handler')
     },
     MEDIA: {
         key: 'MEDIA',
@@ -73,13 +68,23 @@ consts.requests = {
     },
     STATIC: {
         key: 'STATIC',
-        regex: new RegExp('^/_static/(dashboard|bar|bower_components|parts)/(.*)'),
+        regex: new RegExp('^/_static/(dashboard|inpage|bower_components|part)/(.*)'),
         handler: require('./request-handlers/static-handler')
+    },
+    PARTS: {
+        key: 'PARTS',
+        regex: new RegExp('^/_parts/(static|data)/?([A-z0-9-_]*)/?(.*)'),
+        handler: require('./request-handlers/part-handler')
     },
     CACHE: {
         key: 'CACHE',
         regex: new RegExp('^/_cache/(parts)'),
         handler: require('./request-handlers/cache-handler')
+    },
+    TEMPLATES: {
+        key: 'TEMPLATES',
+        regex: new RegExp('^/_templates/(available|template-regions|test|preview)'),
+        handler: require('./request-handlers/templates-handler')
     },
     OTHER: {
         key: 'OTHER',

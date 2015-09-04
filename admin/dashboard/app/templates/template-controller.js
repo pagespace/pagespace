@@ -5,10 +5,13 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window,
+adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
                                                    templateService, partService) {
 
+    $log.info('Showing Template View');
+
     $rootScope.pageTitle = 'Template';
+
 
     var templateId = $routeParams.templateId;
     $scope.templateId = templateId;
@@ -24,8 +27,34 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         $scope.parts = parts;
     });
 
+    templateService.getTemplateSources().success(function(templateSources) {
+        $scope.templateSources = templateSources;
+    });
+
+    $scope.$watch('template.src', function(val) {
+
+        if(val) {
+            $log.debug('Fetching regions for template src: %s...', val);
+            templateService.getTemplateRegions(val).success(function(regions) {
+                $log.debug('Got regions: %s', regions);
+                if(!$scope.template.regions.length) {
+                    $scope.template.regions = regions.map(function(region) {
+                        return {
+                            name: region
+                        };
+                    });
+                }
+
+            }).error(function(err) {
+                $scope.showError('Error getting template', err);
+            });
+        }
+    });
+
     if(templateId) {
+        $log.debug('Fetching template data for id: %s...', templateId);
         templateService.getTemplate(templateId).success(function(template) {
+            $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
 
             template.regions.map(function(region) {
@@ -34,7 +63,8 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
                 return region;
             });
         }).error(function(err) {
-            $rootScope.showError('Error getting template', err);
+            $log.error(err, 'Error getting template');
+            $scope.showError('Error getting template', err);
         });
     }
 
@@ -68,15 +98,17 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         }
     };
 
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.template.regions.forEach(function(region, index) {
-            var dataField = $scope.templateForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
+    $scope.getTemplatePreviewUrl = function() {
+        if($scope.template && $scope.template.src) {
+            var templateSrc = encodeURIComponent($scope.template.src);
+            var regionOutlineColor = encodeURIComponent(localStorage.getItem('sidebarColor'));
+            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            $log.debug('Template preview url is: %s', templatePreviewUrl);
+            return templatePreviewUrl;
+        } else {
+            return null;
+        }
+
     };
 
     $scope.cancel = function() {
@@ -84,6 +116,8 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     };
 
     $scope.save = function(form) {
+
+
 
         if(form.$invalid) {
             $window.scrollTo(0,0);
@@ -115,18 +149,26 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         });
 
         if(templateId) {
+            $log.info('Updating template: %s...', templateId);
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.updateTemplate(templateId, $scope.template).success(function() {
-                $rootScope.showSuccess('Template updated.');
+                $log.info('Template updated successfully');
+                $scope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error updating template', err);
+                $log.error(err, 'Error updating template');
+                $scope.showError('Error updating template', err);
             });
         } else {
+            $log.info('Creating new template...');
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.createTemplate($scope.template).success(function() {
-                $rootScope.showSuccess('Template created.');
+                $log.info('Template created successfully');
+                $scope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error creating template', err);
+                $log.error(err, 'Error creating template');
+                $scope.showError('Error creating template', err);
             });
         }
     };
@@ -134,15 +176,16 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.remove = function() {
         var really = window.confirm('Really delete this template?');
         if(really) {
+            $log.info('Deleting template: %s...', $scope.template._id);
             templateService.deleteTemplate($scope.template._id).success(function (res) {
-                console.log('Template deleted');
+                $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {
-                $rootScope.showError('Error deleting template', err);
+                $log.error(err, 'Could not delete template');
+                $scope.showError('Error deleting template', err);
             });
         }
     };
-
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
@@ -156,120 +199,6 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         }
         return true;
     }
-});
-
-adminApp.directive('drawTemplate', function() {
-
-    function link(scope, element, attrs) {
-
-        var grid = 10;
-
-        element.html('<canvas width="550" height="400"></canvas>');
-        var canvas = new fabric.Canvas(element.find('canvas')[0]);
-        canvas.backgroundColor = '#ddd';
-
-        canvas.on('object:selected', function() {
-            var obj = canvas.getActiveObject();
-            canvas.bringToFront(obj);
-        });
-
-        canvas.on('object:moving', function(e){
-            var obj = e.target;
-
-            //keep in canvas bounds
-            if(obj.top < 0 || obj.left < 0){
-                obj.top = Math.max(obj.top, 0)
-                obj.left = Math.max(obj.left , 0);
-            }
-            if(obj.left + obj.width > canvas.width || obj.top + obj.height > canvas.height) {
-                obj.left = Math.min(obj.left, canvas.width - obj.width);
-                obj.top = Math.min(obj.top, canvas.height - obj.height);
-            }
-
-            //snap to grid
-            obj.set({
-                left: Math.round(obj.left / grid) * grid,
-                top: Math.round(obj.top / grid) * grid
-            });
-        });
-        canvas.on('object:scaling', function(e) {
-            var obj = e.target;
-
-            //fix stroke scaling
-            if(obj.item(0)) {
-                var rect = obj.item(0);
-                if(rect.getHeight() > rect.getWidth()) {
-                    rect.strokeWidth = 1 / obj.scaleY;
-                } else {
-                    rect.strokeWidth = 1 / obj.scaleX;
-                }
-                rect.set('strokeWidth', rect.strokeWidth);
-            }
-
-            //stop text scaling
-            if(obj.item(1)) {
-                var text = obj.item(1);
-                text.scaleX = 1 / obj.scaleX;
-                text.scaleY = 1 / obj.scaleY;
-            }
-        });
-
-        scope.$watch(attrs.regions, function(regions) {
-
-            canvas.clear();
-
-            for(var i = regions.length - 1; i >= 0; i--) {
-                (function (region, i) {
-                    var canvasData = scope.template.regionData[i] || {
-                        top: 10,
-                        left: 10,
-                        width: 100,
-                        height: 100
-                    };
-
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasRotatingPoint: false
-                    });
-
-                    group.on('modified', function () {
-                        var regionData = {
-                            top: this.top,
-                            left: this.left,
-                            width: this.getWidth(),
-                            height: this.getHeight()
-                        };
-                        scope.template.regionData[i] = regionData;
-                    });
-                    group.on('selected', function () {
-                        console.log(this);
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                })(regions[i], i);
-            }
-        }, true);
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
 });
 
 })();

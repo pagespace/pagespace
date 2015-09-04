@@ -49,7 +49,7 @@ PublishingHandler.prototype.doRequest = function(req, res, next) {
 
     logger.info('New publishing request');
     if(req.method === 'POST') {
-        return this.publishDrafts(req, res, next, logger);
+        return this.doPublishDrafts(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -57,7 +57,7 @@ PublishingHandler.prototype.doRequest = function(req, res, next) {
     }
 };
 
-PublishingHandler.prototype.publishDrafts = function(req, res, next, logger) {
+PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
 
     var self = this;
 

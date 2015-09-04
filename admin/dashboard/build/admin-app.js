@@ -9,6 +9,12 @@
     adminApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
 
+            //site
+            when('/pages/site', {
+                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
+                controller: 'SiteSettingsController'
+            }).
+
             //pages
             when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
@@ -21,6 +27,18 @@
             when('/pages/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
+            }).
+            when('/pages/:section/:pageId/', {
+                templateUrl: '/_static/dashboard/app/pages/page.html',
+                controller: 'PageController'
+            }).
+            when('/view-page/:env/', {
+                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                controller: 'ViewPageController'
+            }).
+            when('/view-page/:env/:url*', {
+                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                controller: 'ViewPageController'
             }).
             when('/pages/delete/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
@@ -47,6 +65,10 @@
                 templateUrl: '/_static/dashboard/app/publishing/publishing.html',
                 controller: 'PublishingController'
             }).
+            when('/publishing/:pageId', {
+                templateUrl: '/_static/dashboard/app/publishing/publishing.html',
+                controller: 'PublishingController'
+            }).
 
             //media
             when('/media', {
@@ -66,12 +88,6 @@
             when('/macros', {
                 templateUrl: '/_static/dashboard/app/macros/macros.html',
                 controller: 'MacrosController'
-            }).
-
-            //site
-            when('/site', {
-                templateUrl: '/_static/dashboard/app/site/sitesettings.html',
-                controller: 'SiteSettingsController'
             }).
 
             //templates
@@ -102,12 +118,105 @@
                 controller: 'UserController'
             }).
 
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+
             //default to sitemap
             otherwise({
                 templateUrl: '/_static/dashboard/app/pages/site-map.html',
                 controller: 'SitemapController'
             });
     }]);
+
+    if(window.bunyan) {
+        adminApp.config(function($provide) {
+            $provide.decorator('$log', function($delegate) {
+                $delegate = bunyan.createLogger({
+                    name: 'pagespace',
+                    streams: [
+                        {
+                            level: localStorage.getItem('pagespace:logLevel') || 'info',
+                            stream: new bunyan.ConsoleFormattedStream(),
+                            type: 'raw'
+                        }
+                    ]
+                });
+
+                return $delegate;
+            });
+        });
+    }
+
+    adminApp.controller("MainController", function($scope, $location, $timeout) {
+        $scope.menuClass = function(page) {
+
+            //default page
+            var path = $location.path();
+            if(path === '/') {
+                path = '/pages';
+            }
+            var match = path.indexOf(page) === 0;
+            return match ? "active" : "";
+        };
+
+        //notications
+        $scope.message = null;
+
+        function showMessage(text, type) {
+            $scope.message = {
+                type: type,
+                text: text
+            };
+        }
+
+        $scope.showSuccess = function(text) {
+            console.log(text);
+            showMessage(text, 'success');
+        };
+
+        $scope.showInfo = function(text) {
+            console.log(text);
+            showMessage(text, 'info');
+        };
+
+        $scope.showWarning = function(text) {
+            console.warn(text);
+            showMessage(text, 'warning');
+        };
+
+        $scope.showError = function(text, err) {
+            console.error(text);
+            if(err) {
+                console.error(err);
+            }
+            var message = text;
+            if(err.message) {
+                message += ': ' + err.message;
+            }
+            if(err.status) {
+                message += ' (' + err.status + ')';
+            }
+            showMessage(message, 'danger');
+        };
+
+        $scope.clearNotification = function() {
+            $scope.message = null;
+        };
+        $scope.clear = function() {
+            $scope.message = null;
+        };
+
+        var hideTimeout = null;
+        $scope.$watch('message', function() {
+            $timeout.cancel(hideTimeout);
+            hideTimeout = $timeout(function() {
+                $scope.message = null;
+            }, 1000 * 10)
+        })
+    });
+
 })();
 
 (function() {
@@ -269,7 +378,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         console.log($scope.availableTags);
         $scope.availableTags = availableTags;
     }).error(function(err) {
-        $rootScope.showError("Error getting media items", err);
+        $scope.showError("Error getting media items", err);
     });
 });
 
@@ -364,13 +473,12 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             if(really) {
                 mediaService.deleteItem(item._id).success(function() {
                     $location.path('/media');
-                    $rootScope.showInfo("Media: " + item.name + " removed.");
+                    $scope.showInfo("Media: " + item.name + " removed.");
                 }).error(function(err) {
-                    $rootScope.showError("Error deleting page", err);
+                    $scope.showError("Error deleting page", err);
                 });
             }
         };
-
 
         $scope.cancel = function() {
             $location.path('/media');
@@ -387,15 +495,15 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
                 $scope.itemText = res.data;
             }
         }).catch(function(err) {
-            $rootScope.showError('Error getting media item', err);
+            $scope.showError('Error getting media item', err);
         });
 
         $scope.updateItemText = function() {
             mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
-                $rootScope.showSuccess('Media item updated');
+                $scope.showSuccess('Media item updated');
                 $location.path('/media');
             }).error(function(err) {
-                $rootScope.showError('Could not update text media', err);
+                $scope.showError('Could not update text media', err);
             });
         };
     });
@@ -467,11 +575,15 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
            tags: JSON.stringify($scope.media.tags)
         }).success(function() {
             $location.path('/media');
-            $rootScope.showSuccess('Upload successful');
+            $scope.showSuccess('Upload successful');
         }).error(function(err) {
-            $rootScope.showError('Error uploading file', err);
+            $scope.showError('Error uploading file', err);
         });
-        $rootScope.showInfo('Upload in progress...');
+        $scope.showInfo('Upload in progress...');
+    };
+
+    $scope.cancel = function() {
+        $location.path("/media");
     };
 });
 
@@ -483,53 +595,11 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("notificationsController", function($scope, $rootScope) {
+adminApp.controller("notificationsController", function($scope, $rootScope, $timeout) {
     $scope.message = null;
 
-    function showMessage(text, type) {
-        $scope.message = {
-            type: type,
-            text: text
-        };
 
-    }
 
-    $rootScope.showSuccess = function(text) {
-        console.log(text);
-        showMessage(text, 'success');
-    };
-
-    $rootScope.showInfo = function(text) {
-        console.log(text);
-        showMessage(text, 'info');
-    };
-
-    $rootScope.showWarning = function(text) {
-        console.warn(text);
-        showMessage(text, 'warning');
-    };
-
-    $rootScope.showError = function(text, err) {
-        console.error(text);
-        if(err) {
-            console.error(err);
-        }
-        var message = text;
-        if(err.message) {
-            message += ': ' + err.message;
-        }
-        if(err.status) {
-            message += ' (' + err.status + ')';
-        }
-        showMessage(message, 'danger');
-    };
-
-    $rootScope.clearNotification = function() {
-        $scope.message = null;
-    };
-    $scope.clear = function() {
-        $scope.message = null;
-    };
 });
 
 })();
@@ -544,8 +614,6 @@ adminApp.controller("DeletePageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
-    $rootScope.pageTitle = "Delete page";
-
     var pageId = $routeParams.pageId;
     $scope.status = 410;
 
@@ -555,12 +623,12 @@ adminApp.controller("DeletePageController",
         //default delete status
         page.status = 410;
     }).error(function(err) {
-        $rootScope.showError('Couldn\'t find a page to delete', err);
+        $scope.showError('Couldn\'t find a page to delete', err);
     });
     pageService.getPages().success(function(pages) {
         $scope.pages = pages;
     }).error(function(err) {
-        $rootScope.showError('Couldn\'t get pages', err);
+        $scope.showError('Couldn\'t get pages', err);
     });
 
     $scope.cancel = function() {
@@ -579,9 +647,9 @@ adminApp.controller("DeletePageController",
 
         pageService.deletePage(page).success(function() {
             $location.path("");
-            $rootScope.showInfo("Page: " + page.name + " removed.");
+            $scope.showInfo("Page: " + page.name + " removed.");
         }).error(function(err) {
-            $rootScope.showError("Error deleting page", err);
+            $scope.showError("Error deleting page", err);
         });
     }
 });
@@ -595,13 +663,17 @@ adminApp.controller("DeletePageController",
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
-    function($scope, $rootScope, $routeParams, $location, $timeout,
+    function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, partService, $window) {
 
-    $rootScope.clearNotification();
-    $rootScope.pageTitle = "Page";
+    $log.info('Showiing page view.');
+
+    $scope.section = $routeParams.section || 'basic';
+
+    $scope.clearNotification();
 
     var pageId = $routeParams.pageId;
+
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
@@ -615,27 +687,34 @@ adminApp.controller("PageController",
         $scope.editRegions = !$scope.editRegions;
     };
 
-
     $scope.selectedRegionIndex = -1;
     $scope.template = null;
 
-    var getPageFunctions = [];
-    getPageFunctions.push(function getTemplates(callback) {
-        templateService.getTemplates().success(function(templates) {
+    var pageSetupFunctions = [];
+    pageSetupFunctions.push(function getTemplates(callback) {
+        $log.info('Fetching available templates...');
+        templateService.doGetAvailableTemplates().success(function(templates) {
+            $log.info('Got available templates.');
             $scope.templates = templates;
             callback()
         });
     });
-    getPageFunctions.push(function getParts(callback) {
+    pageSetupFunctions.push(function getParts(callback) {
+        $log.debug('Fetching available parts...');
         partService.getParts().success(function(parts) {
+            $log.debug('Got available parts.');
             $scope.parts = parts;
             callback()
         });
     });
+
     if(pageId) {
+        $log.debug('Fetching page data for: %s', pageId);
         $scope.pageId = pageId;
-        getPageFunctions.push(function getPage(callback) {
+        pageSetupFunctions.push(function getPage(callback) {
             pageService.getPage(pageId).success(function(page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
                 $scope.page = page;
 
                 if(page.expiresAt) {
@@ -646,7 +725,7 @@ adminApp.controller("PageController",
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
-                page.regions.map(function(region) {
+                page.regions = page.regions.map(function(region) {
                     region.data = stringifyData(region.data);
                     region.dataFromServer = !!region.data;
                     return region;
@@ -660,7 +739,7 @@ adminApp.controller("PageController",
             regions: []
         };
         if(parentPageId) {
-            getPageFunctions.push(function getParentPage(callback) {
+            pageSetupFunctions.push(function getParentPage(callback) {
                 pageService.getPage(parentPageId).success(function(page) {
                     $scope.page.parent = page;
                     callback();
@@ -671,9 +750,9 @@ adminApp.controller("PageController",
         }
     }
 
-    async.series(getPageFunctions, function(err) {
+    async.series(pageSetupFunctions, function(err) {
         if(err) {
-            $rootScope.showError(err);
+            $scope.showError(err);
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
@@ -687,7 +766,7 @@ adminApp.controller("PageController",
     };
 
     $scope.cancel = function() {
-        $location.path("");
+        $location.path("/pages");
     };
 
     $scope.selectTemplate = function(template) {
@@ -708,7 +787,7 @@ adminApp.controller("PageController",
     };
 
     $scope.$watch('page.name', function() {
-        if($scope.pageForm.url.$pristine && !pageId) {
+        if($scope.pageForm && $scope.pageForm.url.$pristine && !pageId) {
             $scope.updateUrl();
         }
     });
@@ -752,21 +831,33 @@ adminApp.controller("PageController",
         });
 
         if(pageId) {
+            $log.info('Update page: %s...', pageId);
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.updatePage(pageId, page).success(function(res) {
-                $rootScope.showSuccess("Page: " + page.name + " saved.");
+                $log.info('Page successfully updated');
+                $scope.showSuccess("Page: " + page.name + " saved.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error saving page", err);
+                $log.error(err, 'Error updating page');
+                $scope.showError("Error updating page", err);
             });
         } else {
-            pageService.createPage($scope.page).success(function() {
-                $rootScope.showSuccess("Page: " + page.name + " created.");
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            pageService.createPage(page).success(function() {
+                $log.info('Page successfully created');
+                $scope.showSuccess("Page: " + page.name + " created.");
                 $location.path("");
             }).error(function(err) {
-                $rootScope.showError("Error adding new page", err);
+                $log.error(err, 'Error creating page');
+                $scope.showError("Error adding new page", err);
             });
         }
     };
+
+
+});
+
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
@@ -780,62 +871,6 @@ adminApp.controller("PageController",
         }
         return true;
     }
-});
-
-adminApp.directive('viewTemplate', function() {
-
-    function link(scope, element) {
-
-        scope.$watch('template', function(){
-           drawTemplate();
-        });
-
-        function drawTemplate() {
-            element.html('<canvas width="550" height="400"></canvas>');
-            var canvas = new fabric.Canvas(element.find('canvas')[0]);
-            canvas.backgroundColor = '#ddd';
-
-            scope.template.regions.forEach(function(region, i) {
-
-                var canvasData = scope.template.regionData[i];
-
-                if(canvasData) {
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasControls: false,
-                        lockMovementX: true,
-                        lockMovementY: true
-                    });
-                    group.on('selected', function() {
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                }
-            });
-        }
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
-});
-
 })();
 (function() {
     var adminApp = angular.module('adminApp');
@@ -976,7 +1011,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         siteService.getSite().success(function(site) {
             $scope.site = site;
         }).error(function(err) {
-            $rootScope.showError("Error getting site", err);
+            $scope.showError("Error getting site", err);
         });
     };
 
@@ -1018,7 +1053,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             $scope.pages = primaryRoots;
         }).error(function(err) {
-            $rootScope.showError("Error getting pages", err);
+            $scope.showError("Error getting pages", err);
         });
     };
 
@@ -1039,7 +1074,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 root: 'primary'
             }
         }
-        $rootScope.showInfo('Preparing new page...');
+        $scope.showInfo('Preparing new page...');
         //get future siblings
         pageService.getPages(siblingsQuery).success(function(pages) {
 
@@ -1051,7 +1086,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             highestOrder++;
             $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
         }).error(function(err) {
-            $rootScope.showError('Unable to determine order of new page', err);
+            $scope.showError('Unable to determine order of new page', err);
         });
     };
 
@@ -1064,9 +1099,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             if(really) {
                 pageService.deletePage(page).success(function() {
                     window.location.reload();
-                    $rootScope.showInfo("Page: " + page.name + " removed.");
+                    $scope.showInfo("Page: " + page.name + " removed.");
                 }).error(function(err) {
-                    $rootScope.showError("Error deleting page", err);
+                    $scope.showError("Error deleting page", err);
                 });
             }
         }
@@ -1088,7 +1123,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
 
             var siblingPage = siblings[0];
             if(!siblingPage) {
-                //$rootScope.showInfo('Couldn\'t re-order pages');
+                //$scope.showInfo('Couldn\'t re-order pages');
                 return;
             }
             async.parallel([
@@ -1112,7 +1147,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 }
             ], function(err) {
                 if(err) {
-                    $rootScope.showError('Problem re-ordering pages', err);
+                    $scope.showError('Problem re-ordering pages', err);
                 } else {
                     getPages();
                 }
@@ -1125,6 +1160,74 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
     };
     $scope.moveForward = function(page) {
         $scope.movePage(page, 1);
+    };
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller("ViewPageController",
+    function($scope, $rootScope, $routeParams) {
+
+    var env = $routeParams.env;
+    var url = $routeParams.url;
+
+    $scope.getPageUrl = function() {
+        var staging = env === 'preview';
+        return (url || '/') + '?_preview=' + staging;
+    };
+});
+
+adminApp.directive('pageHolder', function() {
+    return {
+        restrict: 'E',
+        transclude: true,
+        replace: true,
+        template: '<div class="my-div" ng-transclude></div>',
+        link: function link(scope, element, attrs) {
+
+            //sizing
+            function getWindowHeight() {
+                return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+            }
+
+            element.css('clear', 'both');
+            element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+
+            window.addEventListener('resize', function() {
+                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+            });
+
+            //injection
+            var adminStyles = document.createElement('link');
+            adminStyles.id =
+            adminStyles.setAttribute('type', 'text/css');
+            adminStyles.setAttribute('rel', 'stylesheet');
+            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
+
+            var adminScript = document.createElement('script');
+            adminScript.src = '/_static/inpage/inpage-edit.js';
+
+            var pageFrame = element.find('iframe')[0];
+
+            pageFrame.addEventListener('load', function() {
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName("head")[0];
+                frameHead.appendChild(adminStyles);
+                frameHead.appendChild(adminScript);
+
+                adminScript.onload = function() {
+                    window.setTimeout(function() {
+                        //not sure how to guarantee the css is ready
+                        pageFrame.contentWindow.pagespace.setupAdminMode();
+                    }, 50);
+                };
+            });
+        }
     };
 });
 
@@ -1154,15 +1257,15 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         partService.getPart(partId).success(function(part) {
             $scope.part = part;
         }).error(function(err) {
-            $rootScope.showError("Error getting part", err);
+            $scope.showError("Error getting part", err);
         });
     }
 
     $scope.reset = function() {
         partService.resetPart($scope.part).success(function() {
-            $rootScope.showSuccess("Cache cleared");
+            $scope.showSuccess("Cache cleared");
         }).error(function(err) {
-            $rootScope.showError("Error getting part", err);
+            $scope.showError("Error getting part", err);
         })
     };
 
@@ -1180,18 +1283,18 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         if(partId) {
             partService.updatePart(partId, $scope.part).success(function(res) {
                 console.log("Part saved");
-                $rootScope.showSuccess("Part updated.");
+                $scope.showSuccess("Part updated.");
                 $location.path("/parts");
             }).error(function(err) {
-                $rootScope.showError("Error updating part", err);
+                $scope.showError("Error updating part", err);
             });
         } else {
             partService.createPart($scope.part).success(function(res) {
                 console.log("Part created");
-                $rootScope.showSuccess("Part created.");
+                $scope.showSuccess("Part created.");
                 $location.path("/parts");
             }).error(function(err) {
-                $rootScope.showError("Error saving part", err);
+                $scope.showError("Error saving part", err);
             });
         }
     };
@@ -1200,10 +1303,10 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
         var really = window.confirm('Really delete this part?');
         if(really) {
             partService.deletePart($scope.part._id).success(function (res) {
-                $rootScope.showInfo("Part removed", err);
+                $scope.showInfo("Part removed", err);
                 $location.path("/parts");
             }).error(function (err) {
-                $rootScope.showError("Error deleting part", err);
+                $scope.showError("Error deleting part", err);
             });
         }
     };
@@ -1228,7 +1331,7 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
     partService.getParts().success(function(parts) {
         $scope.parts = parts;
     }).error(function(err) {
-        $rootScope.showError("Error getting parts", err);
+        $scope.showError("Error getting parts", err);
     });
 
 });
@@ -1282,17 +1385,24 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location, publishingService) {
-    $rootScope.pageTitle = 'Publishing';
+
+    var preQueued = $routeParams.pageId || null;
 
     //get all pages with drafts
     publishingService.getDrafts().success(function(drafts) {
         $scope.drafts = drafts;
+
+        drafts.forEach(function(page) {
+           if(page._id === preQueued) {
+               page.queued = true;
+           }
+        });
     }).error(function(err) {
-        $rootScope.showError('Error getting drafts to publish', err);
+        $scope.showError('Error getting drafts to publish', err);
     });
 
     $scope.cancel = function() {
-        $location.path('/');
+        $location.path('/pages');
     };
 
     $scope.publish = function() {
@@ -1309,10 +1419,10 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
         }
 
         publishingService.publish(toPublishIds).success(function() {
-            $rootScope.showSuccess('Publishing successful');
+            $scope.showSuccess('Publishing successful');
             $location.path('/');
         }).error(function(err) {
-            $rootScope.showError('Error performing publish', err);
+            $scope.showError('Error performing publish', err);
         });
     };
 });
@@ -1372,7 +1482,6 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
      */
     var adminApp = angular.module('adminApp');
     adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
-        $rootScope.pageTitle = "Site settings";
 
         $scope.defaultPage = null;
 
@@ -1427,15 +1536,15 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
                         }
                     }
                 ], function(err) {
-                    $rootScope.showError('Unable to set default page', err);
+                    $scope.showError('Unable to set default page', err);
                 });
             }
 
             siteService.updateSite(site).success(function() {
-                $rootScope.showSuccess('Site updated.');
+                $scope.showSuccess('Site updated.');
                 $location.path('/');
             }).error(function(err) {
-                $rootScope.showError('Error updating site', err);
+                $scope.showError('Error updating site', err);
             });
 
         };
@@ -1449,10 +1558,13 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('TemplateController', function($scope, $rootScope, $routeParams, $location, $window,
+adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
                                                    templateService, partService) {
 
+    $log.info('Showing Template View');
+
     $rootScope.pageTitle = 'Template';
+
 
     var templateId = $routeParams.templateId;
     $scope.templateId = templateId;
@@ -1468,8 +1580,34 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         $scope.parts = parts;
     });
 
+    templateService.getTemplateSources().success(function(templateSources) {
+        $scope.templateSources = templateSources;
+    });
+
+    $scope.$watch('template.src', function(val) {
+
+        if(val) {
+            $log.debug('Fetching regions for template src: %s...', val);
+            templateService.getTemplateRegions(val).success(function(regions) {
+                $log.debug('Got regions: %s', regions);
+                if(!$scope.template.regions.length) {
+                    $scope.template.regions = regions.map(function(region) {
+                        return {
+                            name: region
+                        };
+                    });
+                }
+
+            }).error(function(err) {
+                $scope.showError('Error getting template', err);
+            });
+        }
+    });
+
     if(templateId) {
+        $log.debug('Fetching template data for id: %s...', templateId);
         templateService.getTemplate(templateId).success(function(template) {
+            $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
 
             template.regions.map(function(region) {
@@ -1478,7 +1616,8 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
                 return region;
             });
         }).error(function(err) {
-            $rootScope.showError('Error getting template', err);
+            $log.error(err, 'Error getting template');
+            $scope.showError('Error getting template', err);
         });
     }
 
@@ -1512,15 +1651,17 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         }
     };
 
-    $scope.setDefaultPartData = function() {
-        //this will check all parts that have not had data explicitly set and set the default part data
-        //for the selected part
-        $scope.template.regions.forEach(function(region, index) {
-            var dataField = $scope.templateForm['regiondata_' + index];
-            if(region.part && dataField.$pristine && !region.dataFromServer) {
-                region.data = region.part.defaultData || "";
-            }
-        });
+    $scope.getTemplatePreviewUrl = function() {
+        if($scope.template && $scope.template.src) {
+            var templateSrc = encodeURIComponent($scope.template.src);
+            var regionOutlineColor = encodeURIComponent(localStorage.getItem('sidebarColor'));
+            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            $log.debug('Template preview url is: %s', templatePreviewUrl);
+            return templatePreviewUrl;
+        } else {
+            return null;
+        }
+
     };
 
     $scope.cancel = function() {
@@ -1528,6 +1669,8 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     };
 
     $scope.save = function(form) {
+
+
 
         if(form.$invalid) {
             $window.scrollTo(0,0);
@@ -1559,18 +1702,26 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         });
 
         if(templateId) {
+            $log.info('Updating template: %s...', templateId);
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.updateTemplate(templateId, $scope.template).success(function() {
-                $rootScope.showSuccess('Template updated.');
+                $log.info('Template updated successfully');
+                $scope.showSuccess('Template updated.');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error updating template', err);
+                $log.error(err, 'Error updating template');
+                $scope.showError('Error updating template', err);
             });
         } else {
+            $log.info('Creating new template...');
+            $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
             templateService.createTemplate($scope.template).success(function() {
-                $rootScope.showSuccess('Template created.');
+                $log.info('Template created successfully');
+                $scope.showSuccess('Template created.');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error creating template', err);
+                $log.error(err, 'Error creating template');
+                $scope.showError('Error creating template', err);
             });
         }
     };
@@ -1578,15 +1729,16 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
     $scope.remove = function() {
         var really = window.confirm('Really delete this template?');
         if(really) {
+            $log.info('Deleting template: %s...', $scope.template._id);
             templateService.deleteTemplate($scope.template._id).success(function (res) {
-                console.log('Template deleted');
+                $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {
-                $rootScope.showError('Error deleting template', err);
+                $log.error(err, 'Could not delete template');
+                $scope.showError('Error deleting template', err);
             });
         }
     };
-
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
@@ -1600,120 +1752,6 @@ adminApp.controller('TemplateController', function($scope, $rootScope, $routePar
         }
         return true;
     }
-});
-
-adminApp.directive('drawTemplate', function() {
-
-    function link(scope, element, attrs) {
-
-        var grid = 10;
-
-        element.html('<canvas width="550" height="400"></canvas>');
-        var canvas = new fabric.Canvas(element.find('canvas')[0]);
-        canvas.backgroundColor = '#ddd';
-
-        canvas.on('object:selected', function() {
-            var obj = canvas.getActiveObject();
-            canvas.bringToFront(obj);
-        });
-
-        canvas.on('object:moving', function(e){
-            var obj = e.target;
-
-            //keep in canvas bounds
-            if(obj.top < 0 || obj.left < 0){
-                obj.top = Math.max(obj.top, 0)
-                obj.left = Math.max(obj.left , 0);
-            }
-            if(obj.left + obj.width > canvas.width || obj.top + obj.height > canvas.height) {
-                obj.left = Math.min(obj.left, canvas.width - obj.width);
-                obj.top = Math.min(obj.top, canvas.height - obj.height);
-            }
-
-            //snap to grid
-            obj.set({
-                left: Math.round(obj.left / grid) * grid,
-                top: Math.round(obj.top / grid) * grid
-            });
-        });
-        canvas.on('object:scaling', function(e) {
-            var obj = e.target;
-
-            //fix stroke scaling
-            if(obj.item(0)) {
-                var rect = obj.item(0);
-                if(rect.getHeight() > rect.getWidth()) {
-                    rect.strokeWidth = 1 / obj.scaleY;
-                } else {
-                    rect.strokeWidth = 1 / obj.scaleX;
-                }
-                rect.set('strokeWidth', rect.strokeWidth);
-            }
-
-            //stop text scaling
-            if(obj.item(1)) {
-                var text = obj.item(1);
-                text.scaleX = 1 / obj.scaleX;
-                text.scaleY = 1 / obj.scaleY;
-            }
-        });
-
-        scope.$watch(attrs.regions, function(regions) {
-
-            canvas.clear();
-
-            for(var i = regions.length - 1; i >= 0; i--) {
-                (function (region, i) {
-                    var canvasData = scope.template.regionData[i] || {
-                        top: 10,
-                        left: 10,
-                        width: 100,
-                        height: 100
-                    };
-
-                    canvasData.stroke = '#000';
-                    canvasData.strokeWidth = 1;
-                    canvasData.fill = '#fff';
-                    var rect = new fabric.Rect(canvasData);
-                    var text = new fabric.Text(region.name, {
-                        fontSize: 16,
-                        fontFamily: 'Arial',
-                        top: canvasData.top + 5,
-                        left: canvasData.left + 5
-                    });
-
-                    var group = new fabric.Group([ rect, text ], {
-                        left: canvasData.left,
-                        top: canvasData.top,
-                        hasRotatingPoint: false
-                    });
-
-                    group.on('modified', function () {
-                        var regionData = {
-                            top: this.top,
-                            left: this.left,
-                            width: this.getWidth(),
-                            height: this.getHeight()
-                        };
-                        scope.template.regionData[i] = regionData;
-                    });
-                    group.on('selected', function () {
-                        console.log(this);
-                        scope.selectedRegionIndex = i;
-                        scope.$apply();
-                    });
-                    canvas.add(group);
-                    canvas.sendToBack(group);
-                })(regions[i], i);
-            }
-        }, true);
-    }
-
-    return {
-        //scope: '=canvasData',
-        restrict: 'E',
-        link: link
-    };
 });
 
 })();
@@ -1730,10 +1768,10 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
 
     $scope.templates = [];
 
-    templateService.getTemplates().success(function(templates) {
+    templateService.doGetAvailableTemplates().success(function(templates) {
         $scope.templates = templates;
     }).error(function(err) {
-        $rootScope.showError("Error getting templates", err);
+        $scope.showError("Error getting templates", err);
     });
 
 });
@@ -1746,13 +1784,22 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
         function TemplateService() {
             this.pageCache = [];
         }
-        TemplateService.prototype.getTemplates = function() {
+        TemplateService.prototype.getTemplateSources = function() {
+            return $http.get('/_templates/available');
+        };
+        TemplateService.prototype.getTemplateRegions = function(templateSrc) {
+            return $http.get('/_templates/template-regions', {
+                params: {
+                    templateSrc: templateSrc
+                }
+            });
+        };
+        TemplateService.prototype.doGetAvailableTemplates = function() {
             return $http.get('/_api/templates');
         };
         TemplateService.prototype.getTemplate = function(templateId) {
             return $http.get('/_api/templates/' + templateId);
         };
-
         TemplateService.prototype.createTemplate = function(templateData) {
             return $http.post('/_api/templates', templateData);
         };
@@ -1815,17 +1862,17 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
             var user = $scope.user;
             if(userId) {
                 userService.updateUser(userId, user).success(function() {
-                    $rootScope.showSuccess('User updated.');
+                    $scope.showSuccess('User updated.');
                     $location.path('/users');
                 }).error(function(err) {
-                    $rootScope.showError('Error updating user', err);
+                    $scope.showError('Error updating user', err);
                 });
             } else {
                 userService.createUser(user).success(function() {
-                    $rootScope.showSuccess('User created.');
+                    $scope.showSuccess('User created.');
                     $location.path('/users');
                 }).error(function(err) {
-                    $rootScope.showError('Error creating user', err);
+                    $scope.showError('Error creating user', err);
                 });
             }
         };
@@ -1835,7 +1882,7 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
                 console.log('User removed');
                 $location.path('/templates');
             }).error(function(err) {
-                $rootScope.showError('Error deleting template', err);
+                $scope.showError('Error deleting template', err);
             });
         };
     });
