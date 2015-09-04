@@ -32,6 +32,10 @@
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/view-page/:env/', {
+                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                controller: 'ViewPageController'
+            }).
             when('/view-page/:env/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
@@ -1175,7 +1179,7 @@ adminApp.controller("ViewPageController",
 
     $scope.getPageUrl = function() {
         var staging = env === 'preview';
-        return url + '?_preview=' + staging;
+        return (url || '/') + '?_preview=' + staging;
     };
 });
 

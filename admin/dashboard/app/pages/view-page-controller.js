@@ -13,7 +13,7 @@ adminApp.controller("ViewPageController",
 
     $scope.getPageUrl = function() {
         var staging = env === 'preview';
-        return url + '?_preview=' + staging;
+        return (url || '/') + '?_preview=' + staging;
     };
 });
 
