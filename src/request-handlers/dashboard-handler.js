@@ -19,9 +19,7 @@
 
 'use strict';
 
-var Promise = require('bluebird'),
-
-    psUtil = require('../misc/pagespace-util'),
+var psUtil = require('../misc/pagespace-util'),
     consts = require('../app-constants');
 
 /**

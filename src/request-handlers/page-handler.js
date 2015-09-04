@@ -19,9 +19,7 @@
 
 'use strict';
 
-var fs = require('fs'),
-    url = require('url'),
-    path = require('path'),
+var  url = require('url'),
 
     Promise = require('bluebird'),
 

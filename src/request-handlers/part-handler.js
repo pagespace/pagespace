@@ -138,7 +138,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
     });
 };
 
-PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) {
+PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) { // jshint ignore:line
 
     if(!this.staticServers[partModuleId]) {
         var partModule = this.partResolver.require(partModuleId);
