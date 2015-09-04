@@ -68,7 +68,7 @@ consts.requests = {
     },
     STATIC: {
         key: 'STATIC',
-        regex: new RegExp('^/_static/(dashboard|bar|bower_components|part)/(.*)'),
+        regex: new RegExp('^/_static/(dashboard|inpage|bower_components|part)/(.*)'),
         handler: require('./request-handlers/static-handler')
     },
     PARTS: {
