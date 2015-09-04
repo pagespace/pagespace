@@ -103,7 +103,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 
         if(partModule) {
             if(req.method === 'GET') {
-                partPromise = partModule.process === 'function' ? partModule.process(region.data) : region.data;
+                partPromise = region.data;
             } else if(req.method === 'PUT') {
                 partPromise = req.body;
             } else {
