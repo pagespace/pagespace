@@ -138,6 +138,7 @@ header > nav {
 .section-heading {
     margin-bottom: 1em;
 }
+.section-heading h2,
 .section-heading h3 {
     margin: 0;
 }

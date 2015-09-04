@@ -221,7 +221,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             if(redirectPage && redirectPage.url) {
                 res.redirect(status, redirectPage.url);
             } else {
-                logger('Page to redirect to is not set. Sending 404');
+                logger.warn('Page to redirect to is not set. Sending 404');
                 err = new Error('Page not found for ' + urlPath);
                 err.status = 404;
                 throw err;
