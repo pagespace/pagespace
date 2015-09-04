@@ -27,7 +27,6 @@
             }
         };
 
-
         $scope.cancel = function() {
             $location.path('/media');
         };
