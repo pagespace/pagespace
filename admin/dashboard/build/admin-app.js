@@ -476,7 +476,6 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             }
         };
 
-
         $scope.cancel = function() {
             $location.path('/media');
         };
@@ -1205,10 +1204,10 @@ adminApp.directive('pageHolder', function() {
             adminStyles.id =
             adminStyles.setAttribute('type', 'text/css');
             adminStyles.setAttribute('rel', 'stylesheet');
-            adminStyles.setAttribute('href', '/_static/bar/adminbar.css');
+            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
 
             var adminScript = document.createElement('script');
-            adminScript.src = '/_static/bar/adminbar.js';
+            adminScript.src = '/_static/inpage/inpage-edit.js';
 
             var pageFrame = element.find('iframe')[0];
 
@@ -1218,13 +1217,12 @@ adminApp.directive('pageHolder', function() {
                 frameHead.appendChild(adminScript);
 
                 adminScript.onload = function() {
-                    pageFrame.contentWindow.pagespace.setupAdminMode();
+                    window.setTimeout(function() {
+                        //not sure how to guarantee the css is ready
+                        pageFrame.contentWindow.pagespace.setupAdminMode();
+                    }, 50);
                 };
-
             });
-
-
-
         }
     };
 });

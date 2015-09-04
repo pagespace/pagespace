@@ -68,7 +68,7 @@
             if(specialColor) {
                 var styleSheetsArray = Array.prototype.slice.call(document.styleSheets);
                 var styleSheet= styleSheetsArray.filter(function(styleSheet) {
-                    return styleSheet.href && styleSheet.href.indexOf('adminbar.css') > -1;
+                    return styleSheet.href && styleSheet.href.indexOf('inpage-edit.css') > -1;
                 })[0];
                 var cssRules = styleSheet.cssRules;
                 var cssRulesArray = Array.prototype.slice.call(cssRules);
