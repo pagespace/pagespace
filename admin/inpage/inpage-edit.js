@@ -166,7 +166,6 @@
         //create the iframe
         var iframe = document.createElement('iframe');
         iframe.name = region + '_' + part + '_' + partIndex;
-        //iframe.src = '/_dashboard/region?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region);
         iframe.src = '/_parts/static/' + part + '/edit.html';
         iframe.width = '100%';
         iframe.height = '100%';
@@ -174,7 +173,6 @@
         editor.appendChild(iframe);
 
         //inject part interface
-        //iframe.contentWindow.window.pagesapce = getPartInterface(part, pageId, region);;
         iframe.contentWindow.window.pagespace = getPartInterface(part, pageId, region, partIndex);
 
         //close button

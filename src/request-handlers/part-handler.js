@@ -148,7 +148,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) { // jshint ignore:line
 
     if(!this.staticServers[partModuleId]) {
-        var partModule = this.partResolver.require(partModuleId);
+        var partModule = this.partResolver.requireByName(partModuleId);
         if(!partModule) {
             var err = new Error('Cannot resolve part module for %s', partModuleId);
             err.url = req.url;
