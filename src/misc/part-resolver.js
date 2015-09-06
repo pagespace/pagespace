@@ -61,7 +61,7 @@ PartResolver.prototype.require = function(partModuleId) {
             this.initPartModule(partModule, partModulePath);
             this.cache[partModuleId] = partModule;
         } catch(e) {
-            logger.error(e, 'A part module could not be resolved');
+            logger.warn(e, 'A part module could not be resolved');
         }
     }
     return partModule;
