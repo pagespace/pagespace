@@ -23,8 +23,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    partService.getParts().success(function(parts) {
-        $scope.parts = parts;
+    partService.getParts().success(function(availableParts) {
+        $scope.availableParts = availableParts;
     });
 
     templateService.getTemplateSources().success(function(templateSources) {
@@ -32,7 +32,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     $scope.$watch('template.src', function(val) {
-
         if(val) {
             $log.debug('Fetching regions for template src: %s...', val);
             templateService.getTemplateRegions(val).success(function(regions) {
@@ -44,7 +43,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                         };
                     });
                 }
-
             }).error(function(err) {
                 $scope.showError('Error getting template', err);
             });
@@ -58,8 +56,9 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $scope.template = template;
 
             template.regions.map(function(region) {
-                region.data = stringifyData(region.data);
-                region.dataFromServer = !!region.data
+                region.data = region.data.map(function(datum) {
+                    return stringifyData(datum);
+                });
                 return region;
             });
         }).error(function(err) {
@@ -90,10 +89,34 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.removeRegion = function(region) {
-
         for(var i = $scope.template.regions.length - 1; i >= 0; i--) {
             if($scope.template.regions[i].name === region.name) {
                 $scope.template.regions.splice(i, 1);
+            }
+        }
+    };
+
+    $scope.addPart = function(regionIndex) {
+        $scope.template.regions[regionIndex].parts.push(null);
+        $scope.template.regions[regionIndex].data.push('{}');
+    };
+
+    $scope.setDefaultDataForRegion = function(regionIndex, partIndex) {
+        var partId = $scope.template.regions[regionIndex].parts[partIndex]._id;
+        var part = $scope.availableParts.filter(function(availablePart) {
+            return availablePart._id === partId;
+        })[0];
+        var defaultData = part && part.defaultData ? part.defaultData : {};
+        $scope.template.regions[regionIndex].data[partIndex] = stringifyData(defaultData);
+    };
+
+    $scope.removePart = function(regionIndex, partIndex) {
+        var really = window.confirm('Really delete this part?');
+        if(really) {
+            for(var i = $scope.template.regions[regionIndex].parts.length - 1; i >= 0; i--) {
+                if(i === partIndex) {
+                    $scope.template.regions[regionIndex].parts.splice(i, 1);
+                }
             }
         }
     };
@@ -116,9 +139,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.save = function(form) {
-
-
-
         if(form.$invalid) {
             $window.scrollTo(0,0);
             $scope.submitted = true;
@@ -139,11 +159,18 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
-            if(region.part) {
-                region.part = region.part._id;
+            if(region.parts) {
+                region.parts = region.parts.map(function(part) {
+                    return part._id
+                });
             }
-            if(isJson(region.data)) {
-                region.data = JSON.parse(region.data);
+            if(region.data) {
+                region.data = region.data.map(function(datum) {
+                    if(isJson(datum)) {
+                        return JSON.parse(datum);
+                    }
+                    return region.data;
+                });
             }
             return region;
         });

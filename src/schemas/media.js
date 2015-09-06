@@ -74,6 +74,11 @@ function generateSchema() {
         next();
     });
 
+    mediaSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
+        next();
+    });
+
     mediaSchema.set('toJSON', {
         transform: function(doc, media) {
             delete media.path;

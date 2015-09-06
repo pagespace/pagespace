@@ -84,13 +84,14 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 
     var pageId = req.query.pageId;
     var regionName = req.query.region;
+    var partIndex = parseInt(req.query.partIndex);
 
     var filter = {
         _id: pageId
     };
 
     var Page = this.dbSupport.getModel('Page');
-    var query = Page.findOne(filter).populate('regions.part');
+    var query = Page.findOne(filter).populate('regions.parts');
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
@@ -99,11 +100,11 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
         })[0];
 
         var partPromise = null;
-        var partModule = self.partResolver.require(region.part ? region.part.module : null);
+        var partModule = self.partResolver.require(region.parts[partIndex] ? region.parts[partIndex].module : null);
 
         if(partModule) {
             if(req.method === 'GET') {
-                partPromise = region.data;
+                partPromise = region.data[partIndex];
             } else if(req.method === 'PUT') {
                 partPromise = req.body;
             } else {
@@ -113,11 +114,17 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
             }
         }
 
-        return [ page, region, partPromise ];
-    }).spread(function(page, region, partData) {
+        return [ page, partPromise ];
+    }).spread(function(page, partData) {
         if(req.method === 'PUT') {
-            region.data = partData;
+
+            var region = page.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+
+            region.data[partIndex] = partData;
             page.draft = true;
+            page.markModified('regions');
             page.save(function (err) {
                 if (err) {
                     //TOOD: promisify, this won't work

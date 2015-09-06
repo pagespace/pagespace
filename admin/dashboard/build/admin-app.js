@@ -28,6 +28,10 @@
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/pages/delete/:pageId', {
+                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
+                controller: 'DeletePageController'
+            }).
             when('/pages/:section/:pageId/', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
@@ -39,10 +43,6 @@
             when('/view-page/:env/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
-            }).
-            when('/pages/delete/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
-                controller: 'DeletePageController'
             }).
 
             //parts
@@ -701,9 +701,9 @@ adminApp.controller("PageController",
     });
     pageSetupFunctions.push(function getParts(callback) {
         $log.debug('Fetching available parts...');
-        partService.getParts().success(function(parts) {
+        partService.getParts().success(function(availableParts) {
             $log.debug('Got available parts.');
-            $scope.parts = parts;
+            $scope.availableParts = availableParts;
             callback()
         });
     });
@@ -725,9 +725,10 @@ adminApp.controller("PageController",
                     return page.template && page.template._id === template._id;
                 })[0] || null;
 
-                page.regions = page.regions.map(function(region) {
-                    region.data = stringifyData(region.data);
-                    region.dataFromServer = !!region.data;
+                page.regions.map(function(region) {
+                    region.data = region.data.map(function(datum) {
+                        return stringifyData(datum);
+                    });
                     return region;
                 });
 
@@ -765,6 +766,32 @@ adminApp.controller("PageController",
         $scope.page.url = pageService.generateUrl($scope.page);
     };
 
+    $scope.addPart = function(regionIndex) {
+        $scope.page.regions[regionIndex].parts.push(null);
+        $scope.page.regions[regionIndex].data.push('{}');
+    };
+
+    $scope.setDefaultDataForRegion = function(regionIndex, partIndex) {
+
+        var partId = $scope.page.regions[regionIndex].parts[partIndex]._id;
+        var part = $scope.availableParts.filter(function(availablePart) {
+            return availablePart._id === partId;
+        })[0];
+        var defaultData = part && part.defaultData ? part.defaultData : {};
+        $scope.page.regions[regionIndex].data[partIndex] = stringifyData(defaultData);
+    };
+
+    $scope.removePart = function(regionIndex, partIndex) {
+        var really = window.confirm('Really delete this part?');
+        if(really) {
+            for(var i = $scope.page.regions[regionIndex].parts.length - 1; i >= 0; i--) {
+                if(i === partIndex) {
+                    $scope.page.regions[regionIndex].parts.splice(i, 1);
+                }
+            }
+        }
+    };
+
     $scope.cancel = function() {
         $location.path("/pages");
     };
@@ -772,7 +799,10 @@ adminApp.controller("PageController",
     $scope.selectTemplate = function(template) {
 
         template.regions = template.regions.map(function(region) {
-            region.data = typeof data !== 'string' ? stringifyData(region.data) : region.data;
+            region.data = region.data.map(function(datum) {
+                return typeof datum !== 'string' ? stringifyData(datum) : datum;
+            });
+
             return region;
         });
 
@@ -787,7 +817,7 @@ adminApp.controller("PageController",
     };
 
     $scope.$watch('page.name', function() {
-        if($scope.pageForm && $scope.pageForm.url.$pristine && !pageId) {
+        if(!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
             $scope.updateUrl();
         }
     });
@@ -821,11 +851,18 @@ adminApp.controller("PageController",
         page.regions = page.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
-            if(region.part) {
-                region.part = region.part._id;
+            if(region.parts) {
+                region.parts = region.parts.map(function(part) {
+                    return part._id
+                });
             }
-            if(isJson(region.data)) {
-                region.data = JSON.parse(region.data);
+            if(region.data) {
+                region.data = region.data.map(function(datum) {
+                    if(isJson(datum)) {
+                        return JSON.parse(datum);
+                    }
+                    return region.data;
+                });
             }
             return region;
         });
@@ -1576,8 +1613,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    partService.getParts().success(function(parts) {
-        $scope.parts = parts;
+    partService.getParts().success(function(availableParts) {
+        $scope.availableParts = availableParts;
     });
 
     templateService.getTemplateSources().success(function(templateSources) {
@@ -1585,7 +1622,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     $scope.$watch('template.src', function(val) {
-
         if(val) {
             $log.debug('Fetching regions for template src: %s...', val);
             templateService.getTemplateRegions(val).success(function(regions) {
@@ -1597,7 +1633,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                         };
                     });
                 }
-
             }).error(function(err) {
                 $scope.showError('Error getting template', err);
             });
@@ -1611,8 +1646,9 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $scope.template = template;
 
             template.regions.map(function(region) {
-                region.data = stringifyData(region.data);
-                region.dataFromServer = !!region.data
+                region.data = region.data.map(function(datum) {
+                    return stringifyData(datum);
+                });
                 return region;
             });
         }).error(function(err) {
@@ -1643,10 +1679,34 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.removeRegion = function(region) {
-
         for(var i = $scope.template.regions.length - 1; i >= 0; i--) {
             if($scope.template.regions[i].name === region.name) {
                 $scope.template.regions.splice(i, 1);
+            }
+        }
+    };
+
+    $scope.addPart = function(regionIndex) {
+        $scope.template.regions[regionIndex].parts.push(null);
+        $scope.template.regions[regionIndex].data.push('{}');
+    };
+
+    $scope.setDefaultDataForRegion = function(regionIndex, partIndex) {
+        var partId = $scope.template.regions[regionIndex].parts[partIndex]._id;
+        var part = $scope.availableParts.filter(function(availablePart) {
+            return availablePart._id === partId;
+        })[0];
+        var defaultData = part && part.defaultData ? part.defaultData : {};
+        $scope.template.regions[regionIndex].data[partIndex] = stringifyData(defaultData);
+    };
+
+    $scope.removePart = function(regionIndex, partIndex) {
+        var really = window.confirm('Really delete this part?');
+        if(really) {
+            for(var i = $scope.template.regions[regionIndex].parts.length - 1; i >= 0; i--) {
+                if(i === partIndex) {
+                    $scope.template.regions[regionIndex].parts.splice(i, 1);
+                }
             }
         }
     };
@@ -1669,9 +1729,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.save = function(form) {
-
-
-
         if(form.$invalid) {
             $window.scrollTo(0,0);
             $scope.submitted = true;
@@ -1692,11 +1749,18 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
-            if(region.part) {
-                region.part = region.part._id;
+            if(region.parts) {
+                region.parts = region.parts.map(function(part) {
+                    return part._id
+                });
             }
-            if(isJson(region.data)) {
-                region.data = JSON.parse(region.data);
+            if(region.data) {
+                region.data = region.data.map(function(datum) {
+                    if(isJson(datum)) {
+                        return JSON.parse(datum);
+                    }
+                    return region.data;
+                });
             }
             return region;
         });

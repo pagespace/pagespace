@@ -57,9 +57,9 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     //fields to auto populate when making queries to these collcetions (the keys)
     var populationsMap = {
         sites: '',
-        pages: 'parent template regions.part redirect createdBy updatedBy',
+        pages: 'parent template regions.parts redirect createdBy updatedBy',
         parts: '',
-        templates: 'regions.part',
+        templates: 'regions.parts',
         users: '',
         media: ''
     };
@@ -147,27 +147,14 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 docData.updatedBy = req.user._id;
                 this.draft = true;
                 logger.debug(req.body);
-                Model.findById(itemId, function (err, doc) {
+                Model.findOneAndUpdate({_id: itemId}, docData, { 'new' : true }, function (err, doc) {
+
                     if (err) {
-                        logger.error(err, 'Trying to save for API PUT for %s', apiType);
+                        logger.error(err, 'Trying to update for API PUT for %s', apiType);
                         next(err);
-                    } else if(doc) {
-                        //need to do this because findByIdAndUpdate does invoke mongoose hooks
-                        //https://github.com/LearnBoost/mongoose/issues/964
-                        for(var key in docData) {
-                            if(docData.hasOwnProperty(key)) {
-                                doc.set(key, docData[key]);
-                            }
-                        }
-                        doc.save(function (err) {
-                            if(err) {
-                                logger.error(err, 'Trying to save for API PUT for %s', apiType);
-                                next(err);
-                            } else {
-                                logger.info('API PUT OK in %s ms', Date.now() - req.startTime);
-                                res.json(model);
-                            }
-                        });
+                    } else {
+                        logger.info('API PUT OK in %s ms', Date.now() - req.startTime);
+                        res.json(doc);
                     }
                 });
             }

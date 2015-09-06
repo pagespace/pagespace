@@ -86,7 +86,7 @@ PartResolver.prototype.initPartModule = function(partModule, partModulePath) {
     try {
         partModule.__config = require(partConfigPath);
     } catch(err) {
-        logger.warn('Couldn\'t load part config at %s', partModulePath)
+        logger.warn('Couldn\'t load part config at %s', partModulePath);
     }
 
     partModule.__dir = partModulePath;
