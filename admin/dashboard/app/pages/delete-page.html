@@ -1,10 +1,10 @@
-<nav class="side-nav">
+<nav class="side-nav col-sm-2">
     <div class="section-heading">
         <h3>Delete <i>{{page.name}}</i></h3>
     </div>
 </nav>
 
-<main class="main col-sm-7">
+<main class="main col-sm-6">
     <form role="form" ng-submit="submit(deletePageForm)" name="deletePageForm" class="form-horizontal" novalidate >
         <div class="form-intro" ng-show="page.published">
             <p >Choose how to delete the page, <b>{{page.name}}</b>:</p>
