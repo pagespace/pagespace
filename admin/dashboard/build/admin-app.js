@@ -45,20 +45,19 @@
                 controller: 'ViewPageController'
             }).
 
-            //parts
-            when('/parts', {
-                templateUrl: '/_static/dashboard/app/parts/part-list.html',
-                controller: 'PartListController'
+            //plugins
+            when('/plugins', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',
+                controller: 'PluginListController'
             }).
-            when('/parts/new', {
-                templateUrl: '/_static/dashboard/app/parts/part.html',
-                controller: 'PartController'
+            when('/plugins/new', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
+                controller: 'PluginController'
             }).
-            when('/parts/:partId', {
-                templateUrl: '/_static/dashboard/app/parts/part.html',
-                controller: 'PartController'
+            when('/plugins/:pluginId', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
+                controller: 'PluginController'
             }).
-
 
             //publishing
             when('/publishing', {
@@ -612,7 +611,7 @@ adminApp.controller("notificationsController", function($scope, $rootScope, $tim
 var adminApp = angular.module('adminApp');
 adminApp.controller("DeletePageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, $window) {
+             pageService, $window) {
 
     var pageId = $routeParams.pageId;
     $scope.status = 410;
@@ -664,7 +663,7 @@ adminApp.controller("DeletePageController",
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, $window) {
+             pageService, templateService, pluginService, $window) {
 
     $log.info('Showiing page view.');
 
@@ -677,7 +676,7 @@ adminApp.controller("PageController",
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
-    //sets the code mirror mode for editing raw part data
+    //sets the code mirror mode for editing raw include data
     $scope.editorOpts = {
         mode: 'application/json'
     };
@@ -699,11 +698,11 @@ adminApp.controller("PageController",
             callback()
         });
     });
-    pageSetupFunctions.push(function getParts(callback) {
-        $log.debug('Fetching available parts...');
-        partService.getParts().success(function(availableParts) {
-            $log.debug('Got available parts.');
-            $scope.availableParts = availableParts;
+    pageSetupFunctions.push(function getPlugins(callback) {
+        $log.debug('Fetching available plugins...');
+        pluginService.getPlugins().success(function(availablePlugins) {
+            $log.debug('Got available plugins.');
+            $scope.availablePlugins = availablePlugins;
             callback()
         });
     });
@@ -769,17 +768,17 @@ adminApp.controller("PageController",
 
     $scope.addInclude = function(regionIndex) {
         $scope.page.regions[regionIndex].includes.push({
-            part: null,
+            plugin: null,
             data: {}
         });
     };
 
     $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var partId = $scope.page.regions[regionIndex].includes[includeIndex].part._id;
-        var part = $scope.availableParts.filter(function(availablePart) {
-            return availablePart._id === partId;
+        var pluginId = $scope.page.regions[regionIndex].includes[includeIndex].plugin._id;
+        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
+            return availablePlugin._id === pluginId;
         })[0];
-        var defaultData = part && part.defaultData ? part.defaultData : {};
+        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
         $scope.page.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
@@ -852,7 +851,7 @@ adminApp.controller("PageController",
             return typeof region === 'object';
         }).map(function(region) {
             region.includes = region.includes.map(function(include) {
-                include.part = include.part._id;
+                include.plugin = include.plugin._id;
                 if(isJson(include.data)) {
                     include.data = JSON.parse(include.data);
                 }
@@ -1269,38 +1268,36 @@ adminApp.directive('pageHolder', function() {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("PartController", function($scope, $rootScope, $routeParams, $location, $window, partService) {
+adminApp.controller("PluginController", function($scope, $rootScope, $routeParams, $location, $window, pluginService) {
 
-    $rootScope.pageTitle = "Page Part";
+    var pluginId = $routeParams.pluginId;
+    $scope.pluginId = pluginId;
 
-    var partId = $routeParams.partId;
-    $scope.partId = partId;
-
-    //sets the code mirror mode for editing raw part data
+    //sets the code mirror mode for editing raw plugin data
     $scope.editorOpts = {
         mode: 'application/json'
     };
 
-    $scope.part = {};
+    $scope.plugin = {};
 
-    if(partId) {
-        partService.getPart(partId).success(function(part) {
-            $scope.part = part;
+    if(pluginId) {
+        pluginService.getPlugin(pluginId).success(function(plugin) {
+            $scope.plugin = plugin;
         }).error(function(err) {
-            $scope.showError("Error getting part", err);
+            $scope.showError("Error getting plugin", err);
         });
     }
 
     $scope.reset = function() {
-        partService.resetPart($scope.part).success(function() {
+        pluginService.resetPlugin($scope.plugin).success(function() {
             $scope.showSuccess("Cache cleared");
         }).error(function(err) {
-            $scope.showError("Error getting part", err);
+            $scope.showError("Error getting plugin", err);
         })
     };
 
     $scope.cancel = function() {
-        $location.path("/parts");
+        $location.path("/plugins");
     };
 
     $scope.save = function(form) {
@@ -1310,33 +1307,33 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
             return;
         }
 
-        if(partId) {
-            partService.updatePart(partId, $scope.part).success(function(res) {
-                console.log("Part saved");
-                $scope.showSuccess("Part updated.");
-                $location.path("/parts");
+        if(pluginId) {
+            pluginService.updatePlugin(pluginId, $scope.plugin).success(function(res) {
+                console.log("Plugin saved");
+                $scope.showSuccess("Plugin updated.");
+                $location.path("/plugins");
             }).error(function(err) {
-                $scope.showError("Error updating part", err);
+                $scope.showError("Error updating plugin", err);
             });
         } else {
-            partService.createPart($scope.part).success(function(res) {
-                console.log("Part created");
-                $scope.showSuccess("Part created.");
-                $location.path("/parts");
+            pluginService.createPlugin($scope.plugin).success(function(res) {
+                console.log("Plugin created");
+                $scope.showSuccess("Plugin created.");
+                $location.path("/plugins");
             }).error(function(err) {
-                $scope.showError("Error saving part", err);
+                $scope.showError("Error saving plugin", err);
             });
         }
     };
 
     $scope.remove = function() {
-        var really = window.confirm('Really delete this part?');
+        var really = window.confirm('Really delete this plugin?');
         if(really) {
-            partService.deletePart($scope.part._id).success(function (res) {
-                $scope.showInfo("Part removed", err);
-                $location.path("/parts");
+            pluginService.deletePlugin($scope.plugin._id).success(function (res) {
+                $scope.showInfo("Plugin removed", err);
+                $location.path("/plugins");
             }).error(function (err) {
-                $scope.showError("Error deleting part", err);
+                $scope.showError("Error deleting plugin", err);
             });
         }
     };
@@ -1352,16 +1349,14 @@ adminApp.controller("PartController", function($scope, $rootScope, $routeParams,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('PartListController', function($scope, $rootScope, $routeParams, $location, partService) {
+adminApp.controller('PluginListController', function($scope, $rootScope, $routeParams, $location, pluginService) {
 
-    $rootScope.pageTitle = "Page Parts";
+    $scope.plugins = [];
 
-    $scope.parts = [];
-
-    partService.getParts().success(function(parts) {
-        $scope.parts = parts;
+    pluginService.getPlugins().success(function(plugins) {
+        $scope.plugins = plugins;
     }).error(function(err) {
-        $scope.showError("Error getting parts", err);
+        $scope.showError("Error getting plugins", err);
     });
 
 });
@@ -1369,38 +1364,37 @@ adminApp.controller('PartListController', function($scope, $rootScope, $routePar
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('partService', function($http) {
+    adminApp.factory('pluginService', function($http) {
 
-        function PartService() {
-            this.pageCache = [];
+        function PluginService() {
         }
-        PartService.prototype.getParts = function() {
-            return $http.get('/_api/parts');
+        PluginService.prototype.getPlugins = function() {
+            return $http.get('/_api/plugins');
         };
-        PartService.prototype.getPart = function(partId) {
-            return $http.get('/_api/parts/' + partId);
-        };
-
-        PartService.prototype.createPart = function(partData) {
-            return $http.post('/_api/parts', partData);
+        PluginService.prototype.getPlugin = function(pluginId) {
+            return $http.get('/_api/plugins/' + pluginId);
         };
 
-        PartService.prototype.deletePart = function(partId) {
-            return $http.delete('/_api/parts/' + partId);
+        PluginService.prototype.createPlugin = function(pluginData) {
+            return $http.post('/_api/plugins', pluginData);
         };
 
-        PartService.prototype.updatePart = function(partId, partData) {
-            return $http.put('/_api/parts/' + partId, partData);
+        PluginService.prototype.deletePlugin = function(pluginId) {
+            return $http.delete('/_api/plugins/' + pluginId);
         };
 
-        PartService.prototype.resetPart = function(partData) {
-            return $http.put('/_cache/parts', {
-                module: partData.module
+        PluginService.prototype.updatePlugin = function(pluginId, pluginData) {
+            return $http.put('/_api/plugins/' + pluginId, pluginData);
+        };
+
+        PluginService.prototype.resetPlugin = function(pluginData) {
+            return $http.put('/_cache/plugins', {
+                module: pluginData.module
             });
         };
 
 
-        return new PartService();
+        return new PluginService();
     });
 
 })();
@@ -1589,7 +1583,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
-                                                   templateService, partService) {
+                                                   templateService, pluginService) {
     $log.info('Showing Template View');
 
     var templateId = $routeParams.templateId;
@@ -1602,8 +1596,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    partService.getParts().success(function(availableParts) {
-        $scope.availableParts = availableParts;
+    pluginService.getPlugins().success(function(availablePlugins) {
+        $scope.availablePlugins = availablePlugins;
     });
 
     templateService.getTemplateSources().success(function(templateSources) {
@@ -1616,9 +1610,10 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             templateService.getTemplateRegions(val).success(function(regions) {
                 $log.debug('Got regions: %s', regions);
                 if(!$scope.template.regions.length) {
-                    $scope.template.regions = regions.map(function(region) {
+                    $scope.template.regions = regions.map(function (region) {
                         return {
-                            name: region
+                            name: region,
+                            includes: []
                         };
                     });
                 }
@@ -1634,7 +1629,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
 
-            template.regions.map(function(region) {
+            $scope.template.regions = template.regions.map(function(region) {
                 region.includes = region.includes.map(function(include) {
                     include.data = stringifyData(include.data);
                     return include;
@@ -1678,17 +1673,17 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
     $scope.addInclude = function(regionIndex) {
         $scope.template.regions[regionIndex].includes.push({
-            part: null,
+            plugin: null,
             data: {}
         });
     };
 
     $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var partId = $scope.template.regions[regionIndex].includes[includeIndex].part._id;
-        var part = $scope.availableParts.filter(function(availablePart) {
-            return availablePart._id === partId;
+        var pluginId = $scope.template.regions[regionIndex].includes[includeIndex].plugin._id;
+        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
+            return availablePlugin._id === pluginId;
         })[0];
-        var defaultData = part && part.defaultData ? part.defaultData : {};
+        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
         $scope.template.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
@@ -1737,12 +1732,12 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             }
         }
 
-        //depopulate parts
+        //depopulate plugins
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
             region.includes = region.includes.map(function(include) {
-                include.part = include.part._id;
+                include.plugin = include.plugin._id;
                 if(isJson(include.data)) {
                     include.data = JSON.parse(include.data);
                 }

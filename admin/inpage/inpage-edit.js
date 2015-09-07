@@ -5,23 +5,23 @@
         //adds various admin functionality to a page
         handleAdminEvents();
         syncColors();
-        decorateParts();
+        decorateIncludes();
     };
 
-    function getPartInterface(part, pageId, region, include) {
+    function getPluginInterface(plugin, pageId, region, include) {
         var query = '?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region) + '&include=' + encodeURIComponent(include);
         return {
             getData: function() {
-                console.info('Pagespace getting data for %s', part);
-                return fetch('/_parts/data' + query, {
+                console.info('Pagespace getting data for %s', plugin);
+                return fetch('/_plugins/data' + query, {
                     credentials: 'same-origin'
                 }). then(function(res) {
                     return res.json();
                 });
             },
             setData: function(data) {
-                console.info('Pagespace setting data for %s', part);
-                return fetch('/_parts/data' + query, {
+                console.info('Pagespace setting data for %s', plugin);
+                return fetch('/_plugins/data' + query, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
@@ -36,7 +36,7 @@
                 })
             },
             close: function() {
-                console.info('Pagespace closing part editor for %s', part);
+                console.info('Pagespace closing plugin editor for %s', plugin);
                 window.parent.location.reload();
             }
         };
@@ -54,9 +54,9 @@
                 updateQueryParam(paramName, paramVal);
             }
 
-            var editPartMatch = e.target.hasAttribute('data-target-region');
-            if(editPartMatch) {
-                launchPartEditor(e.target);
+            var editIncludeMatch = e.target.hasAttribute('data-target-region');
+            if(editIncludeMatch) {
+                launchPluginEditor(e.target);
             }
         });
     }
@@ -86,7 +86,7 @@
                 editButtonRule.style.backgroundColor = specialColor;
 
                 var closeEditButton = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-part-editor-close';
+                    return rule.selectorText === '.ps-include-editor-close';
                 })[0];
                 closeEditButton.style.backgroundColor = specialColor;
             }
@@ -95,15 +95,15 @@
         }
     }
 
-    function decorateParts() {
+    function decorateIncludes() {
 
-        function createEditButton(part, pageId, region, include) {
+        function createEditButton(plugin, pageId, region, include) {
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerHTML =
-                '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Part" title="Edit Part"' +
-                'data-target-part=' + part + ' data-target-page-id=' + pageId + ' data-target-region=' + region + ' data-target-include=' + include + '>';
-            editButton.setAttribute('data-target-part', part);
+                '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Include" title="Edit Include"' +
+                'data-target-plugin=' + plugin + ' data-target-page-id=' + pageId + ' data-target-region=' + region + ' data-target-include=' + include + '>';
+            editButton.setAttribute('data-target-plugin', plugin);
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.setAttribute('data-target-include', include);
@@ -113,7 +113,7 @@
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
             //TODO: less intrusive way of getting page id
-            var button = createEditButton(region.getAttribute('data-part'), region.getAttribute('data-page-id'), region.getAttribute('data-region'), region.getAttribute('data-include'));
+            var button = createEditButton(region.getAttribute('data-plugin'), region.getAttribute('data-page-id'), region.getAttribute('data-region'), region.getAttribute('data-include'));
             region.insertBefore(button, region.firstChild);
             region.classList.add('ps-edit-box');
         });
@@ -142,17 +142,17 @@
         window.location.replace(path + query + hash);
     }
 
-    function launchPartEditor(evSrc) {
+    function launchPluginEditor(evSrc) {
 
-        var part = evSrc.getAttribute('data-target-part');
+        var plugin = evSrc.getAttribute('data-target-plugin');
         var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
         var include = evSrc.getAttribute('data-target-include');
 
         //create the editor frame
         var editor = document.createElement('div');
-        editor.id = 'part-editor';
-        editor.className = 'ps-part-editor';
+        editor.id = 'include-editor';
+        editor.className = 'ps-include-editor';
 
         var regionNode = document.querySelectorAll('[data-region=' + region + ']')[0];
         var regionPos = getAbsolutePosition(regionNode);
@@ -165,19 +165,19 @@
 
         //create the iframe
         var iframe = document.createElement('iframe');
-        iframe.name = region + '_' + part + '_' + include;
-        iframe.src = '/_parts/static/' + part + '/edit.html';
+        iframe.name = region + '_' + plugin + '_' + include;
+        iframe.src = '/_plugins/static/' + plugin + '/edit.html';
         iframe.width = '100%';
         iframe.height = '100%';
         iframe.seamlesss = true;
         editor.appendChild(iframe);
 
-        //inject part interface
-        iframe.contentWindow.window.pagespace = getPartInterface(part, pageId, region, include);
+        //inject plugin interface
+        iframe.contentWindow.window.pagespace = getPluginInterface(plugin, pageId, region, include);
 
         //close button
         var closeBtn = document.createElement('button');
-        closeBtn.classList.add('ps-part-editor-close');
+        closeBtn.classList.add('ps-include-editor-close');
         closeBtn.classList.add('ps-btn');
         closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close title=Close>';
 

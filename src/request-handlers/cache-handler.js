@@ -31,7 +31,7 @@ module.exports = new CacheHandler();
 
 CacheHandler.prototype.init = function(support) {
 
-    this.partResolver = support.partResolver;
+    this.pluginResolver = support.pluginResolver;
     this.logger = support.logger;
     this.reqCount = 0;
 
@@ -48,8 +48,8 @@ CacheHandler.prototype.doRequest = function(req, res, next) {
     var apiInfo = consts.requests.CACHE.regex.exec(req.url);
     var cacheType = apiInfo[1];
 
-    if(req.method === 'PUT' && cacheType === 'parts') {
-        return this._resetPartModule(req, res, next, logger);
+    if(req.method === 'PUT' && cacheType === 'plugins') {
+        return this._resetPluginModule(req, res, next, logger);
     } else {
         var err = new Error('Unsupported method');
         err.status = 405;
@@ -57,26 +57,26 @@ CacheHandler.prototype.doRequest = function(req, res, next) {
     }
 };
 
-CacheHandler.prototype._resetPartModule = function(req, res, next, logger) {
+CacheHandler.prototype._resetPluginModule = function(req, res, next, logger) {
 
     logger.info('New delete cache request');
 
     var moduleId = req.body.module;
-    var partModule = this.partResolver.require(moduleId);
+    var pluginModule = this.pluginResolver.require(moduleId);
 
     var err;
-    if(partModule && typeof partModule.reset === 'function') {
+    if(pluginModule && typeof pluginModule.reset === 'function') {
         var cacheKey = req.body.key || null;
-        partModule.reset(cacheKey);
+        pluginModule.reset(cacheKey);
         logger.info('Cache delete request OK');
         res.status = 200;
-        return res.send('Part module cache cleared');
-    } else if(partModule && typeof partModule.reset !== 'function') {
-        err = new Error('Part module does not implement a reset method');
+        return res.send('Plugin module cache cleared');
+    } else if(pluginModule && typeof pluginModule.reset !== 'function') {
+        err = new Error('Plugin module does not implement a reset method');
         err.status = 501;
         return next(err);
     } else {
-        err = new Error('Part module does not exist');
+        err = new Error('Plugin module does not exist');
         err.status = 404;
         return next(err);
     }

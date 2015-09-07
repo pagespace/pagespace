@@ -24,7 +24,7 @@ var createAcl = require('../misc/acl').acl,
 
 //url patterns
 var ALL_REGEX = new RegExp('.*');
-var DEV_API_REGEX = new RegExp('^/_api/(parts|templates)/?(.*)');
+var DEV_API_REGEX = new RegExp('^/_api/(plugins|templates)/?(.*)');
 var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|media)/?(.*)');
 
 //actions
@@ -55,7 +55,7 @@ AclSetup.prototype.runSetup = function() {
 
     //common actions requiring auth
     acl.match(consts.requests.MEDIA.regex, [ POST, PUT ]).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.PARTS.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(consts.requests.PLUGINS.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.PUBLISH.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.DASHBOARD.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.CACHE.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);

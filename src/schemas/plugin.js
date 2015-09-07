@@ -23,7 +23,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 function generateSchema() {
-    var partSchema = Schema({
+    var pluginSchema = Schema({
         name: {
             type: String,
             required: true
@@ -50,22 +50,26 @@ function generateSchema() {
         }
     });
 
-    partSchema.pre('save', function (next) {
+    pluginSchema.pre('save', function (next) {
         this.updatedAt = Date.now();
         next();
     });
 
-    partSchema.pre('findOneAndUpdate', function (next) {
+    pluginSchema.pre('findOneAndUpdate', function (next) {
         this.update({},{ $set: { updatedAt:  Date.now() }});
         next();
     });
 
-    partSchema.virtual('defaultData').get(function () {
-        var partResolver = require('../misc/part-resolver')();
-        return partResolver.require(this.module).defaultData || {};
+    pluginSchema.virtual('defaultData').get(function () {
+        var pluginResolver = require('../misc/plugin-resolver')();
+        return pluginResolver.require(this.module).defaultData || {};
     });
 
-    return partSchema;
+    pluginSchema.set('toJSON', {
+        virtuals: true
+    });
+
+    return pluginSchema;
 }
 
 module.exports = generateSchema;

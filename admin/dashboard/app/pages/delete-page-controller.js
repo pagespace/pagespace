@@ -7,7 +7,7 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller("DeletePageController",
     function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, $window) {
+             pageService, $window) {
 
     var pageId = $routeParams.pageId;
     $scope.status = 410;

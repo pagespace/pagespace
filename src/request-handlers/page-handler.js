@@ -40,7 +40,7 @@ PageHandler.prototype.init = function(support) {
     this.dbSupport = support.dbSupport;
     this.userBasePath = support.userBasePath;
     this.site = support.site;
-    this.partResolver = support.partResolver;
+    this.pluginResolver = support.pluginResolver;
     this.reqCount = 0;
     this.findPagePromises = {};
 
@@ -88,7 +88,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var filter = {
             url: urlPath
         };
-        var query = Page.findOne(filter).populate('template redirect regions.includes.part');
+        var query = Page.findOne(filter).populate('template redirect regions.includes.plugin');
         var findPage = Promise.promisify(query.exec, query);
         this._setFindPagePromise(pageQueryCachKey, findPage());
     }
@@ -116,19 +116,19 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
             promises.page = page;
 
-            //read data for each part
+            //read data for each plugin
             page.regions.forEach(function (region, regionIndex) {
                 region.includes.forEach(function(include, includeIndex) {
-                    var partModule = self.partResolver.require(include.part ? include.part.module : null);
+                    var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
                     var includeId = regionIndex + '_' + includeIndex;
-                    if (partModule) {
+                    if (pluginModule) {
                         var regionData = include.data || {};
-                        if (typeof partModule.process === 'function') {
-                            promises[includeId] = partModule.process(regionData, {
+                        if (typeof pluginModule.process === 'function') {
+                            promises[includeId] = pluginModule.process(regionData, {
                                 basePath: self.userBasePath,
                                 PageModel: Page,
                                 req: req,
-                                logger: logger.child({part: include.part.name})
+                                logger: logger.child({plugin: include.plugin.name})
                             });
                         } else {
                             promises[includeId] = regionData;
@@ -181,28 +181,28 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
                 var aggregatedViewPartials = [];
                 region.includes.forEach(function(include, includeIndex) {
-                    var partModule = self.partResolver.get(include.part ? include.part.module : null);
+                    var pluginModule = self.pluginResolver.get(include.plugin ? include.plugin.module : null);
                     var viewPartial;
-                    if(partModule) {
+                    if(pluginModule) {
                         var includeId = regionIndex + '_' + includeIndex;
                         pageData[region.name].data[includeIndex] = {
                             data: result[includeId] || {}
                         };
-                        viewPartial = partModule.__viewPartial ?
-                            partModule.__viewPartial : 'The view partial could not be resolved';
+                        viewPartial = pluginModule.__viewPartial ?
+                            pluginModule.__viewPartial : 'The view partial could not be resolved';
                         var htmlWrapper =
-                            '<div data-part="%s" ' +
+                            '<div data-plugin="%s" ' +
                             'data-page-id="%s" ' +
                             'data-region="%s" ' +
                             'data-include="%s">\n%s\n</div>';
 
-                        viewPartial = util.format(htmlWrapper, partModule.__config.name, page._id, region.name,
+                        viewPartial = util.format(htmlWrapper, pluginModule.__config.name, page._id, region.name,
                                                   includeIndex, viewPartial);
                     } else {
                         pageData[region.name].data[includeIndex] = {
                             data: null
                         };
-                        viewPartial = util.format('<!-- Region: %s, Part %s -->', region.name, includeIndex);
+                        viewPartial = util.format('<!-- Region: %s, Include %s -->', region.name, includeIndex);
                     }
                     aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
                 });

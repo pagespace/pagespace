@@ -7,7 +7,7 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller("PageController",
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, partService, $window) {
+             pageService, templateService, pluginService, $window) {
 
     $log.info('Showiing page view.');
 
@@ -20,7 +20,7 @@ adminApp.controller("PageController",
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
-    //sets the code mirror mode for editing raw part data
+    //sets the code mirror mode for editing raw include data
     $scope.editorOpts = {
         mode: 'application/json'
     };
@@ -42,11 +42,11 @@ adminApp.controller("PageController",
             callback()
         });
     });
-    pageSetupFunctions.push(function getParts(callback) {
-        $log.debug('Fetching available parts...');
-        partService.getParts().success(function(availableParts) {
-            $log.debug('Got available parts.');
-            $scope.availableParts = availableParts;
+    pageSetupFunctions.push(function getPlugins(callback) {
+        $log.debug('Fetching available plugins...');
+        pluginService.getPlugins().success(function(availablePlugins) {
+            $log.debug('Got available plugins.');
+            $scope.availablePlugins = availablePlugins;
             callback()
         });
     });
@@ -112,17 +112,17 @@ adminApp.controller("PageController",
 
     $scope.addInclude = function(regionIndex) {
         $scope.page.regions[regionIndex].includes.push({
-            part: null,
+            plugin: null,
             data: {}
         });
     };
 
     $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var partId = $scope.page.regions[regionIndex].includes[includeIndex].part._id;
-        var part = $scope.availableParts.filter(function(availablePart) {
-            return availablePart._id === partId;
+        var pluginId = $scope.page.regions[regionIndex].includes[includeIndex].plugin._id;
+        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
+            return availablePlugin._id === pluginId;
         })[0];
-        var defaultData = part && part.defaultData ? part.defaultData : {};
+        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
         $scope.page.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
@@ -195,7 +195,7 @@ adminApp.controller("PageController",
             return typeof region === 'object';
         }).map(function(region) {
             region.includes = region.includes.map(function(include) {
-                include.part = include.part._id;
+                include.plugin = include.plugin._id;
                 if(isJson(include.data)) {
                     include.data = JSON.parse(include.data);
                 }

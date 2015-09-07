@@ -30,15 +30,15 @@ var reqTypes  = {
     DATA: 'data'
 };
 
-var PartHandler = function() {
+var PluginHandler = function() {
 };
 
-module.exports =  new PartHandler();
+module.exports =  new PluginHandler();
 
-PartHandler.prototype.init = function(support) {
+PluginHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
-    this.partResolver = support.partResolver;
+    this.pluginResolver = support.pluginResolver;
     this.dbSupport = support.dbSupport;
     this.reqCount = 0;
 
@@ -53,19 +53,19 @@ PartHandler.prototype.init = function(support) {
 /**
  * Process a valid request
  */
-PartHandler.prototype.doRequest = function(req, res, next) {
+PluginHandler.prototype.doRequest = function(req, res, next) {
 
 
-    var logger = psUtil.getRequestLogger(this.logger, req, 'parts', ++this.reqCount);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'plugins', ++this.reqCount);
 
-    var reqInfo = consts.requests.PARTS.regex.exec(req.url);
+    var reqInfo = consts.requests.PLUGINS.regex.exec(req.url);
     var reqType = reqInfo[1];
 
     if(reqType === reqTypes.DATA && (req.method === 'GET' || req.method === 'PUT')) {
-        logger.info('New part data request');
+        logger.info('New plugin data request');
         return this.doData(req, res, next, logger);
     } else if (reqType === reqTypes.STATIC && req.method === 'GET') {
-        logger.info('New part static request');
+        logger.info('New plugin static request');
         var moduleId = reqInfo[2];
         var staticPath = reqInfo[3];
         return this.doStatic(req, res, next, logger, moduleId, staticPath);
@@ -76,7 +76,7 @@ PartHandler.prototype.doRequest = function(req, res, next) {
     }
 };
 
-PartHandler.prototype.doData = function(req, res, next, logger) {
+PluginHandler.prototype.doData = function(req, res, next, logger) {
 
     var self = this;
 
@@ -91,7 +91,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
     };
 
     var Page = this.dbSupport.getModel('Page');
-    var query = Page.findOne(filter).populate('regions.includes.part');
+    var query = Page.findOne(filter).populate('regions.includes.plugin');
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
@@ -99,15 +99,15 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
             return region.name === regionName;
         })[0];
 
-        var partPromise = null;
-        var partId = region.includes[includeIndex].part ? region.includes[includeIndex].part.module : null;
-        var partModule = self.partResolver.require(partId);
+        var pluginPromise = null;
+        var pluginId = region.includes[includeIndex].plugin ? region.includes[includeIndex].plugin.module : null;
+        var pluginModule = self.pluginResolver.require(pluginId);
 
-        if(partModule) {
+        if(pluginModule) {
             if(req.method === 'GET') {
-                partPromise = region.includes[includeIndex].data;
+                pluginPromise = region.includes[includeIndex].data;
             } else if(req.method === 'PUT') {
-                partPromise = req.body;
+                pluginPromise = req.body;
             } else {
                 var err = new Error('Unsupported method');
                 err.status = 405;
@@ -115,14 +115,14 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
             }
         }
 
-        return [ page, partPromise ];
-    }).spread(function(page, partData) {
+        return [ page, pluginPromise ];
+    }).spread(function(page, pluginData) {
         if(req.method === 'PUT') {
             var region = page.regions.filter(function(region) {
                 return region.name === regionName;
             })[0];
 
-            region.includes[includeIndex].data = partData;
+            region.includes[includeIndex].data = pluginData;
             page.draft = true;
             page.markModified('regions');
             page.save(function (err) {
@@ -136,7 +136,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
             });
         } else {
             logger.info('Data request OK');
-            res.json(partData);
+            res.json(pluginData);
         }
     }).catch(function(err) {
         logger.error(err, 'Data request failed');
@@ -144,22 +144,22 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
     });
 };
 
-PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) { // jshint ignore:line
+PluginHandler.prototype.doStatic = function(req, res, next, logger, pluginModuleId, pluginStaticPath) { // jshint ignore:line
 
-    if(!this.staticServers[partModuleId]) {
-        var partModule = this.partResolver.requireByName(partModuleId);
-        if(!partModule) {
-            var err = new Error('Cannot resolve part module for %s', partModuleId);
+    if(!this.staticServers[pluginModuleId]) {
+        var pluginModule = this.pluginResolver.requireByName(pluginModuleId);
+        if(!pluginModule) {
+            var err = new Error('Cannot resolve plugin module for %s', pluginModuleId);
             err.url = req.url;
             err.status = 404;
             return next();
         }
-        this.staticServers[partModuleId] = serveStatic(partModule.__dir, {
+        this.staticServers[pluginModuleId] = serveStatic(pluginModule.__dir, {
             index: false
         });
     }
-    req.url = '/static/' + partStaticPath;
-    this.staticServers[partModuleId](req, res, function (e) {
+    req.url = '/static/' + pluginStaticPath;
+    this.staticServers[pluginModuleId](req, res, function (e) {
         req.url = req.originalUrl;
         next(e);
     });

@@ -44,20 +44,13 @@ function generateSchema(modifier) {
                 required: true
             },
             includes: [{
-                part: {
+                plugin: {
                     type: Schema.Types.ObjectId,
-                    ref: 'Part'
+                    ref: 'Plugin'
                 },
                 data: {
                     type: Schema.Types.Mixed
                 }
-            }],
-            parts: [{
-                type: Schema.Types.ObjectId,
-                ref: 'Part'
-            }],
-            data: [{
-                type: Schema.Types.Mixed
             }]
         }],
         template: {

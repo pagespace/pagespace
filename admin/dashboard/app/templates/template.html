@@ -88,13 +88,13 @@
                 <div ng-show="selectedRegionIndex == $index">
                     <div ng-repeat="include in region.includes track by $index">
                         <div class="form-group">
-                            <label class="col-sm-2 control-label">Part type</label>
+                            <label class="col-sm-2 control-label">Plugin</label>
                             <div class="col-sm-7">
-                                <select ng-model="template.regions[$parent.$index].includes[$index].part"
+                                <select ng-model="template.regions[$parent.$index].includes[$index].plugin"
                                         ng-change="setDefaultDataForInclude($parent.$index, $index)"
-                                        ng-options="availablePart as availablePart.name for availablePart in availableParts track by availablePart._id"
+                                        ng-options="availablePlugin as availablePlugin.name for availablePlugin in availablePlugins track by availablePlugin._id"
                                         class="form-control">
-                                    <option value="" disabled selected>Select a part type</option>
+                                    <option value="" disabled selected>Select a plugin</option>
                                 </select>
                             </div>
                             <div class="col-sm-2">
@@ -111,7 +111,7 @@
                                           ui-codemirror-opts="editorOpts"
                                           class="form-control"
                                           name="region_{{$parent.$index}}_data"
-                                          placeholder="Edit raw part data (for advanced users)"></textarea>
+                                          placeholder="Edit raw include data (for advanced users)"></textarea>
                             </div>
                         </div>
                     </div>

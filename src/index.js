@@ -36,7 +36,7 @@ var url = require('url'),
     createDataSetup = require('./setup/data-setup'),
     createAclSetup = require('./setup/acl-setup'),
     createViewEngine = require('./misc/view-engine'),
-    createPartResolver = require('./misc/part-resolver');
+    createPluginResolver = require('./misc/plugin-resolver');
 
 /**
  * The App
@@ -106,8 +106,8 @@ Index.prototype.init = function(options) {
         logger.warn('Running in development mode');
     }
 
-    //this resolves part modules
-    this.partResolver = this.partResolver || createPartResolver({
+    //this resolves plugin modules
+    this.pluginResolver = this.pluginResolver || createPluginResolver({
         logger: logger,
         userBasePath: this.userBasePath,
         devMode: this.devMode ? 'development' : null
@@ -158,16 +158,16 @@ Index.prototype.init = function(options) {
             logger: logger,
             dbSupport: self.dbSupport
         });
-        self.dataSetup.runSetup().spread(function(partModules, site) {
+        self.dataSetup.runSetup().spread(function(pluginModules, site) {
 
-            //pre-resolve part modules (
-            logger.info('Resolving part modules...');
-            if (!partModules.length) {
-                logger.info('There are no registered part modules. Add some via the dashboard');
+            //pre-resolve plugin modules (
+            logger.info('Resolving plugin modules...');
+            if (!pluginModules.length) {
+                logger.info('There are no registered plugin modules. Add some via the dashboard');
             }
-            partModules.forEach(function (partModule) {
-                //requires and caches part modules for later page requests
-                self.partResolver.require(partModule);
+            pluginModules.forEach(function (pluginModule) {
+                //requires and caches plugin modules for later page requests
+                self.pluginResolver.require(pluginModule);
             });
 
             //general support instances supplied to all request handlers
@@ -175,7 +175,7 @@ Index.prototype.init = function(options) {
                 logger: logger,
                 viewEngine: self.viewEngine,
                 dbSupport: self.dbSupport,
-                partResolver: self.partResolver,
+                pluginResolver: self.pluginResolver,
                 site: site,
                 mediaDir: self.mediaDir,
                 userBasePath: self.userBasePath
