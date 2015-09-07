@@ -7,11 +7,7 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
                                                    templateService, partService) {
-
     $log.info('Showing Template View');
-
-    $rootScope.pageTitle = 'Template';
-
 
     var templateId = $routeParams.templateId;
     $scope.templateId = templateId;
@@ -23,8 +19,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    partService.getParts().success(function(parts) {
-        $scope.parts = parts;
+    partService.getParts().success(function(availableParts) {
+        $scope.availableParts = availableParts;
     });
 
     templateService.getTemplateSources().success(function(templateSources) {
@@ -32,7 +28,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     $scope.$watch('template.src', function(val) {
-
         if(val) {
             $log.debug('Fetching regions for template src: %s...', val);
             templateService.getTemplateRegions(val).success(function(regions) {
@@ -44,7 +39,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                         };
                     });
                 }
-
             }).error(function(err) {
                 $scope.showError('Error getting template', err);
             });
@@ -58,8 +52,10 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $scope.template = template;
 
             template.regions.map(function(region) {
-                region.data = stringifyData(region.data);
-                region.dataFromServer = !!region.data
+                region.includes = region.includes.map(function(include) {
+                    include.data = stringifyData(include.data);
+                    return include;
+                });
                 return region;
             });
         }).error(function(err) {
@@ -90,10 +86,36 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.removeRegion = function(region) {
-
         for(var i = $scope.template.regions.length - 1; i >= 0; i--) {
             if($scope.template.regions[i].name === region.name) {
                 $scope.template.regions.splice(i, 1);
+            }
+        }
+    };
+
+    $scope.addInclude = function(regionIndex) {
+        $scope.template.regions[regionIndex].includes.push({
+            part: null,
+            data: {}
+        });
+    };
+
+    $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
+        var partId = $scope.template.regions[regionIndex].includes[includeIndex].part._id;
+        var part = $scope.availableParts.filter(function(availablePart) {
+            return availablePart._id === partId;
+        })[0];
+        var defaultData = part && part.defaultData ? part.defaultData : {};
+        $scope.template.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
+    };
+
+    $scope.removeInclude = function(regionIndex, includeIndex) {
+        var really = window.confirm('Really delete this include?');
+        if(really) {
+            for(var i = $scope.template.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                if(i === includeIndex) {
+                    $scope.template.regions[regionIndex].includes.splice(i, 1);
+                }
             }
         }
     };
@@ -116,9 +138,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     };
 
     $scope.save = function(form) {
-
-
-
         if(form.$invalid) {
             $window.scrollTo(0,0);
             $scope.submitted = true;
@@ -139,12 +158,14 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
-            if(region.part) {
-                region.part = region.part._id;
-            }
-            if(isJson(region.data)) {
-                region.data = JSON.parse(region.data);
-            }
+            region.includes = region.includes.map(function(include) {
+                include.part = include.part._id;
+                if(isJson(include.data)) {
+                    include.data = JSON.parse(include.data);
+                }
+                return include;
+            });
+
             return region;
         });
 

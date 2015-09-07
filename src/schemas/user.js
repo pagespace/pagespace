@@ -84,6 +84,7 @@ function generateSchema() {
 
         user.updatedAt = Date.now();
 
+        //TODO: is this required for update?
         // only hash the password if it has been modified (or is new)
         if (!user.isModified('password')) {
             return next();
@@ -106,6 +107,11 @@ function generateSchema() {
                 next();
             });
         });
+    });
+
+    userSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
+        next();
     });
 
     userSchema.methods.comparePassword = function (candidatePassword, cb) {

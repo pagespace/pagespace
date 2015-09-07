@@ -88,7 +88,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var filter = {
             url: urlPath
         };
-        var query = Page.findOne(filter).populate('template redirect regions.part');
+        var query = Page.findOne(filter).populate('template redirect regions.includes.part');
         var findPage = Promise.promisify(query.exec, query);
         this._setFindPagePromise(pageQueryCachKey, findPage());
     }
@@ -100,10 +100,10 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         page = page || {};
 
         var err;
-        var promises = [];
+        var promises = {};
         if(page.status) {
             //status is good
-            promises.push(page.status);
+            promises.status = page.status;
         } else {
             //doesn't exist create 404
             page.status = 404;
@@ -114,29 +114,27 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
             logger.debug('Page found (200) for %s: %s', urlPath, page.id);
 
-            promises.push(page);
+            promises.page = page;
 
             //read data for each part
-            page.regions.forEach(function (region) {
-                var partModule = self.partResolver.require(region.part ? region.part.module : null);
-                if(partModule) {
-                    var regionData = region.data || {};
-                    var partPromise;
-                    if(typeof partModule.process === 'function') {
-                        partPromise = partModule.process(regionData, {
-                            basePath: self.userBasePath,
-                            PageModel: Page,
-                            req: req,
-                            logger: logger.child({part: region.part.name})
-                        });
-                    } else {
-                        partPromise = regionData;
+            page.regions.forEach(function (region, regionIndex) {
+                region.includes.forEach(function(include, includeIndex) {
+                    var partModule = self.partResolver.require(include.part ? include.part.module : null);
+                    var includeId = regionIndex + '_' + includeIndex;
+                    if (partModule) {
+                        var regionData = include.data || {};
+                        if (typeof partModule.process === 'function') {
+                            promises[includeId] = partModule.process(regionData, {
+                                basePath: self.userBasePath,
+                                PageModel: Page,
+                                req: req,
+                                logger: logger.child({part: include.part.name})
+                            });
+                        } else {
+                            promises[includeId] = regionData;
+                        }
                     }
-
-                    promises.push(partPromise);
-                } else {
-                    promises.push(null);
-                }
+                });
             });
         } else if(page.status === 404) {
             //page is a 404
@@ -153,17 +151,16 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         } else if(redirectStatuses.indexOf(page.status) >= 0) {
             //page is a redirect (301, 302, 303, 307)
             logger.info('Request is %s, handling redirect', page.status);
-            promises.push(page.redirect);
+            promises.redirect = page.redirect;
         } else {
             logger.warn('Page with unsupported status requested (%s)', page.status);
         }
-        return promises;
-    }).spread(function() {
+        return Promise.props(promises);
+    }).then(function(result) {
         var err;
-        var args = Array.prototype.slice.call(arguments, 0);
-        var status = args.shift();
+        var status = result.status;
         if(status === 200) {
-            var page = args.shift();
+            var page = result.page;
 
             var pageData = {};
             pageData.site = self.site;
@@ -177,28 +174,39 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                 pageData.template[prop.name] = prop.value;
             });
 
-            page.regions.forEach(function (region, i) {
-                if (region.part) {
-                    pageData[region.name] = {
-                        data: args[i] || {},
-                        edit: pageData.edit,
-                        region: region.name,
-                        pageId: page._id
-                    };
+            page.regions.forEach(function (region, regionIndex) {
+                pageData[region.name] = {
+                    data: []
+                };
 
-                    var partModule = self.partResolver.get(region.part ? region.part.module : null);
+                var aggregatedViewPartials = [];
+                region.includes.forEach(function(include, includeIndex) {
+                    var partModule = self.partResolver.get(include.part ? include.part.module : null);
                     var viewPartial;
                     if(partModule) {
-                        viewPartial = util.format('<div data-part="%s" data-page-id="%s" data-region="%s">\n%s\n</div>',
-                                                   partModule.__config.name, page._id, region.name, partModule.__viewPartial);
+                        var includeId = regionIndex + '_' + includeIndex;
+                        pageData[region.name].data[includeIndex] = {
+                            data: result[includeId] || {}
+                        };
+                        viewPartial = partModule.__viewPartial ?
+                            partModule.__viewPartial : 'The view partial could not be resolved';
+                        var htmlWrapper =
+                            '<div data-part="%s" ' +
+                            'data-page-id="%s" ' +
+                            'data-region="%s" ' +
+                            'data-include="%s">\n%s\n</div>';
+
+                        viewPartial = util.format(htmlWrapper, partModule.__config.name, page._id, region.name,
+                                                  includeIndex, viewPartial);
                     } else {
-                        viewPartial = '<!-- Region: ' + region.name + ' -->';
-                        if(region.part) {
-                            self.logger.warn('The view partial for %s could not be resolved', partModule);
-                        }
+                        pageData[region.name].data[includeIndex] = {
+                            data: null
+                        };
+                        viewPartial = util.format('<!-- Region: %s, Part %s -->', region.name, includeIndex);
                     }
-                    self.viewEngine.registerPartial(region.name, viewPartial, urlPath);
-                }
+                    aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
+                });
+                self.viewEngine.registerPartial(region.name, aggregatedViewPartials.join('\n'), urlPath);
             });
 
             var templateSrc = !page.template ? 'default.hbs' : page.template.src;
@@ -219,7 +227,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             });
         } else if(redirectStatuses.indexOf(status) >= 0) {
             //redirects
-            var redirectPage = args.shift();
+            var redirectPage = result.redirect;
             if(redirectPage && redirectPage.url) {
                 res.redirect(status, redirectPage.url);
             } else {

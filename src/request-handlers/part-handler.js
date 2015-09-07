@@ -84,13 +84,14 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 
     var pageId = req.query.pageId;
     var regionName = req.query.region;
+    var includeIndex = parseInt(req.query.include);
 
     var filter = {
         _id: pageId
     };
 
     var Page = this.dbSupport.getModel('Page');
-    var query = Page.findOne(filter).populate('regions.part');
+    var query = Page.findOne(filter).populate('regions.includes.part');
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
@@ -99,11 +100,12 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
         })[0];
 
         var partPromise = null;
-        var partModule = self.partResolver.require(region.part ? region.part.module : null);
+        var partId = region.includes[includeIndex].part ? region.includes[includeIndex].part.module : null;
+        var partModule = self.partResolver.require(partId);
 
         if(partModule) {
             if(req.method === 'GET') {
-                partPromise = region.data;
+                partPromise = region.includes[includeIndex].data;
             } else if(req.method === 'PUT') {
                 partPromise = req.body;
             } else {
@@ -113,14 +115,18 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
             }
         }
 
-        return [ page, region, partPromise ];
-    }).spread(function(page, region, partData) {
+        return [ page, partPromise ];
+    }).spread(function(page, partData) {
         if(req.method === 'PUT') {
-            region.data = partData;
+            var region = page.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+
+            region.includes[includeIndex].data = partData;
             page.draft = true;
+            page.markModified('regions');
             page.save(function (err) {
                 if (err) {
-                    //TOOD: promisify, this won't work
                     logger.error(err, 'Error saving data');
                     throw err;
                 }
@@ -141,7 +147,7 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 PartHandler.prototype.doStatic = function(req, res, next, logger, partModuleId, partStaticPath) { // jshint ignore:line
 
     if(!this.staticServers[partModuleId]) {
-        var partModule = this.partResolver.require(partModuleId);
+        var partModule = this.partResolver.requireByName(partModuleId);
         if(!partModule) {
             var err = new Error('Cannot resolve part module for %s', partModuleId);
             err.url = req.url;

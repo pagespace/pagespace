@@ -28,6 +28,10 @@
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
+            when('/pages/delete/:pageId', {
+                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
+                controller: 'DeletePageController'
+            }).
             when('/pages/:section/:pageId/', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
@@ -39,10 +43,6 @@
             when('/view-page/:env/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
-            }).
-            when('/pages/delete/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
-                controller: 'DeletePageController'
             }).
 
             //parts

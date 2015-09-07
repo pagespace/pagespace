@@ -67,6 +67,19 @@ PartResolver.prototype.require = function(partModuleId) {
     return partModule;
 };
 
+PartResolver.prototype.requireByName = function(partModuleName) {
+
+    for(var moduleId in this.cache) {
+        if(this.cache.hasOwnProperty(moduleId) && this.cache[moduleId].__config.name === partModuleName) {
+            return this.require(moduleId);
+        }
+    }
+
+    this.logger.warn('Cannot resolve module for module name [%s]', partModuleName);
+    this.logger.warn('Modules loaded by name, must have been previously required by calling require');
+    return null;
+};
+
 PartResolver.prototype.get = function(partModuleId) {
     var module = this.cache[partModuleId] || null;
 
@@ -86,7 +99,7 @@ PartResolver.prototype.initPartModule = function(partModule, partModulePath) {
     try {
         partModule.__config = require(partConfigPath);
     } catch(err) {
-        logger.warn('Couldn\'t load part config at %s', partModulePath)
+        logger.warn('Couldn\'t load part config at %s', partModulePath);
     }
 
     partModule.__dir = partModulePath;

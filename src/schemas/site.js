@@ -58,6 +58,11 @@ function generateSchema() {
         next();
     });
 
+    siteSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
+        next();
+    });
+
     return siteSchema;
 }
 

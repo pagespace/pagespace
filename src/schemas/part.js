@@ -55,6 +55,11 @@ function generateSchema() {
         next();
     });
 
+    partSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
+        next();
+    });
+
     partSchema.virtual('defaultData').get(function () {
         var partResolver = require('../misc/part-resolver')();
         return partResolver.require(this.module).defaultData || {};

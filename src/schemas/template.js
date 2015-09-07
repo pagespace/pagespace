@@ -38,11 +38,22 @@ function generateSchema() {
                 type: String,
                 required: true
             },
-            data: Schema.Types.Mixed,
-            part: {
+            includes: [{
+                part: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Part'
+                },
+                data: {
+                    type: Schema.Types.Mixed
+                }
+            }],
+            parts: [{
                 type: Schema.Types.ObjectId,
                 ref: 'Part'
-            }
+            }],
+            data: [{
+                type: Schema.Types.Mixed
+            }]
         }],
         properties: [{
             name: String,
@@ -67,6 +78,11 @@ function generateSchema() {
 
     templateSchema.pre('save', function (next) {
         this.updatedAt = Date.now();
+        next();
+    });
+
+    templateSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
         next();
     });
 

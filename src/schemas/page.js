@@ -43,11 +43,22 @@ function generateSchema(modifier) {
                 type: String,
                 required: true
             },
-            data: Schema.Types.Mixed,
-            part: {
+            includes: [{
+                part: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Part'
+                },
+                data: {
+                    type: Schema.Types.Mixed
+                }
+            }],
+            parts: [{
                 type: Schema.Types.ObjectId,
                 ref: 'Part'
-            }
+            }],
+            data: [{
+                type: Schema.Types.Mixed
+            }]
         }],
         template: {
             type: Schema.Types.ObjectId,
@@ -105,6 +116,11 @@ function generateSchema(modifier) {
 
     pageSchema.pre('save', function (next) {
         this.updatedAt = Date.now();
+        next();
+    });
+
+    pageSchema.pre('findOneAndUpdate', function (next) {
+        this.update({},{ $set: { updatedAt:  Date.now() }});
         next();
     });
 
