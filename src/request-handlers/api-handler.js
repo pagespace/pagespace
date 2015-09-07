@@ -57,9 +57,9 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     //fields to auto populate when making queries to these collcetions (the keys)
     var populationsMap = {
         sites: '',
-        pages: 'parent template regions.parts redirect createdBy updatedBy',
+        pages: 'parent template regions.includes.part redirect createdBy updatedBy',
         parts: '',
-        templates: 'regions.parts',
+        templates: 'regions.includes.part',
         users: '',
         media: ''
     };

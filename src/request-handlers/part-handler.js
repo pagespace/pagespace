@@ -84,14 +84,14 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
 
     var pageId = req.query.pageId;
     var regionName = req.query.region;
-    var partIndex = parseInt(req.query.partIndex);
+    var includeIndex = parseInt(req.query.include);
 
     var filter = {
         _id: pageId
     };
 
     var Page = this.dbSupport.getModel('Page');
-    var query = Page.findOne(filter).populate('regions.parts');
+    var query = Page.findOne(filter).populate('regions.includes.part');
     var findPage = Promise.promisify(query.exec, query);
     findPage().then(function(page) {
         //get data for region
@@ -100,11 +100,12 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
         })[0];
 
         var partPromise = null;
-        var partModule = self.partResolver.require(region.parts[partIndex] ? region.parts[partIndex].module : null);
+        var partId = region.includes[includeIndex].part ? region.includes[includeIndex].part.module : null;
+        var partModule = self.partResolver.require(partId);
 
         if(partModule) {
             if(req.method === 'GET') {
-                partPromise = region.data[partIndex];
+                partPromise = region.includes[includeIndex].data;
             } else if(req.method === 'PUT') {
                 partPromise = req.body;
             } else {
@@ -117,17 +118,15 @@ PartHandler.prototype.doData = function(req, res, next, logger) {
         return [ page, partPromise ];
     }).spread(function(page, partData) {
         if(req.method === 'PUT') {
-
             var region = page.regions.filter(function(region) {
                 return region.name === regionName;
             })[0];
 
-            region.data[partIndex] = partData;
+            region.includes[includeIndex].data = partData;
             page.draft = true;
             page.markModified('regions');
             page.save(function (err) {
                 if (err) {
-                    //TOOD: promisify, this won't work
                     logger.error(err, 'Error saving data');
                     throw err;
                 }

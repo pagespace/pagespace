@@ -7,11 +7,7 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
                                                    templateService, partService) {
-
     $log.info('Showing Template View');
-
-    $rootScope.pageTitle = 'Template';
-
 
     var templateId = $routeParams.templateId;
     $scope.templateId = templateId;
@@ -56,8 +52,9 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $scope.template = template;
 
             template.regions.map(function(region) {
-                region.data = region.data.map(function(datum) {
-                    return stringifyData(datum);
+                region.includes = region.includes.map(function(include) {
+                    include.data = stringifyData(include.data);
+                    return include;
                 });
                 return region;
             });
@@ -96,26 +93,28 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         }
     };
 
-    $scope.addPart = function(regionIndex) {
-        $scope.template.regions[regionIndex].parts.push(null);
-        $scope.template.regions[regionIndex].data.push('{}');
+    $scope.addInclude = function(regionIndex) {
+        $scope.template.regions[regionIndex].includes.push({
+            part: null,
+            data: {}
+        });
     };
 
-    $scope.setDefaultDataForRegion = function(regionIndex, partIndex) {
-        var partId = $scope.template.regions[regionIndex].parts[partIndex]._id;
+    $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
+        var partId = $scope.template.regions[regionIndex].includes[includeIndex].part._id;
         var part = $scope.availableParts.filter(function(availablePart) {
             return availablePart._id === partId;
         })[0];
         var defaultData = part && part.defaultData ? part.defaultData : {};
-        $scope.template.regions[regionIndex].data[partIndex] = stringifyData(defaultData);
+        $scope.template.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
-    $scope.removePart = function(regionIndex, partIndex) {
-        var really = window.confirm('Really delete this part?');
+    $scope.removeInclude = function(regionIndex, includeIndex) {
+        var really = window.confirm('Really delete this include?');
         if(really) {
-            for(var i = $scope.template.regions[regionIndex].parts.length - 1; i >= 0; i--) {
-                if(i === partIndex) {
-                    $scope.template.regions[regionIndex].parts.splice(i, 1);
+            for(var i = $scope.template.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                if(i === includeIndex) {
+                    $scope.template.regions[regionIndex].includes.splice(i, 1);
                 }
             }
         }
@@ -159,19 +158,14 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
-            if(region.parts) {
-                region.parts = region.parts.map(function(part) {
-                    return part._id
-                });
-            }
-            if(region.data) {
-                region.data = region.data.map(function(datum) {
-                    if(isJson(datum)) {
-                        return JSON.parse(datum);
-                    }
-                    return region.data;
-                });
-            }
+            region.includes = region.includes.map(function(include) {
+                include.part = include.part._id;
+                if(isJson(include.data)) {
+                    include.data = JSON.parse(include.data);
+                }
+                return include;
+            });
+
             return region;
         });
 

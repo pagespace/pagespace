@@ -43,6 +43,15 @@ function generateSchema(modifier) {
                 type: String,
                 required: true
             },
+            includes: [{
+                part: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Part'
+                },
+                data: {
+                    type: Schema.Types.Mixed
+                }
+            }],
             parts: [{
                 type: Schema.Types.ObjectId,
                 ref: 'Part'

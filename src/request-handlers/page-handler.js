@@ -88,7 +88,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var filter = {
             url: urlPath
         };
-        var query = Page.findOne(filter).populate('template redirect regions.parts');
+        var query = Page.findOne(filter).populate('template redirect regions.includes.part');
         var findPage = Promise.promisify(query.exec, query);
         this._setFindPagePromise(pageQueryCachKey, findPage());
     }
@@ -118,20 +118,20 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
             //read data for each part
             page.regions.forEach(function (region, regionIndex) {
-                region.parts.forEach(function(part, partIndex) {
-                    var partModule = self.partResolver.require(part ? part.module : null);
-                    var partId = regionIndex + '_' + partIndex;
+                region.includes.forEach(function(include, includeIndex) {
+                    var partModule = self.partResolver.require(include.part ? include.part.module : null);
+                    var includeId = regionIndex + '_' + includeIndex;
                     if (partModule) {
-                        var regionData = region.data[partIndex] || {};
+                        var regionData = include.data || {};
                         if (typeof partModule.process === 'function') {
-                            promises[partId] = partModule.process(regionData, {
+                            promises[includeId] = partModule.process(regionData, {
                                 basePath: self.userBasePath,
                                 PageModel: Page,
                                 req: req,
-                                logger: logger.child({part: part.name})
+                                logger: logger.child({part: include.part.name})
                             });
                         } else {
-                            promises[partId] = regionData;
+                            promises[includeId] = regionData;
                         }
                     }
                 });
@@ -180,13 +180,13 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                 };
 
                 var aggregatedViewPartials = [];
-                region.parts.forEach(function(part, partIndex) {
-                    var partModule = self.partResolver.get(part ? part.module : null);
+                region.includes.forEach(function(include, includeIndex) {
+                    var partModule = self.partResolver.get(include.part ? include.part.module : null);
                     var viewPartial;
                     if(partModule) {
-                        var partId = regionIndex + '_' + partIndex;
-                        pageData[region.name].data[partIndex] = {
-                            data: result[partId] || {}
+                        var includeId = regionIndex + '_' + includeIndex;
+                        pageData[region.name].data[includeIndex] = {
+                            data: result[includeId] || {}
                         };
                         viewPartial = partModule.__viewPartial ?
                             partModule.__viewPartial : 'The view partial could not be resolved';
@@ -194,17 +194,17 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                             '<div data-part="%s" ' +
                             'data-page-id="%s" ' +
                             'data-region="%s" ' +
-                            'data-part-index="%s">\n%s\n</div>';
+                            'data-include="%s">\n%s\n</div>';
 
                         viewPartial = util.format(htmlWrapper, partModule.__config.name, page._id, region.name,
-                                                  partIndex, viewPartial);
+                                                  includeIndex, viewPartial);
                     } else {
-                        pageData[region.name].data[partIndex] = {
+                        pageData[region.name].data[includeIndex] = {
                             data: null
                         };
-                        viewPartial = util.format('<!-- Region: %s, Part %s -->', region.name, partIndex);
+                        viewPartial = util.format('<!-- Region: %s, Part %s -->', region.name, includeIndex);
                     }
-                    aggregatedViewPartials.push('{{#with data.[' + partIndex + ']}}' + viewPartial + '{{/with}}');
+                    aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
                 });
                 self.viewEngine.registerPartial(region.name, aggregatedViewPartials.join('\n'), urlPath);
             });
