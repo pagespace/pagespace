@@ -260,7 +260,7 @@ TemplatesHandler.prototype.doGetTemplatePreview = function(req, res, next, logge
             logger.info('Phantom page created');
 
             //TODO: hard coded address
-            var templatePreviewUrl = 'http://localhost:9999/_templates/test?templateSrc=' +
+            var templatePreviewUrl = (req.secure ? 'https': 'http') + '://' + req.get('host') + '/_templates/test?templateSrc=' +
                 encodeURIComponent(templateSrc) + '&regionOutlineColor=' + encodeURIComponent(regionOutlineColor);
             logger.info('Opening url [%s]...', templatePreviewUrl);
 
@@ -344,19 +344,15 @@ TemplatesHandler.prototype.doTemplateTest = function(req, res, next, logger) {
             '</div>';
 
         regions.forEach(function(region) {
-            if(region !== 'adminbar') {
+            pageData[region] = {
+                data: {},
+                edit: false,
+                region: region
+            };
 
-                pageData[region] = {
-                    data: {},
-                    edit: false,
-                    region: region
-                };
-
-                var partialFillerHtml = util.format(REGION_FILLER_HTML, 200, regionOutlineColor, region);
-                self.viewEngine.registerPartial(region, partialFillerHtml, pageData.__template);
-            }
+            var partialFillerHtml = util.format(REGION_FILLER_HTML, 200, regionOutlineColor, region);
+            self.viewEngine.registerPartial(region, partialFillerHtml, pageData.__template);
         });
-        self.viewEngine.registerPartial('adminbar', '', pageData.__template);
 
         //make it make a request to the test url
         res.render(templateSrc, pageData, function(err, html) {
