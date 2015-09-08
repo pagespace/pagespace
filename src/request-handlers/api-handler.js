@@ -123,9 +123,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
                 logger.debug(req.body);
 
                 docData = req.body;
-                docData.createdBy = req.user._id;
-                docData.updatedBy = req.user._id;
                 var model = new Model(docData);
+                model.createdBy = req.user._id;
                 model.save(function(err, model) {
                     if(err) {
                         logger.error(err, 'Trying to save for API POST for %s', apiType);
