@@ -17,20 +17,13 @@
     <form role="form"  name="pluginForm" class="form-horizontal" novalidate ng-submit="save(pluginForm)">
 
         <div class="notification-bar">
-            <p ng-show="!pluginId">Create a new page plugin</p>
-            <p ng-show="pluginId">Update details for plugin: <b>{{plugin.name}}</b></p>
+            <p ng-show="!pluginId">Create a new plugin</p>
+            <p ng-show="pluginId">Update details for: <b>{{plugin.description}}</b></p>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 
-        <div class="form-group" bs-has-error="name">
-            <label class="col-sm-2 control-label">Plugin name</label>
-            <div class="col-sm-7">
-                <input type="text" class="form-control" required name="name"
-                       ng-model="plugin.name" placeholder="Blog post (required)">
-            </div>
-        </div>
         <div class="form-group" bs-has-error="module">
-            <label class="col-sm-2 control-label">Module path</label>
+            <label class="col-sm-2 control-label">Module name</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control input-medium" required name="module"
                        ng-model="plugin.module" placeholder="blog-post">

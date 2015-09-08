@@ -24,10 +24,6 @@ var Schema = mongoose.Schema;
 
 function generateSchema() {
     var pluginSchema = Schema({
-        name: {
-            type: String,
-            required: true
-        },
         module: {
             type: String,
             unique: true,
@@ -63,6 +59,11 @@ function generateSchema() {
     pluginSchema.virtual('defaultData').get(function () {
         var pluginResolver = require('../misc/plugin-resolver')();
         return pluginResolver.require(this.module).defaultData || {};
+    });
+
+    pluginSchema.virtual('description').get(function () {
+        var pluginResolver = require('../misc/plugin-resolver')();
+        return pluginResolver.require(this.module).__config.description || this.module;
     });
 
     pluginSchema.set('toJSON', {
