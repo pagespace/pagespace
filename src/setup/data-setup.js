@@ -45,19 +45,19 @@ DataSetup.prototype.runSetup = function() {
     var self = this;
     var logger = this.logger;
 
-    var loadPartModules = self._loadPartModules();
+    var loadPluginModules = self._loadPluginModules();
     var loadAdminUser = self._loadAdminUser();
     var loadSite = self._loadSite();
 
     //once everything is ready
-    return Promise.join(loadPartModules, loadAdminUser, loadSite, function (parts, users, site) {
+    return Promise.join(loadPluginModules, loadAdminUser, loadSite, function(plugins, users, site) {
 
         var promises = [];
 
-        var partModules = parts.map(function (part) {
-            return part.module;
+        var pluginModules = plugins.map(function (plugin) {
+            return plugin.module;
         });
-        promises.push(partModules);
+        promises.push(pluginModules);
 
         //setup the site model for first run
         if (!site) {
@@ -103,15 +103,15 @@ DataSetup.prototype.runSetup = function() {
 
 
 /**
- * Preloads the parts modules
+ * Preloads the plugins modules
  * @returns {*}
  */
-DataSetup.prototype._loadPartModules = function() {
+DataSetup.prototype._loadPluginModules = function() {
 
-    var Part = this.dbSupport.getModel('Part');
-    var query = Part.find({});
-    var getParts = Promise.promisify(query.exec, query);
-    return getParts();
+    var Plugin = this.dbSupport.getModel('Plugin');
+    var query = Plugin.find({});
+    var getPlugins = Promise.promisify(query.exec, query);
+    return getPlugins();
 };
 
 /**

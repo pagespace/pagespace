@@ -37,7 +37,7 @@ DashboardHandler.prototype.init = function(support) {
     this.viewEngine = support.viewEngine;
     this.userBasePath = support.userBasePath;
     this.dbSupport = support.dbSupport;
-    this.partResolver = support.partResolver;
+    this.pluginResolver = support.pluginResolver;
 
     this.reqCount = 0;
 
@@ -66,9 +66,6 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
     if(!reqType && req.method === 'GET') {
         logger.info('New dashboard request');
         return this.doDashboard(req, res, next, logger);
-    } else if (reqType === 'region' && req.method === 'GET') {
-        logger.info('New part editor request');
-        return this.doRegion(req, res, next, logger);
     } else {
         var err = new Error('Unrecognized method');
         err.status = 405;
@@ -83,7 +80,7 @@ DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
         username: req.user.username,
         displayName: req.user.name,
         allowUsers: req.user.role === 'admin',
-        allowTemplatesAndParts: req.user.role === 'developer' || req.user.role === 'admin',
+        allowTemplatesAndPlugins: req.user.role === 'developer' || req.user.role === 'admin',
         year: new Date().toISOString().substr(0, 4)
     };
 

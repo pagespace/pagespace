@@ -45,20 +45,19 @@
                 controller: 'ViewPageController'
             }).
 
-            //parts
-            when('/parts', {
-                templateUrl: '/_static/dashboard/app/parts/part-list.html',
-                controller: 'PartListController'
+            //plugins
+            when('/plugins', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',
+                controller: 'PluginListController'
             }).
-            when('/parts/new', {
-                templateUrl: '/_static/dashboard/app/parts/part.html',
-                controller: 'PartController'
+            when('/plugins/new', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
+                controller: 'PluginController'
             }).
-            when('/parts/:partId', {
-                templateUrl: '/_static/dashboard/app/parts/part.html',
-                controller: 'PartController'
+            when('/plugins/:pluginId', {
+                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
+                controller: 'PluginController'
             }).
-
 
             //publishing
             when('/publishing', {

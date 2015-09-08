@@ -40,10 +40,10 @@
                 <!--<li><a href="#/macros">Macros</a></li>-->
                 <li ng-class="menuClass('/media')"><a href="#/media">Media</a></li>
                 <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publishing</a></li>
-                {{#allowTemplatesAndParts}}
+                {{#allowTemplatesAndPlugins}}
                     <li ng-class="menuClass('/templates')"><a href="#/templates">Templates</a></li>
-                    <li ng-class="menuClass('/parts')"><a href="#/parts">Page Parts</a></li>
-                {{/allowTemplatesAndParts}}
+                    <li ng-class="menuClass('/plugins')"><a href="#/plugins">Plugins</a></li>
+                {{/allowTemplatesAndPlugins}}
                 {{#allowUsers}}
                     <li ng-class="menuClass('/users')"><a href="#/users">Users</a></li>
                 {{/allowUsers}}

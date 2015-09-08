@@ -1,12 +1,12 @@
 <nav class="side-nav col-sm-2">
 
     <div class="section-heading" ng-cloak>
-        <h3 ng-show="!part._id">Create a part</h3>
-        <h3 ng-show="part._id">Edit part</h3>
+        <h3 ng-show="!plugin._id">Import a plugin</h3>
+        <h3 ng-show="plugin._id">Edit plugin</h3>
     </div>
-    <div ng-show="part._id">
+    <div ng-show="plugin._id">
         <ul class="nav nav-pills nav-stacked">
-            <li><a href="/_api/parts/{{part._id}}" target="_blank">Go to json &raquo;</a></li>
+            <li><a href="/_api/plugins/{{plugin._id}}" target="_blank">Go to json &raquo;</a></li>
         </ul>
 
         <button type="button" class="btn btn-danger" ng-click="remove(item)"
@@ -14,26 +14,26 @@
     </div>
 </nav>
 <main class="main col-sm-6">
-    <form role="form"  name="partForm" class="form-horizontal" novalidate ng-submit="save(partForm)">
+    <form role="form"  name="pluginForm" class="form-horizontal" novalidate ng-submit="save(pluginForm)">
 
         <div class="notification-bar">
-            <p ng-show="!partId">Create a new page part</p>
-            <p ng-show="partId">Update details for part: <b>{{part.name}}</b></p>
+            <p ng-show="!pluginId">Create a new page plugin</p>
+            <p ng-show="pluginId">Update details for plugin: <b>{{plugin.name}}</b></p>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 
         <div class="form-group" bs-has-error="name">
-            <label class="col-sm-2 control-label">Part name</label>
+            <label class="col-sm-2 control-label">Plugin name</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control" required name="name"
-                       ng-model="part.name" placeholder="Blog post (required)">
+                       ng-model="plugin.name" placeholder="Blog post (required)">
             </div>
         </div>
         <div class="form-group" bs-has-error="module">
             <label class="col-sm-2 control-label">Module path</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control input-medium" required name="module"
-                       ng-model="part.module" placeholder="./my-parts/blog-post">
+                       ng-model="plugin.module" placeholder="blog-post">
             </div>
         </div>
 

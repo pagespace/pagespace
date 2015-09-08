@@ -74,7 +74,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
     var updates = [];
 
     var DraftPage = this.dbSupport.getModel('Page');
-    var query = DraftPage.find({ $or : orConditions}).populate('template regions.part');
+    var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.plugin');
     var findPagesToPublish = Promise.promisify(query.exec, query);
     findPagesToPublish().then(function(pages) {
 

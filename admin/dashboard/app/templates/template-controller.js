@@ -6,7 +6,7 @@
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
-                                                   templateService, partService) {
+                                                   templateService, pluginService) {
     $log.info('Showing Template View');
 
     var templateId = $routeParams.templateId;
@@ -19,8 +19,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    partService.getParts().success(function(availableParts) {
-        $scope.availableParts = availableParts;
+    pluginService.getPlugins().success(function(availablePlugins) {
+        $scope.availablePlugins = availablePlugins;
     });
 
     templateService.getTemplateSources().success(function(templateSources) {
@@ -33,9 +33,10 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             templateService.getTemplateRegions(val).success(function(regions) {
                 $log.debug('Got regions: %s', regions);
                 if(!$scope.template.regions.length) {
-                    $scope.template.regions = regions.map(function(region) {
+                    $scope.template.regions = regions.map(function (region) {
                         return {
-                            name: region
+                            name: region,
+                            includes: []
                         };
                     });
                 }
@@ -51,7 +52,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
 
-            template.regions.map(function(region) {
+            $scope.template.regions = template.regions.map(function(region) {
                 region.includes = region.includes.map(function(include) {
                     include.data = stringifyData(include.data);
                     return include;
@@ -95,17 +96,17 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
     $scope.addInclude = function(regionIndex) {
         $scope.template.regions[regionIndex].includes.push({
-            part: null,
+            plugin: null,
             data: {}
         });
     };
 
     $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var partId = $scope.template.regions[regionIndex].includes[includeIndex].part._id;
-        var part = $scope.availableParts.filter(function(availablePart) {
-            return availablePart._id === partId;
+        var pluginId = $scope.template.regions[regionIndex].includes[includeIndex].plugin._id;
+        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
+            return availablePlugin._id === pluginId;
         })[0];
-        var defaultData = part && part.defaultData ? part.defaultData : {};
+        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
         $scope.template.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
@@ -154,12 +155,12 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             }
         }
 
-        //depopulate parts
+        //depopulate plugins
         template.regions = template.regions.filter(function(region) {
             return typeof region === 'object';
         }).map(function(region) {
             region.includes = region.includes.map(function(include) {
-                include.part = include.part._id;
+                include.plugin = include.plugin._id;
                 if(isJson(include.data)) {
                     include.data = JSON.parse(include.data);
                 }
