@@ -73,15 +73,15 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         return req.session[sessionKey] || false;
     }
 
-    var stagingMode = sessionValueSwitch(req, '_preview', 'staging');
-    logger.info('New %s page request', (stagingMode ? 'preview' : 'live'));
+    var previewMode = sessionValueSwitch(req, '_preview', 'preview');
+    logger.info('New %s page request', (previewMode ? 'preview' : 'live'));
 
-    var modelModifier = !stagingMode ? 'live' : null;
+    var modelModifier = !previewMode ? 'live' : null;
     var Page = this.dbSupport.getModel('Page', modelModifier);
     var pageQueryCachKey = urlPath + '_' + modelModifier;
 
-    ///clear cache if in staging mode
-    if(stagingMode) {
+    ///clear cache if in preview mode
+    if(previewMode) {
         this.findPagePromises[pageQueryCachKey] = null;
     }
     if(!this.findPagePromises[pageQueryCachKey]) {
@@ -165,8 +165,8 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             var pageData = {};
             pageData.site = self.site;
             pageData.page = page.toObject();
-            pageData.staging = stagingMode;
-            pageData.live = !stagingMode;
+            pageData.preview = previewMode;
+            pageData.live = !previewMode;
 
             //template properties
             pageData.template = {};
@@ -182,7 +182,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                 var aggregatedViewPartials = [];
                 region.includes.forEach(function(include, includeIndex) {
                     var pluginModule = self.pluginResolver.get(include.plugin ? include.plugin.module : null);
-                    var viewPartial;
+                    var htmlWrapper, viewPartial;
                     if(pluginModule) {
                         var includeId = regionIndex + '_' + includeIndex;
                         pageData[region.name].data[includeIndex] = {
@@ -190,19 +190,24 @@ PageHandler.prototype.doRequest = function(req, res, next) {
                         };
                         viewPartial = pluginModule.__viewPartial ?
                             pluginModule.__viewPartial : 'The view partial could not be resolved';
-                        var htmlWrapper =
-                            '<div data-plugin="%s" ' +
-                            'data-page-id="%s" ' +
-                            'data-region="%s" ' +
-                            'data-include="%s">\n%s\n</div>';
-
-                        viewPartial = util.format(htmlWrapper, pluginModule.__config.name, page._id, region.name,
-                                                  includeIndex, viewPartial);
+                        if(previewMode) {
+                            htmlWrapper =
+                                '<div data-plugin="%s" ' +
+                                'data-page-id="%s" ' +
+                                'data-region="%s" ' +
+                                'data-include="%s">\n%s\n</div>';
+                            viewPartial = util.format(htmlWrapper, pluginModule.__config.name, page._id, region.name,
+                                includeIndex, viewPartial);
+                        } else {
+                            htmlWrapper = '<div>\n%s\n</div>';
+                            viewPartial = util.format(htmlWrapper, viewPartial);
+                        }
                     } else {
                         pageData[region.name].data[includeIndex] = {
                             data: null
                         };
-                        viewPartial = util.format('<!-- Region: %s, Include %s -->', region.name, includeIndex);
+                        htmlWrapper = '<!-- Region: %s, Include %s -->';
+                        viewPartial = util.format(htmlWrapper, region.name, includeIndex);
                     }
                     aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
                 });
