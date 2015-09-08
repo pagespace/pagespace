@@ -160,7 +160,15 @@
             return match ? "active" : "";
         };
 
-        //notications
+        $scope.$on('$routeChangeStart', function(ev, next) {
+            if(next.params && next.params.url) {
+                $scope.viewPageUrl = '/' + (next.params.url || '');
+            } else {
+                $scope.viewPageUrl = null;
+            }
+        });
+
+        //notifications
         $scope.message = null;
 
         function showMessage(text, type) {

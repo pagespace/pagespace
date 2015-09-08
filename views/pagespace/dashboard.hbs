@@ -3,7 +3,6 @@
 <head>
     <title>Pagespace :: Dashboard</title>
     <meta charset="utf-8">
-    <link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
     <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
     <link href="/_static/bower_components/ng-tags-input/ng-tags-input.min.css" rel="stylesheet">
@@ -34,7 +33,7 @@
                 <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
             </div>
         </div>
-        <nav class="header-nav col-sm-8">
+        <nav class="header-nav col-sm-6">
             <ul class="nav nav-pills">
                 <li ng-class="menuClass('/pages', '/')"><a href="#/pages">Pages</a></li>
                 <!--<li><a href="#/macros">Macros</a></li>-->
@@ -49,6 +48,9 @@
                 {{/allowUsers}}
             </ul>
         </nav>
+        <div class="col-sm-2">
+            <div ng-include="'/_static/dashboard/app/pages/view-page-options.html'"></div>
+        </div>
         <div class="header-utils col-sm-2">
             <p>Hello <b>{{displayName}}</b>&nbsp;
                 <a href="/_logout">

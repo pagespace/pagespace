@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-sm-4">
+        <dl>
+            <dt>Created on</dt>
+            <dd>{{page.createdAt | date:'MMM d, yyyy'}} at {{page.createdAt | date:'HH:mm'}}</dd>
+            <dt>by</dt>
+            <dd>{{page.createdBy.name}}</dd>
+        </dl>
+    </div>
+    <div class="col-sm-4">
+        <dl nf-show="page.updateAt">
+            <dt>Last updated on</dt>
+            <dd>{{page.updatedAt | date:'MMM d, yyyy'}} at {{page.updatedAt | date:'HH:mm'}}</dd>
+            <dt>by</dt>
+            <dd>{{page.updatedBy.name}}</dd>
+        </dl>
+    </div>
+</div>

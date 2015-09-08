@@ -1,3 +1,18 @@
+@font-face {
+    font-family: 'Raleway';
+    font-style: normal;
+    font-weight: 200;
+    src: local('Raleway ExtraLight'), local('Raleway-ExtraLight'), url(/_static/dashboard/support/fonts/raleway-extralight.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+@font-face {
+    font-family: 'Raleway';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Raleway'), url(/_static/dashboard/support/fonts/raleway-normal.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
 html,
 body {
     background: #E5E7EA;
@@ -38,7 +53,6 @@ header > nav {
 }
 .logo {
     font-family: 'Raleway', sans-serif;
-    font-weigh: normal;
     text-transform: uppercase;
     text-align: center;
     line-height: 60px;
@@ -104,6 +118,11 @@ header > nav {
 .side-nav .active a {
     background: #f3f3f3 !important;
     color: #999 !important;
+}
+.header-page-options {
+    padding: 7px 18px;
+    margin: 11px 0 0 0 !important;
+    background: rgba(255, 255, 255, 0.65);
 }
 .header-utils {
     padding-right: 22px !important;
@@ -189,10 +208,6 @@ header > nav {
 }
 .btn {
     border-radius: 4px;
-}
-.btn:hover, .btn:focus {
-    color: #D80000;
-    text-decoration: none;
 }
 .selected-template {
     border: 2px solid #afff00;

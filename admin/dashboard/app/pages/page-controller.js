@@ -9,7 +9,7 @@ adminApp.controller("PageController",
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, pluginService, $window) {
 
-    $log.info('Showiing page view.');
+    $log.info('Showing page view.');
 
     $scope.section = $routeParams.section || 'basic';
 
@@ -91,7 +91,7 @@ adminApp.controller("PageController",
                 });
             });
         } else {
-            $scope.page.root = 'primary';
+            $scope.page.root = 'top';
         }
     }
 
@@ -103,6 +103,7 @@ adminApp.controller("PageController",
             if(!$scope.page.template && $scope.templates.length === 1) {
                 $scope.selectTemplate($scope.templates[0]);
             }
+            $scope.updateRegions($scope.template);
         }
     });
 
@@ -141,6 +142,20 @@ adminApp.controller("PageController",
         $location.path("/pages");
     };
 
+    $scope.updateRegions = function(template) {
+        function isRegionNew(regionName) {
+            return !$scope.page.regions.some(function(region) {
+                return region.name === regionName;
+            });
+        }
+
+        template.regions.forEach(function(templateRegion) {
+            if(isRegionNew(templateRegion.name)) {
+                $scope.page.regions.push(templateRegion);
+            }
+        });
+    };
+
     $scope.selectTemplate = function(template) {
 
         template.regions = template.regions.map(function(region) {
@@ -155,7 +170,7 @@ adminApp.controller("PageController",
         $scope.template = template;
 
         if($scope.page && template) {
-            $scope.page.regions = template.regions;
+            $scope.updateRegions(template);
         }
     };
 

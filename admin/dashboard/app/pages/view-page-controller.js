@@ -12,8 +12,8 @@ adminApp.controller("ViewPageController",
     var url = $routeParams.url;
 
     $scope.getPageUrl = function() {
-        var staging = env === 'preview';
-        return (url || '/') + '?_preview=' + staging;
+        var showPreview = env === 'preview';
+        return '/' + (url || '') + '?_preview=' + showPreview;
     };
 });
 
@@ -23,7 +23,7 @@ adminApp.directive('pageHolder', function() {
         transclude: true,
         replace: true,
         template: '<div class="my-div" ng-transclude></div>',
-        link: function link(scope, element, attrs) {
+        link: function link(scope, element) {
 
             //sizing
             function getWindowHeight() {

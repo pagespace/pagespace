@@ -56,7 +56,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             };
 
             var primaryRoots = allPages.filter(function(page) {
-                return page.root === "primary";
+                return page.root === "top";
             });
             populateChildren(primaryRoots);
 

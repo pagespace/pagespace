@@ -1,33 +1,5 @@
 <div class="row">
-    <div class="col-sm-4">
-        <dl>
-            <dt>Created on</dt>
-            <dd>{{page.createdAt | date:'MMM d, yyyy'}} at {{page.createdAt | date:'HH:mm'}}</dd>
-            <dt>by</dt>
-            <dd>{{page.createdBy.name}}</dd>
-        </dl>
-    </div>
-    <div class="col-sm-4">
-        <dl nf-show="page.updateAt">
-            <dt>Last updated on</dt>
-            <dd>{{page.updatedAt | date:'MMM d, yyyy'}} at {{page.updatedAt | date:'HH:mm'}}</dd>
-            <dt>by</dt>
-            <dd>{{page.updatedBy.name}}</dd>
-        </dl>
-    </div>
-    <div class="col-sm-4">
-        <ul class="nav nav-pills nav-stacked">
-            <li><a href="{{page.url}}?_preview=true" target="_blank">Go to page (preview) &raquo;</a></li>
-            <li><a href="{{page.url}}?_preview=false" target="_blank">Go to page (live) &raquo;</a></li>
-            <li><a href="/_api/pages/{{page._id}}" target="_blank">Go to json &raquo;</a></li>
-        </ul>
-    </div>
-</div>
-<div class="row">
     <div class="col-sm-12">
-
-        <h3>Regions</h3>
-
         <div class="form-group">
             <label class="col-sm-2 control-label">Select a region</label>
              <div class="col-sm-7" ng-show="page.regions.length">
@@ -53,7 +25,7 @@
                         </div>
                         <div class="col-sm-2">
                             <button type="button" class="btn btn-danger" ng-click="removeInclude($parent.$index, $index)">
-                                Delete include
+                                <span class="glyphicon glyphicon-remove"></span> Delete include
                             </button>
                         </div>
                     </div>
