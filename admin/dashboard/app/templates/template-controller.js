@@ -28,21 +28,9 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     $scope.$watch('template.src', function(val) {
-        if(val) {
+        if(val && !templateId) {
             $log.debug('Fetching regions for template src: %s...', val);
-            templateService.getTemplateRegions(val).success(function(regions) {
-                $log.debug('Got regions: %s', regions);
-                if(!$scope.template.regions.length) {
-                    $scope.template.regions = regions.map(function (region) {
-                        return {
-                            name: region,
-                            includes: []
-                        };
-                    });
-                }
-            }).error(function(err) {
-                $scope.showError('Error getting template', err);
-            });
+            $scope.scanRegions(val);
         }
     });
 
@@ -92,6 +80,32 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 $scope.template.regions.splice(i, 1);
             }
         }
+    };
+
+    $scope.scanRegions = function(templateSrc) {
+
+        templateSrc = templateSrc || $scope.template.src;
+
+        templateService.getTemplateRegions(templateSrc).success(function(newRegions) {
+            $log.debug('Got regions: %s', newRegions);
+
+            function isRegionNew(regionName) {
+                return !$scope.template.regions.some(function(region) {
+                    return region.name === regionName;
+                });
+            }
+
+            newRegions.forEach(function(regionName) {
+                if(isRegionNew(regionName)) {
+                    $scope.template.regions.push({
+                        name: regionName,
+                        includes: []
+                    })
+                }
+            });
+        }).error(function(err) {
+            $scope.showError('Error getting template regions', err);
+        });
     };
 
     $scope.addInclude = function(regionIndex) {

@@ -160,7 +160,15 @@
             return match ? "active" : "";
         };
 
-        //notications
+        $scope.$on('$routeChangeStart', function(ev, next) {
+            if(next.params && next.params.url) {
+                $scope.viewPageUrl = '/' + (next.params.url || '');
+            } else {
+                $scope.viewPageUrl = null;
+            }
+        });
+
+        //notifications
         $scope.message = null;
 
         function showMessage(text, type) {
@@ -665,7 +673,7 @@ adminApp.controller("PageController",
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, pluginService, $window) {
 
-    $log.info('Showiing page view.');
+    $log.info('Showing page view.');
 
     $scope.section = $routeParams.section || 'basic';
 
@@ -747,7 +755,7 @@ adminApp.controller("PageController",
                 });
             });
         } else {
-            $scope.page.root = 'primary';
+            $scope.page.root = 'top';
         }
     }
 
@@ -759,6 +767,7 @@ adminApp.controller("PageController",
             if(!$scope.page.template && $scope.templates.length === 1) {
                 $scope.selectTemplate($scope.templates[0]);
             }
+            $scope.updateRegions($scope.template);
         }
     });
 
@@ -797,6 +806,20 @@ adminApp.controller("PageController",
         $location.path("/pages");
     };
 
+    $scope.updateRegions = function(template) {
+        function isRegionNew(regionName) {
+            return !$scope.page.regions.some(function(region) {
+                return region.name === regionName;
+            });
+        }
+
+        template.regions.forEach(function(templateRegion) {
+            if(isRegionNew(templateRegion.name)) {
+                $scope.page.regions.push(templateRegion);
+            }
+        });
+    };
+
     $scope.selectTemplate = function(template) {
 
         template.regions = template.regions.map(function(region) {
@@ -811,7 +834,7 @@ adminApp.controller("PageController",
         $scope.template = template;
 
         if($scope.page && template) {
-            $scope.page.regions = template.regions;
+            $scope.updateRegions(template);
         }
     };
 
@@ -1076,7 +1099,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             };
 
             var primaryRoots = allPages.filter(function(page) {
-                return page.root === "primary";
+                return page.root === "top";
             });
             populateChildren(primaryRoots);
 
@@ -1207,8 +1230,8 @@ adminApp.controller("ViewPageController",
     var url = $routeParams.url;
 
     $scope.getPageUrl = function() {
-        var staging = env === 'preview';
-        return (url || '/') + '?_preview=' + staging;
+        var showPreview = env === 'preview';
+        return '/' + (url || '') + '?_preview=' + showPreview;
     };
 });
 
@@ -1218,7 +1241,7 @@ adminApp.directive('pageHolder', function() {
         transclude: true,
         replace: true,
         template: '<div class="my-div" ng-transclude></div>',
-        link: function link(scope, element, attrs) {
+        link: function link(scope, element) {
 
             //sizing
             function getWindowHeight() {
@@ -1605,21 +1628,9 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     $scope.$watch('template.src', function(val) {
-        if(val) {
+        if(val && !templateId) {
             $log.debug('Fetching regions for template src: %s...', val);
-            templateService.getTemplateRegions(val).success(function(regions) {
-                $log.debug('Got regions: %s', regions);
-                if(!$scope.template.regions.length) {
-                    $scope.template.regions = regions.map(function (region) {
-                        return {
-                            name: region,
-                            includes: []
-                        };
-                    });
-                }
-            }).error(function(err) {
-                $scope.showError('Error getting template', err);
-            });
+            $scope.scanRegions(val);
         }
     });
 
@@ -1669,6 +1680,32 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 $scope.template.regions.splice(i, 1);
             }
         }
+    };
+
+    $scope.scanRegions = function(templateSrc) {
+
+        templateSrc = templateSrc || $scope.template.src;
+
+        templateService.getTemplateRegions(templateSrc).success(function(newRegions) {
+            $log.debug('Got regions: %s', newRegions);
+
+            function isRegionNew(regionName) {
+                return !$scope.template.regions.some(function(region) {
+                    return region.name === regionName;
+                });
+            }
+
+            newRegions.forEach(function(regionName) {
+                if(isRegionNew(regionName)) {
+                    $scope.template.regions.push({
+                        name: regionName,
+                        includes: []
+                    })
+                }
+            });
+        }).error(function(err) {
+            $scope.showError('Error getting template regions', err);
+        });
     };
 
     $scope.addInclude = function(regionIndex) {
@@ -1828,7 +1865,6 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
     adminApp.factory('templateService', function($http) {
 
         function TemplateService() {
-            this.pageCache = [];
         }
         TemplateService.prototype.getTemplateSources = function() {
             return $http.get('/_templates/available');

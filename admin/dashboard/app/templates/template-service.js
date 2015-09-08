@@ -3,7 +3,6 @@
     adminApp.factory('templateService', function($http) {
 
         function TemplateService() {
-            this.pageCache = [];
         }
         TemplateService.prototype.getTemplateSources = function() {
             return $http.get('/_templates/available');

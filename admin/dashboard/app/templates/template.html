@@ -72,7 +72,16 @@
 
         <div ng-show="template.regions && template.regions.length">
 
-            <h3>Regions and includes</h3>
+            <div class="row" style="margin-top: 2em">
+                <div class="col-sm-9">
+                    <h3>Regions and includes</h3>
+                </div>
+                <div class="col-sm-3">
+                    <button type="button" class="btn btn-primary" ng-click="scanRegions()">
+                        <span class="glyphicon glyphicon-refresh"></span> Rescan
+                    </button>
+                </div>
+            </div>
 
             <div class="form-group">
                 <div class="col-sm-9">
@@ -99,7 +108,7 @@
                             </div>
                             <div class="col-sm-2">
                                 <button type="button" class="btn btn-danger" ng-click="removeInclude($parent.$index, $index)">
-                                    Delete include
+                                    <span class="glyphicon glyphicon-remove"></span> Delete include
                                 </button>
                             </div>
                         </div>
