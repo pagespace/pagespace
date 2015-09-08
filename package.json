@@ -2,7 +2,7 @@
   "name": "pagespace",
   "version": "0.0.3",
   "homepage": "https://github.com/philmander/pagespace",
-  "author": "Phil Mander <philip.mander@gamil.com>",
+  "author": "Phil Mander <philip.mander@gmail.com>",
   "description": "Manageable and versatile web sites powered by Node.js",
   "main": "src/index",
   "license": "LGPL-3.0",
@@ -55,5 +55,10 @@
   },
   "peerDependencies": {
     "express": "4.13.x"
-  }
+  },
+  "bundledDependencies" : [
+      "pagespace-webcopy",
+      "pagespace-html",
+      "pagespace-nav"
+  ]
 }

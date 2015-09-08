@@ -1701,7 +1701,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     $scope.getTemplatePreviewUrl = function() {
         if($scope.template && $scope.template.src) {
             var templateSrc = encodeURIComponent($scope.template.src);
-            var regionOutlineColor = encodeURIComponent(localStorage.getItem('sidebarColor'));
+            var regionOutlineColor = encodeURIComponent(localStorage.getItem('specialColor'));
             var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
             $log.debug('Template preview url is: %s', templatePreviewUrl);
             return templatePreviewUrl;
