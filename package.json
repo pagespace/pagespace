@@ -1,6 +1,6 @@
 {
   "name": "pagespace",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "homepage": "https://github.com/philmander/pagespace",
   "author": "Phil Mander <philip.mander@gmail.com>",
   "description": "Manageable and versatile web sites powered by Node.js",
@@ -16,7 +16,6 @@
   },
   "files": [
     "admin",
-    "parts",
     "views",
     "src",
     "LICENSE"
@@ -54,7 +53,10 @@
     "verror": "^1.6.0"
   },
   "peerDependencies": {
-    "express": "4.13.x"
+    "express": ">4.10",
+    "body-parser": "1.x",
+    "cookie-parser": "1.x",
+    "express-session": "1.x"
   },
   "bundledDependencies" : [
       "pagespace-webcopy",
