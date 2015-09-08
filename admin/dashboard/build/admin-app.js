@@ -1223,8 +1223,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("ViewPageController",
-    function($scope, $rootScope, $routeParams) {
+adminApp.controller("ViewPageController", function($scope, $rootScope, $routeParams) {
 
     var env = $routeParams.env;
     var url = $routeParams.url;
@@ -1240,7 +1239,7 @@ adminApp.directive('pageHolder', function() {
         restrict: 'E',
         transclude: true,
         replace: true,
-        template: '<div class="my-div" ng-transclude></div>',
+        template: '<div ng-transclude></div>',
         link: function link(scope, element) {
 
             //sizing
