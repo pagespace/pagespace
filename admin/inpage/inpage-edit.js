@@ -210,14 +210,6 @@
             offset.top += node.offsetTop;
             return getAbsolutePosition(node.offsetParent, offset)
         } else {
-
-            //account for margin on the html doc
-            var htmlNode = document.getElementsByTagName('html')[0];
-            var margin = window.getComputedStyle(htmlNode)['margin-top'];
-            if(margin) {
-                offset.top += parseInt(margin);
-            }
-
             return offset;
         }
     }
