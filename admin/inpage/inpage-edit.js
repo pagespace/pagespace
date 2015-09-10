@@ -184,10 +184,13 @@
         editor.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
             editor.parentNode.removeChild(editor);
+            document.body.style.overflow = 'auto';
         });
 
         //animate to size
         window.setTimeout(function() {
+            document.body.style.overflow = 'hidden';
+
             editor.style.top = 30 + 'px';
             editor.style.left = ((window.innerWidth - 1000) / 2) + 'px';
             editor.style.width = 1000 + 'px';
