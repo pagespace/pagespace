@@ -92,7 +92,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
 
     //get the page from the db!
     this.findPagePromises[pageQueryCachKey].then(function(page) {
-        var status = page.status || httpStatus.NOT_FOUND;
+        var status = page ? page.status : httpStatus.NOT_FOUND;
 
         var pageProps = {
             page: page,
@@ -101,7 +101,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             urlPath: urlPath
         };
 
-        if(page.status === httpStatus.OK) {
+        if(status === httpStatus.OK) {
             logger.debug('Page found (%s) for %s: %s', status, urlPath, page.id);
             //each region may need to be processed, this may be async
             pageProps = self.getProcessedPageRegions(req, logger, page, Page, pageProps);
