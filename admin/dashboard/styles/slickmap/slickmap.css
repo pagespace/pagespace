@@ -6,10 +6,10 @@
 ------------------------------------------------------------ */
 
 .sitemap-primary li {
-	width:25%;
+    width:25%;
 }
 .sitemap-primary li ul li {
-	width:100% !important;
+    width:100% !important;
 }
 
 .sitemap-primary.col1 li { width:25.0%; }
@@ -28,15 +28,15 @@
 ------------------------------------------------------------ */
 
 .sitemap {
-	margin: 50px 0 0 0;
+    margin: 50px 0 0 0;
     clear: both;
-	width: 100%;
+    width: 100%;
 }
 .sitemap a {
-	text-decoration: none;
+    text-decoration: none;
 }
 .sitemap ol, ul {
-	list-style: none;
+    list-style: none;
 }
 
 /* ------------------------------------------------------------
@@ -46,22 +46,21 @@
 /* --------	Top Level --------- */
 
 .sitemap-primary {
-	margin: 0;
-	float: left;
-	width: 100%;
+    margin: 0;
+    float: left;
+    width: 100%;
     padding-left: 0;
 }
 .sitemap-primary .sitemap-home {
-	display: block;
-	float: none;
-	background: #E5E7EA url(images/l1-left.png) center bottom no-repeat;
-	position: relative;
-	z-index: 2;
-	padding: 0 0 30px 0;
+    display: block;
+    float: none;
+    background: #E5E7EA url(images/l1-left.png) center bottom no-repeat;
+    position: relative;
+    z-index: 2;
+    padding: 0 0 30px 0;
 }
 .sitemap-primary .sitemap-home .sitemap-node {
-    background-color: #faa129
-}
+    background-color: #FF3636;}
 .sitemap-primary .sitemap-home  a {
     height: 50px;
     line-height: 50px;
@@ -71,28 +70,28 @@
     height: 34px;
     line-height:34px;
     overflow: hidden;
-    color: #004EA3;
+    color: #F5F7FB;
     height: 50px;     line-height: 50px;
 }
 .sitemap-primary li {
-	float: left;
-	background: url(images/l1-center.png) center top no-repeat;
-	padding: 30px 0;
-	margin-top: -30px;
+    float: left;
+    background: url(images/l1-center.png) center top no-repeat;
+    padding: 30px 0;
+    margin-top: -30px;
 }
 .sitemap-primary li .sitemap-node {
-	margin: 0 20px 0 0;
-	font-size: 16px;
-	font-weight: bold;
-	text-align: center;
-	color: black;	
-	background: #57d5ff;
+    margin: 0 20px 0 0;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    background: rgb(30, 100, 255);
     border-radius: 4px;
 }
 .sitemap-primary li a:hover {
 }
 .sitemap-primary li:last-child {
-	background: url(images/l1-right.png) center top no-repeat;
+    background: url(images/l1-right.png) center top no-repeat;
 }
 a:link:before,
 a:visited:before {
@@ -100,7 +99,7 @@ a:visited:before {
 }
 .sitemap-primary li a:link:before,
 .sitemap-primary li a:visited:before {
-	
+
 }
 .sitemap-primary a.page-link {
     font-weight: normal;
@@ -118,59 +117,59 @@ a:visited:before {
     padding-left: 0;
 }
 .sitemap-primary li li {
-	width: 100%;
-	clear: left;
-	margin-top: 0;
-	padding: 10px 0 0 0;
-	background: url(images/vertical-line.png) center bottom repeat-y;
+    width: 100%;
+    clear: left;
+    margin-top: 0;
+    padding: 10px 0 0 0;
+    background: url(images/vertical-line.png) center bottom repeat-y;
 }
 .sitemap-primary li li .sitemap-node {
-	background-color: #00e5a3;
+    background-color: rgb(0, 196, 255);
 }
 .sitemap-primary li li:first-child {
-	padding-top: 30px;
+    padding-top: 30px;
 }
 .sitemap-primary li li:last-child {
-	background: url(images/vertical-line.png) center bottom repeat-y;
+    background: url(images/vertical-line.png) center bottom repeat-y;
 }
 .sitemap-primary li li a:link:before,
 .sitemap-primary li li a:visited:before {
-	
+
 }
 
 /* --------	Third Level --------- */
 
 .sitemap-primary li li ul {
-	margin: 10px 0 0 0;
-	width: 100%;
-	float: right;
-	padding: 9px 0 0 0;
-	background: #E5E7EA url(images/l3-ul-top.png) center top no-repeat;
+    margin: 10px 0 0 0;
+    width: 100%;
+    float: right;
+    padding: 9px 0 0 0;
+    background: #E5E7EA url(images/l3-ul-top.png) center top no-repeat;
 }
 .sitemap-primary li li li {
-	background: url(images/l3-center.png) left center no-repeat;
+    background: url(images/l3-center.png) left center no-repeat;
 }
 .sitemap-primary li li li .sitemap-node {
-	background-color: #FFFF8B;
-	font-size: 16px;
-	/* padding: 5px 0; */
-	width: 80%;
-	float: right;
+    background-color: rgb(49, 202, 146);
+    font-size: 16px;
+    /* padding: 5px 0; */
+    width: 80%;
+    float: right;
 }
 .sitemap-primary li li li a:hover {
 
 }
 .sitemap-primary li li li:first-child {
-	padding: 15px 0 5px 0;
-	background: url(images/l3-li-top.png) left center no-repeat;
+    padding: 15px 0 5px 0;
+    background: url(images/l3-li-top.png) left center no-repeat;
 }
 .sitemap-primary li li li:last-child {
-	background: url(images/l3-bottom.png) left center no-repeat;
+    background: url(images/l3-bottom.png) left center no-repeat;
 }
 .sitemap-primary li li li a:link:before,
 .sitemap-primary li li li a:visited:before {
-	color: #ccae14;
-	font-size: 16px;
+    color: #ccae14;
+    font-size: 16px;
 }
 
 
@@ -179,27 +178,27 @@ a:visited:before {
 ------------------------------------------------------------ */
 
 .sitemap-utility {
-	float: right;
-	max-width: 50%;
-	margin-right: 10px;
+    float: right;
+    max-width: 50%;
+    margin-right: 10px;
 }
 .sitemap-utility li {
-	float: left;
-	margin-bottom: 10px;
+    float: left;
+    margin-bottom: 10px;
 }
 .sitemap-utility li .sitemap-node {
-	margin: 0 10px 0 0;
-	padding: 5px 10px;
-	display: block;	
-	border: 2px solid #e3ca4b;
-	font-size: 12px;
-	font-weight: bold;
-	text-align: center;
-	color: black;
+    margin: 0 10px 0 0;
+    padding: 5px 10px;
+    display: block;
+    border: 2px solid #e3ca4b;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    color: black;
 }
 .sitemap-utility li a:hover {
-	background-color: #fffce5;
-	border-color: #d1b62c;
+    background-color: #fffce5;
+    border-color: #d1b62c;
 }
 .sitemap-utility li a:link:before,
 .sitemap-utility li a:visited:before {
@@ -214,9 +213,9 @@ a:visited:before {
 /* Buttons */
 .sitemap-primary .btn,
 .sitemap-primary .btn {
-    background-color: rgba(160, 160, 160, 0.41);
+    background-color: rgba(229, 231, 234, 0.28);
     /* border: 1px solid #004EA3; */
-    color: #004EA3;
+    color: #FFFFFF;
     border-radius: 4px;
     /* margin: 6px 6px 0 6px; */
     padding: 3px 6px;
@@ -225,8 +224,12 @@ a:visited:before {
     line-height: 50px;
     width: 36px;
 }
+
+.sitemap-primary a.sitemap-edit:hover,
+.sitemap-primary a.sitemap-publish:hover,
 .sitemap-primary button:hover {
-    color: #0074ff;
+    color: #FFFFFF;
+    background-color: rgba(229, 231, 234, 0.67);
 }
 .sitemap-add {
     display: none;
