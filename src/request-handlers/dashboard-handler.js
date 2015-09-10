@@ -19,8 +19,7 @@
 
 'use strict';
 
-var psUtil = require('../misc/pagespace-util'),
-    consts = require('../app-constants');
+var psUtil = require('../misc/pagespace-util');
 
 /**
  *
@@ -58,12 +57,9 @@ DashboardHandler.prototype.init = function(support) {
  */
 DashboardHandler.prototype.doRequest = function(req, res, next) {
 
-    var logger = psUtil.getRequestLogger(this.logger, req, 'templates', ++this.reqCount);
+    var logger = psUtil.getRequestLogger(this.logger, req, 'dashboard', ++this.reqCount);
 
-    var reqInfo = consts.requests.DASHBOARD.regex.exec(req.url);
-    var reqType = reqInfo[1];
-
-    if(!reqType && req.method === 'GET') {
+    if(req.method === 'GET') {
         logger.info('New dashboard request');
         return this.doDashboard(req, res, next, logger);
     } else {
