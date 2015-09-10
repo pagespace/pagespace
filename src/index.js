@@ -117,8 +117,7 @@ Index.prototype.init = function(options) {
     //this resolves plugin modules
     this.pluginResolver = this.pluginResolver || createPluginResolver({
         logger: logger,
-        userBasePath: this.userBasePath,
-        devMode: this.devMode ? 'development' : null
+        userBasePath: this.userBasePath
     });
 
     //define where to save media uploads

@@ -29,7 +29,6 @@ var PluginResolver = function(opts) {
     this.logger = opts.logger;
     this.userBasePath = opts.userBasePath;
     this.cache = {};
-    this.devMode = opts.devMode || false;
 };
 
 module.exports = function(opts) {
@@ -81,14 +80,8 @@ PluginResolver.prototype.requireByName = function(pluginModuleName) {
 };
 
 PluginResolver.prototype.get = function(pluginModuleId) {
-    var module = this.cache[pluginModuleId] || null;
 
-    if(module && this.devMode) {
-        var pluginModulePath = this._resolveModulePath(pluginModuleId);
-        this.initPluginModule(pluginModulePath, module);
-    }
-
-    return module;
+    return  this.cache[pluginModuleId] || null;
 };
 
 PluginResolver.prototype.initPluginModule = function(pluginModule, pluginModulePath) {
