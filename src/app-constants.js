@@ -26,9 +26,12 @@ var consts = {
         NOT_READY: 0,
         READY: 1
     },
-    DEFAULT_SITE_ID: '1'
+    DEFAULT_SITE_ID: '1',
+    GUEST_USER: {
+        username: 'guest',
+        role: 'guest'
+    }
 };
-module.exports = consts;
 
 consts.requests = {
     PAGE: {
@@ -91,3 +94,6 @@ consts.requests = {
         regex: null
     }
 };
+consts = Object.freeze(consts);
+
+module.exports = consts;

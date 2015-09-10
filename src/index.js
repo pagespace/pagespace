@@ -39,7 +39,7 @@ var url = require('url'),
     createPluginResolver = require('./misc/plugin-resolver');
 
 /**
- * The App
+ * The App. This is the root of Pagespace.
  * @constructor
  */
 var Index = function() {
@@ -73,6 +73,13 @@ module.exports = new Index();
 
 /**
  * Initializes and returns the middleware
+ * @param options Configuration object
+ * @param options.logStreams Array of additional custom bunyan log streams
+ * @param options.logLevel The logging level. See Bunyran
+ * @param options.env. Set to 'development' to enable development mode
+ * @param options.mediaDir A location to save uploaded media items. Defauults to ./media-uploads.
+ *                         This directory will be created if it doesn't exist
+ * @param options.commonViewLocals Locals to make available in every handlebars template
  */
 Index.prototype.init = function(options) {
 
@@ -82,6 +89,7 @@ Index.prototype.init = function(options) {
         throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
     }
 
+    //used in downstream request handlers and plugins for loading files relative to the application
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
@@ -100,7 +108,7 @@ Index.prototype.init = function(options) {
 
     logger.info('Initializing the middleware...');
 
-    //mode
+    //dev mode. Will disable caches etc
     this.devMode = options.env === 'development';
     if(this.devMode) {
         logger.warn('Running in development mode');
@@ -120,6 +128,7 @@ Index.prototype.init = function(options) {
         this.mediaDir = path.join(this.userBasePath, 'media-uploads');
         logger.warn('No media directory was specified. Defaulting to %s', this.mediaDir);
     }
+    //create if it doesn't exist
     if(!fs.existsSync(this.mediaDir)) {
         var mediaDir = mkdirp.sync(this.mediaDir);
         if(mediaDir) {
@@ -132,6 +141,7 @@ Index.prototype.init = function(options) {
     //default handlbars data option to false
     viewOpts.data = viewOpts.data !== 'boolean';
     this.viewEngine.setOpts(viewOpts);
+
     //dev mode (no caching
     if(this.devMode) {
         this.viewEngine.enableDevMode();
@@ -200,6 +210,7 @@ Index.prototype.init = function(options) {
         if(self.appState === consts.appStates.READY) {
             req.startTime = Date.now();
             req.url = url.parse(req.url).pathname;
+
             //run all requests through passport first
             async.series([
                 function (callback) {
@@ -235,20 +246,25 @@ Index.prototype._doRequest = function(req, res, next) {
     var logger = this.logger;
 
     var requestHandler, requestType;
-    var user = req.user || {
-        username: 'guest',
-        role: 'guest'
-    };
+
+    //set the user or default to a guest
+    var user = req.user || consts.GUEST_USER;
+
     logger.trace('Request received for url [%s] with user role [%s]', req.url, user.role);
+
+    //ACL determines if a user is not allowed to make this request
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
         var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
         res.status(user.role === 'guest' ? 401 : 403);
         req.session.loginToUrl = req.url;
+        //force login request type
         requestType = consts.requests.LOGIN;
     } else {
+        //permission ok, find the type of request (STATIC, DASHBOARD, API, etc)
         requestType = this._getRequestType(req.url);
     }
+    //delegate to the relevant handler for the request type
     requestHandler = this._getRequestHandler(requestType);
     return requestHandler(req, res, next);
 };
@@ -270,6 +286,7 @@ Index.prototype._getRequestType = function(url) {
         }
     }
 
+    //default to PAGE requeset
     if(!type) {
         type = consts.requests.PAGE;
     }
@@ -286,6 +303,7 @@ Index.prototype._getRequestHandler = function(requestType) {
 
     var middleware = this.requestHandlers[requestType.key];
     if(!middleware) {
+        //initialize uninitialized request handlers and cache
         middleware = requestType.handler.init(this.requestHandlerSupport);
         this.requestHandlers[requestType.key] = middleware;
     }
@@ -362,6 +380,11 @@ Index.prototype._configureAuth = function() {
     ));
 };
 
+/**
+ * Extend Pagespcae with custom request handlers
+ * Add custom request handler rules
+ * @param rule
+ */
 Index.prototype.use = function(rule) {
 
     //validate
@@ -381,20 +404,43 @@ Index.prototype.use = function(rule) {
     consts.requests[rule.key] = rule;
 };
 
+/**
+ * Add a new ACL rule
+ * @param rule
+ */
 Index.prototype.addRuleToAcl = function(rule) {
     this.acl.addRuleToAcl(rule);
 };
 
+/**
+ * Add multiple new ACL rules
+ * @param rules
+ */
 Index.prototype.addRulesToAcl = function(rules) {
     this.acl.addRulesToAcl(rules);
 };
 
+/**
+ * Gets the Pagesapce view engine. Required for Express setup
+ * @returns {*}
+ */
+Index.prototype.getViewEngine = function() {
+    return this.viewEngine.__express;
+};
+
+/**
+ * Gets Pagespace's internal view directory. Required for Express setup
+ * @returns {*}
+ */
 Index.prototype.getViewDir = function() {
     return path.join(__dirname, '/../views/pagespace');
 };
+
+/**
+ * Gets Pagespace's internal default template location. Required for Express setup if you
+ * want to use out of the box tempaltes
+ * @returns {*}
+ */
 Index.prototype.getDefaultTemplateDir = function() {
     return path.join(__dirname, '/../views/templates');
-};
-Index.prototype.getViewEngine = function() {
-    return this.viewEngine.__express;
 };

@@ -260,7 +260,8 @@ TemplatesHandler.prototype.doGetTemplatePreview = function(req, res, next, logge
             logger.info('Phantom page created');
 
             //TODO: hard coded address
-            var templatePreviewUrl = (req.secure ? 'https': 'http') + '://' + req.get('host') + '/_templates/test?templateSrc=' +
+            var templatePreviewUrl =
+                (req.secure ? 'https': 'http') + '://' + req.get('host') + '/_templates/test?templateSrc=' +
                 encodeURIComponent(templateSrc) + '&regionOutlineColor=' + encodeURIComponent(regionOutlineColor);
             logger.info('Opening url [%s]...', templatePreviewUrl);
 
