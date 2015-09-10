@@ -27,7 +27,8 @@ var serveStatic = require('serve-static'),
 
 var reqTypes  = {
     STATIC: 'static',
-    DATA: 'data'
+    DATA: 'data',
+    RESET: 'reset'
 };
 
 var PluginHandler = function() {
@@ -60,15 +61,20 @@ PluginHandler.prototype.doRequest = function(req, res, next) {
 
     var reqInfo = consts.requests.PLUGINS.regex.exec(req.url);
     var reqType = reqInfo[1];
+    var moduleId;
 
     if(reqType === reqTypes.DATA && (req.method === 'GET' || req.method === 'PUT')) {
         logger.info('New plugin data request');
         return this.doData(req, res, next, logger);
     } else if (reqType === reqTypes.STATIC && req.method === 'GET') {
         logger.info('New plugin static request');
-        var moduleId = reqInfo[2];
+        moduleId = reqInfo[2];
         var staticPath = reqInfo[3];
         return this.doStatic(req, res, next, logger, moduleId, staticPath);
+    } else if (reqType === reqTypes.RESET) {
+        logger.info('New delete cache request');
+        moduleId = reqInfo[2];
+        return this.doReset(req, res, next, logger, moduleId);
     } else {
         var err = new Error('Unrecognized method');
         err.status = 405;
@@ -144,7 +150,7 @@ PluginHandler.prototype.doData = function(req, res, next, logger) {
     });
 };
 
-PluginHandler.prototype.doStatic = function(req, res, next, logger, pluginModuleId, pluginStaticPath) { // jshint ignore:line
+PluginHandler.prototype.doStatic = function(req, res, next, logger, pluginModuleId, pluginStaticPath) {
 
     if(!this.staticServers[pluginModuleId]) {
         var pluginModule = this.pluginResolver.requireByName(pluginModuleId);
@@ -163,4 +169,28 @@ PluginHandler.prototype.doStatic = function(req, res, next, logger, pluginModule
         req.url = req.originalUrl;
         next(e);
     });
+};
+
+PluginHandler.prototype.doReset = function(req, res, next, logger, moduleId) {
+
+    var pluginModule = this.pluginResolver.require(moduleId);
+
+    var err;
+    if(pluginModule && typeof pluginModule.reset === 'function') {
+        var cacheKey = req.query.cacheKey || null;
+        pluginModule.reset(cacheKey);
+        logger.info('Cache delete request OK');
+        res.status = 200;
+        return res.json({
+            message: 'Plugin module cache cleared'
+        });
+    } else if(pluginModule && typeof pluginModule.reset !== 'function') {
+        err = new Error('Plugin module does not implement a reset method');
+        err.status = 501;
+        return next(err);
+    } else {
+        err = new Error('Plugin module does not exist');
+        err.status = 404;
+        return next(err);
+    }
 };

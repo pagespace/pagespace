@@ -38,7 +38,7 @@ module.exports = function(opts) {
 };
 
 /**
- *
+ * Data setup
  */
 DataSetup.prototype.runSetup = function() {
 
