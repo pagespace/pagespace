@@ -33,6 +33,8 @@ var consts = {
     }
 };
 
+module.exports = consts;
+
 consts.requests = {
     PAGE: {
         key: 'PAGE',
@@ -94,6 +96,3 @@ consts.requests = {
         regex: null
     }
 };
-consts = Object.freeze(consts);
-
-module.exports = consts;
