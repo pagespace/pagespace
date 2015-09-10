@@ -257,13 +257,14 @@ Index.prototype._doRequest = function(req, res, next) {
         var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
         logger.debug(debugMsg, user.role, req.url);
         res.status(user.role === 'guest' ? 401 : 403);
-        req.session.loginToUrl = req.url;
+
         //force login request type
-        requestType = consts.requests.LOGIN;
-    } else {
-        //permission ok, find the type of request (STATIC, DASHBOARD, API, etc)
-        requestType = this._getRequestType(req.url);
+        req.originalUrl = req.url;
+        req.session.loginToUrl = req.originalUrl;
+        req.url = '/_auth/login';
     }
+    requestType = this._getRequestType(req.url);
+
     //delegate to the relevant handler for the request type
     requestHandler = this._getRequestHandler(requestType);
     return requestHandler(req, res, next);

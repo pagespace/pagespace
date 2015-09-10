@@ -46,16 +46,16 @@
 ✓ Do same in page
 * Multiple parts per region
 * Redo parts as external editiable plugins
-    ✓ html (in page)
-    * html (blog)
-    * navigation
+    * html (in page)
+    ✓ html (blog)
+    ✓ navigation
     ✓ html include
-* Move pageId to html tag
+✓ Move pageId to html tag
 * Select media image from ck picker
 * REST tests
-* tidy up test app
+✓ tidy up test app
 * externalize ACL
-* parts to plugins?
+✓ parts to plugins?
 * cli, plugin generator
 * archiving
 

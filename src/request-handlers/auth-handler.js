@@ -22,15 +22,20 @@
 //support
 var passport = require('passport'),
     async = require('async'),
+    consts = require('../app-constants'),
     psUtil = require('../misc/pagespace-util');
 
-
-var LoginHandler = function() {
+var reqTypes  = {
+    LOGIN: 'login',
+    LOGOUT: 'logout'
 };
 
-module.exports = new LoginHandler();
+var AuthHandler = function() {
+};
 
-LoginHandler.prototype.init = function(support) {
+module.exports = new AuthHandler();
+
+AuthHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
     this.reqCount = 0;
@@ -41,11 +46,35 @@ LoginHandler.prototype.init = function(support) {
     };
 };
 
-LoginHandler.prototype.doRequest = function(req, res, next) {
+AuthHandler.prototype.doRequest = function(req, res, next) {
 
-    var logger = psUtil.getRequestLogger(this.logger, req, 'login', ++this.reqCount);
+    var reqInfo = consts.requests.AUTH.regex.exec(req.url);
+    var reqType = reqInfo[1];
 
-    logger.info('New login request');
+    var logger = psUtil.getRequestLogger(this.logger, req, 'auth', ++this.reqCount);
+
+    if(reqType === reqTypes.LOGIN && req.method === 'GET' || req.method === 'POST') {
+        logger.info('New login request');
+        return this.doLogin(req, res, next, logger);
+    } else if (reqType === reqTypes.LOGOUT && req.method === 'GET' || req.method === 'POST') {
+        logger.info('New logout request');
+        return this.doLogout(req, res, next, logger);
+    } else {
+        var err = new Error('Unrecognized method');
+        err.status = 405;
+        next(err);
+    }
+};
+
+/**
+ * Login
+ * @param req
+ * @param res
+ * @param next
+ * @param logger
+ * @returns {*}
+ */
+AuthHandler.prototype.doLogin = function(req, res, next, logger) {
 
     if(req.method === 'GET') {
         var doNext = function(err) {
@@ -145,4 +174,18 @@ LoginHandler.prototype.doRequest = function(req, res, next) {
             });
         })(req, res, next);
     }
+};
+
+/**
+ * Logout
+ * @param req
+ * @param res
+ * @param next
+ * @param logger
+ */
+AuthHandler.prototype.doLogout = function(req, res, next, logger) {
+    req.logout();
+    res.clearCookie('remember_me');
+    logger.info('Logout OK, redirecting to login page');
+    return res.redirect('/_auth/login');
 };

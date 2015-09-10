@@ -41,19 +41,14 @@ consts.requests = {
         regex: null,
         handler: require('./request-handlers/page-handler')
     },
-    LOGIN: {
-        key: 'LOGIN',
-        regex: new RegExp('^/_(login)'),
-        handler: require('./request-handlers/login-handler')
-    },
-    LOGOUT: {
-        key: 'LOGOUT',
-        regex: new RegExp('^/_(logout)'),
-        handler: require('./request-handlers/logout-handler')
+    AUTH: {
+        key: 'AUTH',
+        regex: new RegExp('^/_auth/(login|logout)'),
+        handler: require('./request-handlers/auth-handler')
     },
     DASHBOARD: {
         key: 'DASHBOARD',
-        regex: new RegExp('^/_dashboard/?(region)?'),
+        regex: new RegExp('^/_dashboard'),
         handler: require('./request-handlers/dashboard-handler')
     },
     API: {
@@ -78,13 +73,8 @@ consts.requests = {
     },
     PLUGINS: {
         key: 'PLUGINS',
-        regex: new RegExp('^/_plugins/(static|data)/?([A-z0-9-_]*)/?(.*)'),
+        regex: new RegExp('^/_plugins/(static|data|reset)/?([A-z0-9-_]*)/?(.*)'),
         handler: require('./request-handlers/plugin-handler')
-    },
-    CACHE: {
-        key: 'CACHE',
-        regex: new RegExp('^/_cache/(plugins)'),
-        handler: require('./request-handlers/cache-handler')
     },
     TEMPLATES: {
         key: 'TEMPLATES',
