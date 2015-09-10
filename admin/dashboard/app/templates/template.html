@@ -87,8 +87,7 @@
                 <div class="col-sm-9">
                     <select ng-model="selectedRegionIndex"
                             ng-options="template.regions.indexOf(region) as region.name for region in template.regions"
-                            class="form-control">
-                        <option value="" disabled>Select a region</option>
+                            class="form-control" data-ng-attr-size="{{template.regions.length}}">
                     </select>
                 </div>
             </div>
