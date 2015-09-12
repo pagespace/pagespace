@@ -28,15 +28,6 @@
         <a ng-if="page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}</span>
         </a>
-<!--
-        <a  ng-if="!page.redirect" title="Edit {{page.name}}" class="page-link">
-            <span ng-show="page.draft"><b>*</b></span>Edit {{page.name}}
-        </a>
-        <a href="#/pages/{{page._id}}" ng-if="page.redirect" title="Edit {{page.name}} &gt; {{page.redirect.name}}" class="page-link">
-            Edit {{page.name}} &gt; {{page.redirect.name}}
-        </a>-->
-
-
     </div>
     <ul ng-if="page.children.length">
         <li ng-repeat="page in page.children" ng-include="'page-item'"></li>
