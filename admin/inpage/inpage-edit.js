@@ -149,6 +149,13 @@
         var region = evSrc.getAttribute('data-target-region');
         var include = evSrc.getAttribute('data-target-include');
 
+        //create the modal
+        var modal = document.createElement('div');
+        modal.id = 'include-modal';
+        modal.className = 'ps-include-modal';
+
+        document.body.appendChild(modal);
+
         //create the editor frame
         var editor = document.createElement('div');
         editor.id = 'include-editor';
@@ -161,7 +168,8 @@
         editor.style.width = regionPos.width + 'px';
         editor.style.height = regionPos.height + 'px';
 
-        document.body.appendChild(editor);
+        //document.body.appendChild(editor);
+        modal.appendChild(editor);
 
         //create the iframe
         var iframe = document.createElement('iframe');
@@ -183,7 +191,7 @@
 
         editor.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
-            editor.parentNode.removeChild(editor);
+            editor.parentNode.parentNode.removeChild(modal);
             document.body.style.overflow = 'auto';
         });
 
