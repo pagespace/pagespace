@@ -5,8 +5,7 @@
              <div class="col-sm-7" ng-show="page.regions.length">
                 <select ng-model="selectedRegionIndex"
                         ng-options="page.regions.indexOf(region) as region.name for region in page.regions"
-                        class="form-control">
-                    <option value="" disabled>Select a region</option>
+                        class="form-control" data-ng-attr-size="{{page.regions.length}}">
                 </select>
             </div>
         </div>
@@ -18,7 +17,7 @@
                         <div class="col-sm-7">
                             <select ng-model="page.regions[$parent.$index].includes[$index].plugin"
                                     ng-change="setDefaultDataForInclude($parent.$index, $index)"
-                                    ng-options="availablePlugin as availablePlugin.description for availablePlugin in availablePlugins track by availablePlugin._id"
+                                    ng-options="availablePlugin as availablePlugin.name for availablePlugin in availablePlugins track by availablePlugin._id"
                                     class="form-control">
                                 <option value="" disabled selected>Select a plugin</option>
                             </select>

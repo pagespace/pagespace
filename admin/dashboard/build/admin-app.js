@@ -694,7 +694,7 @@ adminApp.controller("PageController",
         $scope.editRegions = !$scope.editRegions;
     };
 
-    $scope.selectedRegionIndex = -1;
+    $scope.selectedRegionIndex = 0;
     $scope.template = null;
 
     var pageSetupFunctions = [];
