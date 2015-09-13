@@ -114,12 +114,6 @@ Index.prototype.init = function(options) {
         logger.warn('Running in development mode');
     }
 
-    //this resolves plugin modules
-    this.pluginResolver = this.pluginResolver || createPluginResolver({
-        logger: logger,
-        userBasePath: this.userBasePath
-    });
-
     //define where to save media uploads
     if(options.mediaDir) {
         this.mediaDir = options.mediaDir;
@@ -159,6 +153,14 @@ Index.prototype.init = function(options) {
         mongoose: this.mongoose
     });
     this.dbSupport.initModels();
+
+    //this resolves plugin modules
+    this.pluginResolver = this.pluginResolver || createPluginResolver({
+        logger: logger,
+        userBasePath: this.userBasePath,
+        dbSupport: this.dbSupport
+    });
+
 
     var db = this.mongoose.connection;
     db.once('open', function() {

@@ -19,7 +19,8 @@
 
 'use strict';
 
-var fs = require('fs'),
+var vm = require('vm'),
+    fs = require('fs'),
     path = require('path');
 
 var instance = null;
@@ -27,6 +28,7 @@ var instance = null;
 var PluginResolver = function(opts) {
 
     this.logger = opts.logger;
+    this.dbSupport = opts.dbSupport;
     this.userBasePath = opts.userBasePath;
     this.cache = {};
 };
@@ -42,77 +44,64 @@ module.exports = function(opts) {
 
 PluginResolver.prototype.require = function(pluginModuleId) {
 
+    var self = this;
     var logger = this.logger;
 
     if(!pluginModuleId) {
         return null;
     }
-    var pluginModule = this.get(pluginModuleId);
+    var pluginModule = this.cache[pluginModuleId];
     if(!pluginModule) {
-        //resolve plugin module
-        //this whole plugin is a bit convoluted. Assumes module paths starting with ./ or ../
-        //should be resolved relative to the express app using this middleware.
-        var pluginModulePath = this._resolveModulePath(pluginModuleId);
-
         try {
-            pluginModule = require(pluginModulePath);
+            var pluginPath = require.resolve(pluginModuleId);
+            var pluginDirPath = path.dirname(pluginPath);
+            var code = fs.readFileSync(require.resolve(pluginPath));
+            var sandbox = {
+                console : console,
+                module  : {},
+                __filename: pluginPath,
+                __dirname: pluginDirPath,
+                require : require,
+                pagespace: {
+                    getPageModel: function(previewMode) {
+                        return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
+                    },
+                    logger: logger.child({plugin: pluginModuleId}),
+                    userBasePath: this.userBasePath
+                }
+            };
+            vm.runInNewContext(code, sandbox, __filename); //TODO: make filename an opts object in Node 4+
+            pluginModule = sandbox.module.exports;
 
-            this.initPluginModule(pluginModule, pluginModulePath);
+            this.initPluginModule(pluginModule, pluginDirPath);
             this.cache[pluginModuleId] = pluginModule;
-        } catch(e) {
-            logger.warn(e, 'A plugin module could not be resolved');
+        } catch(err) {
+            logger.warn(err, 'The plugin module %s could not be resolved', pluginModuleId);
         }
     }
     return pluginModule;
 };
 
-PluginResolver.prototype.requireByName = function(pluginModuleName) {
-
-    for(var moduleId in this.cache) {
-        if(this.cache.hasOwnProperty(moduleId) && this.cache[moduleId].__config.name === pluginModuleName) {
-            return this.require(moduleId);
-        }
-    }
-
-    this.logger.warn('Cannot resolve module for module name [%s]', pluginModuleName);
-    this.logger.warn('Modules loaded by name, must have been previously required by calling require');
-    return null;
-};
-
-PluginResolver.prototype.get = function(pluginModuleId) {
-
-    return  this.cache[pluginModuleId] || null;
-};
-
-PluginResolver.prototype.initPluginModule = function(pluginModule, pluginModulePath) {
+PluginResolver.prototype.initPluginModule = function(pluginModule, pluginDirPath) {
 
     var logger = this.logger;
 
-    var pluginConfigPath = path.join(pluginModulePath, 'package.json');
+    pluginModule.__dir = pluginDirPath;
+
+    var pluginConfigPath = path.join(pluginDirPath, 'package.json');
     try {
         pluginModule.__config = require(pluginConfigPath);
+        pluginModule.__config.pagespace = pluginModule.__config.pagespace || {};
     } catch(err) {
-        logger.warn('Couldn\'t load plugin config at %s', pluginModulePath);
+        logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
     }
 
-    pluginModule.__dir = pluginModulePath;
-
     //load the plugin view
-    var pluginViewPath = path.join(pluginModulePath, 'index.hbs');
+    var pluginViewPath = path.join(pluginDirPath, 'index.hbs');
     logger.debug('Loading plugin view partial from %s...', pluginViewPath);
     try {
         pluginModule.__viewPartial = fs.readFileSync(pluginViewPath, 'utf8');
     } catch(err) {
-        logger.warn('Cannot find an index template (index.hbs) for the plugin module for [%s]', pluginModulePath);
-    }
-};
-
-PluginResolver.prototype._resolveModulePath = function(module) {
-
-    //resolve relative module paths to the app calling this middlware module
-    if(module.indexOf('./') === 0 || module.indexOf('../') === 0) {
-        return path.resolve(this.userBasePath, module);
-    } else {
-        return path.dirname(require.resolve(module));
+        logger.warn('Cannot find an index template (index.hbs) for the plugin module for [%s]', pluginDirPath);
     }
 };
