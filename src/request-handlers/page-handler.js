@@ -171,10 +171,9 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
                 var regionData = include.data || {};
                 if (typeof pluginModule.process === 'function') {
                     pageProps[includeId] = pluginModule.process(regionData, {
-                        basePath: self.userBasePath,
-                        PageModel: pageModel,
-                        req: req,
-                        logger: logger.child({plugin: include.plugin.name})
+                        preview: pageProps.previewMode,
+                        reqUrl: req.url,
+                        reqMethod: req.method
                     });
                 } else {
                     pageProps[includeId] = regionData;
@@ -219,7 +218,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
 
         var aggregatedViewPartials = [];
         region.includes.forEach(function(include, includeIndex) {
-            var pluginModule = self.pluginResolver.get(include.plugin ? include.plugin.module : null);
+            var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
                 var includeId = regionIndex + '_' + includeIndex;

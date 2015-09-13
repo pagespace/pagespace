@@ -153,7 +153,7 @@ PluginHandler.prototype.doData = function(req, res, next, logger) {
 PluginHandler.prototype.doStatic = function(req, res, next, logger, pluginModuleId, pluginStaticPath) {
 
     if(!this.staticServers[pluginModuleId]) {
-        var pluginModule = this.pluginResolver.requireByName(pluginModuleId);
+        var pluginModule = this.pluginResolver.require(pluginModuleId);
         if(!pluginModule) {
             var err = new Error('Cannot resolve plugin module for %s', pluginModuleId);
             err.url = req.url;

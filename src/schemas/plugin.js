@@ -58,12 +58,12 @@ function generateSchema() {
 
     pluginSchema.virtual('defaultData').get(function () {
         var pluginResolver = require('../misc/plugin-resolver')();
-        return pluginResolver.require(this.module).defaultData || {};
+        return pluginResolver.require(this.module).__config.pagespace.defaultData || {};
     });
 
-    pluginSchema.virtual('description').get(function () {
+    pluginSchema.virtual('name').get(function () {
         var pluginResolver = require('../misc/plugin-resolver')();
-        return pluginResolver.require(this.module).__config.description || this.module;
+        return pluginResolver.require(this.module).__config.pagespace.name || this.module;
     });
 
     pluginSchema.set('toJSON', {
