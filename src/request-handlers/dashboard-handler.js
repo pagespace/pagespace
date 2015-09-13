@@ -19,7 +19,7 @@
 
 'use strict';
 
-var psUtil = require('../misc/pagespace-util');
+var psUtil = require('../support/pagespace-util');
 
 /**
  *

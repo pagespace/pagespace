@@ -25,7 +25,7 @@ var fs = require('fs'),
     formidable = require('formidable'),
 
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 
 var MediaHandler = function() {

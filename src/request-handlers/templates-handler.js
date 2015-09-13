@@ -29,7 +29,7 @@ var fs = require('fs'),
     Promise = require('bluebird'),
 
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var readFileAsync = Promise.promisify(fs.readFile);
 

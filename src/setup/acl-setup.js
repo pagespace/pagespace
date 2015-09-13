@@ -19,7 +19,7 @@
 
 'use strict';
 
-var createAcl = require('../misc/acl').acl,
+var createAcl = require('../support/acl').acl,
     consts = require('../app-constants');
 
 //url patterns

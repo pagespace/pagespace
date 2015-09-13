@@ -22,7 +22,7 @@
 var util = require('util'),
     url = require('url'),
     Promise = require('bluebird'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var httpStatus = {
     OK: 200,

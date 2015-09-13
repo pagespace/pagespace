@@ -23,7 +23,7 @@
 var passport = require('passport'),
     async = require('async'),
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var reqTypes  = {
     LOGIN: 'login',

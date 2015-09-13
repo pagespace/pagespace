@@ -21,7 +21,7 @@
 
 var util = require('util'),
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 //maps model ur namel partss to model names
 var modelMap = {

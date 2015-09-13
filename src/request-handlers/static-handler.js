@@ -21,7 +21,7 @@
 
 var serveStatic = require('serve-static'),
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var StaticHandler = function() {
 };

@@ -57,12 +57,12 @@ function generateSchema() {
     });
 
     pluginSchema.virtual('defaultData').get(function () {
-        var pluginResolver = require('../misc/plugin-resolver')();
+        var pluginResolver = require('../support/plugin-resolver')();
         return pluginResolver.require(this.module).__config.pagespace.defaultData || {};
     });
 
     pluginSchema.virtual('name').get(function () {
-        var pluginResolver = require('../misc/plugin-resolver')();
+        var pluginResolver = require('../support/plugin-resolver')();
         return pluginResolver.require(this.module).__config.pagespace.name || this.module;
     });
 

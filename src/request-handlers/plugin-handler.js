@@ -23,7 +23,7 @@
 var serveStatic = require('serve-static'),
     Promise = require('bluebird'),
     consts = require('../app-constants'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var reqTypes  = {
     STATIC: 'static',

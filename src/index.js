@@ -32,11 +32,11 @@ var url = require('url'),
     mkdirp = require('mkdirp'),
 
     consts = require('./app-constants'),
-    createDbSupport = require('./misc/db-support'),
+    createDbSupport = require('./support/db-support'),
     createDataSetup = require('./setup/data-setup'),
     createAclSetup = require('./setup/acl-setup'),
-    createViewEngine = require('./misc/view-engine'),
-    createPluginResolver = require('./misc/plugin-resolver');
+    createViewEngine = require('./support/view-engine'),
+    createPluginResolver = require('./support/plugin-resolver');
 
 /**
  * The App. This is the root of Pagespace.

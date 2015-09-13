@@ -21,7 +21,7 @@
 
 //support
 var Promise = require('bluebird'),
-    psUtil = require('../misc/pagespace-util');
+    psUtil = require('../support/pagespace-util');
 
 var PublishingHandler = function() {
 };
