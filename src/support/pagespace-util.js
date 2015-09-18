@@ -37,6 +37,8 @@ module.exports = {
             return false;
         } else if(value.toLowerCase() === 'true') {
             return true;
+        } else if(value.length > 2 && value.indexOf('/') === 0 && value.lastIndexOf('/') === value.length - 1) {
+            return new RegExp(value.substring(1, value.length - 1));
         } else {
             return value;
         }
