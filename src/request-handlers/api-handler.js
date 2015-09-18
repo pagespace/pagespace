@@ -228,7 +228,7 @@ ApiHandler.prototype.doUpdate = function update(req, res, next, logger, Model, i
  * @param Model
  * @param itemId
  */
-ApiHandler.prototype.doDelete = function del(res, req, next, logger, Model, itemId) {
+ApiHandler.prototype.doDelete = function del(req, res, next, logger, Model, itemId) {
     if (!itemId) {
         var message = 'Cannot delete for this url. It should contain an id';
         logger.warn(message);
