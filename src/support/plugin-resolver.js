@@ -92,6 +92,7 @@ PluginResolver.prototype.initPluginModule = function(pluginModule, pluginDirPath
     try {
         pluginModule.__config = require(pluginConfigPath);
         pluginModule.__config.pagespace = pluginModule.__config.pagespace || {};
+        pluginModule.__config.pagespace.name = pluginModule.__config.pagespace.name || pluginModule.__config.name;
     } catch(err) {
         logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
     }

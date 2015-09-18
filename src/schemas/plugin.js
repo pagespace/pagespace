@@ -57,18 +57,35 @@ function generateSchema() {
     });
 
     pluginSchema.virtual('defaultData').get(function () {
-        var pluginResolver = require('../support/plugin-resolver')();
-        return pluginResolver.require(this.module).__config.pagespace.defaultData || {};
+        var plugin = getPluginModule(this.module);
+        var defaultData;
+        if(plugin.__config && plugin.__config.pagespace) {
+            defaultData = plugin.__config.pagespace.defaultData;
+        }
+
+        return defaultData || {};
     });
 
     pluginSchema.virtual('name').get(function () {
-        var pluginResolver = require('../support/plugin-resolver')();
-        return pluginResolver.require(this.module).__config.pagespace.name || this.module;
+        var plugin = getPluginModule(this.module);
+        var name;
+        if(plugin.__config && plugin.__config.pagespace) {
+            name = plugin.__config.pagespace.name;
+        } else if(plugin.__config) {
+            name = plugin.__config.name;
+        }
+
+        return name || 'Unresolved plugin';
     });
 
     pluginSchema.set('toJSON', {
         virtuals: true
     });
+
+    function getPluginModule(pluginModule) {
+        var pluginResolver = require('../support/plugin-resolver')();
+        return pluginResolver.require(pluginModule) || {};
+    }
 
     return pluginSchema;
 }

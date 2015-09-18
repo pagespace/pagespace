@@ -67,7 +67,7 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
         var really = window.confirm('Really delete this plugin?');
         if(really) {
             pluginService.deletePlugin($scope.plugin._id).success(function (res) {
-                $scope.showInfo("Plugin removed", err);
+                $scope.showInfo("Plugin deleted");
                 $location.path("/plugins");
             }).error(function (err) {
                 $scope.showError("Error deleting plugin", err);
