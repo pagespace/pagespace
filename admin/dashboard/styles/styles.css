@@ -24,7 +24,7 @@ h1,
 header {
     position: relative;
     z-index: 1;
-    background-color: rgb(203, 203, 203);
+    background-color: #CBCBCB;
 }
 header h1,
 header .nav {
