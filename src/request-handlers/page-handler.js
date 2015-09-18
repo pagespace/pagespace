@@ -230,11 +230,17 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 if(pageResult.previewMode) {
                     htmlWrapper =
                         '<div data-plugin="%s" ' +
+                        '<div data-plugin-name="%s" ' +
                         'data-page-id="%s" ' +
                         'data-region="%s" ' +
                         'data-include="%s">\n%s\n</div>';
-                    viewPartial = util.format(htmlWrapper, pluginModule.__config.name, page._id, region.name,
-                        includeIndex, viewPartial);
+                    viewPartial = util.format(htmlWrapper,
+                                              pluginModule.__config.name,
+                                              pluginModule.__config.pagespace.name,
+                                              page._id,
+                                              region.name,
+                                              includeIndex,
+                                              viewPartial);
                 } else {
                     htmlWrapper = '<div>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper, viewPartial);

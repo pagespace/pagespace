@@ -36,19 +36,34 @@
     position: absolute;
     z-index: 100;
     transition: 300ms linear;
-    box-shadow: #636363 0 3px 53px 16px;
     background: #fff;
+}
+.ps-include-editor-titlebar {
+    position: absolute;
+    height: 30px;
+    top: -30px;
+    left: 0;
+    right: 0;
+    padding: 4px;
+    background: #CBCBCB;
+}
+.ps-include-editor-titlebar p {
+    margin: 0;
+    font-family: sans-serif;
+    color: #000;
+    line-height: 26px;
 }
 .ps-include-editor-close {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    top: -20px;
-    right: -20px;
-    padding: 4px;
-    background: #000;
-    border-radius: 4px;
-    box-shadow: #636363 0 3px 16px 5px
+    width: 30px;
+    height: 30px;
+    right: 0;
+    top: 0;
+    padding: 0;
+    background: rgba(255, 255, 255, 0);
+}
+.ps-include-editor-close:hover {
+    background: rgba(255, 255, 255, 0.6);
 }
 .ps-include-modal {
     position: absolute;

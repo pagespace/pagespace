@@ -85,10 +85,10 @@
                 })[0];
                 editButtonRule.style.backgroundColor = specialColor;
 
-                var closeEditButton = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-include-editor-close';
+                var titlebarRule = cssRulesArray.filter(function(rule) {
+                    return rule.selectorText === '.ps-include-editor-titlebar';
                 })[0];
-                closeEditButton.style.backgroundColor = specialColor;
+                titlebarRule.style.backgroundColor = specialColor;
             }
         } catch(e) {
             console.warn(e);
@@ -97,13 +97,14 @@
 
     function decorateIncludes() {
 
-        function createEditButton(plugin, pageId, region, include) {
+        function createEditButton(plugin, pluginName, pageId, region, include) {
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerHTML =
                 '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Include" title="Edit Include"' +
-                'data-target-plugin=' + plugin + ' data-target-page-id=' + pageId + ' data-target-region=' + region + ' data-target-include=' + include + '>';
+                'data-target-plugin=' + plugin + ' data-target-plugin-name="' + pluginName + '" data-target-page-id=' + pageId + ' data-target-region=' + region + ' data-target-include=' + include + '>';
             editButton.setAttribute('data-target-plugin', plugin);
+            editButton.setAttribute('data-target-plugin-name', pluginName);
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.setAttribute('data-target-include', include);
@@ -112,8 +113,11 @@
         }
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
-            //TODO: less intrusive way of getting page id
-            var button = createEditButton(region.getAttribute('data-plugin'), region.getAttribute('data-page-id'), region.getAttribute('data-region'), region.getAttribute('data-include'));
+            var button = createEditButton(region.getAttribute('data-plugin'),
+                                          region.getAttribute('data-plugin-name'),
+                                          region.getAttribute('data-page-id'),
+                                          region.getAttribute('data-region'),
+                                          region.getAttribute('data-include'));
             region.insertBefore(button, region.firstChild);
             region.classList.add('ps-edit-box');
         });
@@ -144,7 +148,9 @@
 
     function launchPluginEditor(evSrc) {
 
+        //data about the plugin from the button that launched the editor
         var plugin = evSrc.getAttribute('data-target-plugin');
+        var pluginName = evSrc.getAttribute('data-target-plugin-name') || 'Plugin editor';
         var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
         var include = evSrc.getAttribute('data-target-include');
@@ -163,7 +169,7 @@
 
         var regionNode = document.querySelectorAll('[data-region=' + region + ']')[0];
         var regionPos = getAbsolutePosition(regionNode);
-        editor.style.top = regionPos.top + 'px';
+        editor.style.top = regionPos.top + 30 + 'px';
         editor.style.left = regionPos.left + 'px';
         editor.style.width = regionPos.width + 'px';
         editor.style.height = regionPos.height + 'px';
@@ -183,28 +189,35 @@
         //inject plugin interface
         iframe.contentWindow.window.pagespace = getPluginInterface(plugin, pageId, region, include);
 
+        //titlebar
+        var titleBar = document.createElement('div');
+        titleBar.classList.add('ps-include-editor-titlebar');
+        titleBar.innerHTML = '<p>' + pluginName + '</p>';
+
         //close button
         var closeBtn = document.createElement('button');
         closeBtn.classList.add('ps-include-editor-close');
         closeBtn.classList.add('ps-btn');
-        closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close title=Close>';
+        closeBtn.setAttribute('title', 'Close without saving');
+        closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close>';
 
-        editor.appendChild(closeBtn);
+        titleBar.appendChild(closeBtn);
         closeBtn.addEventListener('click', function() {
             editor.parentNode.parentNode.removeChild(modal);
             document.body.style.overflow = 'auto';
         });
 
+        editor.appendChild(titleBar);
+
         //animate to size
         window.setTimeout(function() {
             document.body.style.overflow = 'hidden';
 
-            editor.style.top = 30 + 'px';
+            editor.style.top = 50 + 'px';
             editor.style.left = ((window.innerWidth - 1000) / 2) + 'px';
             editor.style.width = 1000 + 'px';
-            editor.style.height = (window.innerHeight - 60) + 'px';
+            editor.style.height = (window.innerHeight - 100) + 'px';
         }, 300);
-
     }
 
     function getAbsolutePosition(node, offset) {
