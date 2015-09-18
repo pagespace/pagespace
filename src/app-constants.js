@@ -24,7 +24,8 @@ var consts = {
 
     appStates: {
         NOT_READY: 0,
-        READY: 1
+        READY: 1,
+        FAILED: 3
     },
     DEFAULT_SITE_ID: '1',
     GUEST_USER: {

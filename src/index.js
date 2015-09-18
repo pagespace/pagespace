@@ -46,8 +46,6 @@ var Index = function() {
 
     this.reset();
 
-    this.devMode = false;
-
     //dependencies
     this.mongoose = mongoose;
     this.viewEngine = createViewEngine();
@@ -108,12 +106,6 @@ Index.prototype.init = function(options) {
 
     logger.info('Initializing the middleware...');
 
-    //dev mode. Will disable caches etc
-    this.devMode = options.env === 'development';
-    if(this.devMode) {
-        logger.warn('Running in development mode');
-    }
-
     //define where to save media uploads
     if(options.mediaDir) {
         this.mediaDir = options.mediaDir;
@@ -135,10 +127,6 @@ Index.prototype.init = function(options) {
     viewOpts.data = viewOpts.data !== 'boolean';
     this.viewEngine.setOpts(viewOpts);
 
-    //dev mode (no caching
-    if(this.devMode) {
-        this.viewEngine.enableDevMode();
-    }
     //common locals for all templates
     var commonViewLocals = options.commonViewLocals || {};
     this.viewEngine.setCommonLocals(commonViewLocals);
@@ -163,6 +151,11 @@ Index.prototype.init = function(options) {
 
 
     var db = this.mongoose.connection;
+    db.on('error', function(err) {
+        logger.fatal(err, 'Unable to connect to database');
+        self.appState = consts.appStates.FAILED;
+        self.emit('error');
+    });
     db.once('open', function() {
         logger.info('DB connection established');
         self.dataSetup = self.dataSetup || createDataSetup({
@@ -196,6 +189,7 @@ Index.prototype.init = function(options) {
 
             //app state is now ready
             self.appState = consts.appStates.READY;
+            self.emit('ready');
         }).catch(function(e) {
             logger.error(e, 'Initialization error');
         });
@@ -380,6 +374,20 @@ Index.prototype._configureAuth = function() {
             });
         }
     ));
+};
+
+/**
+ * Fires the callback when pagespce is ready
+ * @param callback
+ */
+Index.prototype.ready = function(callback) {
+    if(this.appState === consts.appStates.READY) {
+        callback();
+    } else {
+        this.on('ready', function() {
+            callback();
+        });
+    }
 };
 
 /**
