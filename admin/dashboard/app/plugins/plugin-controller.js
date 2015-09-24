@@ -8,7 +8,6 @@ var adminApp = angular.module('adminApp');
 adminApp.controller("PluginController", function($scope, $rootScope, $routeParams, $location, $window, pluginService) {
 
     var pluginId = $routeParams.pluginId;
-    $scope.pluginId = pluginId;
 
     //sets the code mirror mode for editing raw plugin data
     $scope.editorOpts = {
@@ -18,6 +17,7 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
     $scope.plugin = {};
 
     if(pluginId) {
+        $scope.pluginId = pluginId;
         pluginService.getPlugin(pluginId).success(function(plugin) {
             $scope.plugin = plugin;
         }).error(function(err) {

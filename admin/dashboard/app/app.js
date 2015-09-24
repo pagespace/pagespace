@@ -3,6 +3,7 @@
         'ngRoute',
         'ngResource',
         'ngTagsInput',
+        'focus-if',
         'ui.codemirror'
     ]);
 

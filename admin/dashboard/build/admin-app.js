@@ -3,6 +3,7 @@
         'ngRoute',
         'ngResource',
         'ngTagsInput',
+        'focus-if',
         'ui.codemirror'
     ]);
 
@@ -1133,7 +1134,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         } else {
             parentRoute = 'root';
             siblingsQuery = {
-                root: 'primary'
+                root: 'top'
             }
         }
         $scope.showInfo('Preparing new page...');
@@ -1303,7 +1304,6 @@ var adminApp = angular.module('adminApp');
 adminApp.controller("PluginController", function($scope, $rootScope, $routeParams, $location, $window, pluginService) {
 
     var pluginId = $routeParams.pluginId;
-    $scope.pluginId = pluginId;
 
     //sets the code mirror mode for editing raw plugin data
     $scope.editorOpts = {
@@ -1313,6 +1313,7 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
     $scope.plugin = {};
 
     if(pluginId) {
+        $scope.pluginId = pluginId;
         pluginService.getPlugin(pluginId).success(function(plugin) {
             $scope.plugin = plugin;
         }).error(function(err) {
@@ -1619,7 +1620,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     $log.info('Showing Template View');
 
     var templateId = $routeParams.templateId;
-    $scope.templateId = templateId;
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
@@ -1644,6 +1644,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     if(templateId) {
+        $scope.templateId = templateId;
         $log.debug('Fetching template data for id: %s...', templateId);
         templateService.getTemplate(templateId).success(function(template) {
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));

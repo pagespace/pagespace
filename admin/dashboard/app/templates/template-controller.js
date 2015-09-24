@@ -10,7 +10,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     $log.info('Showing Template View');
 
     var templateId = $routeParams.templateId;
-    $scope.templateId = templateId;
 
     $scope.selectedRegionIndex = 0;
     $scope.template = {
@@ -35,6 +34,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     });
 
     if(templateId) {
+        $scope.templateId = templateId;
         $log.debug('Fetching template data for id: %s...', templateId);
         templateService.getTemplate(templateId).success(function(template) {
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
