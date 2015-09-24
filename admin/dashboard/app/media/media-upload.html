@@ -21,10 +21,11 @@
         <div class="form-group" bs-has-error="file">
             <label class="col-sm-2 control-label">Select a file</label>
             <div class="col-sm-7">
-                <div class="btn btn-primary btn-file">
+                <div class="btn btn-primary btn-file pull-left">
                     <span ng-show="!fileSrc">Choose...</span><span ng-show="fileSrc">Choose again...</span>
                     <input type="file" name="file" onchange="angular.element(this).scope().setFiles(this.files)" required>
                 </div>
+                <p class="pull-left" style="margin-left: 1em">{{fileName}}</p>
             </div>
         </div>
 

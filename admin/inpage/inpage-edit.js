@@ -213,10 +213,10 @@
         window.setTimeout(function() {
             document.body.style.overflow = 'hidden';
 
-            editor.style.top = 50 + 'px';
-            editor.style.left = ((window.innerWidth - 1000) / 2) + 'px';
-            editor.style.width = 1000 + 'px';
-            editor.style.height = (window.innerHeight - 100) + 'px';
+            editor.style.top = 35 + 'px';
+            editor.style.left = window.innerWidth < 1000 ? 0 : ((window.innerWidth - 1000) / 2) + 'px';
+            editor.style.width = window.innerWidth < 1000 ? window.innerWidth + 'px' : 1000 + 'px';
+            editor.style.height = (window.innerHeight - 40) + 'px';
         }, 300);
     }
 

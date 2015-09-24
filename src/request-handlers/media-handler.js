@@ -20,13 +20,16 @@
 'use strict';
 
 var fs = require('fs'),
-
+    util = require('util'),
     send = require('send'),
+    Promise = require('bluebird'),
+    MongooseError = require('mongoose/lib/error'),
     formidable = require('formidable'),
-
+    sizeOf = require('image-size'),
     consts = require('../app-constants'),
     psUtil = require('../support/pagespace-util');
 
+var sizeOfAsync = Promise.promisify(sizeOf);
 
 var MediaHandler = function() {
 };
@@ -143,37 +146,68 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
     form.keepExtensions = true;
     form.type = 'multipart';
 
-    try {
-        //save media
-        form.parse(req, function(err, fields, files) {
-            logger.info('Media item saved to: %s', files.file.path);
-            var tags = fields.tags ? JSON.parse(fields.tags) : [];
-
-            var Media = self.dbSupport.getModel('Media');
-            var media = new Media({
-                name: fields.name,
-                description: fields.description || '',
-                tags: tags,
-                type: files.file.type,
-                path: files.file.path,
-                fileName: files.file.name,
-                size: files.file.size
-            });
-
-            media.save(function (err, model) {
-                if (err) {
-                    logger.error(err, 'Trying to save for media item for to db for %s', fields);
-                    next(err);
-                } else {
-                    logger.info('Media upload request OK');
-                    //don't send file paths to client
-                    delete model.filePath;
-                    res.json(model);
-                }
-            });
-        });
-    } catch(err) {
+    var formParseAsync = Promise.promisify(form.parse, form);
+    formParseAsync(req).catch(function(err) {
         logger.error(err, 'Error uploading media item');
-        return next(e);
-    }
+        throw err;
+    }).spread(function(fields, files) {
+        var dimensions =  files.file.type.indexOf('image') === 0 ? sizeOfAsync(files.file.path) : {};
+        logger.debug('Dimensions of %s are w:%s, h:%s', files.file.path, dimensions.width, dimensions.height);
+        return Promise.settle([ fields,  files, dimensions ]);
+    }).then(function(promises) {
+        var fields = promises[0].value();
+        var files = promises[1].value();
+        var dimensionsPromise = promises[2];
+
+        var dimensions;
+        if(dimensionsPromise.isRejected()) {
+            logger.warn('Unable to determine image dimensions for %s', files.file.path);
+            dimensions = Promise.resolve({});
+        } else {
+            dimensions = dimensionsPromise.value();
+        }
+        return [ fields, files, dimensions ];
+    }).spread(function(fields, files, dimensions) {
+        var tags = fields.tags ? JSON.parse(fields.tags) : [];
+
+        var Media = self.dbSupport.getModel('Media');
+        var media = new Media({
+            name: fields.name,
+            description: fields.description || '',
+            tags: tags,
+            type: files.file.type,
+            path: files.file.path,
+            fileName: files.file.name,
+            size: files.file.size,
+            width: dimensions.width || null,
+            height: dimensions.height || null
+        });
+
+        var saveAsync = Promise.promisify(media.save, media);
+        return Promise.settle([saveAsync(), files.file.path]);
+    }).then(function(result) {
+        var savePromise = result[0];
+        var filePath = result[1].value();
+        if(savePromise.isFulfilled()) {
+            var model = savePromise.value();
+            logger.info('Media upload request OK');
+            //don't send file paths to client
+            delete model.filePath;
+            res.json(model);
+        } else {
+            //rollback file upload
+            fs.unlink(filePath, function(fileErr) {
+                if(fileErr) {
+                    logger.warn(fileErr, 'Unable to rollback file upload after mongoose save failure');
+                } else {
+                    logger.debug('Roll back file upload after mongoose save failure was successful');
+                }
+            })
+            //next catch will handle the mongoose failure
+            return savePromise.value();
+        }
+    }).catch(function(err) {
+        logger.error(err);
+        next(err);
+    });
 };
