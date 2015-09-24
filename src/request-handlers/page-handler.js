@@ -129,7 +129,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             next(err);
         }
     }).catch(function(err) {
-        logger.error(err);
         next(err);
     });
 };
