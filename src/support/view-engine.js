@@ -27,7 +27,6 @@ function ViewEngine() {
     this.handlebarsOpts = {};
     this.handlebarsInstances = {};
     this.commonLocals = {};
-    this.devMode = false;
 }
 
 var instance = new ViewEngine();
@@ -38,10 +37,6 @@ module.exports = function() {
 
 ViewEngine.prototype.setOpts = function(handlebarsOpts) {
     this.handlebarsOpts = handlebarsOpts || {};
-};
-
-ViewEngine.prototype.enableDevMode = function() {
-    this.devMode = true;
 };
 
 ViewEngine.prototype.setCommonLocals = function(commonLocals) {
@@ -74,7 +69,7 @@ ViewEngine.prototype.__express = function(filename, locals, done) {
     // cached?
     //template cache not working with multi instances
     var template = handleBarsInstance.templateCache[filename];
-    if (template && !instance.devMode) {
+    if (template && locals.cache) {
         return done(null, template(locals));
     }
 
