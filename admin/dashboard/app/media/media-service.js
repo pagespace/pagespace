@@ -41,15 +41,23 @@
 
         //some utils
         MediaService.prototype.isImage = function(item) {
-            return item && !!item.type.match(/image\/[jpeg|png|gif]/);
+            return item && !!item.type.match(/^image/);
         };
         MediaService.prototype.isText = function(item) {
             return item && !!item.type.match(/text\/[plain|json|html]/);
+        };
+        MediaService.prototype.isDocument = function(item) {
+            return item && !!item.type.match(/application\/pdf/);
         };
 
         MediaService.prototype.getMimeClass = function(item) {
             return 'media-' + item.type.split('/')[1];
         };
+
+        MediaService.prototype.getSrcPath = function(item) {
+            return item &&  item.fileName ? '/_media/' + item.fileName : null;
+        };
+
 
         //thanks http://stackoverflow.com/a/14919494/200113
         MediaService.prototype.humanFileSize = function(bytes, si) {

@@ -11,6 +11,8 @@
 
         $scope.isImage = mediaService.isImage;
         $scope.isText = mediaService.isText;
+        $scope.isDocument = mediaService.isDocument;
+        $scope.getSrcPath = mediaService.getSrcPath;
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;

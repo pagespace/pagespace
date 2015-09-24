@@ -23,7 +23,7 @@
     <h2>{{item.name}}</h2>
     <p ng-show="item.description && item.description !== 'undefined'">{{item.description}}</p>
     <div ng-show="isImage(item)" class="media-item-full">
-        <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
+        <img ng-src="{{getSrcPath(item)}}" alt="{{item.name}}">
     </div>
     <div ng-show="isText(item)" class="media-item-full">
 
@@ -36,5 +36,8 @@
                 <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
             </div>
         </form>
+    </div>
+    <div ng-show="isDocument(item)" class="media-item-full">
+        <iframe ng-src="{{getSrcPath(item)}}" width="100%" height="500"></iframe>
     </div>
 </main>

@@ -433,15 +433,23 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         //some utils
         MediaService.prototype.isImage = function(item) {
-            return item && !!item.type.match(/image\/[jpeg|png|gif]/);
+            return item && !!item.type.match(/^image/);
         };
         MediaService.prototype.isText = function(item) {
             return item && !!item.type.match(/text\/[plain|json|html]/);
+        };
+        MediaService.prototype.isDocument = function(item) {
+            return item && !!item.type.match(/application\/pdf/);
         };
 
         MediaService.prototype.getMimeClass = function(item) {
             return 'media-' + item.type.split('/')[1];
         };
+
+        MediaService.prototype.getSrcPath = function(item) {
+            return item &&  item.fileName ? '/_media/' + item.fileName : null;
+        };
+
 
         //thanks http://stackoverflow.com/a/14919494/200113
         MediaService.prototype.humanFileSize = function(bytes, si) {
@@ -471,6 +479,8 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         $scope.isImage = mediaService.isImage;
         $scope.isText = mediaService.isText;
+        $scope.isDocument = mediaService.isDocument;
+        $scope.getSrcPath = mediaService.getSrcPath;
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
