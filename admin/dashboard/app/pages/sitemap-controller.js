@@ -80,7 +80,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         } else {
             parentRoute = 'root';
             siblingsQuery = {
-                root: 'primary'
+                root: 'top'
             }
         }
         $scope.showInfo('Preparing new page...');
