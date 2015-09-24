@@ -8,8 +8,10 @@ var session = require("express-session");
 
 var app = express();
 
+app.disable('view cache');
+
 app.use(favicon(__dirname + '/favicon.ico'));
-app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: 'keyboard cat'})]);
+app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: process.env.SESSION_SECRET || 'foo'})]);
 
 // view engine setup
 app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
@@ -71,4 +73,7 @@ app.listen(port, function() {
     }
 });
 
-module.exports = app;
+module.exports = {
+    app: app,
+    pagespace: pagespace
+};

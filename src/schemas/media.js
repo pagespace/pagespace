@@ -33,6 +33,14 @@ function generateSchema() {
             type: Number,
             required: true
         },
+        width: {
+            type: Number,
+            required: false
+        },
+        height: {
+            type: Number,
+            required: false
+        },
         fileName: {
             type: String,
             unique: true,
