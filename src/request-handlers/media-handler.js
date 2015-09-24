@@ -20,10 +20,8 @@
 'use strict';
 
 var fs = require('fs'),
-    util = require('util'),
     send = require('send'),
     Promise = require('bluebird'),
-    MongooseError = require('mongoose/lib/error'),
     formidable = require('formidable'),
     sizeOf = require('image-size'),
     consts = require('../app-constants'),
@@ -202,7 +200,7 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
                 } else {
                     logger.debug('Roll back file upload after mongoose save failure was successful');
                 }
-            })
+            });
             //next catch will handle the mongoose failure
             return savePromise.value();
         }
