@@ -25,6 +25,7 @@
     "bcrypt": "~0.8.5",
     "bluebird": "~2.9.34",
     "bunyan": "^1.2.3",
+    "bunyan-prettystream": "^0.1.3",
     "formidable": "~1.0.15",
     "handlebars": "~3.0.3",
     "image-size": "^0.3.5",

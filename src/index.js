@@ -29,6 +29,7 @@ var url = require('url'),
     RememberMeStrategy = require('passport-remember-me').Strategy,
     async = require('async'),
     bunyan = require('bunyan'),
+    PrettyStream = require('bunyan-prettystream'),
     mkdirp = require('mkdirp'),
 
     consts = require('./app-constants'),
@@ -92,11 +93,13 @@ Index.prototype.init = function(options) {
 
     //logger setup
     var logStreams = options.logStreams instanceof Array ? options.logStreams : [];
+    var prettyStdOut = new PrettyStream();
+    prettyStdOut.pipe(process.stdout);
     this.logger =  bunyan.createLogger({
         name: 'pagespace',
         streams: [{
             level: options.logLevel || 'info',
-            stream: process.stdout
+            stream: prettyStdOut
         }].concat(logStreams)
     });
     this.logger.on('error', function (err) {
