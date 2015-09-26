@@ -26,7 +26,7 @@ hidden behind different user roles.
 ###Prerequisites
 
 * Install [MongoDB](http://docs.mongodb.org/getting-started/shell/installation/)
-* Use an existing or [create new Express](http://expressjs.com/starter/generator.html) application
+* Use an existing or [create a new](http://expressjs.com/starter/generator.html) Express application
 
 ###Database setup
 
@@ -103,7 +103,7 @@ See [app.js](./app.js) for a more comprehensive example.
 First install a part plugin, for example [webcopy](https://github.com/pagespace/pagespace-webcopy)
 
 ```
-    npm install pagespace
+    npm install pagespace-webcopy
 ```
 
 Next, import it via the Dashboard

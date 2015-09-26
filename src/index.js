@@ -23,6 +23,7 @@ var url = require('url'),
     EventEmitter = require('events').EventEmitter,
     util = require('util'),
 
+    Promise = require('bluebird'),
     mongoose = require('mongoose'),
     passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
@@ -157,7 +158,7 @@ Index.prototype.init = function(options) {
     db.on('error', function(err) {
         logger.fatal(err, 'Unable to connect to database');
         self.appState = consts.appStates.FAILED;
-        self.emit('error');
+        self.emit('error', err);
     });
     db.once('open', function() {
         logger.info('DB connection established');
@@ -193,8 +194,10 @@ Index.prototype.init = function(options) {
             //app state is now ready
             self.appState = consts.appStates.READY;
             self.emit('ready');
-        }).catch(function(e) {
-            logger.error(e, 'Initialization error');
+        }).catch(function(err) {
+            logger.fatal(err, 'Initialization error');
+            self.appState = consts.appStates.FAILED;
+            self.emit('error', err);
         });
     });
 
@@ -252,13 +255,14 @@ Index.prototype._doRequest = function(req, res, next) {
 
     //ACL determines if a user is not allowed to make this request
     if(!this.acl.isAllowed(user.role, req.url, req.method)) {
-        var debugMsg = 'User with role [%s] is not allowed to access %s. Redirecting to login.';
-        logger.debug(debugMsg, user.role, req.url);
+        var msg = 'User with role [%s] is not allowed to access %s (%s). Redirecting to login.';
+        logger.info(msg, user.role, req.url, req.method);
         res.status(user.role === 'guest' ? 401 : 403);
 
         //force login request type
         req.originalUrl = req.url;
         req.session.loginToUrl = req.originalUrl;
+        req.method = 'GET';
         req.url = '/_auth/login';
     }
     requestType = this._getRequestType(req.url);
@@ -380,17 +384,43 @@ Index.prototype._configureAuth = function() {
 };
 
 /**
- * Fires the callback when pagespce is ready
+ * Fires the callback when pagespce is ready and/or returns promise
  * @param callback
+ * @return Promise
  */
 Index.prototype.ready = function(callback) {
-    if(this.appState === consts.appStates.READY) {
-        callback();
-    } else {
-        this.on('ready', function() {
-            callback();
-        });
-    }
+
+    var self = this;
+
+    return new Promise(function(resolve, reject) {
+
+        function success() {
+            if(typeof callback === 'function') {
+                callback.call(self, null);
+            }
+            resolve();
+        }
+        function fail(err) {
+            err = err || new Error('Pagespace startup failed.')
+            if(typeof callback === 'function') {
+                callback.call(self, new Error(err));
+            }
+            reject(err);
+        }
+
+        if(self.appState === consts.appStates.FAILED) {
+            fail();
+        } if(self.appState === consts.appStates.READY) {
+            success();
+        } else {
+            self.once('error', function(err) {
+                fail(err);
+            });
+            self.once('ready', function() {
+                success();
+            });
+        }
+    });
 };
 
 /**

@@ -56,7 +56,6 @@ PluginHandler.prototype.init = function(support) {
  */
 PluginHandler.prototype.doRequest = function(req, res, next) {
 
-
     var logger = psUtil.getRequestLogger(this.logger, req, 'plugins', ++this.reqCount);
 
     var reqInfo = consts.requests.PLUGINS.regex.exec(req.url);

@@ -60,7 +60,6 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
     var logger = psUtil.getRequestLogger(this.logger, req, 'dashboard', ++this.reqCount);
 
     if(req.method === 'GET') {
-        logger.info('New dashboard request');
         return this.doDashboard(req, res, next, logger);
     } else {
         var err = new Error('Unrecognized method');

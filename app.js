@@ -18,9 +18,9 @@ app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
-    db: 'mongodb://localhost/test',
+    db: 'mongodb://localhost/spec',
     mediaDir: path.join(__dirname, 'media-uploads'),
-    logLevel: "info"
+    logLevel: 'info'
 }));
 
 /// catch 404 and forwarding to error handler

@@ -21,6 +21,7 @@
 
 //support
 var Promise = require('bluebird'),
+    util = require('util'),
     psUtil = require('../support/pagespace-util');
 
 var PublishingHandler = function() {
@@ -82,6 +83,12 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
         var LivePage = self.dbSupport.getModel('Page', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
+
+            if(!page.draft) {
+                logger.warn('Aborted publishing page %s. It is not a draft', page._id);
+                return;
+            }
+
             var templateId = null;
             if(!page.template && page.status === 200) {
                 logger.warn('Attempting to publish page without a template: %s', page._id);
@@ -134,10 +141,13 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
         });
 
         return updates;
-    }).then(function() {
-        logger.info('Publishing completed');
-        res.statusCode = 204;
-        res.send();
+    }).then(function(updates) {
+        logger.info('Publishing completed. %s pages published', updates.length);
+        res.status(200);
+        res.json({
+            message: util.format('Published %s pages', updates.length),
+            publishCount: updates.length
+        });
     }).catch(function(e) {
         logger.warn('Error during publishing, try again', e);
         next(new Error(e));

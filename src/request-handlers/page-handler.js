@@ -66,6 +66,12 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var self = this;
     var logger = psUtil.getRequestLogger(this.logger, req, 'page', ++this.reqCount);
 
+    if(req.method !== 'GET') {
+        var err = new Error('Unsupported method');
+        err.status = 405;
+        return next(err);
+    }
+
     var urlPath = url.parse(req.url).pathname;
 
     var previewMode = sessionValueSwitch(req, '_preview', 'preview');
@@ -105,6 +111,9 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             logger.debug('Page found (%s) for %s: %s', status, urlPath, page.id);
             //each region may need to be processed, this may be async
             pageProps = self.getProcessedPageRegions(req, logger, page, Page, pageProps);
+        } else {
+            //don't cache none 200s
+            delete self.findPagePromises[pageQueryCachKey];
         }
 
         return Promise.props(pageProps);
@@ -131,22 +140,6 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     }).catch(function(err) {
         next(err);
     });
-};
-
-/**
- * Caches the promise for finding a page by its url. Expires after a minute for live mode
- * @param key
- * @param promise
- * @private
- */
-PageHandler.prototype._setFindPagePromise = function(key, promise) {
-    var self = this;
-    this.findPagePromises[key] = promise;
-
-    //simple cache expiration. nice to be a lru impl...
-    setTimeout(function() {
-        delete self.findPagePromises[key];
-    }, 60 * 1000);
 };
 
 /**
@@ -313,6 +306,22 @@ PageHandler.prototype.doNotFound = function(logger, pageResult) {
     var err = new Error(util.format(errMessage, pageResult.urlPath, status));
     err.status = status;
     throw err;
+};
+
+/**
+ * Caches the promise for finding a page by its url. Expires after a minute for live mode
+ * @param key
+ * @param promise
+ * @private
+ */
+PageHandler.prototype._setFindPagePromise = function(key, promise) {
+    var self = this;
+    this.findPagePromises[key] = promise;
+
+    //simple cache expiration. nice to be a lru impl...
+    setTimeout(function() {
+        delete self.findPagePromises[key];
+    }, 60 * 1000);
 };
 
 /**

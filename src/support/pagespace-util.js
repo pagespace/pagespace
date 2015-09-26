@@ -19,7 +19,8 @@
 
 'use strict';
 
-var handlebars = require('handlebars');
+var handlebars = require('handlebars'),
+    consts = require('../app-constants');
 
 module.exports = {
 
@@ -57,7 +58,8 @@ module.exports = {
             sessionID: req.sessionID,
             reqId: source + '-' + count,
             url: req.url,
-            method: req.method
+            method: req.method,
+            role: req.user ? req.user.role : consts.GUEST_USER.role
         });
     }
 };

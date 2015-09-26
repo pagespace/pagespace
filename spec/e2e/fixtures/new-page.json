@@ -1,0 +1,52 @@
+{
+    "root":"top",
+    "name":"Page 6",
+    "url":"/page-6",
+    "expiresAt":null,
+    "order":"5",
+    "template":"5604557bb42fff62527b40f7",
+    "regions":[
+        {
+            "name":"Sidebar",
+            "_id":"5604557bb42fff62527b40fb",
+            "includes":[
+
+            ],
+            "include":[
+
+            ]
+        },
+        {
+            "name":"Main",
+            "_id":"5604557bb42fff62527b40f9",
+            "includes":[
+                {
+                    "plugin":"560441fbe4b151164bdb3bf8",
+                    "data":{
+                        "html":"<p>Template B Content</p>"
+                    },
+                    "_id":"5604557bb42fff62527b40fa"
+                }
+            ],
+            "include":[
+                {
+                    "plugin":"560441fbe4b151164bdb3bf8",
+                    "data":{
+                        "html":"<p>Template B Content</p>"
+                    },
+                    "_id":"5604557bb42fff62527b40fa"
+                }
+            ]
+        },
+        {
+            "name":"Footer",
+            "_id":"5604557bb42fff62527b40f8",
+            "includes":[
+
+            ],
+            "include":[
+
+            ]
+        }
+    ]
+}

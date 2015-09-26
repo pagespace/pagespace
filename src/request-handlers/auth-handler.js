@@ -159,7 +159,7 @@ AuthHandler.prototype.doLogin = function(req, res, next, logger) {
                     logger.info('User logged failed');
                     return next(err);
                 } else {
-                    logger.info('User logged in OK');
+                    logger.info('User logged in OK as %s', user.role);
                     if(results[0]) {
                         res.cookie('remember_me', results[0], {
                             path: '/',

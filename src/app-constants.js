@@ -37,10 +37,10 @@ var consts = {
 module.exports = consts;
 
 consts.requests = {
-    PAGE: {
-        key: 'PAGE',
-        regex: null,
-        handler: require('./request-handlers/page-handler')
+    API: {
+        key: 'API',
+        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media)/?(.*)'),
+        handler: require('./request-handlers/api-handler')
     },
     AUTH: {
         key: 'AUTH',
@@ -52,15 +52,20 @@ consts.requests = {
         regex: new RegExp('^/_dashboard'),
         handler: require('./request-handlers/dashboard-handler')
     },
-    API: {
-        key: 'API',
-        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media)/?(.*)'),
-        handler: require('./request-handlers/api-handler')
-    },
     MEDIA: {
         key: 'MEDIA',
         regex: new RegExp('^/_media/?(.*)'),
         handler: require('./request-handlers/media-handler')
+    },
+    PAGE: {
+        key: 'PAGE',
+        regex: null,
+        handler: require('./request-handlers/page-handler')
+    },
+    PLUGINS: {
+        key: 'PLUGINS',
+        regex: new RegExp('^/_plugins/(static|data|reset)/?([A-z0-9-_]*)/?(.*)'),
+        handler: require('./request-handlers/plugin-handler')
     },
     PUBLISH: {
         key: 'PUBLISH',
@@ -71,11 +76,6 @@ consts.requests = {
         key: 'STATIC',
         regex: new RegExp('^/_static/(dashboard|inpage|bower_components)/(.*)'),
         handler: require('./request-handlers/static-handler')
-    },
-    PLUGINS: {
-        key: 'PLUGINS',
-        regex: new RegExp('^/_plugins/(static|data|reset)/?([A-z0-9-_]*)/?(.*)'),
-        handler: require('./request-handlers/plugin-handler')
     },
     TEMPLATES: {
         key: 'TEMPLATES',

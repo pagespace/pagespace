@@ -178,8 +178,13 @@ ApiHandler.prototype.doCreate = function create(req, res, next, logger, Model, i
         model.createdBy = req.user._id;
         model.save().then(function (model) {
             logger.info('API post OK in %s ms', Date.now() - req.startTime);
+            res.status(201);
             res.json(model);
         }).then(undefined, function (err) {
+            if(err.name === 'CastError' || err.name === 'ValidationError') {
+                //it was the client's fault
+                err.status = 400;
+            }
             logger.error(err, 'Trying to save for API POST for %s', Model.name);
             next(err);
         });
@@ -213,6 +218,10 @@ ApiHandler.prototype.doUpdate = function update(req, res, next, logger, Model, i
             logger.info('API PUT OK in %s ms', Date.now() - req.startTime);
             res.json(doc);
         }).then(undefined, function (err) {
+            if(err.name === 'CastError' || err.name === 'ValidationError') {
+                //it was the client's fault
+                err.status = 400;
+            }
             logger.error(err, 'Trying to update for API PUT for %s', Model.modelName);
             next(err);
         });
@@ -242,6 +251,10 @@ ApiHandler.prototype.doDelete = function del(req, res, next, logger, Model, item
             res.statusCode = 204;
             res.send();
         }).then(undefined, function (err) {
+            if(err.name === 'CastError') {
+                //it was the client's fault
+                err.status = 400;
+            }
             logger.error(err, 'Trying to do API DELETE for %s', Model.modelName);
             next(err);
         });
