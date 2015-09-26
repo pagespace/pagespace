@@ -401,7 +401,7 @@ Index.prototype.ready = function(callback) {
             resolve();
         }
         function fail(err) {
-            err = err || new Error('Pagespace startup failed.')
+            err = err || new Error('Pagespace startup failed.');
             if(typeof callback === 'function') {
                 callback.call(self, new Error(err));
             }
