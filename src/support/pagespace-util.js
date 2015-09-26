@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Philip Mander
+ * Copyright © 2015, Versatile Internet
  *
  * This file is part of Pagespace.
  *
