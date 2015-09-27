@@ -122,7 +122,8 @@ Acl.prototype.isAllowed = function(role, resource, action) {
 
         //if the resource + action is match then allow or deny, given the role
         if(matchResource && matchAction) {
-            return rule.roles === '*' || rule.roles.indexOf(role) > -1;
+            var matchRole = rule.roles === '*' || rule.roles.indexOf(role) > -1;
+            return matchRole;
         }
     }
 

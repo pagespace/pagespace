@@ -5,7 +5,7 @@ var app = require('../../app.js').app,
 var doGet = httpSupport.doGet;
 var doGets = httpSupport.doGets;
 
-describe('E2E Dashboard requests', function() {
+describe('Client sending dashboard requests', function() {
 
 
     it('cannot log into dashboard as guest', function(done) {

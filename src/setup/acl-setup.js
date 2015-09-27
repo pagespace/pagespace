@@ -23,9 +23,12 @@ var createAcl = require('../support/acl').acl,
     consts = require('../app-constants');
 
 //url patterns
-var ALL_REGEX = new RegExp('.*');
+var ALL_PAGES = new RegExp('^/(?!_)(.*)');
 var DEV_API_REGEX = new RegExp('^/_api/(plugins|templates)/?(.*)');
 var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|media)/?(.*)');
+
+var LOGIN = new RegExp('^/_auth/login');
+var LOGOUT = new RegExp('^/_auth/logout');
 
 //actions
 var GET = 'GET', PUT = 'PUT', POST = 'POST', DELETE = 'DELETE';
@@ -33,6 +36,7 @@ var ALL_ACTIONS = [ GET, POST, PUT, DELETE ];
 
 //users
 var admin = 'admin', developer = 'developer', editor = 'editor', guest = 'guest';
+var ALL_ROLES = [ admin, developer, editor, guest ];
 
 /**
  *
@@ -51,7 +55,13 @@ AclSetup.prototype.runSetup = function() {
     var acl = createAcl();
 
     //all
-    acl.match(ALL_REGEX, [ GET, POST ]).thenOnlyAllow([ editor, developer, admin, guest]);
+    acl.match(ALL_PAGES, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
+    acl.match(consts.requests.STATIC.regex, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
+    acl.match(consts.requests.MEDIA.regex, [ GET ]).thenOnlyAllow(ALL_ROLES);
+
+    //auth
+    acl.match(LOGIN, [ GET, POST ]).thenOnlyAllow([ guest ]);
+    acl.match(LOGOUT, [ GET ]).thenOnlyAllow([ editor, developer, admin ]);
 
     //common actions requiring auth
     acl.match(consts.requests.MEDIA.regex, [ POST, PUT ]).thenOnlyAllow([ editor, developer, admin ]);

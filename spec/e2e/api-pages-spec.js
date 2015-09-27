@@ -9,15 +9,15 @@ var doPosts = httpSupport.doPosts;
 var doPuts = httpSupport.doPuts;
 var doDels = httpSupport.doDels;
 
-describe('E2E API requests for pages', function() {
+describe('Client sending API requests for pages', function() {
 
     // -- General--------------------------------------------------------------
 
-    it('responds with 404 for unrecognized API urls', function(done) {
+    it('receives 403 response for unrecognized API urls', function(done) {
         doGets({
             user: 'admin',
             url: '/_api/cats',
-            status: 404
+            status: 403
         }).then(function() {
             done();
         }).catch(function(err) {

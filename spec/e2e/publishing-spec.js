@@ -2,19 +2,12 @@ var app = require('../../app.js').app,
     pagespace = require('../../app.js').pagespace,
     httpSupport = require('./support/http-support');
 
-var TOTAL_PAGES = 18;
-
 var doGet = httpSupport.doGet;
-var doGets = httpSupport.doGets;
 var doPost = httpSupport.doPost;
-var doPosts = httpSupport.doPosts;
-var doPuts = httpSupport.doPuts;
-var doDels = httpSupport.doDels;
-
 var publishedAlready = [ '560449ff99d5e6354d960b26', '56044a6c99d5e6354d960b2a', '56044a7499d5e6354d960b2b' ];
 var toPublish = ["560450f5b42fff62527b40f2","560450fcb42fff62527b40f3","56045103b42fff62527b40f4"];
 
-describe('E2E Publishing requests', function() {
+describe('Client sending publishing requests', function() {
 
     it('cannot publish as guest', function (done) {
         doPost({

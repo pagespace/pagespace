@@ -91,11 +91,11 @@ describe('Client sending page request', function() {
         });
     });
 
-/*    it('cannot send a PUT to a page', function(done) {
+    it('cannot send a PUT to a page', function(done) {
         doPuts({
             user: [ 'guest', 'editor', 'admin' ],
             url: '/page-1',
-            status: 403
+            status: 405
         }).then(function() {
             done()
         }).catch(function(err) {
@@ -107,11 +107,11 @@ describe('Client sending page request', function() {
         doDels({
             user: [ 'guest', 'editor', 'admin' ],
             url: '/page-1',
-            status: 403
+            status: 405
         }).then(function() {
             done()
         }).catch(function(err) {
             done.fail(err);
         });
-    });*/
+    });
 });

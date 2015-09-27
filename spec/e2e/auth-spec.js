@@ -5,9 +5,9 @@ var app = require('../../app.js').app,
 var doGet = httpSupport.doGet
 var doPost = httpSupport.doPost;
 
-describe('E2E Auth requests', function() {
+describe('Client sending authentication requests', function() {
 
-    it('log in and logs out', function(done) {
+    it('can log in and logs out', function(done) {
 
         doGet({
             user: 'guest',

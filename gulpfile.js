@@ -4,7 +4,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat');
 
 gulp.task('lint', function() {
-    return gulp.src('src/**/*.js')
+    return gulp.src(['src/**/*.js', 'admin/dashboard/**/*.js', 'admin/inpage/**/*.js'])
         .pipe(jshint('.jshintrc'))
         .pipe(jshint.reporter('default'));
 });

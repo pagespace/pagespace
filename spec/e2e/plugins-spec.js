@@ -7,7 +7,7 @@ var doPut = httpSupport.doPut;
 
 var page2PluginUrl = '/_plugins/data?pageId=56044a3399d5e6354d960b27&region=Main&include=1';
 
-describe('E2E Plugin requests', function() {
+describe('Client sending plugin requests', function() {
 
     it('cannot get plugin data as guest', function (done) {
         doGet({
