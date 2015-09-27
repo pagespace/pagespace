@@ -72,8 +72,8 @@ AclSetup.prototype.runSetup = function() {
 
     //api
     acl.match(consts.requests.API.regex, [ PUT, POST, DELETE ]).thenOnlyAllow([ admin ]);
-    acl.match(DEV_API_REGEX, ALL_ACTIONS).thenOnlyAllow([ developer, admin ]);
-    acl.match(EDITOR_API_REGEX, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(EDITOR_API_REGEX, [ PUT, POST, DELETE ]).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(DEV_API_REGEX, [ PUT, POST, DELETE ]).thenOnlyAllow([ developer, admin ]);
     acl.match(consts.requests.API.regex, [ GET ]).thenOnlyAllow([ admin, developer, editor ]);
 
     return acl;

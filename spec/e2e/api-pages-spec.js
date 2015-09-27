@@ -5,9 +5,10 @@ var app = require('../../app.js').app,
 var TOTAL_PAGES = 18;
 
 var doGets = httpSupport.doGets;
-var doPosts = httpSupport.doPosts;
-var doPuts = httpSupport.doPuts;
-var doDels = httpSupport.doDels;
+var doGet = httpSupport.doGet;
+var doPost = httpSupport.doPost;
+var doPut = httpSupport.doPut;
+var doDel = httpSupport.doDel;
 
 describe('Client sending API requests for pages', function() {
 
@@ -29,7 +30,7 @@ describe('Client sending API requests for pages', function() {
     });
 
     it('does not get pages as guest', function(done) {
-        doGets({
+        doGet({
             user: 'guest',
             url: '/_api/pages',
             status: 401
@@ -65,7 +66,7 @@ describe('Client sending API requests for pages', function() {
 
     it('does not get a single page as guest', function(done) {
         //tests against a known id in the fixture db
-        doGets({
+        doGet({
             user: 'guest',
             url: '/_api/pages/56044a6199d5e6354d960b29',
             status: 401
@@ -80,15 +81,15 @@ describe('Client sending API requests for pages', function() {
 
     it('creates a page', function(done) {
         var pageBody = require('./fixtures/new-page.json');
-        doPosts({
+        doPost({
             user: 'editor',
             url: '/_api/pages',
             status: 201,
             body: pageBody
-        }).then(function(results) {
+        }).then(function(res) {
 
             //we get back the page created
-            var page = results[0].body;
+            var page = res.body;
             expect(page.root).toBe('top');
             expect(page.name).toBe('Page 6');
             expect(page.url).toBe('/page-6');
@@ -112,7 +113,7 @@ describe('Client sending API requests for pages', function() {
     it('does not creates a page with missing data', function(done) {
         var pageBody = require('./fixtures/new-page.json');
         delete pageBody.name;
-        doPosts({
+        doPost({
             user: 'editor',
             url: '/_api/pages',
             status: 400,
@@ -131,14 +132,14 @@ describe('Client sending API requests for pages', function() {
             name: 'Page Four',
             url: '/page/four'
         };
-        doPuts({
+        doPut({
             user: 'editor',
             url: '/_api/pages/56044a6199d5e6354d960b29',
             status: 200,
             body: pageBody
-        }).then(function(results) {
+        }).then(function(res) {
             //we get back the page created
-            var page = results[0].body;
+            var page = res.body;
             expect(page.root).toBe('top');
             expect(page.name).toBe('Page Four');
             expect(page.url).toBe('/page/four');
@@ -153,7 +154,7 @@ describe('Client sending API requests for pages', function() {
             name: 'Page X',
             url: '/page-x'
         };
-        doPuts({
+        doPut({
             user: 'editor',
             url: '/_api/pages',
             status: 400,
@@ -170,7 +171,7 @@ describe('Client sending API requests for pages', function() {
             name: 'Page X',
             url: '/page-x'
         };
-        doPuts({
+        doPut({
             user: 'editor',
             url: '/_api/pages/youcantuseme',
             status: 400,
@@ -185,7 +186,7 @@ describe('Client sending API requests for pages', function() {
     // -- delete a page
 
     it('deletes a page', function(done) {
-        doDels({
+        doDel({
             user: 'editor',
             url: '/_api/pages/56044a6199d5e6354d960b29',
             status: 204
@@ -197,7 +198,7 @@ describe('Client sending API requests for pages', function() {
     });
 
     it('cannot delete a page without an id', function(done) {
-        doDels({
+        doDel({
             user: 'editor',
             url: '/_api/pages',
             status: 400
@@ -209,7 +210,7 @@ describe('Client sending API requests for pages', function() {
     });
 
     it('cannot delete a page with an invalid id', function(done) {
-        doDels({
+        doDel({
             user: 'editor',
             url: '/_api/pages/youcantuseme',
             status: 400

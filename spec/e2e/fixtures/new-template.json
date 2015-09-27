@@ -1,0 +1,30 @@
+{
+    "properties":[
+
+    ],
+    "regions":[
+        {
+            "name":"Sidebar",
+            "includes":[
+
+            ]
+        },
+        {
+            "name":"Main",
+            "includes":[
+
+            ]
+        },
+        {
+            "name":"Footer",
+            "includes":[
+
+            ]
+        }
+    ],
+    "regionData":[
+
+    ],
+    "name":"Template C",
+    "src":"standard.hbs"
+}
