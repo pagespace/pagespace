@@ -1,4 +1,5 @@
 var gulp = require('gulp'),
+    run = require('gulp-run'),
     jshint = require('gulp-jshint'),
     jasmine = require('gulp-jasmine'),
     concat = require('gulp-concat');
@@ -15,21 +16,27 @@ gulp.task('lint-server', function() {
         .pipe(jshint.reporter('default'));
 });
 
-gulp.task('test', [ 'lint' ], function () {
-    gulp.src('**/*-spec.js')
-        .pipe(jasmine());
+gulp.task('clean', function() {
+    return run('./clean.sh').exec()
+        .pipe(gulp.dest('output'))
 });
 
-gulp.task('buildAdmin', function() {
+gulp.task('test', [ 'clean' ], function () {
+    gulp.src('***/*//*-spec.js')
+        .pipe(jasmine());
+
+});
+
+gulp.task('build-client', [ 'lint-client' ], function() {
     gulp.src('./admin/dashboard/app/**/*.js')
         .pipe(concat('admin-app.js'))
         .pipe(gulp.dest('./admin/dashboard/build'));
 });
 
-gulp.task('watch', [ 'buildAdmin' ], function() {
+gulp.task('watch', [ 'build-client' ], function() {
     gulp.watch('./admin/dashboard/app/**/*.js', ['buildAdmin']);
 });
 
-gulp.task('default', [ 'buildAdmin', 'lint-server', 'lint-client'], function() {
+gulp.task('default', [ 'build-client', 'test', 'lint-server'], function() {
 
 });

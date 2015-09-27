@@ -18,7 +18,7 @@ app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
-    db: 'mongodb://localhost/spec',
+    db: 'mongodb://localhost/test',
     mediaDir: path.join(__dirname, 'media-uploads'),
     logLevel: 'info'
 }));
