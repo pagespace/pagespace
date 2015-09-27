@@ -1,3 +1,4 @@
+/* globals console */
 (function() {
     var adminApp = angular.module('adminApp', [
         'ngRoute',
@@ -149,7 +150,7 @@
         });
     }
 
-    adminApp.controller("MainController", function($scope, $location, $timeout) {
+    adminApp.controller('MainController', function($scope, $location, $timeout) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -158,7 +159,7 @@
                 path = '/pages';
             }
             var match = path.indexOf(page) === 0;
-            return match ? "active" : "";
+            return match ? 'active' : '';
         };
 
         $scope.$on('$routeChangeStart', function(ev, next) {
@@ -221,8 +222,8 @@
             $timeout.cancel(hideTimeout);
             hideTimeout = $timeout(function() {
                 $scope.message = null;
-            }, 1000 * 10)
-        })
+            }, 1000 * 10);
+        });
     });
 
 })();
@@ -231,8 +232,8 @@
     var adminApp = angular.module('adminApp');
     adminApp.directive('bsHasError', function() {
         return {
-            restrict: "A",
-            link: function(scope, element, attrs, ctrl) {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
                 //find parent form
                 function getClosestFormName(element) {
                     var parent = element.parent();
@@ -298,8 +299,8 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("MacrosController", function($scope, $rootScope, $routeParams, $location, templateService) {
-        $rootScope.pageTitle = "Macros";
+    adminApp.controller('MacrosController', function($scope, $rootScope) {
+        $rootScope.pageTitle = 'Macros';
     });
 
 })();
@@ -383,10 +384,9 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         availableTags = availableTags.filter(function(tag) {
             return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
         });
-        console.log($scope.availableTags);
         $scope.availableTags = availableTags;
     }).error(function(err) {
-        $scope.showError("Error getting media items", err);
+        $scope.showError('Error getting media items', err);
     });
 });
 
@@ -416,10 +416,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         MediaService.prototype.uploadItem = function(file, mediaData) {
             var formData = new FormData();
-            formData.append("file", file);
-            formData.append("name", mediaData.name);
-            formData.append("description", mediaData.description);
-            formData.append("tags", mediaData.tags);
+            formData.append('file', file);
+            formData.append('name', mediaData.name);
+            formData.append('description', mediaData.description);
+            formData.append('tags', mediaData.tags);
 
             //store upload in session, then accept media data
             return $http.post('/_media', formData, {
@@ -452,13 +452,15 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         };
 
 
+        /* jshint ignore:start */
         //thanks http://stackoverflow.com/a/14919494/200113
-        MediaService.prototype.humanFileSize = function(bytes, si) {
+        MediaService.prototype.humanFileSize = function(bytes) {
             var exp = Math.log(bytes) / Math.log(1024) | 0;
             var result = (bytes / Math.pow(1024, exp)).toFixed(2);
 
             return result + ' ' + (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
         };
+        /* jshint ignore:end */
 
         return new MediaService();
     });
@@ -491,9 +493,9 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             if(really) {
                 mediaService.deleteItem(item._id).success(function() {
                     $location.path('/media');
-                    $scope.showInfo("Media: " + item.name + " removed.");
+                    $scope.showInfo('Media: ' + item.name + ' removed.');
                 }).error(function(err) {
-                    $scope.showError("Error deleting page", err);
+                    $scope.showError('Error deleting page', err);
                 });
             }
         };
@@ -557,7 +559,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
             availableTags.filter(function(tag) {
                 return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
             });
-            resolve(availableTags)
+            resolve(availableTags);
         });
         return promise;
     };
@@ -601,7 +603,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
     };
 
     $scope.cancel = function() {
-        $location.path("/media");
+        $location.path('/media');
     };
 });
 
@@ -613,22 +615,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("notificationsController", function($scope, $rootScope, $timeout) {
-    $scope.message = null;
-
-
-
-});
-
-})();
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller("DeletePageController",
+adminApp.controller('DeletePageController',
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, $window) {
 
@@ -650,7 +637,7 @@ adminApp.controller("DeletePageController",
     });
 
     $scope.cancel = function() {
-        $location.path("");
+        $location.path('');
     };
 
     $scope.submit = function(form) {
@@ -664,12 +651,12 @@ adminApp.controller("DeletePageController",
         var page = $scope.page;
 
         pageService.deletePage(page).success(function() {
-            $location.path("");
-            $scope.showInfo("Page: " + page.name + " removed.");
+            $location.path('');
+            $scope.showInfo('Page: ' + page.name + ' removed.');
         }).error(function(err) {
-            $scope.showError("Error deleting page", err);
+            $scope.showError('Error deleting page', err);
         });
-    }
+    };
 });
 
 })();
@@ -680,7 +667,7 @@ adminApp.controller("DeletePageController",
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("PageController",
+adminApp.controller('PageController',
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, pluginService, $window) {
 
@@ -714,7 +701,7 @@ adminApp.controller("PageController",
         templateService.doGetAvailableTemplates().success(function(templates) {
             $log.info('Got available templates.');
             $scope.templates = templates;
-            callback()
+            callback();
         });
     });
     pageSetupFunctions.push(function getPlugins(callback) {
@@ -722,7 +709,7 @@ adminApp.controller("PageController",
         pluginService.getPlugins().success(function(availablePlugins) {
             $log.debug('Got available plugins.');
             $scope.availablePlugins = availablePlugins;
-            callback()
+            callback();
         });
     });
 
@@ -814,7 +801,7 @@ adminApp.controller("PageController",
     };
 
     $scope.cancel = function() {
-        $location.path("/pages");
+        $location.path('/pages');
     };
 
     $scope.updateRegions = function(template) {
@@ -898,24 +885,24 @@ adminApp.controller("PageController",
         if(pageId) {
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            pageService.updatePage(pageId, page).success(function(res) {
+            pageService.updatePage(pageId, page).success(function() {
                 $log.info('Page successfully updated');
-                $scope.showSuccess("Page: " + page.name + " saved.");
-                $location.path("");
+                $scope.showSuccess('Page: ' + page.name + ' saved.');
+                $location.path('');
             }).error(function(err) {
                 $log.error(err, 'Error updating page');
-                $scope.showError("Error updating page", err);
+                $scope.showError('Error updating page', err);
             });
         } else {
             $log.info('Creating page...');
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.createPage(page).success(function() {
                 $log.info('Page successfully created');
-                $scope.showSuccess("Page: " + page.name + " created.");
-                $location.path("");
+                $scope.showSuccess('Page: ' + page.name + ' created.');
+                $location.path('');
             }).error(function(err) {
                 $log.error(err, 'Error creating page');
-                $scope.showError("Error adding new page", err);
+                $scope.showError('Error adding new page', err);
             });
         }
     };
@@ -1001,8 +988,9 @@ adminApp.controller("PageController",
 
             parent = parent || page.parent;
 
+            var parentUrlPart = null;
             if(parent && parent.url) {
-                var parentUrlPart = parent.url;
+                parentUrlPart = parent.url;
             }
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
@@ -1017,8 +1005,8 @@ adminApp.controller("PageController",
         str = str.toLowerCase();
 
         // remove accents, swap ñ for n, etc
-        var from = "ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;";
-        var to   = "aaaaaeeeeeiiiiooooouuuunc------";
+        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
+        var to   = 'aaaaaeeeeeiiiiooooouuuunc------';
         for (var i=0, l=from.length ; i<l ; i++) {
             str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
         }
@@ -1028,24 +1016,6 @@ adminApp.controller("PageController",
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
-    }
-
-    function getNewPageName(pages) {
-
-        var defaultName = 'New Page ';
-        var pageRegex = new RegExp(defaultName + '(\\d+)');
-
-        var largest = 0;
-        pages.forEach(function(page) {
-            if(page.name) {
-                var result = pageRegex.exec(page.name);
-                if(result && parseInt(result[1]) > largest) {
-                    largest = parseInt(result[1]);
-                }
-            }
-        });
-        largest++;
-        return defaultName + largest;
     }
 
 })();
@@ -1059,9 +1029,9 @@ adminApp.controller("PageController",
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("SitemapController", function($scope, $rootScope, $location, siteService, pageService) {
+adminApp.controller('SitemapController', function($scope, $rootScope, $location, siteService, pageService) {
 
-    $rootScope.pageTitle = "Sitemap";
+    $rootScope.pageTitle = 'Sitemap';
 
     var VIEW_MODE_STORAGE_KEY = 'sitemapViewMode';
     $scope.viewMode = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'view';
@@ -1074,7 +1044,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         siteService.getSite().success(function(site) {
             $scope.site = site;
         }).error(function(err) {
-            $scope.showError("Error getting site", err);
+            $scope.showError('Error getting site', err);
         });
     };
 
@@ -1085,11 +1055,13 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             allPages = allPages.filter(function(page) {
                 return page.status < 400;
             }).sort(function(a, b) {
-                if (a.order < b.order)
+                if (a.order < b.order) {
                     return -1;
-                if (a.order > b.order)
+                } else if (a.order > b.order) {
                     return 1;
-                return 0;
+                } else {
+                    return 0;
+                }
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
@@ -1110,13 +1082,13 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             };
 
             var primaryRoots = allPages.filter(function(page) {
-                return page.root === "top";
+                return page.root === 'top';
             });
             populateChildren(primaryRoots);
 
             $scope.pages = primaryRoots;
         }).error(function(err) {
-            $scope.showError("Error getting pages", err);
+            $scope.showError('Error getting pages', err);
         });
     };
 
@@ -1130,12 +1102,12 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             parentRoute = parentPage._id;
             siblingsQuery = {
                 parent: parentPage._id
-            }
+            };
         } else {
             parentRoute = 'root';
             siblingsQuery = {
                 root: 'top'
-            }
+            };
         }
         $scope.showInfo('Preparing new page...');
         //get future siblings
@@ -1162,9 +1134,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             if(really) {
                 pageService.deletePage(page).success(function() {
                     window.location.reload();
-                    $scope.showInfo("Page: " + page.name + " removed.");
+                    $scope.showInfo('Page: ' + page.name + ' removed.');
                 }).error(function(err) {
-                    $scope.showError("Error deleting page", err);
+                    $scope.showError('Error deleting page', err);
                 });
             }
         }
@@ -1194,7 +1166,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     pageService.updatePage(page._id, {
                         order: page.order + direction
                     }).success(function() {
-                        callback(null)
+                        callback(null);
                     }).error(function(err) {
                         callback(err);
                     });
@@ -1203,7 +1175,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     pageService.updatePage(siblingPage._id, {
                         order: siblingPage.order - direction
                     }).success(function() {
-                        callback(null)
+                        callback(null);
                     }).error(function(err) {
                         callback(err);
                     });
@@ -1214,7 +1186,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 } else {
                     getPages();
                 }
-            })
+            });
         });
     };
 
@@ -1234,7 +1206,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("ViewPageController", function($scope, $rootScope, $routeParams) {
+adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
 
     var env = $routeParams.env;
     var url = $routeParams.url;
@@ -1278,7 +1250,7 @@ adminApp.directive('pageHolder', function() {
             var pageFrame = element.find('iframe')[0];
 
             pageFrame.addEventListener('load', function() {
-                var frameHead = pageFrame.contentWindow.document.getElementsByTagName("head")[0];
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
                 frameHead.appendChild(adminStyles);
                 frameHead.appendChild(adminScript);
 
@@ -1301,7 +1273,8 @@ adminApp.directive('pageHolder', function() {
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("PluginController", function($scope, $rootScope, $routeParams, $location, $window, pluginService) {
+adminApp.controller('PluginController', function($scope, $rootScope, $log, $routeParams, $location, $window,
+                                                 pluginService) {
 
     var pluginId = $routeParams.pluginId;
 
@@ -1317,20 +1290,20 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
         pluginService.getPlugin(pluginId).success(function(plugin) {
             $scope.plugin = plugin;
         }).error(function(err) {
-            $scope.showError("Error getting plugin", err);
+            $scope.showError('Error getting plugin', err);
         });
     }
 
     $scope.reset = function() {
         pluginService.resetPlugin($scope.plugin).success(function() {
-            $scope.showSuccess("Cache cleared");
+            $scope.showSuccess('Cache cleared');
         }).error(function(err) {
-            $scope.showError("Error getting plugin", err);
-        })
+            $scope.showError('Error getting plugin', err);
+        });
     };
 
     $scope.cancel = function() {
-        $location.path("/plugins");
+        $location.path('/plugins');
     };
 
     $scope.save = function(form) {
@@ -1341,20 +1314,20 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
         }
 
         if(pluginId) {
-            pluginService.updatePlugin(pluginId, $scope.plugin).success(function(res) {
-                console.log("Plugin saved");
-                $scope.showSuccess("Plugin updated.");
-                $location.path("/plugins");
+            pluginService.updatePlugin(pluginId, $scope.plugin).success(function() {
+                $log.info('Plugin saved');
+                $scope.showSuccess('Plugin updated.');
+                $location.path('/plugins');
             }).error(function(err) {
-                $scope.showError("Error updating plugin", err);
+                $scope.showError('Error updating plugin', err);
             });
         } else {
-            pluginService.createPlugin($scope.plugin).success(function(res) {
-                console.log("Plugin created");
-                $scope.showSuccess("Plugin created.");
-                $location.path("/plugins");
+            pluginService.createPlugin($scope.plugin).success(function() {
+                $log.info('Plugin created');
+                $scope.showSuccess('Plugin created.');
+                $location.path('/plugins');
             }).error(function(err) {
-                $scope.showError("Error saving plugin", err);
+                $scope.showError('Error saving plugin', err);
             });
         }
     };
@@ -1362,11 +1335,11 @@ adminApp.controller("PluginController", function($scope, $rootScope, $routeParam
     $scope.remove = function() {
         var really = window.confirm('Really delete this plugin?');
         if(really) {
-            pluginService.deletePlugin($scope.plugin._id).success(function (res) {
-                $scope.showInfo("Plugin deleted");
-                $location.path("/plugins");
+            pluginService.deletePlugin($scope.plugin._id).success(function () {
+                $scope.showInfo('Plugin deleted');
+                $location.path('/plugins');
             }).error(function (err) {
-                $scope.showError("Error deleting plugin", err);
+                $scope.showError('Error deleting plugin', err);
             });
         }
     };
@@ -1389,7 +1362,7 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
     pluginService.getPlugins().success(function(plugins) {
         $scope.plugins = plugins;
     }).error(function(err) {
-        $scope.showError("Error getting plugins", err);
+        $scope.showError('Error getting plugins', err);
     });
 
 });
@@ -1441,7 +1414,8 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location, publishingService) {
+adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location,
+                                                     publishingService) {
 
     var preQueued = $routeParams.pageId || null;
 
@@ -1510,105 +1484,6 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
 
 (function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('siteService', function($http) {
-
-        function SiteService() {
-
-        }
-        SiteService.prototype.getSite = function() {
-            return $http.get('/_api/sites/1');
-        };
-
-        SiteService.prototype.updateSite = function(siteData) {
-            return $http.put('/_api/sites/1', siteData);
-        };
-
-        return new SiteService();
-    });
-
-})();
-
-
-
-(function() {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
-
-        $scope.defaultPage = null;
-
-        siteService.getSite().success(function(site) {
-            $scope.site = site;
-        });
-
-        pageService.getPages().success(function(pages) {
-            $scope.pages = pages.filter(function(page) {
-                return page.status === 200;
-            });
-        });
-
-        $scope.cancel = function() {
-            $location.path('/');
-        };
-
-        $scope.save = function(form) {
-
-            if(form.$invalid) {
-                $window.scrollTo(0,0);
-                $scope.submitted = true;
-                return;
-            }
-            var site = $scope.site;
-
-            if($scope.defaultPage) {
-                async.waterfall([
-                    function(cb) {
-                        pageService.getPages({
-                            url: '/'
-                        }).success(function(pages) {
-                            var page = pages && pages.length ? pages[0] : null;
-                            cb(null, page);
-                        }).error(function(e) {
-                            cb(e);
-                        })
-                    },
-                    function(page) {
-                        //if a page without the default url is already set...
-                        var defaultPageData = {
-                            name: 'Default page',
-                            url: '/',
-                            redirect: $scope.defaultPage,
-                            status: 301
-                        };
-                        if(!page) {
-                            defaultPageData.url = '/';
-                            pageService.createPage(defaultPageData);
-                        } else if(page) {
-                            pageService.updatePage(page._id, defaultPageData);
-                        }
-                    }
-                ], function(err) {
-                    $scope.showError('Unable to set default page', err);
-                });
-            }
-
-            siteService.updateSite(site).success(function() {
-                $scope.showSuccess('Site updated.');
-                $location.path('/');
-            }).error(function(err) {
-                $scope.showError('Error updating site', err);
-            });
-
-        };
-    });
-
-})();
-(function() {
 
 /**
  *
@@ -1665,8 +1540,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
     $scope.addProperty = function() {
         $scope.template.properties.push({
-            name: "",
-            value: ""
+            name: '',
+            value: ''
         });
     };
 
@@ -1710,7 +1585,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                     $scope.template.regions.push({
                         name: regionName,
                         includes: []
-                    })
+                    });
                 }
             });
         }).error(function(err) {
@@ -1749,7 +1624,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         if($scope.template && $scope.template.src) {
             var templateSrc = encodeURIComponent($scope.template.src);
             var regionOutlineColor = encodeURIComponent(localStorage.getItem('specialColor'));
-            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc +
+                '&regionOutlineColor=' + regionOutlineColor;
             $log.debug('Template preview url is: %s', templatePreviewUrl);
             return templatePreviewUrl;
         } else {
@@ -1823,7 +1699,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         var really = window.confirm('Really delete this template?');
         if(really) {
             $log.info('Deleting template: %s...', $scope.template._id);
-            templateService.deleteTemplate($scope.template._id).success(function (res) {
+            templateService.deleteTemplate($scope.template._id).success(function() {
                 $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {
@@ -1855,16 +1731,16 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("TemplateListController", function($scope, $rootScope, $routeParams, $location, templateService) {
+adminApp.controller('TemplateListController', function($scope, $rootScope, $routeParams, $location, templateService) {
 
-    $rootScope.pageTitle = "Templates";
+    $rootScope.pageTitle = 'Templates';
 
     $scope.templates = [];
 
     templateService.doGetAvailableTemplates().success(function(templates) {
         $scope.templates = templates;
     }).error(function(err) {
-        $scope.showError("Error getting templates", err);
+        $scope.showError('Error getting templates', err);
     });
 
 });
@@ -1912,27 +1788,128 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
 
 
 (function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('siteService', function($http) {
+
+        function SiteService() {
+
+        }
+        SiteService.prototype.getSite = function() {
+            return $http.get('/_api/sites/1');
+        };
+
+        SiteService.prototype.updateSite = function(siteData) {
+            return $http.put('/_api/sites/1', siteData);
+        };
+
+        return new SiteService();
+    });
+
+})();
+
+
+
+(function() {
 
     /**
      *
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("UserController", function($scope, $rootScope, $location, $routeParams, $window, userService) {
-        $rootScope.pageTitle = "User";
+    adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, pageService,
+                                                           siteService) {
+
+        $scope.defaultPage = null;
+
+        siteService.getSite().success(function(site) {
+            $scope.site = site;
+        });
+
+        pageService.getPages().success(function(pages) {
+            $scope.pages = pages.filter(function(page) {
+                return page.status === 200;
+            });
+        });
+
+        $scope.cancel = function() {
+            $location.path('/');
+        };
+
+        $scope.save = function(form) {
+
+            if(form.$invalid) {
+                $window.scrollTo(0,0);
+                $scope.submitted = true;
+                return;
+            }
+            var site = $scope.site;
+
+            if($scope.defaultPage) {
+                async.waterfall([
+                    function(cb) {
+                        pageService.getPages({
+                            url: '/'
+                        }).success(function(pages) {
+                            var page = pages && pages.length ? pages[0] : null;
+                            cb(null, page);
+                        }).error(function(e) {
+                            cb(e);
+                        });
+                    },
+                    function(page) {
+                        //if a page without the default url is already set...
+                        var defaultPageData = {
+                            name: 'Default page',
+                            url: '/',
+                            redirect: $scope.defaultPage,
+                            status: 301
+                        };
+                        if(!page) {
+                            defaultPageData.url = '/';
+                            pageService.createPage(defaultPageData);
+                        } else if(page) {
+                            pageService.updatePage(page._id, defaultPageData);
+                        }
+                    }
+                ], function(err) {
+                    $scope.showError('Unable to set default page', err);
+                });
+            }
+
+            siteService.updateSite(site).success(function() {
+                $scope.showSuccess('Site updated.');
+                $location.path('/');
+            }).error(function(err) {
+                $scope.showError('Error updating site', err);
+            });
+
+        };
+    });
+
+})();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('UserController', function($scope, $rootScope, $log, $location, $routeParams, $window,
+                                                   userService) {
+        $rootScope.pageTitle = 'User';
 
         var userId = $routeParams.userId;
         $scope.userId = userId;
 
         $scope.roles = [{
-            name: "editor",
-            label: "Editor"
+            name: 'editor',
+            label: 'Editor'
         },{
-            name: "developer",
-            label: "Developer"
+            name: 'developer',
+            label: 'Developer'
         },{
-            name: "admin",
-            label: "Admin"
+            name: 'admin',
+            label: 'Admin'
         }];
 
         if(userId) {
@@ -1970,8 +1947,8 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
         };
 
         $scope.remove = function() {
-            userService.deleteTemplate($scope.user._id).success(function (res) {
-                console.log('User removed');
+            userService.deleteTemplate($scope.user._id).success(function () {
+                $log.info('User removed');
                 $location.path('/templates');
             }).error(function(err) {
                 $scope.showError('Error deleting template', err);
@@ -1987,8 +1964,8 @@ adminApp.controller("TemplateListController", function($scope, $rootScope, $rout
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("UserListController", function($scope, $rootScope, $location, userService) {
-        $rootScope.pageTitle = "Users";
+    adminApp.controller('UserListController', function($scope, $rootScope, $location, userService) {
+        $rootScope.pageTitle = 'Users';
 
         userService.getUsers().success(function(users) {
             $scope.users = users;
