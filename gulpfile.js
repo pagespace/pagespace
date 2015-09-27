@@ -22,7 +22,6 @@ gulp.task('test', [ 'lint' ], function () {
 });
 
 gulp.task('buildAdmin', function() {
-
     gulp.src('./admin/dashboard/app/**/*.js')
         .pipe(concat('admin-app.js'))
         .pipe(gulp.dest('./admin/dashboard/build'));
@@ -32,6 +31,6 @@ gulp.task('watch', [ 'buildAdmin' ], function() {
     gulp.watch('./admin/dashboard/app/**/*.js', ['buildAdmin']);
 });
 
-gulp.task('default', ['lint-server'], function() {
+gulp.task('default', [ 'buildAdmin', 'lint-server'], function() {
 
 });
