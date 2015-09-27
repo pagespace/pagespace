@@ -55,8 +55,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
     $scope.addProperty = function() {
         $scope.template.properties.push({
-            name: "",
-            value: ""
+            name: '',
+            value: ''
         });
     };
 
@@ -100,7 +100,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                     $scope.template.regions.push({
                         name: regionName,
                         includes: []
-                    })
+                    });
                 }
             });
         }).error(function(err) {
@@ -139,7 +139,8 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         if($scope.template && $scope.template.src) {
             var templateSrc = encodeURIComponent($scope.template.src);
             var regionOutlineColor = encodeURIComponent(localStorage.getItem('specialColor'));
-            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc + '&regionOutlineColor=' + regionOutlineColor;
+            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc +
+                '&regionOutlineColor=' + regionOutlineColor;
             $log.debug('Template preview url is: %s', templatePreviewUrl);
             return templatePreviewUrl;
         } else {
@@ -213,7 +214,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         var really = window.confirm('Really delete this template?');
         if(really) {
             $log.info('Deleting template: %s...', $scope.template._id);
-            templateService.deleteTemplate($scope.template._id).success(function (res) {
+            templateService.deleteTemplate($scope.template._id).success(function() {
                 $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {

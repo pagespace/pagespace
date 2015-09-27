@@ -5,8 +5,8 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("MacrosController", function($scope, $rootScope, $routeParams, $location, templateService) {
-        $rootScope.pageTitle = "Macros";
+    adminApp.controller('MacrosController', function($scope, $rootScope) {
+        $rootScope.pageTitle = 'Macros';
     });
 
 })();

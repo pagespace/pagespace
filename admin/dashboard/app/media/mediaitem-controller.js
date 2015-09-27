@@ -22,9 +22,9 @@
             if(really) {
                 mediaService.deleteItem(item._id).success(function() {
                     $location.path('/media');
-                    $scope.showInfo("Media: " + item.name + " removed.");
+                    $scope.showInfo('Media: ' + item.name + ' removed.');
                 }).error(function(err) {
-                    $scope.showError("Error deleting page", err);
+                    $scope.showError('Error deleting page', err);
                 });
             }
         };

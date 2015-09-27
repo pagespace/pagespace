@@ -5,7 +5,8 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller("SiteSettingsController", function($scope, $rootScope, $location, $window, pageService, siteService) {
+    adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, pageService,
+                                                           siteService) {
 
         $scope.defaultPage = null;
 
@@ -42,7 +43,7 @@
                             cb(null, page);
                         }).error(function(e) {
                             cb(e);
-                        })
+                        });
                     },
                     function(page) {
                         //if a page without the default url is already set...

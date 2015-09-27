@@ -1,3 +1,4 @@
+/* globals console */
 (function() {
 
     window.pagespace = window.pagespace || {};
@@ -9,7 +10,9 @@
     };
 
     function getPluginInterface(plugin, pageId, region, include) {
-        var query = '?pageId=' + encodeURIComponent(pageId) +'&region=' + encodeURIComponent(region) + '&include=' + encodeURIComponent(include);
+        var query = '?pageId=' + encodeURIComponent(pageId) +
+                    '&region=' + encodeURIComponent(region) +
+                    '&include=' + encodeURIComponent(include);
         return {
             getData: function() {
                 console.info('Pagespace getting data for %s', plugin);
@@ -32,8 +35,8 @@
                 }).then(function() {
                     return {
                         status: 'ok'
-                    }
-                })
+                    };
+                });
             },
             close: function() {
                 console.info('Pagespace closing plugin editor for %s', plugin);
@@ -77,7 +80,7 @@
                 var boxHoverRule = cssRulesArray.filter(function(rule) {
                     return rule.selectorText === '.ps-edit-box:hover';
                 })[0];
-                boxHoverRule.style.outlineColor = specialColor
+                boxHoverRule.style.outlineColor = specialColor;
 
                 //edit button rules
                 var editButtonRule = cssRulesArray.filter(function(rule) {
@@ -101,8 +104,14 @@
             //add edit buttons
             var editButton = document.createElement('button');
             editButton.innerHTML =
-                '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16 alt="Edit Include" title="Edit Include"' +
-                'data-target-plugin=' + plugin + ' data-target-plugin-name="' + pluginName + '" data-target-page-id=' + pageId + ' data-target-region=' + region + ' data-target-include=' + include + '>';
+                '<img src=/_static/dashboard/support/icons/pencil41.svg width=16 height=16' +
+                ' alt="Edit Include" title="Edit Include"' +
+                ' data-target-plugin=' + plugin +
+                ' data-target-plugin-name="' + pluginName +
+                '" data-target-page-id=' + pageId +
+                ' data-target-region=' + region +
+                ' data-target-include=' + include + '>';
+
             editButton.setAttribute('data-target-plugin', plugin);
             editButton.setAttribute('data-target-plugin-name', pluginName);
             editButton.setAttribute('data-target-page-id', pageId);
@@ -232,7 +241,7 @@
         if(node.offsetParent) {
             offset.left += node.offsetLeft;
             offset.top += node.offsetTop;
-            return getAbsolutePosition(node.offsetParent, offset)
+            return getAbsolutePosition(node.offsetParent, offset);
         } else {
             return offset;
         }

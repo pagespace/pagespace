@@ -149,7 +149,7 @@
         });
     }
 
-    adminApp.controller("MainController", function($scope, $location, $timeout) {
+    adminApp.controller('MainController', function($scope, $location, $timeout) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -158,7 +158,7 @@
                 path = '/pages';
             }
             var match = path.indexOf(page) === 0;
-            return match ? "active" : "";
+            return match ? 'active' : '';
         };
 
         $scope.$on('$routeChangeStart', function(ev, next) {
@@ -221,8 +221,8 @@
             $timeout.cancel(hideTimeout);
             hideTimeout = $timeout(function() {
                 $scope.message = null;
-            }, 1000 * 10)
-        })
+            }, 1000 * 10);
+        });
     });
 
 })();

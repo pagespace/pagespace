@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("DeletePageController",
+adminApp.controller('DeletePageController',
     function($scope, $rootScope, $routeParams, $location, $timeout,
              pageService, $window) {
 
@@ -27,7 +27,7 @@ adminApp.controller("DeletePageController",
     });
 
     $scope.cancel = function() {
-        $location.path("");
+        $location.path('');
     };
 
     $scope.submit = function(form) {
@@ -41,12 +41,12 @@ adminApp.controller("DeletePageController",
         var page = $scope.page;
 
         pageService.deletePage(page).success(function() {
-            $location.path("");
-            $scope.showInfo("Page: " + page.name + " removed.");
+            $location.path('');
+            $scope.showInfo('Page: ' + page.name + ' removed.');
         }).error(function(err) {
-            $scope.showError("Error deleting page", err);
+            $scope.showError('Error deleting page', err);
         });
-    }
+    };
 });
 
 })();

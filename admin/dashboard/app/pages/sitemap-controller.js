@@ -5,9 +5,9 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("SitemapController", function($scope, $rootScope, $location, siteService, pageService) {
+adminApp.controller('SitemapController', function($scope, $rootScope, $location, siteService, pageService) {
 
-    $rootScope.pageTitle = "Sitemap";
+    $rootScope.pageTitle = 'Sitemap';
 
     var VIEW_MODE_STORAGE_KEY = 'sitemapViewMode';
     $scope.viewMode = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'view';
@@ -20,7 +20,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
         siteService.getSite().success(function(site) {
             $scope.site = site;
         }).error(function(err) {
-            $scope.showError("Error getting site", err);
+            $scope.showError('Error getting site', err);
         });
     };
 
@@ -31,11 +31,13 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             allPages = allPages.filter(function(page) {
                 return page.status < 400;
             }).sort(function(a, b) {
-                if (a.order < b.order)
+                if (a.order < b.order) {
                     return -1;
-                if (a.order > b.order)
+                } else if (a.order > b.order) {
                     return 1;
-                return 0;
+                } else {
+                    return 0;
+                }
             });
             allPages.forEach(function(page) {
                 pageMap[page._id] = page;
@@ -56,13 +58,13 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             };
 
             var primaryRoots = allPages.filter(function(page) {
-                return page.root === "top";
+                return page.root === 'top';
             });
             populateChildren(primaryRoots);
 
             $scope.pages = primaryRoots;
         }).error(function(err) {
-            $scope.showError("Error getting pages", err);
+            $scope.showError('Error getting pages', err);
         });
     };
 
@@ -76,12 +78,12 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             parentRoute = parentPage._id;
             siblingsQuery = {
                 parent: parentPage._id
-            }
+            };
         } else {
             parentRoute = 'root';
             siblingsQuery = {
                 root: 'top'
-            }
+            };
         }
         $scope.showInfo('Preparing new page...');
         //get future siblings
@@ -108,9 +110,9 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
             if(really) {
                 pageService.deletePage(page).success(function() {
                     window.location.reload();
-                    $scope.showInfo("Page: " + page.name + " removed.");
+                    $scope.showInfo('Page: ' + page.name + ' removed.');
                 }).error(function(err) {
-                    $scope.showError("Error deleting page", err);
+                    $scope.showError('Error deleting page', err);
                 });
             }
         }
@@ -140,7 +142,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     pageService.updatePage(page._id, {
                         order: page.order + direction
                     }).success(function() {
-                        callback(null)
+                        callback(null);
                     }).error(function(err) {
                         callback(err);
                     });
@@ -149,7 +151,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                     pageService.updatePage(siblingPage._id, {
                         order: siblingPage.order - direction
                     }).success(function() {
-                        callback(null)
+                        callback(null);
                     }).error(function(err) {
                         callback(err);
                     });
@@ -160,7 +162,7 @@ adminApp.controller("SitemapController", function($scope, $rootScope, $location,
                 } else {
                     getPages();
                 }
-            })
+            });
         });
     };
 

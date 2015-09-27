@@ -23,10 +23,10 @@
 
         MediaService.prototype.uploadItem = function(file, mediaData) {
             var formData = new FormData();
-            formData.append("file", file);
-            formData.append("name", mediaData.name);
-            formData.append("description", mediaData.description);
-            formData.append("tags", mediaData.tags);
+            formData.append('file', file);
+            formData.append('name', mediaData.name);
+            formData.append('description', mediaData.description);
+            formData.append('tags', mediaData.tags);
 
             //store upload in session, then accept media data
             return $http.post('/_media', formData, {
@@ -59,13 +59,15 @@
         };
 
 
+        /* jshint ignore:start */
         //thanks http://stackoverflow.com/a/14919494/200113
-        MediaService.prototype.humanFileSize = function(bytes, si) {
+        MediaService.prototype.humanFileSize = function(bytes) {
             var exp = Math.log(bytes) / Math.log(1024) | 0;
             var result = (bytes / Math.pow(1024, exp)).toFixed(2);
 
             return result + ' ' + (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
         };
+        /* jshint ignore:end */
 
         return new MediaService();
     });

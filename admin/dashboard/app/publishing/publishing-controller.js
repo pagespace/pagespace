@@ -5,7 +5,8 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location, publishingService) {
+adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location,
+                                                     publishingService) {
 
     var preQueued = $routeParams.pageId || null;
 

@@ -27,7 +27,7 @@
     //   "double" : require double quotes
     "undef"         : true,     // true: Require all non-global variables to be declared (prevents global leaks)
     "unused"        : true,     // true: Require all defined variables be used
-    "strict"        : true,     // true: Requires all functions run in ES5 Strict Mode
+    "strict"        : false,     // true: Requires all functions run in ES5 Strict Mode
     "maxparams"     : 6,    // {int} Max number of formal params allowed per function
     "maxdepth"      : false,    // {int} Max depth of nested blocks (within functions)
     "maxstatements" : false,    // {int} Max number statements per function
@@ -63,7 +63,7 @@
     "validthis"     : false,     // true: Tolerate using this in a non-constructor function
 
     // Environments
-    "browser"       : true,     // Web Browser (window, document, etc)
+    "browser"       : false,     // Web Browser (window, document, etc)
     "browserify"    : false,    // Browserify (node.js code in the browser)
     "couch"         : false,    // CouchDB
     "devel"         : false,     // Development/debugging (alert, confirm, etc)

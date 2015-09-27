@@ -3,8 +3,15 @@ var gulp = require('gulp'),
     jasmine = require('gulp-jasmine'),
     concat = require('gulp-concat');
 
-gulp.task('lint', function() {
-    return gulp.src(['src/**/*.js', 'admin/dashboard/**/*.js', 'admin/inpage/**/*.js'])
+//not currently automated. See https://github.com/spalger/gulp-jshint/issues/77
+gulp.task('lint-client', function() {
+    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js'])
+        .pipe(jshint('.jshintrc'))
+        .pipe(jshint.reporter('default'));
+});
+
+gulp.task('lint-server', function() {
+    return gulp.src(['src/**/*.js'])
         .pipe(jshint('.jshintrc'))
         .pipe(jshint.reporter('default'));
 });
@@ -25,6 +32,6 @@ gulp.task('watch', [ 'buildAdmin' ], function() {
     gulp.watch('./admin/dashboard/app/**/*.js', ['buildAdmin']);
 });
 
-gulp.task('default', ['lint'], function() {
+gulp.task('default', ['lint-server'], function() {
 
 });

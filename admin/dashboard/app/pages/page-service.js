@@ -64,8 +64,9 @@
 
             parent = parent || page.parent;
 
+            var parentUrlPart = null;
             if(parent && parent.url) {
-                var parentUrlPart = parent.url;
+                parentUrlPart = parent.url;
             }
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
@@ -80,8 +81,8 @@
         str = str.toLowerCase();
 
         // remove accents, swap ñ for n, etc
-        var from = "ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;";
-        var to   = "aaaaaeeeeeiiiiooooouuuunc------";
+        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
+        var to   = 'aaaaaeeeeeiiiiooooouuuunc------';
         for (var i=0, l=from.length ; i<l ; i++) {
             str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
         }
@@ -91,24 +92,6 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
-    }
-
-    function getNewPageName(pages) {
-
-        var defaultName = 'New Page ';
-        var pageRegex = new RegExp(defaultName + '(\\d+)');
-
-        var largest = 0;
-        pages.forEach(function(page) {
-            if(page.name) {
-                var result = pageRegex.exec(page.name);
-                if(result && parseInt(result[1]) > largest) {
-                    largest = parseInt(result[1]);
-                }
-            }
-        });
-        largest++;
-        return defaultName + largest;
     }
 
 })();

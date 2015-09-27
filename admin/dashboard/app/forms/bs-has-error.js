@@ -2,8 +2,8 @@
     var adminApp = angular.module('adminApp');
     adminApp.directive('bsHasError', function() {
         return {
-            restrict: "A",
-            link: function(scope, element, attrs, ctrl) {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
                 //find parent form
                 function getClosestFormName(element) {
                     var parent = element.parent();

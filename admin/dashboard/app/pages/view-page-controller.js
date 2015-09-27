@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("ViewPageController", function($scope, $rootScope, $routeParams) {
+adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
 
     var env = $routeParams.env;
     var url = $routeParams.url;
@@ -49,7 +49,7 @@ adminApp.directive('pageHolder', function() {
             var pageFrame = element.find('iframe')[0];
 
             pageFrame.addEventListener('load', function() {
-                var frameHead = pageFrame.contentWindow.document.getElementsByTagName("head")[0];
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
                 frameHead.appendChild(adminStyles);
                 frameHead.appendChild(adminScript);
 

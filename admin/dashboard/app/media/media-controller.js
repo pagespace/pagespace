@@ -78,10 +78,9 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         availableTags = availableTags.filter(function(tag) {
             return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
         });
-        console.log($scope.availableTags);
         $scope.availableTags = availableTags;
     }).error(function(err) {
-        $scope.showError("Error getting media items", err);
+        $scope.showError('Error getting media items', err);
     });
 });
 

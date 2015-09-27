@@ -5,7 +5,7 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller("PageController",
+adminApp.controller('PageController',
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
              pageService, templateService, pluginService, $window) {
 
@@ -39,7 +39,7 @@ adminApp.controller("PageController",
         templateService.doGetAvailableTemplates().success(function(templates) {
             $log.info('Got available templates.');
             $scope.templates = templates;
-            callback()
+            callback();
         });
     });
     pageSetupFunctions.push(function getPlugins(callback) {
@@ -47,7 +47,7 @@ adminApp.controller("PageController",
         pluginService.getPlugins().success(function(availablePlugins) {
             $log.debug('Got available plugins.');
             $scope.availablePlugins = availablePlugins;
-            callback()
+            callback();
         });
     });
 
@@ -139,7 +139,7 @@ adminApp.controller("PageController",
     };
 
     $scope.cancel = function() {
-        $location.path("/pages");
+        $location.path('/pages');
     };
 
     $scope.updateRegions = function(template) {
@@ -223,24 +223,24 @@ adminApp.controller("PageController",
         if(pageId) {
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            pageService.updatePage(pageId, page).success(function(res) {
+            pageService.updatePage(pageId, page).success(function() {
                 $log.info('Page successfully updated');
-                $scope.showSuccess("Page: " + page.name + " saved.");
-                $location.path("");
+                $scope.showSuccess('Page: ' + page.name + ' saved.');
+                $location.path('');
             }).error(function(err) {
                 $log.error(err, 'Error updating page');
-                $scope.showError("Error updating page", err);
+                $scope.showError('Error updating page', err);
             });
         } else {
             $log.info('Creating page...');
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             pageService.createPage(page).success(function() {
                 $log.info('Page successfully created');
-                $scope.showSuccess("Page: " + page.name + " created.");
-                $location.path("");
+                $scope.showSuccess('Page: ' + page.name + ' created.');
+                $location.path('');
             }).error(function(err) {
                 $log.error(err, 'Error creating page');
-                $scope.showError("Error adding new page", err);
+                $scope.showError('Error adding new page', err);
             });
         }
     };

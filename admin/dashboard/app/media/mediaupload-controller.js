@@ -28,7 +28,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
             availableTags.filter(function(tag) {
                 return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
             });
-            resolve(availableTags)
+            resolve(availableTags);
         });
         return promise;
     };
@@ -72,7 +72,7 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
     };
 
     $scope.cancel = function() {
-        $location.path("/media");
+        $location.path('/media');
     };
 });
 

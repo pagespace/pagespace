@@ -12,7 +12,7 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
     pluginService.getPlugins().success(function(plugins) {
         $scope.plugins = plugins;
     }).error(function(err) {
-        $scope.showError("Error getting plugins", err);
+        $scope.showError('Error getting plugins', err);
     });
 
 });
