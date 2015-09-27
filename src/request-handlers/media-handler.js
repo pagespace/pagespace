@@ -100,8 +100,6 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
 
 MediaHandler.prototype.doUpdateResource = function(req, res, next, logger) {
 
-
-
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = apiInfo[1];
     logger.info('Updating media text for %s', itemFileName);
@@ -125,7 +123,6 @@ MediaHandler.prototype.doUpdateResource = function(req, res, next, logger) {
             }
         });
     });
-
 };
 
 MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
@@ -191,21 +188,33 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             logger.info('Media upload request OK');
             //don't send file paths to client
             delete model.filePath;
+            res.status(201);
             res.json(model);
         } else {
+            var err = savePromise.reason();
+            err.fileUploadPath = filePath;
+            //next catch will handle the mongoose failure
+            throw err;
+        }
+    }).catch(function(err) {
+        logger.error(err);
+
+        if(err.code && err.code === 11000) {
+            err.message = 'This file has already been uploaded';
+            err.status = 400;
+        }
+        if(err.fileUploadPath) {
             //rollback file upload
-            fs.unlink(filePath, function(fileErr) {
+            fs.unlink(err.fileUploadPath, function(fileErr) {
                 if(fileErr) {
                     logger.warn(fileErr, 'Unable to rollback file upload after mongoose save failure');
                 } else {
                     logger.debug('Roll back file upload after mongoose save failure was successful');
                 }
+                next(err);
             });
-            //next catch will handle the mongoose failure
-            return savePromise.value();
+        } else {
+            next(err);
         }
-    }).catch(function(err) {
-        logger.error(err);
-        next(err);
     });
 };

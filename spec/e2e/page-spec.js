@@ -8,7 +8,7 @@ var doPosts = httpSupport.doPosts;
 var doPuts = httpSupport.doPuts;
 var doDels = httpSupport.doDels;
 
-describe('Client sending page request', function() {
+describe('Client sending page requests', function() {
 
     it('gets a live page as guest', function(done) {
         doGet({

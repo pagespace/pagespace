@@ -34,6 +34,8 @@ var support = {
         var body = opts.body || null;
         var accept = opts.accept || 'application/json';
         var contentType = opts.contentType || null;
+        var fields = opts.fields || [];
+        var attach = opts.attach || null;
 
         return pagespace.ready().then(function() {
             return getAgentForUser(user);
@@ -44,6 +46,14 @@ var support = {
                     .send(body);
                 if(contentType) {
                     request = request.expect('Content-Type', contentType)
+                }
+                if(attach) {
+                    request = request.attach(attach.name, attach.value);
+                }
+                if(fields) {
+                    fields.forEach(function(field) {
+                        request = request.field(field.name, field.value);
+                    });
                 }
                 request.expect(expectedStatus)
                     .end(function(err, res){
