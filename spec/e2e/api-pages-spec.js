@@ -11,22 +11,6 @@ var doDels = httpSupport.doDels;
 
 describe('Client sending API requests for pages', function() {
 
-    // -- General--------------------------------------------------------------
-
-    it('receives 403 response for unrecognized API urls', function(done) {
-        doGets({
-            user: 'admin',
-            url: '/_api/cats',
-            status: 403
-        }).then(function() {
-            done();
-        }).catch(function(err) {
-            done.fail(err);
-        })
-    });
-
-    // -- Pages ---------------------------------------------------------------
-
     // -- get collection
 
     it('gets pages as admin or editor', function(done) {

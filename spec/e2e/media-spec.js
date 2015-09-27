@@ -139,6 +139,9 @@ describe('Client sending media requests', function() {
 
     it('cannot upload the same file name twice', function(done) {
 
+        var uploads = fs.readdirSync(__dirname + '/../../media-uploads');
+        expect(uploads.length).toBe(2);
+
         doPost({
             user: 'editor',
             url: '/_media',
@@ -154,6 +157,11 @@ describe('Client sending media requests', function() {
             },
             status: 400
         }).then(function() {
+
+            //ensures the rollback occurred
+            var uploads = fs.readdirSync(__dirname + '/../../media-uploads');
+            expect(uploads.length).toBe(2);
+
             done();
         }).catch(function(err) {
             done.fail(err);
