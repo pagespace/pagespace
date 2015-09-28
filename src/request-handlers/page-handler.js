@@ -32,6 +32,8 @@ var httpStatus = {
     REDIRECTS: [ 301, 302, 303, 307 ]
 };
 
+var FIND_PAGE_CACHE_DURATION = 1000 * 60;
+
 var PageHandler = function() {};
 
 module.exports = new PageHandler();
@@ -321,7 +323,7 @@ PageHandler.prototype._setFindPagePromise = function(key, promise) {
     //simple cache expiration. nice to be a lru impl...
     setTimeout(function() {
         delete self.findPagePromises[key];
-    }, 60 * 1000);
+    }, FIND_PAGE_CACHE_DURATION);
 };
 
 /**
