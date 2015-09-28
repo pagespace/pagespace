@@ -29,3 +29,20 @@ media-uploads
 
 *.iml
 .idea
+
+admin/bower_components/*
+!admin/bower_components/ng-tags-input/ng-tags-input.min.css
+!admin/bower_components/ng-tags-input/ng-tags-input.bootstrap.min.css
+!admin/bower_components/codemirror/lib/codemirror.css
+!admin/bower_components/browser-bunyan/dist/browser-bunyan.min.js
+!admin/bower_components/async/lib/async.js
+!admin/bower_components/angular/angular.min.js
+!admin/bower_components/angular-resource/angular-resource.min.js
+!admin/bower_components/angular-route/angular-route.min.js
+!admin/bower_components/angular-touch/angular-touch.min.js
+!admin/bower_components/ng-tags-input/ng-tags-input.min.js
+!admin/bower_components/ng-focus-if/focusIf.min.js
+!admin/bower_components/codemirror/lib/codemirror.js
+!admin/bower_components/codemirror/mode/xml/xml.js
+!admin/bower_components/codemirror/mode/javascript/javascript.js
+!admin/bower_components/angular-ui-codemirror/ui-codemirror.js
