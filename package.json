@@ -51,7 +51,10 @@
     "gulp-watch": "~3.0.0",
     "jasmine": "^2.3.2",
     "serve-favicon": "^2.3.0",
-    "supertest": "^1.1.0"
+    "supertest": "^1.1.0",
+    "pagespace-webcopy" : "pagespace/pagespace-webcopy",
+    "pagespace-html" : "pagespace/pagespace-html",
+    "pagespace-nav" : "pagespace/pagespace-nav"
   },
   "peerDependencies": {
     "express": ">4.10",
