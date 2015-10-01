@@ -9,4 +9,5 @@ services:
 before_script:
   - sleep 15
   - mongod --version
+  - mongorestore --db test spec/e2e/fixtures/db
   - mongo test --eval 'db.addUser("tester", "test");'
