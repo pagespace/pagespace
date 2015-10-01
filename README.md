@@ -64,38 +64,42 @@ var express = require('express');
 var pagespace = require('./src/index');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
+var favicon = require('serve-favicon');
 var session = require("express-session");
 
 var app = express();
 
-//additional middleware required by Pagespace
-app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: 'keyboard cat'})]);
+app.use(favicon(__dirname + '/favicon.ico'));
+app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: process.env.SESSION_SECRET || 'foo'})]);
 
-// view engine setup, add a custom template directory to this list:
+// view engine setup
 app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
-//use pagespace middleware
 app.use(pagespace.init({
-    db: 'mongodb://localhost/mysite-db'
+    db: 'mongodb://localhost/test'
 }));
 
-//handle errors
-app.use(function(err, req, res, next) {
+// catch 404 and forwarding to error handler
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+
+// error handler
+app.use(function(err, req, res) {
     res.status(err.status || 500);
     res.render('error', {
         message: err.message,
-        status: err.status
+        status: err.status,
+        error: {}
     });
 });
 
-//start server
-var port = 8080;
-app.listen(port, function() {
-    console.log('Pagespace is running on %s', port)
+app.listen(9999, function() {
+    console.log('Pagespace dev app now running on http://localhost:9999');
 });
-
-module.exports = app;
 ```
 
 See [app.js](./app.js) for a more comprehensive example.

@@ -13,7 +13,7 @@
   "scripts": {
     "build" : "gulp",
     "test": "./node_modules/jasmine/bin/jasmine.js",
-    "start": "node app.js | ./node_modules/.bin/bunyan"
+    "start": "node app-test.js"
   },
   "files": [
     "admin",

@@ -1,6 +1,6 @@
 var request = require('supertest'),
     agents = require('./agents'),
-    app = require('../../../app.js'),
+    app = require('../../../app-test.js'),
     pagespace = app.pagespace,
     Promise = require('bluebird');
 
