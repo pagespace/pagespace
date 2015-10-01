@@ -79,7 +79,7 @@ DataSetup.prototype.runSetup = function() {
 
         //set up the default admin user for first run
         if (users.length === 0) {
-            logger.info('Creating admin user with default admin password');
+            logger.warn('Creating admin user with default admin password');
             var User = self.dbSupport.getModel('User');
             var defaultAdmin = new User({
                 username: 'admin',
