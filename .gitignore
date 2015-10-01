@@ -26,6 +26,8 @@ node_modules
 
 pspace
 media-uploads
+tmp
+output
 
 *.iml
 .idea
