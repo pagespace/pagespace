@@ -1,6 +1,8 @@
 Pagespace
 =========
 
+[![Build Status](https://travis-ci.org/pagespace/pagespace.svg?branch=master)](https://travis-ci.org/pagespace/pagespace)
+
 Pagespace is website management software built using [Node.JS](https://nodejs.org/en/) and [MongoDB](https://www.mongodb.org/).
 
 Pagespace began as a simple platform for me to make websites on the Node platform for friends with content that was 
