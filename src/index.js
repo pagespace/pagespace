@@ -139,7 +139,7 @@ Index.prototype.init = function(options) {
     if(!options.db) {
         throw new Error('You must specify a db connection string');
     }
-    this.mongoose.connect(options.db);
+    this.mongoose.connect(options.db, options.dbOptions || {});
     this.dbSupport = this.dbSupport || createDbSupport({
         logger: logger,
         mongoose: this.mongoose
@@ -161,7 +161,8 @@ Index.prototype.init = function(options) {
         self.emit('error', err);
     });
     db.once('open', function() {
-        logger.info('DB connection established');
+        var conn = mongoose.connection;
+        logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user);
         self.dataSetup = self.dataSetup || createDataSetup({
             logger: logger,
             dbSupport: self.dbSupport

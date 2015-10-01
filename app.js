@@ -19,7 +19,11 @@ app.engine('hbs', pagespace.getViewEngine());
 app.set('view engine', 'hbs');
 
 app.use(pagespace.init({
-    db: 'mongodb://localhost/test',
+    db: 'mongodb://127.0.0.1/test',
+//    dbOptions: {
+//        user: 'tester',
+//        pass: 'test'
+//    },
     mediaDir: path.join(__dirname, 'media-uploads'),
     logLevel: 'info'
 }));
