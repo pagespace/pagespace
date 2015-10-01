@@ -162,7 +162,7 @@ Index.prototype.init = function(options) {
     });
     db.once('open', function() {
         var conn = mongoose.connection;
-        logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user);
+        logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user || 'anon');
         self.dataSetup = self.dataSetup || createDataSetup({
             logger: logger,
             dbSupport: self.dbSupport
