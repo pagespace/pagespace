@@ -1,6 +1,4 @@
-var app = require('../../app.js').app,
-    pagespace = require('../../app.js').pagespace,
-    httpSupport = require('./support/http-support');
+var httpSupport = require('./support/http-support');
 
 var doGet = httpSupport.doGet;
 var doPut = httpSupport.doPut;
@@ -8,6 +6,7 @@ var doPut = httpSupport.doPut;
 var page2PluginUrl = '/_plugins/data?pageId=56044a3399d5e6354d960b27&region=Main&include=1';
 
 describe('Client sending plugin requests', function() {
+
 
     it('cannot get plugin data as guest', function (done) {
         doGet({

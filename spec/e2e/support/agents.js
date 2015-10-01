@@ -1,4 +1,5 @@
-var app = require('../../../app.js').app;
+var app = require('../../../app.js');
+var server = app.server;
 var Promise = require('bluebird');
 var request = require('supertest');
 
@@ -7,6 +8,22 @@ var editorAgent = null;
 var guestAgent = null;
 
 var agents = {
+
+    kill: function() {
+        return new Promise(function(resolve) {
+            adminAgent = null;
+            editorAgent = null;
+            guestAgent = null;
+            app.server.on('close', function() {
+                setTimeout(function() {
+                    //a little time for mongoose to disconnect too
+                    resolve();
+                }, 100);
+            });
+            app.server.close();
+        });
+    },
+
     getGuestAgent: function (app) {
         if (!app) {
             throw new Error('Give me an app');
@@ -17,7 +34,7 @@ var agents = {
                 resolve(guestAgent);
                 return;
             }
-            guestAgent = request.agent(app);
+            guestAgent = request.agent(server);
             console.log('Guest agent created');
             resolve(guestAgent);
         });
@@ -34,7 +51,7 @@ var agents = {
                 return;
             }
 
-            editorAgent = request.agent(app);
+            editorAgent = request.agent(server);
             editorAgent.post('/_auth/login')
                 .send({ username: 'editor', password: 'editor' })
                 .end(function (err, res) {
@@ -59,7 +76,7 @@ var agents = {
                 return;
             }
 
-            adminAgent = request.agent(app);
+            adminAgent = request.agent(server);
             adminAgent.post('/_auth/login')
                 .send({ username: 'admin', password: 'admin' })
                 .end(function (err, res) {

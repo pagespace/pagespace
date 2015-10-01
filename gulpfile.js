@@ -4,6 +4,8 @@ var gulp = require('gulp'),
     jasmine = require('gulp-jasmine'),
     concat = require('gulp-concat');
 
+var httpSupport = require('./spec/e2e/support/http-support');
+
 gulp.task('lint-client', function() {
     return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js'])
         .pipe(jshint())
@@ -21,14 +23,18 @@ gulp.task('clean', function() {
         .pipe(gulp.dest('output'))
 });
 
-gulp.task('test', [ 'clean' ], function () {
-    gulp.src('***/*//*-spec.js')
+gulp.task('jasmine', [ 'clean' ], function () {
+    //gulp.src('**/*/static-spec.js')
+    return gulp.src('**/*-spec.js')
         .pipe(jasmine());
 
 });
+gulp.task('test', [ 'jasmine' ], function (done) {
+    httpSupport.end().then(done);
+});
 
 gulp.task('build-client', [ 'lint-client' ], function() {
-    gulp.src('./admin/dashboard/app/**/*.js')
+    return gulp.src('./admin/dashboard/app/**/*.js')
         .pipe(concat('admin-app.js'))
         .pipe(gulp.dest('./admin/dashboard/build'));
 });
@@ -38,5 +44,9 @@ gulp.task('watch', [ 'build-client' ], function() {
 });
 
 gulp.task('default', [ 'build-client', 'test', 'lint-server'], function() {
+    //can't always get tests to exit!
+    setTimeout(function() {
+        process.exit(0);
+    }, 1000);
 
 });

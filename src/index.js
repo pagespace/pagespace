@@ -200,6 +200,15 @@ Index.prototype.init = function(options) {
             self.emit('error', err);
         });
     });
+    db.on('close', function() {
+        self.logger.warn('DB Connection closed');
+    });
+    db.on('disconnected', function() {
+        self.logger.warn('DB Connection disconnected');
+    });
+    db.on('reconnected', function() {
+        self.logger.warn('DB Connection reconnected');
+    });
 
     //auth and acl setup
     this.acl = createAclSetup().runSetup();

@@ -16,6 +16,7 @@ app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret
 // view engine setup
 app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
+app.set('view engine', 'hbs');
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test',
@@ -34,7 +35,7 @@ app.use(function(req, res, next) {
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'development') {
+if (app.get('env') === 'production') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);
@@ -63,7 +64,7 @@ if (app.get('env') === 'development') {
 }
 
 var port = 9999;
-app.listen(port, function() {
+var server = app.listen(port, function() {
     console.log('Pagespace dev app now running on http://localhost:%s', port)
 }).on('error', function(err) {
     if(err.code === 'EADDRINUSE') {
@@ -71,9 +72,13 @@ app.listen(port, function() {
     } else {
         console.error(err, 'Couldn\'t start pagespace :(');
     }
+}).on('close', function() {
+    //disconnnect or gulp jasmine doesn't exit
+    pagespace.mongoose.disconnect();
+    console.info('Pagesapce server closed');
 });
 
 module.exports = {
-    app: app,
-    pagespace: pagespace
+    pagespace: pagespace,
+    server: server
 };

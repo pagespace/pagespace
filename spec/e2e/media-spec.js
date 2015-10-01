@@ -1,7 +1,5 @@
 var Promise = require('bluebird'),
     fs = require('fs'),
-    app = require('../../app.js').app,
-    pagespace = require('../../app.js').pagespace,
     httpSupport = require('./support/http-support');
 
 var doGet = httpSupport.doGet;

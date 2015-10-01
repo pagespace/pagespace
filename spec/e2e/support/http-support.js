@@ -1,7 +1,7 @@
 var request = require('supertest'),
     agents = require('./agents'),
-    app = require('../../../app.js').app,
-    pagespace = require('../../../app.js').pagespace,
+    app = require('../../../app.js'),
+    pagespace = app.pagespace,
     Promise = require('bluebird');
 
 function getAgentForUser(user) {
@@ -15,6 +15,18 @@ function getAgentForUser(user) {
 }
 
 var support = {
+
+    end: function() {
+        return new Promise(function(resolve, reject) {
+            pagespace.ready(function() {
+                agents.kill().then(function() {
+                    resolve();
+                }).catch(function(err) {
+                    reject(err);
+                });
+            });
+        })
+    },
 
     doReqs: function(method, opts) {
 
