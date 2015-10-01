@@ -24,7 +24,7 @@ gulp.task('clean', function() {
 });
 
 gulp.task('jasmine', [ 'clean' ], function () {
-    //gulp.src('**/*/static-spec.js')
+
     return gulp.src('**/*-spec.js')
         .pipe(jasmine());
 
