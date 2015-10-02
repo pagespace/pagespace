@@ -319,9 +319,9 @@ PageHandler.prototype.doNotFound = function(logger, pageResult) {
 
 /**
  * Records a page hit
+ * @param req
+ * @param pageId
  * @param logger
- * @param result
- * @param urlPath
  */
 PageHandler.prototype.recordHit = function(req, pageId, logger) {
 
