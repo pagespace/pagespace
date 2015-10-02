@@ -143,6 +143,7 @@ header > nav {
     max-height: 300px;
     overflow: auto;
     transition: max-height linear 1s;
+    border-radius: 0 0 0 6px;
 }
 .alert.ng-hide {
     display: block !important;

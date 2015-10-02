@@ -1,15 +1,17 @@
-.ps-edit-box {
+/* edit */
+.ps-box {
     position: relative;
-    min-height: 24px;
+    min-height: 50px;
 }
-.ps-edit-box:hover {
+.ps-box:hover {
     outline: 2px solid #cbcbcb;
-
+    min-height: 50px;
 }
-.ps-edit-box .ps-edit {
+.ps-box .ps-edit,
+.ps-box .ps-remove,
+.ps-box .ps-add {
     display: none;
     position: absolute;
-    top: 0;
     right: 0;
     box-sizing: border-box;
     border: none;
@@ -18,11 +20,33 @@
     color: #fff;
     background: #cbcbcb;
     cursor: pointer;
-
 }
-.ps-edit-box:hover .ps-edit {
+.ps-box:hover .ps-edit,
+.ps-box:hover .ps-remove,
+.ps-box:hover .ps-add {
     display: block;
 }
+.ps-box .ps-edit {
+    top: 0;
+}
+.ps-box .ps-remove {
+    bottom: 0;
+}
+.ps-box .ps-add {
+    top: 0;
+}
+.ps-box.ps-box-add {
+    min-height: 24px;
+}
+.ps-region:hover .ps-box-add {
+    display: block;
+    outline: 2px solid #d8d8d8;
+}
+.ps-region:hover .ps-box-add:hover {
+    outline: 2px solid #cbcbcb;
+}
+
+/* buttons */
 .ps-btn {
     cursor: pointer;
     color: #fff;
