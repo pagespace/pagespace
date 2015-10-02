@@ -26,7 +26,8 @@ var siteSchema = require('../schemas/site'),
     pluginSchema = require('../schemas/plugin'),
     templateSchema = require('../schemas/template'),
     userSchema = require('../schemas/user'),
-    mediaSchema = require('../schemas/media');
+    mediaSchema = require('../schemas/media'),
+    hitSchema = require('../schemas/hit');
 
 var modelData = [{
     name: 'Site',
@@ -51,6 +52,10 @@ var modelData = [{
 }, {
     name: 'Media',
     schema: mediaSchema,
+    publishable: false
+}, {
+    name: 'Hit',
+    schema: hitSchema,
     publishable: false
 }];
 

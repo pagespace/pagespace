@@ -23,14 +23,15 @@ var util = require('util'),
     consts = require('../app-constants'),
     psUtil = require('../support/pagespace-util');
 
-//maps model ur namel partss to model names
+//maps model ur namel parts to model names
 var modelMap = {
     sites: 'Site',
     pages: 'Page',
     plugins: 'Plugin',
     templates:'Template',
     users: 'User',
-    media: 'Media'
+    media: 'Media',
+    hits: 'Hit'
 };
 
 //fields to auto populate when making queries to these model names (the keys)
@@ -40,7 +41,8 @@ var populationsMap = {
     Plugin: '',
     Template: 'regions.includes.plugin',
     User: '',
-    Media: ''
+    Media: '',
+    Hit: ''
 };
 
 var ApiHandler = function() {};
