@@ -1,12 +1,9 @@
 var gulp = require('gulp'),
-    run = require('gulp-run'),
     jshint = require('gulp-jshint'),
     concat = require('gulp-concat');
 
-var httpSupport = require('./spec/e2e/support/http-support');
-
 gulp.task('lint-client', function() {
-    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js'])
+    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js', '!admin/dashboard/app/inpage/*.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
@@ -24,8 +21,8 @@ gulp.task('build-client', [ 'lint-client' ], function() {
 });
 
 gulp.task('watch', [ 'build-client' ], function() {
-    gulp.watch('./admin/dashboard/app/**/*.js', ['buildAdmin']);
+    gulp.watch('./admin/dashboard/app/**/*.js', ['build-client']);
 });
 
-gulp.task('default', [ 'build-client', 'test', 'lint-server'], function() {
+gulp.task('default', [ 'build-client', 'lint-server'], function() {
 });

@@ -19,7 +19,8 @@
 
 'use strict';
 
-var psUtil = require('../support/pagespace-util');
+var psUtil = require('../support/pagespace-util'),
+    consts = require('../app-constants');
 
 /**
  *
@@ -79,7 +80,11 @@ DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
         year: new Date().toISOString().substr(0, 4)
     };
 
-    return res.render('dashboard.hbs', pageData, function(err, html) {
+    var reqInfo = consts.requests.DASHBOARD.regex.exec(req.url);
+    var reqType = reqInfo[1];
+
+    var view = reqType === 'inpage' ? 'inpage.hbs' : 'dashboard.hbs';
+    return res.render(view, pageData, function(err, html) {
         if(err) {
             logger.error(err, 'Error trying to render dashboard page, %s', req.url);
             next(err);

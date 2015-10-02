@@ -17,6 +17,16 @@
                 controller: 'SiteSettingsController'
             }).
 
+            //inpage
+            when('/add-include/:pageId/:region', {
+                templateUrl: '/_static/dashboard/app/inpage/add-include.html',
+                controller: 'AddIncludeController'
+            }).
+            when('/remove-include/:pageId/:region/:include', {
+                templateUrl: '/_static/dashboard/app/inpage/remove-include.html',
+                controller: 'RemoveIncludeController'
+            }).
+
             //pages
             when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',

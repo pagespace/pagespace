@@ -71,6 +71,59 @@
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
 
+        PageService.prototype.removeInclude = function(page, regionIndex, includeIndex) {
+
+            var i;
+            //convert region name to index
+            for(i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
+                if(page.regions[i].name === regionIndex) {
+                    regionIndex = i;
+                }
+            }
+
+            if(typeof regionIndex === 'number') {
+                for(i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                    if(i === includeIndex) {
+                        page.regions[regionIndex].includes.splice(i, 1);
+                    }
+                }
+            } else {
+                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
+                throw new Error(msg);
+            }
+
+            return page;
+        };
+
+        PageService.prototype.depopulatePage = function(page, templateId) {
+
+            delete page.createdBy;
+            delete page.updatedBy;
+            delete page.createdAt;
+            delete page.updatedAt;
+            page.template = templateId || page.template._id;
+            if(page.parent && page.parent._id) {
+                page.parent = page.parent._id;
+            }
+            if(page.redirect && page.redirect._id) {
+                page.redirect = page.redirect._id;
+            }
+            page.regions = page.regions.filter(function(region) {
+                return typeof region === 'object';
+            }).map(function(region) {
+                region.includes = region.includes.map(function(include) {
+                    include.plugin = include.plugin._id;
+                    if(isJson(include.data)) {
+                        include.data = JSON.parse(include.data);
+                    }
+                    return include;
+                });
+
+                return region;
+            });
+            return page;
+        };
+
         return new PageService();
     });
 
@@ -92,6 +145,16 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    }
+
+
+    function isJson(str) {
+        try {
+            JSON.parse(str);
+        } catch(e) {
+            return false;
+        }
+        return true;
     }
 
 })();

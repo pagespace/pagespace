@@ -1,12 +1,16 @@
-.ps-edit-box {
+/* edit */
+.ps-box {
     position: relative;
     min-height: 24px;
+    /*special outline color added by js */
 }
-.ps-edit-box:hover {
+.ps-box:hover {
     outline: 2px solid #cbcbcb;
-
+    min-height: 24px;
 }
-.ps-edit-box .ps-edit {
+.ps-box .ps-edit,
+.ps-box .ps-remove,
+.ps-box .ps-add {
     display: none;
     position: absolute;
     top: 0;
@@ -18,11 +22,35 @@
     color: #fff;
     background: #cbcbcb;
     cursor: pointer;
-
 }
-.ps-edit-box:hover .ps-edit {
+.ps-box:hover .ps-edit,
+.ps-box:hover .ps-remove,
+.ps-box:hover .ps-add {
     display: block;
 }
+.ps-box .ps-edit {
+    right: 26px;
+    /*special bg color added by js*/
+}
+.ps-box .ps-add {
+    /*special bg color added by js*/
+}
+.ps-box .ps-remove {
+    /*special bg color added by js*/
+}
+.ps-box.ps-box-add {
+    min-height: 24px;
+}
+.ps-region:hover .ps-box-add {
+    display: block;
+    outline: 2px solid #d8d8d8;
+}
+.ps-region:hover .ps-box-add:hover {
+    outline: 2px solid #cbcbcb;
+    /*special outline color added by js*/
+}
+
+/* buttons */
 .ps-btn {
     cursor: pointer;
     color: #fff;
@@ -46,6 +74,7 @@
     right: 0;
     padding: 4px;
     background: #CBCBCB;
+    /*special bg color added by js*/
 }
 .ps-include-editor-titlebar p {
     margin: 0;

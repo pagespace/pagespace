@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html ng-app="adminApp">
+<head>
+    <title>Pagespace :: Inpage</title>
+    <meta charset="utf-8">
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+
+    <script src="/_static/bower_components/browser-bunyan/dist/browser-bunyan.min.js"></script>
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
+    <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/_static/bower_components/angular-touch/angular-touch.min.js"></script>
+    <script src="/_static/bower_components/ng-tags-input/ng-tags-input.min.js"></script>
+    <script src="/_static/bower_components/ng-focus-if/focusIf.min.js"></script>
+    <script src="/_static/bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/xml/xml.js"></script>
+    <script src="/_static/bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/_static/bower_components/angular-ui-codemirror/ui-codemirror.min.js"></script>
+
+    <script src="/_static/dashboard/build/admin-app.js"></script>
+</head>
+<body ng-controller="MainController">
+
+<div class="container-fluid">
+    <div class="row">
+        <div ng-view></div>
+    </div>
+</div>
+</body>
+</html>

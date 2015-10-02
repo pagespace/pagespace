@@ -17,6 +17,16 @@
                 controller: 'SiteSettingsController'
             }).
 
+            //inpage
+            when('/add-include/:pageId/:region', {
+                templateUrl: '/_static/dashboard/app/inpage/add-include.html',
+                controller: 'AddIncludeController'
+            }).
+            when('/remove-include/:pageId/:region/:include', {
+                templateUrl: '/_static/dashboard/app/inpage/remove-include.html',
+                controller: 'RemoveIncludeController'
+            }).
+
             //pages
             when('/pages/new/root/:order', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
@@ -292,6 +302,110 @@
 })();
 
 
+(function() {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
+
+        var pageId = $routeParams.pageId;
+        var regionName = $routeParams.region;
+
+        $scope.added = false;
+        $scope.selectedPlugin = null;
+
+        var pluginsPromise = pluginService.getPlugins();
+        var pagePromise = pageService.getPage(pageId);
+
+        $q.all([pluginsPromise, pagePromise ]).then(function(results) {
+            $scope.availablePlugins = results[0].data;
+            $scope.page = results[1].data;
+
+            $log.debug('Got available plugins and page ok');
+        }).catch(function() {
+            $scope.err = err;
+            $log.error(err, 'Unable to get data');
+        });
+
+        $scope.selectPlugin = function(plugin) {
+            $scope.selectedPlugin = plugin;
+        };
+
+        $scope.addInclude = function() {
+
+            //map region name to index
+            var regionIndex = null;
+            for(var i = 0; i < $scope.page.regions.length && regionIndex === null; i++) {
+                if($scope.page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+
+            //add the new include to the region
+            if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
+                $scope.page.regions[regionIndex].includes.push({
+                    plugin: $scope.selectedPlugin,
+                    data: $scope.selectedPlugin.defaultData || {}
+                });
+
+                //save
+                $scope.page = pageService.depopulatePage($scope.page);
+                pageService.updatePage(pageId, $scope.page).success(function() {
+                    $scope.added = true;
+                }).error(function(err) {
+                    $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, region);
+                });
+            } else {
+                $log.error('Unable to determine region index for new include (pageId=%s, region=%s)',
+                    pageId, regionName);
+            }
+
+
+
+        };
+
+        $scope.close = function() {
+            window.parent.parent.location.reload();
+        };
+    });
+})();
+(function() {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('RemoveIncludeController', function($log, $scope, $routeParams, pageService) {
+
+        var pageId = $routeParams.pageId;
+        var regionName = $routeParams.region;
+        var includeIndex =  parseInt($routeParams.include);
+
+        $scope.page = null;
+        $scope.removed = false;
+
+        pageService.getPage(pageId).success(function(page) {
+            $scope.page = page;
+        }).error(function() {
+            $scope.err = err;
+            $log.error(err, 'Unable to get page: %s', pageId);
+        });
+
+        $scope.remove = function() {
+            if($scope.page) {
+                $scope.page = pageService.removeInclude($scope.page, regionName, includeIndex);
+                $scope.page = pageService.depopulatePage($scope.page);
+                pageService.updatePage(pageId, $scope.page).success(function() {
+                    $scope.removed = true;
+                }).error(function(err) {
+                    $scope.err = err;
+                    $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
+                        pageId, regionName, includeIndex);
+                });
+            }
+        };
+
+        $scope.close = function() {
+            window.parent.parent.location.reload();
+        };
+    });
+})();
 (function() {
 
     /**
@@ -789,14 +903,10 @@ adminApp.controller('PageController',
         $scope.page.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
-    $scope.removeInclude = function(regionIndex, includeIndex) {
+    $scope.removeInclude = function(region, includeIndex) {
         var really = window.confirm('Really delete this include?');
         if(really) {
-            for(var i = $scope.pageId.regions[regionIndex].includes.length - 1; i >= 0; i--) {
-                if(i === includeIndex) {
-                    $scope.page.regions[regionIndex].includes.splice(i, 1);
-                }
-            }
+            $scope.page = pageService.removeInclude($scope.page, region, includeIndex);
         }
     };
 
@@ -851,36 +961,12 @@ adminApp.controller('PageController',
         }
 
         var page = $scope.page;
-
         if(order) {
             page.order = order;
         }
 
         //unpopulate
-        delete page.createdBy;
-        delete page.updatedBy;
-        delete page.createdAt;
-        delete page.updatedAt;
-        page.template = $scope.template._id;
-        if(page.parent && page.parent._id) {
-            page.parent = page.parent._id;
-        }
-        if(page.redirect && page.redirect._id) {
-            page.redirect = page.redirect._id;
-        }
-        page.regions = page.regions.filter(function(region) {
-            return typeof region === 'object';
-        }).map(function(region) {
-            region.includes = region.includes.map(function(include) {
-                include.plugin = include.plugin._id;
-                if(isJson(include.data)) {
-                    include.data = JSON.parse(include.data);
-                }
-                return include;
-            });
-
-            return region;
-        });
+        page = pageService.depopulatePage(page, $scope.template._id);
 
         if(pageId) {
             $log.info('Update page: %s...', pageId);
@@ -911,15 +997,6 @@ adminApp.controller('PageController',
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
-    }
-
-    function isJson(str) {
-        try {
-            JSON.parse(str);
-        } catch(e) {
-            return false;
-        }
-        return true;
     }
 })();
 (function() {
@@ -995,6 +1072,59 @@ adminApp.controller('PageController',
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
 
+        PageService.prototype.removeInclude = function(page, regionIndex, includeIndex) {
+
+            var i;
+            //convert region name to index
+            for(i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
+                if(page.regions[i].name === regionIndex) {
+                    regionIndex = i;
+                }
+            }
+
+            if(typeof regionIndex === 'number') {
+                for(i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                    if(i === includeIndex) {
+                        page.regions[regionIndex].includes.splice(i, 1);
+                    }
+                }
+            } else {
+                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
+                throw new Error(msg);
+            }
+
+            return page;
+        };
+
+        PageService.prototype.depopulatePage = function(page, templateId) {
+
+            delete page.createdBy;
+            delete page.updatedBy;
+            delete page.createdAt;
+            delete page.updatedAt;
+            page.template = templateId || page.template._id;
+            if(page.parent && page.parent._id) {
+                page.parent = page.parent._id;
+            }
+            if(page.redirect && page.redirect._id) {
+                page.redirect = page.redirect._id;
+            }
+            page.regions = page.regions.filter(function(region) {
+                return typeof region === 'object';
+            }).map(function(region) {
+                region.includes = region.includes.map(function(include) {
+                    include.plugin = include.plugin._id;
+                    if(isJson(include.data)) {
+                        include.data = JSON.parse(include.data);
+                    }
+                    return include;
+                });
+
+                return region;
+            });
+            return page;
+        };
+
         return new PageService();
     });
 
@@ -1016,6 +1146,16 @@ adminApp.controller('PageController',
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    }
+
+
+    function isJson(str) {
+        try {
+            JSON.parse(str);
+        } catch(e) {
+            return false;
+        }
+        return true;
     }
 
 })();

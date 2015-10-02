@@ -224,7 +224,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 if(pageResult.previewMode) {
                     htmlWrapper =
                         '<div data-plugin="%s" ' +
-                        '<div data-plugin-name="%s" ' +
+                        'div data-plugin-name="%s" ' +
                         'data-page-id="%s" ' +
                         'data-region="%s" ' +
                         'data-include="%s">\n%s\n</div>';

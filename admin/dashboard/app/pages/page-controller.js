@@ -127,14 +127,10 @@ adminApp.controller('PageController',
         $scope.page.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
     };
 
-    $scope.removeInclude = function(regionIndex, includeIndex) {
+    $scope.removeInclude = function(region, includeIndex) {
         var really = window.confirm('Really delete this include?');
         if(really) {
-            for(var i = $scope.pageId.regions[regionIndex].includes.length - 1; i >= 0; i--) {
-                if(i === includeIndex) {
-                    $scope.page.regions[regionIndex].includes.splice(i, 1);
-                }
-            }
+            $scope.page = pageService.removeInclude($scope.page, region, includeIndex);
         }
     };
 
@@ -189,36 +185,12 @@ adminApp.controller('PageController',
         }
 
         var page = $scope.page;
-
         if(order) {
             page.order = order;
         }
 
         //unpopulate
-        delete page.createdBy;
-        delete page.updatedBy;
-        delete page.createdAt;
-        delete page.updatedAt;
-        page.template = $scope.template._id;
-        if(page.parent && page.parent._id) {
-            page.parent = page.parent._id;
-        }
-        if(page.redirect && page.redirect._id) {
-            page.redirect = page.redirect._id;
-        }
-        page.regions = page.regions.filter(function(region) {
-            return typeof region === 'object';
-        }).map(function(region) {
-            region.includes = region.includes.map(function(include) {
-                include.plugin = include.plugin._id;
-                if(isJson(include.data)) {
-                    include.data = JSON.parse(include.data);
-                }
-                return include;
-            });
-
-            return region;
-        });
+        page = pageService.depopulatePage(page, $scope.template._id);
 
         if(pageId) {
             $log.info('Update page: %s...', pageId);
@@ -249,14 +221,5 @@ adminApp.controller('PageController',
 
     function stringifyData(val) {
         return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
-    }
-
-    function isJson(str) {
-        try {
-            JSON.parse(str);
-        } catch(e) {
-            return false;
-        }
-        return true;
     }
 })();
