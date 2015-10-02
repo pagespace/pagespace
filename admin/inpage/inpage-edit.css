@@ -1,17 +1,19 @@
 /* edit */
 .ps-box {
     position: relative;
-    min-height: 50px;
+    min-height: 24px;
+    /*special outline color added by js */
 }
 .ps-box:hover {
     outline: 2px solid #cbcbcb;
-    min-height: 50px;
+    min-height: 24px;
 }
 .ps-box .ps-edit,
 .ps-box .ps-remove,
 .ps-box .ps-add {
     display: none;
     position: absolute;
+    top: 0;
     right: 0;
     box-sizing: border-box;
     border: none;
@@ -27,13 +29,14 @@
     display: block;
 }
 .ps-box .ps-edit {
-    top: 0;
-}
-.ps-box .ps-remove {
-    bottom: 0;
+    right: 26px;
+    /*special bg color added by js*/
 }
 .ps-box .ps-add {
-    top: 0;
+    /*special bg color added by js*/
+}
+.ps-box .ps-remove {
+    /*special bg color added by js*/
 }
 .ps-box.ps-box-add {
     min-height: 24px;
@@ -44,6 +47,7 @@
 }
 .ps-region:hover .ps-box-add:hover {
     outline: 2px solid #cbcbcb;
+    /*special outline color added by js*/
 }
 
 /* buttons */
@@ -70,6 +74,7 @@
     right: 0;
     padding: 4px;
     background: #CBCBCB;
+    /*special bg color added by js*/
 }
 .ps-include-editor-titlebar p {
     margin: 0;
