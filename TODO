@@ -1,3 +1,28 @@
+MUST
+=====
+* Finish rest testing
+* Blog macro
+* Docs
+* Static generator/CLI
+* edit image and link in web copy plugin
+* markdown plugin
+* gallery plugin
+* forgot password
+
+NICE
+=====
+* Dashboard
+* Analytics
+* archiving
+* externalize ACL
+* plugin generator
+
+BUGS
+====
+* edit link in web copy
+
+DONE
+=====
 ✓ Populate some data, and test a query.
 ✓ Nested population with Model.populate, _ref notation (page._template), get template and start rendering
 ✓ Read possible urls from db and add as ready promise
@@ -44,34 +69,23 @@
 ✓ Auto determine template regions
 ✓ When selecting a part, pop in template, populate the default data
 ✓ Do same in page
-* Multiple parts per region
+✓ Multiple parts per region
 * Redo parts as external editiable plugins
-    * html (in page)
+    ✓ html (in page)
     ✓ html (blog)
     ✓ navigation
     ✓ html include
 ✓ Move pageId to html tag
-* Select media image from ck picker
-* REST tests
+✓  Select media image from ck picker
 ✓ tidy up test app
-* externalize ACL
 ✓ parts to plugins?
-* cli, plugin generator
-* archiving
-
-
-Cache points
-- development:
-    - change a template
-    - change a part view
-
-OTT
-
 
 BUGS
+====
 * edit link in web copy
 
 PRODUCTION CHECKLIST
+====================
 ✓ Full code review
 ✓ Logging review
 ✓ Caching
@@ -79,4 +93,4 @@ PRODUCTION CHECKLIST
 ✓ OTT
 ✓ Test perf (jmeter)
 ✓ Publish npm
-* Security checks
+✓ Travis
