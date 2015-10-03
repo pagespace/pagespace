@@ -52,6 +52,7 @@ PageHandler.prototype.init = function(support) {
     this.userBasePath = support.userBasePath;
     this.site = support.site;
     this.pluginResolver = support.pluginResolver;
+    this.analytics = support.analytics;
     this.reqCount = 0;
     this.findPagePromises = {};
 
@@ -111,7 +112,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         };
 
         //analytics. page exists and its a guest user
-        if(page && (!req.user || req.user.role === consts.GUEST_USER.role)) {
+        if(self.analytics && page && (!req.user || req.user.role === consts.GUEST_USER.role)) {
             self.recordHit(req, page._id, logger);
         }
 

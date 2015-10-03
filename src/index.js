@@ -153,6 +153,8 @@ Index.prototype.init = function(options) {
         dbSupport: this.dbSupport
     });
 
+    //analytics
+    var analytics = options.analytics || false;
 
     var db = this.mongoose.connection;
     db.on('error', function(err) {
@@ -187,7 +189,8 @@ Index.prototype.init = function(options) {
                 pluginResolver: self.pluginResolver,
                 site: site,
                 mediaDir: self.mediaDir,
-                userBasePath: self.userBasePath
+                userBasePath: self.userBasePath,
+                analytics: analytics
             };
 
             logger.info('Initialized, waiting for requests');
