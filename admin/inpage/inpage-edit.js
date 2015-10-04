@@ -314,8 +314,8 @@
                 top = 100;
                 height = window.innerHeight - 200;
             } else {
-                top = 31;
-                height = window.innerHeight - 32;
+                top = 30;
+                height = window.innerHeight - 30;
 
             }
 
