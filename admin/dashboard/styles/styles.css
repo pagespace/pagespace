@@ -21,14 +21,14 @@ h1,
 .h1 {
     margin-bottom: 40px;
 }
-header {
+.dashboard-header  {
     position: relative;
     z-index: 1;
     background-color: #D7DADE;
     border-bottom: 4px solid #CBCBCB;
 }
-header h1,
-header .nav {
+.dashboard-header  h1,
+.dashboard-header .nav {
     text-align: right;
 }
 a {

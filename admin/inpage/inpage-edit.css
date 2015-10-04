@@ -74,6 +74,7 @@
     right: 0;
     padding: 4px;
     background: #CBCBCB;
+    box-sizing: border-box;
     /*special bg color added by js*/
 }
 .ps-include-editor-titlebar p {

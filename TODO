@@ -12,6 +12,7 @@ MUST
 * comments plugin
 * forgot password
 * Blog macro
+* hide live popout for unpublished pages
 
 NICE
 =====
@@ -24,6 +25,11 @@ NICE
 BUGS
 ====
 * edit link in web copy
+* template name missing first letter for ./
+* webcopy buggy
+* No popout links for /
+* Default page
+
 
 DONE
 =====

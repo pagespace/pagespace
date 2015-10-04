@@ -296,36 +296,49 @@
         closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close>';
 
         titleBar.appendChild(closeBtn);
-        closeBtn.addEventListener('click', function() {
-            editor.parentNode.parentNode.removeChild(modal);
-            document.body.style.overflow = 'auto';
-        });
 
         editor.appendChild(titleBar);
 
         //animate to size
         window.setTimeout(function() {
-
-            var top, height;
-            if(size === 'small') {
-                top = 200;
-                height = window.innerHeight - 400;
-            } else if(size === 'medium') {
-                top = 100;
-                height = window.innerHeight - 200;
-            } else {
-                top = 30;
-                height = window.innerHeight - 30;
-
-            }
-
-            document.body.style.overflow = 'hidden';
-
-            editor.style.top = top + 'px';
-            editor.style.left = window.innerWidth < 1000 ? 0 : ((window.innerWidth - 1000) / 2) + 'px';
-            editor.style.width = window.innerWidth < 1000 ? window.innerWidth + 'px' : 1000 + 'px';
-            editor.style.height = height+ 'px';
+            setIframeSize(editor, size);
         }, 300);
+
+
+        function setIframeSize(editor, size) {
+            if(editor) {
+                var top, height;
+                if(size === 'small') {
+                    top = 200;
+                    height = window.innerHeight - 400;
+                } else if(size === 'medium') {
+                    top = 100;
+                    height = window.innerHeight - 200;
+                } else {
+                    top = 30;
+                    height = window.innerHeight - 30;
+
+                }
+
+                document.body.style.overflow = 'hidden';
+
+                editor.style.top = top + 'px';
+                editor.style.left = window.innerWidth < 1000 ? 0 : ((window.innerWidth - 1000) / 2) + 'px';
+                editor.style.width = window.innerWidth < 1000 ? window.innerWidth + 'px' : 1000 + 'px';
+                editor.style.height = height+ 'px';
+            }
+        }
+        var resizeListener = function() {
+            setIframeSize(editor, size);
+        };
+
+        window.addEventListener('resize', resizeListener);
+
+        closeBtn.addEventListener('click', function() {
+            window.removeEventListener('resize', resizeListener);
+            editor.parentNode.parentNode.removeChild(modal);
+            document.body.style.overflow = 'auto';
+        });
 
         return iframe;
     }

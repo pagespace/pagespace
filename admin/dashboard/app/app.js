@@ -179,10 +179,12 @@
 
                 $scope.viewPageUrlPublished = false;
                 pageService.getPages({
-                    url:  url,
-                    published: true
+                    url:  url
                 }).success(function(pages) {
-                    $scope.viewPageUrlPublished = pages.length > 0;
+                    if(pages.length  === 1) {
+                        $scope.viewPageName = pages[0].name;
+                        $scope.viewPageUrlPublished = pages[0].published;
+                    }
                 });
             } else {
                 $scope.viewPageUrl = null;

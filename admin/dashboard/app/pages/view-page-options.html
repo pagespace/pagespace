@@ -1,6 +1,6 @@
 <div class="well pull-right header-page-options" ng-show="viewPageUrl">
     <span class="glyphicon glyphicon glyphicon-new-window"></span>&nbsp;
-    <a target="_blank" ng-href="{{viewPageUrl + '?_preview=true'}}" title="Open preview page in new tab">Preview</a>
+    <a target="_blank" ng-href="{{viewPageUrl + '?_preview=true'}}" title="Open '{{viewPageName}}' preview in a new tab">Preview</a>
     <span ng-show="viewPageUrlPublished">&nbsp;|&nbsp;
-    <a target="_blank" ng-href="{{viewPageUrl + '?_preview=false'}}" title="Open live page in new tab">Live</a></span>
+    <a target="_blank" ng-href="{{viewPageUrl + '?_preview=false'}}" title="Open '{{viewPageName}}' live page a in new tab">Live</a></span>
 </div>
