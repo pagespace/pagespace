@@ -160,7 +160,7 @@
         });
     }
 
-    adminApp.controller('MainController', function($scope, $location, $timeout) {
+    adminApp.controller('MainController', function($scope, $location, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -174,7 +174,16 @@
 
         $scope.$on('$routeChangeStart', function(ev, next) {
             if(next.params && next.params.url) {
-                $scope.viewPageUrl = '/' + (next.params.url || '');
+                var url = '/' + next.params.url || '';
+                $scope.viewPageUrl = url;
+
+                $scope.viewPageUrlPublished = false;
+                pageService.getPages({
+                    url:  url,
+                    published: true
+                }).success(function(pages) {
+                    $scope.viewPageUrlPublished = pages.length > 0;
+                });
             } else {
                 $scope.viewPageUrl = null;
             }

@@ -69,13 +69,13 @@
         //change the sidebar color stuff
         var headerColor = window.localStorage.getItem('specialColor');
         if(headerColor) {
-            document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+            document.getElementsByTagName('header')[0].style.borderColor = headerColor;
         }
         document.body.addEventListener('click', function (e) {
             if (e.target.getAttribute('data-color')) {
                 headerColor = e.target.getAttribute('data-color');
                 window.localStorage.setItem('specialColor', headerColor);
-                document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+                document.getElementsByTagName('header')[0].style.borderColor = headerColor;
             }
         });
     })();
