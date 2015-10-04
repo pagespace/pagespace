@@ -7,7 +7,7 @@
 <main class="main col-sm-6">
     <form role="form" ng-submit="submit(deletePageForm)" name="deletePageForm" class="form-horizontal" novalidate >
         <div class="form-intro" ng-show="page.published">
-            <p >Choose how to delete the page, <b>{{page.name}}</b>:</p>
+            <h4>Choose how to delete the page, <b>{{page.name}}</b>:</h4>
         </div>
         <p ng-show="!page.published">Delete the page, <b>{{page.name}}</b></p>
         <div ng-if="page.published">

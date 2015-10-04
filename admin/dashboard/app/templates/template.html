@@ -19,8 +19,8 @@
     <form role="form" name="templateForm" class="form-horizontal" novalidate ng-submit="save(templateForm)">
 
         <div class="notification-bar">
-            <p ng-show="!templateId">Create a new template</p>
-            <p ng-show="templateId">Update details for template: <b>{{template.name}}</b></p>
+            <h4 ng-show="!templateId">Create a new template</h4>
+            <h4 ng-show="templateId">Update details for template: <b>{{template.name}}</b></h4>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 

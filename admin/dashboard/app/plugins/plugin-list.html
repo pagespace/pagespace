@@ -10,7 +10,7 @@
 </nav>
 <main class="main col-sm-6">
     <div class="notification-bar">
-        <p ng-show="plugins.length == 0">No plugins have been imported</p>
+        <h4 ng-show="plugins.length == 0">No plugins have been imported</h4>
     </div>
     <div class="list-group" ng-show="plugins.length > 0">
         <a href="#/plugins/{{plugin._id}}" ng-repeat="plugin in plugins" class="list-group-item">

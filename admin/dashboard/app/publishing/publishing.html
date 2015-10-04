@@ -6,8 +6,8 @@
 <main class="main col-sm-6">
     <form role="form" ng-submit="publish()">
         <div class="notification-bar">
-            <p ng-show="drafts.length == 0">There is nothing to publish</p>
-            <p ng-show="drafts.length > 0">Select pages to publish:</p>
+            <h4 ng-show="drafts.length == 0">There are no pages to publish</h4>
+            <h4 ng-show="drafts.length > 0">Select pages to publish:</h4>
             <p ng-show="submitted" class="text-danger">Please select one or more pages to publish</p>
         </div>
         <div class="list-group" ng-show="drafts.length > 0">

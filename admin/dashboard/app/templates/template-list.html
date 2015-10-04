@@ -8,7 +8,7 @@
 </nav>
 <main class="main col-sm-6">
     <div class="notification-bar">
-        <p ng-show="templates.length == 0">There are no templates</p>
+        <h4 ng-show="templates.length == 0">There are no templates</h4>
     </div>
     <div class="list-group" ng-show="templates.length > 0">
         <a href="#/templates/{{template._id}}" ng-repeat="template in templates" class="list-group-item">
