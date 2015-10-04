@@ -64,7 +64,7 @@
                         return pageService.updatePage(page._id, defaultPageData);
                     } else {
                         var msg = 'Cannot set the default page. ' +
-                            page.name + ' has been explicitly set as the default page'
+                            page.name + ' has been explicitly set as the default page';
                         throw new Error(msg);
                     }
                     //else the page has the url / explicitly set. leave it alone

@@ -44,15 +44,15 @@
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
             }).
-            when('/pages/:section/:pageId/', {
+            when('/pages/:section/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/view-page/:env/', {
+            when('/view-page/:viewPageEnv', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
-            when('/view-page/:env/:url*', {
+            when('/view-page/:viewPageEnv/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
@@ -173,8 +173,8 @@
         };
 
         $scope.$on('$routeChangeStart', function(ev, next) {
-            if(next.params && next.params.url) {
-                var url = '/' + next.params.url || '';
+            if(next.params && next.params.viewPageEnv) {
+                var url = '/' + (next.params.url || '');
                 $scope.viewPageUrl = url;
 
                 $scope.viewPageUrlPublished = false;
@@ -1357,7 +1357,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
 var adminApp = angular.module('adminApp');
 adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
 
-    var env = $routeParams.env;
+    var env = $routeParams.viewPageEnv;
     var url = $routeParams.url;
 
     $scope.getPageUrl = function() {
@@ -1720,7 +1720,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
                         return pageService.updatePage(page._id, defaultPageData);
                     } else {
                         var msg = 'Cannot set the default page. ' +
-                            page.name + ' has been explicitly set as the default page'
+                            page.name + ' has been explicitly set as the default page';
                         throw new Error(msg);
                     }
                     //else the page has the url / explicitly set. leave it alone
