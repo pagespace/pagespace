@@ -46,7 +46,7 @@ StaticHandler.prototype.doRequest = function(req, res, next) {
 
     var logger = psUtil.getRequestLogger(this.logger, req, 'static', ++this.reqCount);
 
-    logger.debug('Processing static request for %s', req.url);
+    logger.trace('Processing static request for %s', req.url);
 
     var apiInfo = consts.requests.STATIC.regex.exec(req.url);
     var staticType = apiInfo[1];
