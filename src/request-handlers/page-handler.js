@@ -283,14 +283,13 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
  */
 PageHandler.prototype.doRedirect = function(req, res, next, logger, pageResult) {
     //redirects
-    var redirectPage = pageResult.redirect;
+    var redirectPage = pageResult.page.redirect;
     if(redirectPage && redirectPage.url) {
         res.redirect(pageResult.status, redirectPage.url);
     } else {
         logger.warn('Page to redirect to is not set. Sending 404');
-        var err = new Error('Page not found for ' + pageResult.urlPath);
-        err.status = 404;
-        throw err;
+        pageResult.status = httpStatus.NOT_FOUND;
+        return this.doNotFound(logger, pageResult);
     }
 };
 

@@ -7,7 +7,7 @@
     <form role="form" name="settingsForm" class="form-horizontal" novalidate ng-submit="save(settingsForm)" >
 
         <div class="notification-bar">
-            <p ng-show="!userId">Edit site settings</p>
+            <h4 ng-show="!userId">Edit site settings</h4>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 
@@ -15,7 +15,7 @@
             <label class="col-sm-2 control-label">Site name</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control input-medium"
-                       name="name" ng-model="site.name" placeholder="Orange Tea Theatre (required)" required>
+                       name="name" ng-model="site.name" placeholder="(required)" required>
             </div>
         </div>
 
@@ -23,17 +23,17 @@
             <label class="col-sm-2 control-label">Description</label>
             <div class="col-sm-10">
                 <textarea class="form-control input-medium" name="description" rows="5"
-                          ng-model="site.description" placeholder="Orange Tea Theate is based in Amsterdam..."></textarea>
+                          ng-model="site.description" placeholder="Briefly describe your site for SEO"></textarea>
             </div>
         </div>
 
         <div class="form-group" bs-has-error="defaultPage">
             <label class="col-sm-2 control-label">Default page</label>
             <div class="col-sm-10">
-                <select ng-model="defaultPage"
-                        ng-options="page._id as page.name for page in pages" class="form-control">
+                <select ng-model="defaultPage.redirect" class="form-control">
                     <option value="" disabled selected>Select a page</option>
-                    <option value="none">None</option>
+                    <option value="" ng-selected="!defaultPage.redirect">None</option>
+                    <option ng-repeat="page in availablePages" value="{{page._id}}" ng-selected="defaultPage.redirect._id == page._id">{{page.name}}</option>
                 </select>
             </div>
         </div>
