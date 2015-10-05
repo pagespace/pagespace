@@ -94,6 +94,10 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
             // pipe
             logger.debug('Streaming media to client for  %s', model.path);
             stream.pipe(res);
+        } else {
+            err = new Error(itemFileName + ' not found');
+            err.status = 404;
+            return next(err);
         }
     });
 };
