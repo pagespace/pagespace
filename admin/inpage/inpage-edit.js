@@ -322,9 +322,11 @@
 
                 document.body.style.overflow = 'hidden';
 
+                var maxLeft = (window.innerWidth / 12) * 2;
                 editor.style.top = top + 'px';
-                editor.style.left = window.innerWidth < 1000 ? 0 : ((window.innerWidth - 1000) / 2) + 'px';
-                editor.style.width = window.innerWidth < 1000 ? window.innerWidth + 'px' : 1000 + 'px';
+                editor.style.left = window.innerWidth < 1000 ? 0 : maxLeft + 'px';
+                editor.style.width = window.innerWidth < 1000 ?
+                    window.innerWidth + 'px' : window.innerWidth - (maxLeft * 2) + 'px';
                 editor.style.height = height+ 'px';
             }
         }
@@ -356,6 +358,9 @@
             '&region=' + encodeURIComponent(region) +
             '&include=' + encodeURIComponent(include);
         return {
+            getKey: function() {
+                return plugin + '_' + pageId + '_' + region + '_' + include;
+            },
             getData: function() {
                 console.info('Pagespace getting data for %s', plugin);
                 return fetch('/_plugins/data' + query, {
