@@ -76,12 +76,6 @@
                     return rule.selectorText === '.ps-box .ps-add';
                 })[0];
                 addButtonRule.style.backgroundColor = specialColor;
-
-                //title bar
-                var titlebarRule = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-include-editor-titlebar';
-                })[0];
-                titlebarRule.style.backgroundColor = specialColor;
             }
         } catch(e) {
             console.warn(e);
