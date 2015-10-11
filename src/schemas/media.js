@@ -74,7 +74,37 @@ function generateSchema() {
         updatedBy: {
             type: Schema.Types.ObjectId,
             ref: 'User'
-        }
+        },
+        variations: [{
+            label: {
+                type: String,
+                required: true
+            },
+            path: {
+                type: String,
+                required: true
+            },
+            size: {
+                type: Number,
+                required: true
+            },
+            width: {
+                type: Number,
+                required: false
+            },
+            height: {
+                type: Number,
+                required: false
+            },
+            fileName: {
+                type: String,
+                required: true
+            },
+            type: {
+                type: String,
+                required: true
+            }
+        }]
     });
 
     mediaSchema.pre('save', function (next) {
