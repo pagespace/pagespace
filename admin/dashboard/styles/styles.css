@@ -114,7 +114,8 @@ h4 {
 }
 
 
-.main {
+.main,
+.aside {
     padding: 18px;
     font-size: 18px;
 }
@@ -126,12 +127,16 @@ h4 {
     padding-bottom: 150px;
     background-image: linear-gradient(to bottom, #CBCBCB 0%, #E5E7EA 100%);
 }
-.side-nav a {
+.side-nav li a {
     font-size: 18px;
 }
 .side-nav .active a {
     background: #f3f3f3 !important;
     color: #999 !important;
+}
+.side-nav dt {
+    float: left;
+    margin-right: 8px;
 }
 .header-page-options {
     padding: 7px 18px;

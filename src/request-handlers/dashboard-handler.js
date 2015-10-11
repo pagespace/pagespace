@@ -38,6 +38,7 @@ DashboardHandler.prototype.init = function(support) {
     this.userBasePath = support.userBasePath;
     this.dbSupport = support.dbSupport;
     this.pluginResolver = support.pluginResolver;
+    this.imageVariations = support.imageVariations;
 
     this.reqCount = 0;
 
@@ -70,6 +71,7 @@ DashboardHandler.prototype.doRequest = function(req, res, next) {
 };
 
 DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
+
     logger.info('New dashboard request from %s', req.user.username);
 
     var pageData = {
@@ -83,14 +85,21 @@ DashboardHandler.prototype.doDashboard = function(req, res, next, logger) {
     var reqInfo = consts.requests.DASHBOARD.regex.exec(req.url);
     var reqType = reqInfo[1];
 
-    var view = reqType === 'inpage' ? 'inpage.hbs' : 'dashboard.hbs';
-    return res.render(view, pageData, function(err, html) {
-        if(err) {
-            logger.error(err, 'Error trying to render dashboard page, %s', req.url);
-            next(err);
-        } else {
-            logger.info('Dashboard request OK');
-            res.send(html);
-        }
-    });
+    if(reqType === 'settings') {
+        return res.json({
+            imageVariations: this.imageVariations
+        });
+    } else {
+        var view = reqType === 'inpage' ? 'inpage.hbs' : 'dashboard.hbs';
+        return res.render(view, pageData, function(err, html) {
+            if(err) {
+                logger.error(err, 'Error trying to render dashboard page, %s', req.url);
+                next(err);
+            } else {
+                logger.info('Dashboard request OK');
+                res.send(html);
+            }
+        });
+    }
+
 };

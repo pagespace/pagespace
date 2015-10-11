@@ -4,9 +4,11 @@
 
         function MediaService() {
         }
+
         MediaService.prototype.getItems = function() {
             return $http.get('/_api/media');
         };
+
         MediaService.prototype.getItem = function(mediaId) {
             return $http.get('/_api/media/' + mediaId);
         };
@@ -35,8 +37,16 @@
                 transformRequest: angular.identity
             });
         };
+
         MediaService.prototype.getItemText = function(item) {
             return $http.get('/_media/' + item.fileName);
+        };
+
+        MediaService.prototype.getImageVariations = function() {
+            return $http.get('/_dashboard/settings').then(function(res) {
+                var settings = res.data;
+                return settings.imageVariations || [];
+            });
         };
 
         //some utils
@@ -54,10 +64,16 @@
             return 'media-' + item.type.split('/')[1];
         };
 
-        MediaService.prototype.getSrcPath = function(item) {
-            return item &&  item.fileName ? '/_media/' + item.fileName : null;
+        MediaService.prototype.getSrcPath = function(item, label) {
+            var src = null;
+            if(item && item.fileName) {
+                src = '/_media/' + item.fileName;
+                if(label) {
+                    src += '?label=' + label;
+                }
+            }
+            return src;
         };
-
 
         /* jshint ignore:start */
         //thanks http://stackoverflow.com/a/14919494/200113

@@ -55,12 +55,8 @@
     "supertest": "^1.1.0",
     "pagespace-webcopy": "pagespace/pagespace-webcopy",
     "pagespace-html": "pagespace/pagespace-html",
-<<<<<<< HEAD
-    "pagespace-nav": "pagespace/pagespace-nav"
-=======
     "pagespace-nav": "pagespace/pagespace-nav",
     "pagespace-markdown": "pagespace/pagespace-markdown"
->>>>>>> master
   },
   "peerDependencies": {
     "express": ">4.10",

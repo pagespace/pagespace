@@ -95,14 +95,6 @@ function generateSchema() {
             height: {
                 type: Number,
                 required: false
-            },
-            fileName: {
-                type: String,
-                required: true
-            },
-            type: {
-                type: String,
-                required: true
             }
         }]
     });
@@ -120,6 +112,10 @@ function generateSchema() {
     mediaSchema.set('toJSON', {
         transform: function(doc, media) {
             delete media.path;
+            media.variations = media.variations.map(function(variation) {
+                delete variation.path;
+                return variation;
+            });
             return media;
         }
     });

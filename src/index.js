@@ -80,11 +80,11 @@ module.exports = new Index();
  * @param options.env. Set to 'development' to enable development mode
  * @param options.mediaDir A location to save uploaded media items. Defauults to ./media-uploads.
  *                         This directory will be created if it doesn't exist
- * @param options.imageSizes When users upload images they will be presented with options for creating resized
- *                           variations of that image, given these sizes. E.g.
- *                           <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
- *                           Resize objects with the label 'thumb' will be automatically applied when an image is
- *                           uploaded
+ * @param options.imageVariations When users upload images they will be presented with options for creating resized
+ *                                variations of that image, given these sizes. E.g.
+ *                                <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
+ *                                Resize objects with the label 'thumb' will be automatically applied when an image is
+ *                                uploaded
  * @param options.commonViewLocals Locals to make available in every handlebars template
  */
 Index.prototype.init = function(options) {
@@ -162,6 +162,19 @@ Index.prototype.init = function(options) {
     //analytics
     var analytics = options.analytics || false;
 
+    //other settings
+    //define a default thumbnail size
+    var imageVariations = options.imageVariations || [];
+    if(imageVariations.filter(function(variation) {
+        return variation.label === 'thumb';
+    }).length === 0) {
+        imageVariations.push({
+            label: 'thumb',
+            width: 200
+        });
+    }
+
+    //db
     var db = this.mongoose.connection;
     db.on('error', function(err) {
         logger.fatal(err, 'Unable to connect to database');
@@ -197,7 +210,7 @@ Index.prototype.init = function(options) {
                 mediaDir: self.mediaDir,
                 userBasePath: self.userBasePath,
                 analytics: analytics,
-                imageSizes: options.imageSizes || {}
+                imageVariations: imageVariations
             };
 
             logger.info('Initialized, waiting for requests');

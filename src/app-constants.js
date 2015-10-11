@@ -49,7 +49,7 @@ consts.requests = {
     },
     DASHBOARD: {
         key: 'DASHBOARD',
-        regex: new RegExp('^/_dashboard/?(inpage)?'),
+        regex: new RegExp('^/_dashboard/?(inpage|settings)?'),
         handler: require('./request-handlers/dashboard-handler')
     },
     MEDIA: {

@@ -442,6 +442,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
     $scope.isImage = mediaService.isImage;
     $scope.getMimeClass = mediaService.getMimeClass;
+    $scope.getSrcPath = mediaService.getSrcPath;
     $scope.mediaItems = [];
     $scope.availableTags = [];
     $scope.selectedTags = [];
@@ -522,9 +523,11 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         function MediaService() {
         }
+
         MediaService.prototype.getItems = function() {
             return $http.get('/_api/media');
         };
+
         MediaService.prototype.getItem = function(mediaId) {
             return $http.get('/_api/media/' + mediaId);
         };
@@ -553,8 +556,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
                 transformRequest: angular.identity
             });
         };
+
         MediaService.prototype.getItemText = function(item) {
             return $http.get('/_media/' + item.fileName);
+        };
+
+        MediaService.prototype.getImageVariations = function() {
+            return $http.get('/_dashboard/settings').then(function(res) {
+                var settings = res.data;
+                return settings.imageVariations || [];
+            });
         };
 
         //some utils
@@ -572,10 +583,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             return 'media-' + item.type.split('/')[1];
         };
 
-        MediaService.prototype.getSrcPath = function(item) {
-            return item &&  item.fileName ? '/_media/' + item.fileName : null;
+        MediaService.prototype.getSrcPath = function(item, label) {
+            var src = null;
+            if(item && item.fileName) {
+                src = '/_media/' + item.fileName;
+                if(label) {
+                    src += '?label=' + label;
+                }
+            }
+            return src;
         };
-
 
         /* jshint ignore:start */
         //thanks http://stackoverflow.com/a/14919494/200113
@@ -613,6 +630,11 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         var mediaId = $routeParams.mediaId;
 
+        $scope.selectedVariation = {
+            width: '',
+            height: ''
+        };
+
         $scope.deleteItem = function(item) {
             var really = window.confirm('Really delete the item, ' + item.name + '?');
             if(really) {
@@ -639,6 +661,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
                 };
                 $scope.itemText = res.data;
             }
+            return mediaService.isImage($scope.item) ? mediaService.getImageVariations() : null;
+        }).then(function(availableVariations) {
+          /*  $scope.availableVariations = availableVariations.filter(function(availableVariation) {
+                return !($scope.item.variations.filter(function(itemVariation) {
+                    return itemVariation.label === availableVariation.label;
+                })[0]);
+            });
+            $scope.availableVariations.push({
+                label: 'custom'
+            });*/
         }).catch(function(err) {
             $scope.showError('Error getting media item', err);
         });

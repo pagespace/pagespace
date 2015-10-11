@@ -17,6 +17,11 @@
 
         var mediaId = $routeParams.mediaId;
 
+        $scope.selectedVariation = {
+            width: '',
+            height: ''
+        };
+
         $scope.deleteItem = function(item) {
             var really = window.confirm('Really delete the item, ' + item.name + '?');
             if(really) {
@@ -43,6 +48,16 @@
                 };
                 $scope.itemText = res.data;
             }
+            return mediaService.isImage($scope.item) ? mediaService.getImageVariations() : null;
+        }).then(function(availableVariations) {
+          /*  $scope.availableVariations = availableVariations.filter(function(availableVariation) {
+                return !($scope.item.variations.filter(function(itemVariation) {
+                    return itemVariation.label === availableVariation.label;
+                })[0]);
+            });
+            $scope.availableVariations.push({
+                label: 'custom'
+            });*/
         }).catch(function(err) {
             $scope.showError('Error getting media item', err);
         });
