@@ -13,6 +13,7 @@ app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret
 // view engine setup
 app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
+app.set('view engine', 'hbs');
 
 app.use(pagespace.init({
     db: 'mongodb://localhost/test'

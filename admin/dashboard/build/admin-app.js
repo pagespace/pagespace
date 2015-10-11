@@ -44,15 +44,15 @@
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
             }).
-            when('/pages/:section/:pageId/', {
+            when('/pages/:section/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/view-page/:env/', {
+            when('/view-page/:viewPageEnv', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
-            when('/view-page/:env/:url*', {
+            when('/view-page/:viewPageEnv/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
@@ -160,7 +160,7 @@
         });
     }
 
-    adminApp.controller('MainController', function($scope, $location, $timeout) {
+    adminApp.controller('MainController', function($scope, $location, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -173,8 +173,19 @@
         };
 
         $scope.$on('$routeChangeStart', function(ev, next) {
-            if(next.params && next.params.url) {
-                $scope.viewPageUrl = '/' + (next.params.url || '');
+            if(next.params && next.params.viewPageEnv) {
+                var url = '/' + (next.params.url || '');
+                $scope.viewPageUrl = url;
+
+                $scope.viewPageUrlPublished = false;
+                pageService.getPages({
+                    url:  url
+                }).success(function(pages) {
+                    if(pages.length  === 1) {
+                        $scope.viewPageName = pages[0].name;
+                        $scope.viewPageUrlPublished = pages[0].published;
+                    }
+                });
             } else {
                 $scope.viewPageUrl = null;
             }
@@ -1348,7 +1359,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
 var adminApp = angular.module('adminApp');
 adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
 
-    var env = $routeParams.env;
+    var env = $routeParams.viewPageEnv;
     var url = $routeParams.url;
 
     $scope.getPageUrl = function() {
@@ -1652,19 +1663,24 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, pageService,
+    adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, $q, pageService,
                                                            siteService) {
-
-        $scope.defaultPage = null;
+        $scope.defaultPage = {
+            redirect: null
+        };
 
         siteService.getSite().success(function(site) {
             $scope.site = site;
         });
 
         pageService.getPages().success(function(pages) {
-            $scope.pages = pages.filter(function(page) {
-                return page.status === 200;
+            $scope.availablePages = pages.filter(function(page) {
+                return page.status === 200 && page.parent !== null;
             });
+            $scope.defaultPage = pages.filter(function(page) {
+                return page.url === '/';
+            })[0];
+
         });
 
         $scope.cancel = function() {
@@ -1680,42 +1696,48 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
             }
             var site = $scope.site;
 
+            var promise = $q.when();
             if($scope.defaultPage) {
-                async.waterfall([
-                    function(cb) {
-                        pageService.getPages({
-                            url: '/'
-                        }).success(function(pages) {
-                            var page = pages && pages.length ? pages[0] : null;
-                            cb(null, page);
-                        }).error(function(e) {
-                            cb(e);
-                        });
-                    },
-                    function(page) {
-                        //if a page without the default url is already set...
-                        var defaultPageData = {
-                            name: 'Default page',
-                            url: '/',
-                            redirect: $scope.defaultPage,
-                            status: 301
-                        };
-                        if(!page) {
-                            defaultPageData.url = '/';
-                            pageService.createPage(defaultPageData);
-                        } else if(page) {
-                            pageService.updatePage(page._id, defaultPageData);
-                        }
+                //get existing default pages (where url == /)
+                promise = promise.then(function() {
+                    return pageService.getPages({
+                        url: '/'
+                    });
+                }).then(function(response) {
+                    var pages = response.data;
+                    var page = pages.length ? pages[0] : null;
+
+                    var defaultPageData = {
+                        name: 'Default page',
+                        url: '/',
+                        redirect: $scope.defaultPage.redirect,
+                        status: 301
+                    };
+
+                    if(!page) {
+                        //create new
+                        return pageService.createPage(defaultPageData);
+                    } else if(page && page.status === 301) {
+                        //update an existing default page redirect
+                        return pageService.updatePage(page._id, defaultPageData);
+                    } else {
+                        var msg = 'Cannot set the default page. ' +
+                            page.name + ' has been explicitly set as the default page';
+                        throw new Error(msg);
                     }
-                ], function(err) {
-                    $scope.showError('Unable to set default page', err);
+                    //else the page has the url / explicitly set. leave it alone
+                }).catch(function(err) {
+                     $scope.showError('Unable to set default page', err);
                 });
             }
 
-            siteService.updateSite(site).success(function() {
+
+            promise.then(function() {
+                return siteService.updateSite(site);
+            }).then(function() {
                 $scope.showSuccess('Site updated.');
                 $location.path('/');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error updating site', err);
             });
 

@@ -57,7 +57,7 @@ AclSetup.prototype.runSetup = function() {
     //all
     acl.match(ALL_PAGES, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
     acl.match(consts.requests.STATIC.regex, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
-    acl.match(consts.requests.MEDIA.regex, [ GET ]).thenOnlyAllow(ALL_ROLES);
+    acl.match(consts.requests.MEDIA.regex, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
 
     //auth
     acl.match(LOGIN, [ GET, POST ]).thenOnlyAllow([ guest ]);

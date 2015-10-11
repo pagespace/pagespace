@@ -7,8 +7,8 @@
     <form role="form" name="userForm" class="form-horizontal" novalidate ng-submit="save(userForm)" >
 
         <div class="notification-bar">
-            <p ng-show="!userId">Create a new user</p>
-            <p ng-show="userId">Update details for <b>{{user.username}}</b></p>
+            <h4 ng-show="!userId">Create a new user</h4>
+            <h4 ng-show="userId">Update details for <b>{{user.username}}</b></h4>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 

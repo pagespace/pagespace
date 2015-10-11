@@ -34,6 +34,7 @@
     "mkdirp": "~0.5.0",
     "mongoose": "~4.1.5",
     "passport": "~0.2.1",
+    "passport-http": "^0.3.0",
     "passport-local": "~1.0.0",
     "passport-remember-me": "~0.0.1",
     "send": "~0.10.1",
@@ -54,7 +55,12 @@
     "supertest": "^1.1.0",
     "pagespace-webcopy": "pagespace/pagespace-webcopy",
     "pagespace-html": "pagespace/pagespace-html",
+<<<<<<< HEAD
     "pagespace-nav": "pagespace/pagespace-nav"
+=======
+    "pagespace-nav": "pagespace/pagespace-nav",
+    "pagespace-markdown": "pagespace/pagespace-markdown"
+>>>>>>> master
   },
   "peerDependencies": {
     "express": ">4.10",
@@ -65,6 +71,7 @@
   "bundledDependencies": [
     "pagespace-webcopy",
     "pagespace-html",
-    "pagespace-nav"
+    "pagespace-nav",
+    "pagespace-markdown"
   ]
 }

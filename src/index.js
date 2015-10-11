@@ -27,6 +27,7 @@ var url = require('url'),
     mongoose = require('mongoose'),
     passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
+    BasicStrategy = require('passport-http').BasicStrategy,
     RememberMeStrategy = require('passport-remember-me').Strategy,
     async = require('async'),
     bunyan = require('bunyan'),
@@ -239,6 +240,15 @@ Index.prototype.init = function(options) {
                 function (callback) {
                     passport.session()(req, res, callback);
                 },
+                function (callback) {
+                    //basic auth for API requests with no session already
+                    if(consts.requests.API.regex.test(req.url) && !req.user) {
+                        passport.authenticate('basic', { session: false })(req, res, callback);
+                    } else {
+                        callback();
+                    }
+
+                },
                 function () {
                     self._doRequest(req, res, next);
                 }
@@ -339,7 +349,6 @@ Index.prototype._configureAuth = function() {
 
     var self = this;
 
-    //setup passport/authentication
     passport.serializeUser(function(user, done) {
         done(null, {
             username: user.username,
@@ -355,26 +364,28 @@ Index.prototype._configureAuth = function() {
         done(null, user);
     });
 
-    passport.use(new LocalStrategy(
-        function(username, password, done) {
-            var User = self.dbSupport.getModel('User');
-            User.findOne({ username: username }, function(err, user) {
-                if (err) {
-                    return done(err);
+    function dbAuth(username, password, done) {
+        var User = self.dbSupport.getModel('User');
+        User.findOne({ username: username }, function(err, user) {
+            if (err) {
+                return done(err);
+            }
+            if (!user) {
+                return done(null, false, { message: 'Incorrect username.' });
+            }
+            user.comparePassword(password, function(err, match) {
+                if(!match) {
+                    done(null, false, { message: 'Incorrect password.' });
+                } else {
+                    done(null, user);
                 }
-                if (!user) {
-                    return done(null, false, { message: 'Incorrect username.' });
-                }
-                user.comparePassword(password, function(err, match) {
-                    if(!match) {
-                        done(null, false, { message: 'Incorrect password.' });
-                    } else {
-                        done(null, user);
-                    }
-                });
             });
-        }
-    ));
+        });
+    }
+
+    passport.use(new BasicStrategy(dbAuth));
+    passport.use(new LocalStrategy(dbAuth));
+
     passport.use(new RememberMeStrategy(
         function(token, done) {
             var User = self.dbSupport.getModel('User');

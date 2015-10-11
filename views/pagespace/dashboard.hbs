@@ -28,7 +28,7 @@
 <body ng-controller="MainController">
 
 <div class="container-fluid">
-    <header class="row">
+    <header class="dashboard-header row">
         <div class="col-sm-2">
             <div class="logo">
                 <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
@@ -53,7 +53,7 @@
             <div ng-include="'/_static/dashboard/app/pages/view-page-options.html'"></div>
         </div>
         <div class="header-utils col-sm-2">
-            <p>Hello <b>{{displayName}}</b>&nbsp;
+            <p>Hello {{displayName}}&nbsp;
                 <a href="/_auth/logout">
                     <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout" alt="Logout" style="vertical-align: baseline">
                 </a></p>
@@ -69,13 +69,13 @@
         //change the sidebar color stuff
         var headerColor = window.localStorage.getItem('specialColor');
         if(headerColor) {
-            document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+            document.getElementsByTagName('header')[0].style.borderColor = headerColor;
         }
         document.body.addEventListener('click', function (e) {
             if (e.target.getAttribute('data-color')) {
                 headerColor = e.target.getAttribute('data-color');
                 window.localStorage.setItem('specialColor', headerColor);
-                document.getElementsByTagName('header')[0].style.backgroundColor = headerColor;
+                document.getElementsByTagName('header')[0].style.borderColor = headerColor;
             }
         });
     })();

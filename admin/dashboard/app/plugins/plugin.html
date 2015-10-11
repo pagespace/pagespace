@@ -17,8 +17,8 @@
     <form role="form"  name="pluginForm" class="form-horizontal" novalidate ng-submit="save(pluginForm)">
 
         <div class="notification-bar">
-            <p ng-show="!pluginId">Create a new plugin</p>
-            <p ng-show="pluginId">Update details for: <b>{{plugin.name}}</b></p>
+            <h4 ng-show="!pluginId">Create a new plugin</h4>
+            <h4 ng-show="pluginId">Update details for: <b>{{plugin.name}}</b></h4>
             <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
         </div>
 

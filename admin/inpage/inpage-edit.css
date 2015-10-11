@@ -73,12 +73,13 @@
     left: 0;
     right: 0;
     padding: 4px;
-    background: #CBCBCB;
+    background: #D7DADE;
+    box-sizing: border-box;
     /*special bg color added by js*/
 }
 .ps-include-editor-titlebar p {
     margin: 0;
-    font-family: sans-serif;
+    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial;
     color: #000;
     line-height: 26px;
 }
@@ -95,7 +96,7 @@
     background: rgba(255, 255, 255, 0.6);
 }
 .ps-include-modal {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
     right: 0;

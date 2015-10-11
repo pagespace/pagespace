@@ -44,15 +44,15 @@
                 templateUrl: '/_static/dashboard/app/pages/delete-page.html',
                 controller: 'DeletePageController'
             }).
-            when('/pages/:section/:pageId/', {
+            when('/pages/:section/:pageId', {
                 templateUrl: '/_static/dashboard/app/pages/page.html',
                 controller: 'PageController'
             }).
-            when('/view-page/:env/', {
+            when('/view-page/:viewPageEnv', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
-            when('/view-page/:env/:url*', {
+            when('/view-page/:viewPageEnv/:url*', {
                 templateUrl: '/_static/dashboard/app/pages/view-page.html',
                 controller: 'ViewPageController'
             }).
@@ -160,7 +160,7 @@
         });
     }
 
-    adminApp.controller('MainController', function($scope, $location, $timeout) {
+    adminApp.controller('MainController', function($scope, $location, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -173,8 +173,19 @@
         };
 
         $scope.$on('$routeChangeStart', function(ev, next) {
-            if(next.params && next.params.url) {
-                $scope.viewPageUrl = '/' + (next.params.url || '');
+            if(next.params && next.params.viewPageEnv) {
+                var url = '/' + (next.params.url || '');
+                $scope.viewPageUrl = url;
+
+                $scope.viewPageUrlPublished = false;
+                pageService.getPages({
+                    url:  url
+                }).success(function(pages) {
+                    if(pages.length  === 1) {
+                        $scope.viewPageName = pages[0].name;
+                        $scope.viewPageUrlPublished = pages[0].published;
+                    }
+                });
             } else {
                 $scope.viewPageUrl = null;
             }
