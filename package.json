@@ -11,7 +11,7 @@
     "url": "https://github.com/pagespace/pagespace"
   },
   "scripts": {
-    "build" : "gulp",
+    "build": "gulp",
     "test": "./node_modules/jasmine/bin/jasmine.js",
     "start": "node app-test.js"
   },
@@ -33,6 +33,7 @@
     "mkdirp": "~0.5.0",
     "mongoose": "~4.1.5",
     "passport": "~0.2.1",
+    "passport-http": "^0.3.0",
     "passport-local": "~1.0.0",
     "passport-remember-me": "~0.0.1",
     "send": "~0.10.1",
@@ -51,9 +52,10 @@
     "jasmine": "^2.3.2",
     "serve-favicon": "^2.3.0",
     "supertest": "^1.1.0",
-    "pagespace-webcopy" : "pagespace/pagespace-webcopy",
-    "pagespace-html" : "pagespace/pagespace-html",
-    "pagespace-nav" : "pagespace/pagespace-nav"
+    "pagespace-webcopy": "pagespace/pagespace-webcopy",
+    "pagespace-html": "pagespace/pagespace-html",
+    "pagespace-nav": "pagespace/pagespace-nav",
+    "pagespace-markdown": "pagespace/pagespace-markdown"
   },
   "peerDependencies": {
     "express": ">4.10",
@@ -64,6 +66,7 @@
   "bundledDependencies": [
     "pagespace-webcopy",
     "pagespace-html",
-    "pagespace-nav"
+    "pagespace-nav",
+    "pagespace-markdown"
   ]
 }
