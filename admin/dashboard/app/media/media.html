@@ -26,7 +26,7 @@
         <p>{{item.type}}</p>
         <div  class="media-item-wrap" ng-class="getMimeClass(item)">
             <div ng-show="isImage(item)">
-                <img ng-src="/_media/{{item.fileName}}" alt="{{item.name}}">
+                <img ng-src="{{getSrcPath(item, 'thumb')}}" alt="{{item.name}}">
             </div>
         </div>
         <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>

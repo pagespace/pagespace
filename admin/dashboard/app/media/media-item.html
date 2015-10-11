@@ -5,22 +5,37 @@
     </div>
 
 
-    <h3>Details</h3>
+    <h4>Details</h4>
+    <p><a href="{{getSrcPath(item)}}" target="_blank">{{getSrcPath(item)}}</a></p>
     <dl>
-        <dt>Url</dt>
-        <dd><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></dd>
-        <dt>Type</dt>
+        <dt>Type:</dt>
         <dd>{{item.type}}</dd>
-        <dt>Filesize</dt>
+        <dt>Filesize:</dt>
         <dd>{{humanFileSize(item.size)}}</dd>
+        <dt ng-show="isImage(item)">Dimensions:</dt>
+        <dd ng-show="isImage(item)">{{item.width}} &times; {{item.height}}</dd>
     </dl>
 
+    <div ng-show="item.variations.length">
+        <h4>Variations</h4>
+        <div ng-repeat="variation in item.variations">
+            <dl>
+                <dt>Label:</dt>
+                <dd><a href="{{getSrcPath(item, variation.label)}}" target="_blank">{{variation.label}}</a></dd>
+                <dt>Filesize:</dt>
+                <dd>{{humanFileSize(variation.size)}}</dd>
+                <dt ng-show="isImage(item)">Dimensions:</dt>
+                <dd ng-show="isImage(item)">{{variation.width}} &times; {{variation.height}}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <h4>Delete media</h4>
     <button type="button" class="btn btn-danger" ng-click="deleteItem(item)">Delete</button>
 </nav>
-<main class="main col-sm-10">
-    <div class="notification-bar"><p></p></div>
+<main class="main col-sm-8">
+    <div class="notification-bar"><h4>{{item.name}}</h4></div>
 
-    <h2>{{item.name}}</h2>
     <p ng-show="item.description && item.description !== 'undefined'">{{item.description}}</p>
     <div ng-show="isImage(item)" class="media-item-full">
         <img ng-src="{{getSrcPath(item)}}" alt="{{item.name}}">
@@ -41,3 +56,26 @@
         <iframe ng-src="{{getSrcPath(item)}}" width="100%" height="500"></iframe>
     </div>
 </main>
+<aside class="aside col-sm-2" ng-show="isImage(item)">
+<!--    <div class="notification-bar"><h4>Add variation</h4></div>
+
+    <form role="form" name="resizeForm" novalidate ng-show="isImage(item)" ng-submit="doResize(resizeForm)">
+
+        <div class="form-group" bs-has-error="imageSize">
+            <select ng-model="selectedVariation"
+                    ng-options="imageVariation as imageVariation.label for imageVariation in availableVariations"
+                    class="form-control">
+                <option value="" disabled selected>Select an image size</option>
+            </select>
+        </div>
+        <div class="form-group" bs-has-error="imageSize">
+            <input placeholder="Width" class="form-control" ng-model="selectedVariation.width" ng-readonly="selectedVariation.label != 'custom'">&nbsp;
+            <input placeholder="Height" class="form-control" ng-model="selectedVariation.height" ng-readonly="selectedVariation.label != 'custom'">
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary">Add variation</button>
+        </div>
+    </form>-->
+
+</aside>

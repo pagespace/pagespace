@@ -22,7 +22,8 @@
 var util = require('util'),
     url = require('url'),
     Promise = require('bluebird'),
-    psUtil = require('../support/pagespace-util');
+    psUtil = require('../support/pagespace-util'),
+    consts = require('../app-constants');
 
 var httpStatus = {
     OK: 200,
@@ -51,6 +52,7 @@ PageHandler.prototype.init = function(support) {
     this.userBasePath = support.userBasePath;
     this.site = support.site;
     this.pluginResolver = support.pluginResolver;
+    this.analytics = support.analytics;
     this.reqCount = 0;
     this.findPagePromises = {};
 
@@ -108,6 +110,11 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             previewMode: previewMode,
             urlPath: urlPath
         };
+
+        //analytics. page exists and its a guest user
+        if(self.analytics && page && (!req.user || req.user.role === consts.GUEST_USER.role)) {
+            self.recordHit(req, page._id, logger);
+        }
 
         if(status === httpStatus.OK) {
             logger.debug('Page found (%s) for %s: %s', status, urlPath, page.id);
@@ -307,6 +314,28 @@ PageHandler.prototype.doNotFound = function(logger, pageResult) {
     var err = new Error(util.format(errMessage, pageResult.urlPath, status));
     err.status = status;
     throw err;
+};
+
+
+/**
+ * Records a page hit
+ * @param req
+ * @param pageId
+ * @param logger
+ */
+PageHandler.prototype.recordHit = function(req, pageId, logger) {
+
+    var Hit = this.dbSupport.getModel('Hit');
+    var hit = new Hit({
+        page: pageId,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        referrer: req.headers['referrer'], // jshint ignore:line
+        agent: req.headers['user-agent'],
+        session: req.sessionID
+    });
+    hit.save().then(null, function (err) {
+        logger.warn(err, 'Couldn\'t save page hit');
+    });
 };
 
 /**

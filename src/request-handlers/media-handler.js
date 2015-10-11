@@ -20,14 +20,20 @@
 'use strict';
 
 var fs = require('fs'),
+    path = require('path'),
     send = require('send'),
     Promise = require('bluebird'),
     formidable = require('formidable'),
     sizeOf = require('image-size'),
+    lwip = require('lwip'),
     consts = require('../app-constants'),
     psUtil = require('../support/pagespace-util');
 
+var writeFileAsync = Promise.promisify(fs.writeFile);
+var unlinkAsync = Promise.promisify(fs.unlink);
 var sizeOfAsync = Promise.promisify(sizeOf);
+var openImage = Promise.promisify(lwip.open);
+Promise.promisifyAll(require('lwip/lib/Image').prototype);
 
 var MediaHandler = function() {
 };
@@ -39,6 +45,7 @@ MediaHandler.prototype.init = function(support) {
     this.logger = support.logger;
     this.dbSupport = support.dbSupport;
     this.mediaDir = support.mediaDir;
+    this.imageVariations = support.imageVariations;
     this.reqCount = 0;
 
     var self = this;
@@ -82,12 +89,28 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
             logger.warn(err, 'Unable to serve media');
             return next(err);
         }
-        if(model && model.path) {
-            var stream = send(req, model.path);
+
+        if(model) {
+            var path = null;
+
+            //find the variation path for this label
+            if(req.query.label) {
+                var variation = model.variations.filter(function(variation) {
+                   return variation.label === req.query.label.trim();
+                })[0];
+                if(variation) {
+                    path = variation.path;
+                }
+            }
+
+            //revert to original if there is no variation
+            path = path || model.path;
+
+            var stream = send(req, path);
 
             // forward non-404 errors
             stream.on('error', function error(err) {
-                logger.warn('Error streaming media for %s (%s)', req.url, model.path);
+                logger.warn('Error streaming media for %s (%s)', req.url, path);
                 next(err.status === 404 ? null : err);
             });
 
@@ -108,13 +131,7 @@ MediaHandler.prototype.doUpdateResource = function(req, res, next, logger) {
     var itemFileName = apiInfo[1];
     logger.info('Updating media text for %s', itemFileName);
     var Media = this.dbSupport.getModel('Media');
-    Media.findOne({
-        fileName: itemFileName
-    }).exec(function(err, model) {
-        if(err) {
-            logger.warn(err, 'Unable to find media item to update');
-            return next(err);
-        }
+    Media.findOne({ fileName: itemFileName }).then(function (model) {
         logger.info('Updating file %s', model.path);
         var content = req.body.content;
         fs.writeFile(model.path, content, function(err) {
@@ -126,6 +143,9 @@ MediaHandler.prototype.doUpdateResource = function(req, res, next, logger) {
                 res.send('%s updated successfully', itemFileName);
             }
         });
+    }).then(undefined, function (err) {
+        logger.warn(err, 'Unable to find media item to update');
+        return next(err);
     });
 };
 
@@ -147,13 +167,16 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
 
     var formParseAsync = Promise.promisify(form.parse, form);
     formParseAsync(req).catch(function(err) {
+        //catch upload errors immediately
         logger.error(err, 'Error uploading media item');
         throw err;
     }).spread(function(fields, files) {
+        //get image dimensions
         var dimensions =  files.file.type.indexOf('image') === 0 ? sizeOfAsync(files.file.path) : {};
         logger.debug('Dimensions of %s are w:%s, h:%s', files.file.path, dimensions.width, dimensions.height);
         return Promise.settle([ fields,  files, dimensions ]);
     }).then(function(promises) {
+        //step to handle unknown image dimensions
         var fields = promises[0].value();
         var files = promises[1].value();
         var dimensionsPromise = promises[2];
@@ -167,9 +190,27 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
         }
         return [ fields, files, dimensions ];
     }).spread(function(fields, files, dimensions) {
+        //generate thumbnail image
+        var thumb = self.imageVariations.filter(function(variation) {
+            return variation.label && variation.label === 'thumb' && (variation.width || variation.height);
+        })[0];
+        var thumbnailPromise = thumb && dimensions.width && dimensions.height ?
+            resizeImage(files.file.path, 'thumb', dimensions, {
+                width: thumb.width, height: thumb.height
+            }, thumb.format, logger) : null;
+
+        return [ fields, files, dimensions, thumbnailPromise ];
+    }).spread(function(fields, files, dimensions, thumbnail) {
+        //save media to db
         var tags = fields.tags ? JSON.parse(fields.tags) : [];
 
         var Media = self.dbSupport.getModel('Media');
+
+        var variations = [];
+        if(thumbnail) {
+            variations.push(thumbnail);
+        }
+
         var media = new Media({
             name: fields.name,
             description: fields.description || '',
@@ -179,46 +220,107 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             fileName: files.file.name,
             size: files.file.size,
             width: dimensions.width || null,
-            height: dimensions.height || null
+            height: dimensions.height || null,
+            variations: variations
         });
 
         var saveAsync = Promise.promisify(media.save, media);
-        return Promise.settle([saveAsync(), files.file.path]);
+        return Promise.settle([ saveAsync(), files.file.path, thumbnail ]);
     }).then(function(result) {
+        //send response
         var savePromise = result[0];
-        var filePath = result[1].value();
         if(savePromise.isFulfilled()) {
-            var model = savePromise.value();
-            logger.info('Media upload request OK');
-            //don't send file paths to client
-            delete model.filePath;
+            var model = savePromise.value()[0];
+            //don't send local path to client
+            delete model.path;
+            model.variations = model.variations.map(function(variation) {
+                delete variation.path;
+                return variation;
+            });
             res.status(201);
             res.json(model);
         } else {
+            var filePath = result[1].value();
+            var thumbnailPath = result[2] && result[2].value().path;
             var err = savePromise.reason();
             err.fileUploadPath = filePath;
+            err.thumnailPath = thumbnailPath;
             //next catch will handle the mongoose failure
             throw err;
         }
     }).catch(function(err) {
+        //rollback upload
         logger.error(err);
 
         if(err.code && err.code === 11000) {
             err.message = 'This file has already been uploaded';
             err.status = 400;
         }
+        var rollbackPromises = [];
+        rollbackPromises.push(err);
         if(err.fileUploadPath) {
             //rollback file upload
-            fs.unlink(err.fileUploadPath, function(fileErr) {
-                if(fileErr) {
-                    logger.warn(fileErr, 'Unable to rollback file upload after mongoose save failure');
-                } else {
-                    logger.debug('Roll back file upload after mongoose save failure was successful');
-                }
-                next(err);
-            });
-        } else {
-            next(err);
+            logger.debug('Rolling back file upload after mongoose save failure (%s)', err.fileUploadPath);
+            rollbackPromises.push(unlinkAsync(err.fileUploadPath));
         }
+        if(err.thumnailPath) {
+            //rollback thumbnail creation
+            logger.debug('Rolling back file upload thumnbnail after mongoose save failure (%s)', err.thumnailPath);
+            rollbackPromises.push(unlinkAsync(err.thumnailPath));
+        }
+        Promise.all(rollbackPromises).then(function() {
+            //successful rollback
+            logger.debug('Roll back file upload after mongoose save failure was successful');
+            next(err);
+        }).catch(function(err) {
+            logger.warn(err, 'Unable to rollback file modifications after mongoose save failure');
+            next(err);
+        });
     });
 };
+
+function resizeImage(filePath, label, fDim, tDim, format, logger) {
+
+    var dir = path.dirname(filePath);
+    var ext = path.extname(filePath);
+    var base = path.basename(filePath);
+    var newBase = base.substring(0, base.length - ext.length) + '.' + label;
+    format = format || ext.substr(1);
+    var fileName =  newBase + '.' + format;
+    var toPath = path.join(dir, fileName);
+
+    var newSize = 0;
+    var ratio = fDim.height / fDim.width;
+
+
+    if(!tDim.width && tDim.height) {
+        //only height, calc width
+        tDim.width = fDim.width > fDim.height ? tDim.height / ratio : tDim.height * ratio;
+    } else if(!tDim.height && tDim.width) {
+        //only width, calc height
+        tDim.height = fDim.height > fDim.width ? tDim.width / ratio : tDim.width * ratio;
+    } else if(!tDim.width && !tDim.height) {
+        //no dimensions
+        throw new Error('Cannot resize image for %s without a width or height', label);
+    }
+
+    return openImage(filePath).then(function(image) {
+        logger.debug('Resizing image @ %s to %s x %s', filePath, tDim.width, tDim.height);
+        return image.resizeAsync(tDim.width, tDim.height);
+    }).then(function(image) {
+        logger.debug('Resize OK. Saving image as %s', format);
+        return image.toBufferAsync(format);
+    }).then(function(buffer) {
+        newSize = buffer.length;
+        return writeFileAsync(toPath, buffer);
+    }).then(function() {
+        logger.debug('New image save to %s', toPath);
+        return {
+            label: label,
+            path: toPath,
+            size: newSize,
+            width: Math.round(tDim.width),
+            height: Math.round(tDim.height)
+        };
+    });
+}

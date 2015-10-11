@@ -25,7 +25,11 @@ app.use(pagespace.init({
 //        pass: 'test'
 //    },
     mediaDir: path.join(__dirname, 'media-uploads'),
-    logLevel: 'info'
+    logLevel: 'info',
+    imageVariations: [{
+        label: 'header',
+        width: 500
+    }]
 }));
 
 /// catch 404 and forwarding to error handler

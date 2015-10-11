@@ -11,6 +11,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
     $scope.isImage = mediaService.isImage;
     $scope.getMimeClass = mediaService.getMimeClass;
+    $scope.getSrcPath = mediaService.getSrcPath;
     $scope.mediaItems = [];
     $scope.availableTags = [];
     $scope.selectedTags = [];

@@ -74,7 +74,29 @@ function generateSchema() {
         updatedBy: {
             type: Schema.Types.ObjectId,
             ref: 'User'
-        }
+        },
+        variations: [{
+            label: {
+                type: String,
+                required: true
+            },
+            path: {
+                type: String,
+                required: true
+            },
+            size: {
+                type: Number,
+                required: true
+            },
+            width: {
+                type: Number,
+                required: false
+            },
+            height: {
+                type: Number,
+                required: false
+            }
+        }]
     });
 
     mediaSchema.pre('save', function (next) {
@@ -90,6 +112,10 @@ function generateSchema() {
     mediaSchema.set('toJSON', {
         transform: function(doc, media) {
             delete media.path;
+            media.variations = media.variations.map(function(variation) {
+                delete variation.path;
+                return variation;
+            });
             return media;
         }
     });

@@ -39,7 +39,7 @@ module.exports = consts;
 consts.requests = {
     API: {
         key: 'API',
-        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media)/?(.*)'),
+        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media|hits)/?(.*)'),
         handler: require('./request-handlers/api-handler')
     },
     AUTH: {
@@ -49,7 +49,7 @@ consts.requests = {
     },
     DASHBOARD: {
         key: 'DASHBOARD',
-        regex: new RegExp('^/_dashboard/?(inpage)?'),
+        regex: new RegExp('^/_dashboard/?(inpage|settings)?'),
         handler: require('./request-handlers/dashboard-handler')
     },
     MEDIA: {

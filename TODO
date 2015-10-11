@@ -3,16 +3,12 @@ MUST
 * Loveday
 * Image resizing
 * OTT
-* Static generator/CLI
 * Docs
 * Finish rest testing
-* edit image and link in web copy plugin
-* markdown plugin
 * gallery plugin
 * comments plugin
 * forgot password
-* Blog macro
-* hide live popout for unpublished pages
+* Blog macro?
 
 NICE
 =====
@@ -89,6 +85,10 @@ DONE
 ✓  Select media image from ck picker
 ✓ tidy up test app
 ✓ parts to plugins?
+✓ edit image and link in web copy plugin
+✓ markdown plugin
+✓ hide live popout for unpublished pages
+✓ Static generator/CLI
 
 BUGS
 ====

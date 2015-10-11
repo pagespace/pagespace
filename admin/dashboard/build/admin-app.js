@@ -250,70 +250,6 @@
 })();
 
 (function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('bsHasError', function() {
-        return {
-            restrict: 'A',
-            link: function(scope, element, attrs) {
-                //find parent form
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.bsHasError;
-
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    if(field) {
-                        scope.$watch(function() {
-                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
-                            element.toggleClass('has-success', field.$valid && field.$dirty);
-                        });
-                    }
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('psFieldMatch', function() {
-        return {
-            require: 'ngModel',
-            link: function (scope, element, attrs, model) {
-
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.psFieldMatch;
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    model.$parsers.push(function (value) {
-                        var valid = value === field.$viewValue;
-                        model.$setValidity('psFieldMatch', valid);
-                        return valid ? value : undefined;
-                    });
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
 
     var adminApp = angular.module('adminApp');
     adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
@@ -442,6 +378,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
     $scope.isImage = mediaService.isImage;
     $scope.getMimeClass = mediaService.getMimeClass;
+    $scope.getSrcPath = mediaService.getSrcPath;
     $scope.mediaItems = [];
     $scope.availableTags = [];
     $scope.selectedTags = [];
@@ -522,9 +459,11 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
 
         function MediaService() {
         }
+
         MediaService.prototype.getItems = function() {
             return $http.get('/_api/media');
         };
+
         MediaService.prototype.getItem = function(mediaId) {
             return $http.get('/_api/media/' + mediaId);
         };
@@ -553,8 +492,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
                 transformRequest: angular.identity
             });
         };
+
         MediaService.prototype.getItemText = function(item) {
             return $http.get('/_media/' + item.fileName);
+        };
+
+        MediaService.prototype.getImageVariations = function() {
+            return $http.get('/_dashboard/settings').then(function(res) {
+                var settings = res.data;
+                return settings.imageVariations || [];
+            });
         };
 
         //some utils
@@ -572,10 +519,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             return 'media-' + item.type.split('/')[1];
         };
 
-        MediaService.prototype.getSrcPath = function(item) {
-            return item &&  item.fileName ? '/_media/' + item.fileName : null;
+        MediaService.prototype.getSrcPath = function(item, label) {
+            var src = null;
+            if(item && item.fileName) {
+                src = '/_media/' + item.fileName;
+                if(label) {
+                    src += '?label=' + label;
+                }
+            }
+            return src;
         };
-
 
         /* jshint ignore:start */
         //thanks http://stackoverflow.com/a/14919494/200113
@@ -2166,4 +2119,68 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 
 })();
 
+
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('bsHasError', function() {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                //find parent form
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.bsHasError;
+
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    if(field) {
+                        scope.$watch(function() {
+                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
+                            element.toggleClass('has-success', field.$valid && field.$dirty);
+                        });
+                    }
+                }
+            }
+        };
+    });
+})();
+
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('psFieldMatch', function() {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, model) {
+
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.psFieldMatch;
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    model.$parsers.push(function (value) {
+                        var valid = value === field.$viewValue;
+                        model.$setValidity('psFieldMatch', valid);
+                        return valid ? value : undefined;
+                    });
+                }
+            }
+        };
+    });
+})();
 
