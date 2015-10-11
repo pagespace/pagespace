@@ -55,13 +55,30 @@ PluginResolver.prototype.require = function(pluginModuleId) {
         try {
             var pluginPath = require.resolve(pluginModuleId);
             var pluginDirPath = path.dirname(pluginPath);
-            var code = fs.readFileSync(require.resolve(pluginPath));
+            var code = fs.readFileSync(require.resolve(pluginPath), 'utf8');
             var sandbox = {
                 console : console,
                 module  : {},
                 __filename: pluginPath,
                 __dirname: pluginDirPath,
-                require : require,
+                require : function(modulePath) {
+
+                    //TODO: this a quick workaround to require not being in the plugin module context.
+                    //it may cause issues if the plugin module requires  a different version of a module already
+                    //required by Pagespace
+                    try {
+                        return require(modulePath);
+                    } catch(err){
+                        if(err.code === 'MODULE_NOT_FOUND'){
+                            if(modulePath.indexOf('.') === 0) {
+                                modulePath = path.resolve(pluginDirPath, modulePath)
+                            } else {
+                                modulePath = path.resolve(pluginDirPath, 'node_modules', modulePath);
+                            }
+                            return require(modulePath);
+                        }
+                    }
+                },
                 pagespace: {
                     getPageModel: function(previewMode) {
                         return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
