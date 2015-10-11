@@ -233,7 +233,7 @@ Index.prototype.init = function(options) {
                 },
                 function (callback) {
                     //basic auth for API requests with no session already
-                    if(consts.requests['API'].regex.test(req.url) && !req.user) {
+                    if(consts.requests.API.regex.test(req.url) && !req.user) {
                         passport.authenticate('basic', { session: false })(req, res, callback);
                     } else {
                         callback();

@@ -71,7 +71,7 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                     } catch(err){
                         if(err.code === 'MODULE_NOT_FOUND'){
                             if(modulePath.indexOf('.') === 0) {
-                                modulePath = path.resolve(pluginDirPath, modulePath)
+                                modulePath = path.resolve(pluginDirPath, modulePath);
                             } else {
                                 modulePath = path.resolve(pluginDirPath, 'node_modules', modulePath);
                             }
