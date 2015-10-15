@@ -125,7 +125,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             order: page.order + direction
         };
         if(page.parent) {
-            silbingQuery.parent = parent.page;
+            silbingQuery.parent = page.parent._id;
         } else if(page.root) {
             silbingQuery.root = page.root;
         }
