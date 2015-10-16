@@ -140,7 +140,8 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             async.parallel([
                 function(callback) {
                     pageService.updatePage(page._id, {
-                        order: page.order + direction
+                        order: page.order + direction,
+                        draft: true
                     }).success(function() {
                         callback(null);
                     }).error(function(err) {
@@ -149,7 +150,8 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
                 },
                 function(callback) {
                     pageService.updatePage(siblingPage._id, {
-                        order: siblingPage.order - direction
+                        order: siblingPage.order - direction,
+                        draft: true
                     }).success(function() {
                         callback(null);
                     }).error(function(err) {
