@@ -33,6 +33,13 @@ adminApp.controller('PageController',
     $scope.selectedRegionIndex = 0;
     $scope.template = null;
 
+    $scope.allPages = [];
+    pageService.getPages().success(function(pages) {
+        $scope.allPages = pages;
+    }).error(function(err) {
+        $scope.showError('Couldn\'t get all pages', err);
+    });
+
     var pageSetupFunctions = [];
     pageSetupFunctions.push(function getTemplates(callback) {
         $log.info('Fetching available templates...');
@@ -62,6 +69,11 @@ adminApp.controller('PageController',
 
                 if(page.expiresAt) {
                     page.expiresAt = new Date(page.expiresAt);
+                }
+
+                //depopulate redirect page
+                if(page.redirect) {
+                    page.redirect = page.redirect._id;
                 }
 
                 $scope.template = $scope.templates.filter(function(template) {

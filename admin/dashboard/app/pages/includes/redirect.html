@@ -1,0 +1,40 @@
+<div class="row">
+    <div class="col-sm-12">
+        <div class="form-group">
+            <label class="col-sm-2 control-label">This page has</label>
+            <div class="col-sm-7">
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="status" value="200" ng-model="page.status">
+                        not moved
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="status" value="301" ng-model="page.status">
+                        moved permanently
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="status" value="302" ng-model="page.status">
+                        move temporarily
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">...to</label>
+            <div class="col-sm-7">
+                <select ng-model="page.redirect" ng-disabled="page.status != 301 && page.status != 302"
+                        ng-options="page._id as page.name for page in allPages" class="form-control">
+                    <option value="" disabled selected>Select a page</option>
+                </select>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </div>
+</div>
