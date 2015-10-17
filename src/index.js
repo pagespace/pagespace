@@ -170,7 +170,7 @@ Index.prototype.init = function(options) {
     }).length === 0) {
         imageVariations.push({
             label: 'thumb',
-            width: 200
+            size: 200
         });
     }
 

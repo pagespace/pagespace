@@ -192,12 +192,10 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
     }).spread(function(fields, files, dimensions) {
         //generate thumbnail image
         var thumb = self.imageVariations.filter(function(variation) {
-            return variation.label && variation.label === 'thumb' && (variation.width || variation.height);
+            return variation.label && variation.label === 'thumb' && variation.size;
         })[0];
         var thumbnailPromise = thumb && dimensions.width && dimensions.height ?
-            resizeImage(files.file.path, 'thumb', dimensions, {
-                width: thumb.width, height: thumb.height
-            }, thumb.format, logger) : null;
+            resizeImage(files.file.path, 'thumb', dimensions, thumb.size, thumb.format, logger) : null;
 
         return [ fields, files, dimensions, thumbnailPromise ];
     }).spread(function(fields, files, dimensions, thumbnail) {
@@ -290,23 +288,27 @@ function resizeImage(filePath, label, fDim, tDim, format, logger) {
     var toPath = path.join(dir, fileName);
 
     var newSize = 0;
-    var ratio = fDim.height / fDim.width;
+    var ratio = fDim.width / fDim.height;
 
-
-    if(!tDim.width && tDim.height) {
-        //only height, calc width
-        tDim.width = fDim.width > fDim.height ? tDim.height / ratio : tDim.height * ratio;
-    } else if(!tDim.height && tDim.width) {
-        //only width, calc height
-        tDim.height = fDim.height > fDim.width ? tDim.width / ratio : tDim.width * ratio;
-    } else if(!tDim.width && !tDim.height) {
-        //no dimensions
+    var toWidth, toHeight;
+    if(typeof tDim === 'number') {
+        if(fDim.width > fDim.height) {
+            toWidth = tDim;
+            toHeight = tDim / ratio;
+        } else {
+            toHeight = tDim;
+            toWidth = tDim * ratio;
+        }
+    } else if(typeof tDim.width === 'number' && typeof tDim.height === 'number') {
+        toWidth = tDim.width;
+        toHeight = tDim.height;
+    } else {
         throw new Error('Cannot resize image for %s without a width or height', label);
     }
 
     return openImage(filePath).then(function(image) {
-        logger.debug('Resizing image @ %s to %s x %s', filePath, tDim.width, tDim.height);
-        return image.resizeAsync(tDim.width, tDim.height);
+        logger.debug('Resizing image @ %s to %s x %s', filePath, toWidth, toHeight);
+        return image.resizeAsync(toWidth, toHeight);
     }).then(function(image) {
         logger.debug('Resize OK. Saving image as %s', format);
         return image.toBufferAsync(format);
@@ -319,8 +321,8 @@ function resizeImage(filePath, label, fDim, tDim, format, logger) {
             label: label,
             path: toPath,
             size: newSize,
-            width: Math.round(tDim.width),
-            height: Math.round(tDim.height)
+            width: Math.round(toWidth),
+            height: Math.round(toHeight)
         };
     });
 }
