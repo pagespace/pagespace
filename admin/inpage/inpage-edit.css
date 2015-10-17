@@ -22,6 +22,7 @@
     color: #fff;
     background: #cbcbcb;
     cursor: pointer;
+    z-index: 1000;
 }
 .ps-box:hover .ps-edit,
 .ps-box:hover .ps-remove,

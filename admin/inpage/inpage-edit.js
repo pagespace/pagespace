@@ -31,6 +31,16 @@
                 launchAddInclude(target);
             }
         });
+
+        window.pagespace.interceptLinks = function(ev) {
+            if(ev.target.tagName.toUpperCase() === 'A' && ev.target.getAttribute('href').indexOf('/') === 0) {
+                var href = ev.target.getAttribute('href');
+                window.parent.location.assign('/_dashboard#/view-page/preview' + href);
+                ev.preventDefault();
+            }
+        };
+        document.body.addEventListener('click', window.pagespace.interceptLinks);
+
     }
 
     /**
