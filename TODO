@@ -1,14 +1,17 @@
 MUST
 =====
 * Loveday
-* Image resizing
 * OTT
 * Docs
 * Finish rest testing
 * gallery plugin
 * comments plugin
 * forgot password
-* Blog macro?
+* Duplicate template
+* Nav page root dropdown
+* Add include to empty region
+* Plugin sizes
+* re-order plugins
 
 NICE
 =====
@@ -17,15 +20,17 @@ NICE
 * archiving
 * externalize ACL
 * plugin generator
+* Blog macro?
 
 BUGS
 ====
-* edit link in web copy
-* template name missing first letter for ./
-* webcopy buggy
+✓ edit link in web copy
+✓ template name missing first letter for ./
+✓ webcopy buggy
 * No popout links for /
-* Default page
-
+✓ Default page
+✓ Preview of portrait media is stretched
+✓ thumbnail dimensions code
 
 DONE
 =====
@@ -89,6 +94,8 @@ DONE
 ✓ markdown plugin
 ✓ hide live popout for unpublished pages
 ✓ Static generator/CLI
+✓ Create redirect UI
+✓ intercept links inpage editing
 
 BUGS
 ====
