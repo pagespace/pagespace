@@ -9,7 +9,7 @@
     min-height: 24px;
 }
 .ps-box .ps-edit,
-.ps-box .ps-remove,
+.ps-box .ps-grab,
 .ps-box .ps-add {
     display: none;
     position: absolute;
@@ -20,24 +20,32 @@
     width: 24px;
     height: 24px;
     color: #fff;
-    background: #cbcbcb;
     cursor: pointer;
     z-index: 1000;
+    background-color: #cbcbcb;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
 }
 .ps-box:hover .ps-edit,
-.ps-box:hover .ps-remove,
+.ps-box:hover .ps-grab,
 .ps-box:hover .ps-add {
     display: block;
 }
 .ps-box .ps-edit {
-    right: 26px;
+    right: 16px;
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/pencil41.png);
 }
 .ps-box .ps-add {
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/1443751631_icon-plus-round.png);
 }
-.ps-box .ps-remove {
+.ps-box .ps-grab {
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/dots.png);
+    width: 16px;
+    cursor: move;
 }
 .ps-box.ps-box-add {
     min-height: 24px;

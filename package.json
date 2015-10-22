@@ -63,11 +63,5 @@
     "body-parser": "1.x",
     "cookie-parser": "1.x",
     "express-session": "1.x"
-  },
-  "bundledDependencies": [
-    "pagespace-webcopy",
-    "pagespace-html",
-    "pagespace-nav",
-    "pagespace-markdown"
-  ]
+  }
 }

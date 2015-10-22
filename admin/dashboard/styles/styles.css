@@ -302,3 +302,23 @@ h4 {
 .media-html {
     background: url(types/html.png) no-repeat center center;
 }
+
+.inpage-actions {
+    display: none;
+}
+.inpage-actions .header-page-options {
+    font-size: 16px;
+    width: 50%;
+    margin: 11px auto !important;
+    text-align: center;
+}
+.inpage-actions .header-page-options.drag-over {
+    background-color: rgba(255, 0, 0, 0.5);
+    color: #fff;
+}
+.dragging-include .inpage-actions {
+    display: block;
+}
+.dragging-include .header-nav {
+    display: none;
+}

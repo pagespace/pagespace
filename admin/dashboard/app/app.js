@@ -247,4 +247,16 @@
         });
     });
 
+
+    window.addEventListener('message', function(ev) {
+        if(ev.origin === window.location.origin) {
+            if(ev.data === 'drag-include-start') {
+                document.body.classList.add('dragging-include');
+            }
+            if(ev.data === 'drag-include-end') {
+                document.body.classList.remove('dragging-include');
+            }
+        }
+    });
+
 })();
