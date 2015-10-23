@@ -52,27 +52,16 @@
                     }
                     return false;
                 }
-
-                function hasParent(node, parent) {
-                    var node;
-                    while(node = node.parentNode) {
-                        if(node === lookFor) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
             },
             controller: function($log, $scope, pageService) {
-
                 $scope.remove = function(pageId, regionName, includeIndex) {
                     pageService.getPage(pageId).success(function(page) {
-                        var page = pageService.removeInclude(page, regionName, includeIndex);
+                        page = pageService.removeInclude(page, regionName, includeIndex);
                         page = pageService.depopulatePage(page);
                         pageService.updatePage(pageId, page).success(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
-                            window.parent.parent.location.reload();
+                            window.location.reload();
                         }).error(function(err) {
                             $scope.err = err;
                             $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',

@@ -160,7 +160,7 @@
         });
     }
 
-    adminApp.controller('MainController', function($scope, $location, $timeout, pageService) {
+    adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -245,20 +245,38 @@
                 $scope.message = null;
             }, 1000 * 10);
         });
-    });
 
-
-    window.addEventListener('message', function(ev) {
-        if(ev.origin === window.location.origin) {
-            if(ev.data === 'drag-include-start') {
-                document.body.classList.add('dragging-include');
-            }
-            if(ev.data === 'drag-include-end') {
-                document.body.classList.remove('dragging-include');
-            }
+        function swapIncludes(pageId, regionName, includeOne, includeTwo) {
+            pageService.getPage(pageId).success(function(page) {
+                page = pageService.swapIncludes(page, regionName, parseInt(includeOne), parseInt(includeTwo));
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).success(function() {
+                    $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
+                        includeOne, includeTwo, pageId, regionName);
+                    window.location.reload();
+                }).error(function(err) {
+                    $scope.err = err;
+                    $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
+                        includeOne, includeTwo, pageId, regionName);
+                });
+            }).error(function(err) {
+                $scope.err = err;
+                $log.error(err, 'Unable to get page: %s', pageId);
+            });
         }
-    });
 
+        window.addEventListener('message', function(ev) {
+            if(ev.origin === window.location.origin) {
+                if(ev.data.name === 'drag-include-start') {
+                    document.body.classList.add('dragging-include');
+                } else if(ev.data.name === 'drag-include-end') {
+                    document.body.classList.remove('dragging-include');
+                } else if(ev.data.name === 'swap-includes') {
+                    swapIncludes(ev.data.pageId, ev.data.regionName, ev.data.includeOne, ev.data.includeTwo);
+                }
+            }
+        });
+    });
 })();
 
 (function() {
@@ -445,27 +463,16 @@
                     }
                     return false;
                 }
-
-                function hasParent(node, parent) {
-                    var node;
-                    while(node = node.parentNode) {
-                        if(node === lookFor) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
             },
             controller: function($log, $scope, pageService) {
-
                 $scope.remove = function(pageId, regionName, includeIndex) {
                     pageService.getPage(pageId).success(function(page) {
-                        var page = pageService.removeInclude(page, regionName, includeIndex);
+                        page = pageService.removeInclude(page, regionName, includeIndex);
                         page = pageService.depopulatePage(page);
                         pageService.updatePage(pageId, page).success(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
-                            window.parent.parent.location.reload();
+                            window.location.reload();
                         }).error(function(err) {
                             $scope.err = err;
                             $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
@@ -1162,6 +1169,22 @@ adminApp.controller('PageController',
 
         PageService.prototype.updatePage = function(pageId, pageData) {
             return $http.put('/_api/pages/' + pageId, pageData);
+        };
+
+        PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
+
+            //find the region
+            var region = page.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+
+            if(region) {
+                var temp = region.includes[includeOne];
+                region.includes[includeOne] = region.includes[includeTwo];
+                region.includes[includeTwo] = temp;
+            }
+
+            return page;
         };
 
         PageService.prototype.generateUrl = function(page, parent) {

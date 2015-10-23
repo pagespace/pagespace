@@ -111,5 +111,31 @@
     right: 0;
     bottom: 0;
     overflow: hidden;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.ps-box.ps-no-drop.ps-drag-over {
+    background: transparent;
+}
+.ps-drop-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    opacity: 0.5;
+    outline: 2px solid #cbcbcb;
+    background: url(/_static/dashboard/support/icons/1445551402_ic_swap_vert_circle_48px.png) no-repeat center center;
+    background-color: #e8e8e8;
+}
+.ps-drag-over .ps-drop-overlay {
+    /*special bg color added by js */
+}
+.ps-dragging-include .ps-drop-overlay {
+    display: block;
+}
+.ps-dragging-include .ps-no-drop .ps-drop-overlay {
+    display: none;
 }
