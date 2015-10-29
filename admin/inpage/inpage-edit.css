@@ -9,7 +9,7 @@
     min-height: 24px;
 }
 .ps-box .ps-edit,
-.ps-box .ps-remove,
+.ps-box .ps-grab,
 .ps-box .ps-add {
     display: none;
     position: absolute;
@@ -20,24 +20,32 @@
     width: 24px;
     height: 24px;
     color: #fff;
-    background: #cbcbcb;
     cursor: pointer;
     z-index: 1000;
+    background-color: #cbcbcb;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
 }
 .ps-box:hover .ps-edit,
-.ps-box:hover .ps-remove,
+.ps-box:hover .ps-grab,
 .ps-box:hover .ps-add {
     display: block;
 }
 .ps-box .ps-edit {
-    right: 26px;
+    right: 16px;
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/pencil41.png);
 }
 .ps-box .ps-add {
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/1443751631_icon-plus-round.png);
 }
-.ps-box .ps-remove {
+.ps-box .ps-grab {
     /*special bg color added by js*/
+    background-image: url(/_static/dashboard/support/icons/dots.png);
+    width: 16px;
+    cursor: url(img/openhand.cur) 8 8, move;
 }
 .ps-box.ps-box-add {
     min-height: 24px;
@@ -103,5 +111,31 @@
     right: 0;
     bottom: 0;
     overflow: hidden;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.ps-box.ps-no-drop.ps-drag-over {
+    background: transparent;
+}
+.ps-drop-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    opacity: 0.5;
+    outline: 2px solid #cbcbcb;
+    background: url(/_static/dashboard/support/icons/1445551402_ic_swap_vert_circle_48px.png) no-repeat center center;
+    background-color: #e8e8e8;
+}
+.ps-drag-over .ps-drop-overlay {
+    /*special bg color added by js */
+}
+.ps-dragging-include .ps-drop-overlay {
+    display: block;
+}
+.ps-dragging-include .ps-no-drop .ps-drop-overlay {
+    display: none;
 }

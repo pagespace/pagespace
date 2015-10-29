@@ -18,20 +18,14 @@
         //listen for clicks that bubble in up in the admin bar
         document.body.addEventListener('click', function (ev) {
 
-            var target;
-
             if(ev.target.hasAttribute('data-edit-include')) {
-                target = ev.target.tagName.toUpperCase() === 'IMG' ? ev.target.parentNode : ev.target;
-                launchPluginEditor(target);
-            } else if(ev.target.hasAttribute('data-remove-include')) {
-                target = ev.target.tagName.toUpperCase() === 'IMG' ? ev.target.parentNode : ev.target;
-                launchRemoveInclude(target);
+                launchPluginEditor(ev.target);
             } else if(ev.target.hasAttribute('data-add-include')) {
-                target = ev.target.tagName.toUpperCase() === 'IMG' ? ev.target.parentNode : ev.target;
-                launchAddInclude(target);
+                launchAddInclude(ev.target);
             }
         });
 
+        //intercept link clicks so the parent frame changes
         window.pagespace.interceptLinks = function(ev) {
             if(ev.target.tagName.toUpperCase() === 'A' && ev.target.getAttribute('href').indexOf('/') === 0) {
                 var href = ev.target.getAttribute('href');
@@ -40,7 +34,6 @@
             }
         };
         document.body.addEventListener('click', window.pagespace.interceptLinks);
-
     }
 
     /**
@@ -75,17 +68,23 @@
                 })[0];
                 editButtonRule.style.backgroundColor = specialColor;
 
-                //remove button
-                var removeButtonRule = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-box .ps-remove';
+                //grab handle
+                var grabHandleRule = cssRulesArray.filter(function(rule) {
+                    return rule.selectorText === '.ps-box .ps-grab';
                 })[0];
-                removeButtonRule.style.backgroundColor = specialColor;
+                grabHandleRule.style.backgroundColor = specialColor;
 
                 //add button
                 var addButtonRule = cssRulesArray.filter(function(rule) {
                     return rule.selectorText === '.ps-box .ps-add';
                 })[0];
                 addButtonRule.style.backgroundColor = specialColor;
+
+                //add button
+                var dropOverlayRule = cssRulesArray.filter(function(rule) {
+                    return rule.selectorText === '.ps-drag-over .ps-drop-overlay';
+                })[0];
+                dropOverlayRule.style.backgroundColor = specialColor;
             }
         } catch(e) {
             console.warn(e);
@@ -98,14 +97,6 @@
     function decorateIncludes() {
 
         function createEditButton(plugin, pluginName, pageId, region, include) {
-
-            //add edit buttons
-            var editButttonIcon = document.createElement('img');
-            editButttonIcon.src = '/_static/dashboard/support/icons/pencil41.svg';
-            editButttonIcon.width = 16;
-            editButttonIcon.height = 16;
-            editButttonIcon.setAttribute('data-edit-include', 'data-edit-include');
-
             var editButton = document.createElement('button');
             editButton.setAttribute('data-edit-include', 'data-edit-include');
             editButton.setAttribute('data-target-plugin', plugin);
@@ -115,33 +106,25 @@
             editButton.setAttribute('data-target-include', include);
             editButton.setAttribute('title', 'Edit include');
             editButton.classList.add('ps-edit');
-            editButton.appendChild(editButttonIcon);
 
             return editButton;
         }
 
-        function createRemoveButton(pageId, region, include) {
-
-            //remove buttons
-            var removeButtonIcon = document.createElement('img');
-            removeButtonIcon.src = '/_static/dashboard/support/icons/1443751567_icon-minus-round.svg';
-            removeButtonIcon.width = 16;
-            removeButtonIcon.height = 16;
-            removeButtonIcon.setAttribute('data-remove-include', 'data-remove-include');
-
-            var removeButton = document.createElement('button');
-            removeButton.setAttribute('data-remove-include', 'data-remove-include');
-            removeButton.setAttribute('data-target-page-id', pageId);
-            removeButton.setAttribute('data-target-region', region);
-            removeButton.setAttribute('data-target-include', include);
-            removeButton.setAttribute('title', 'Remove include');
-            removeButton.classList.add('ps-remove');
-            removeButton.appendChild(removeButtonIcon);
-
-            return removeButton;
+        function createGrabHandle(pageId, region, include) {
+            var grabHandle = document.createElement('div');
+            grabHandle.setAttribute('data-grab-include', 'data-grab-include');
+            grabHandle.setAttribute('data-target-page-id', pageId);
+            grabHandle.setAttribute('data-target-region', region);
+            grabHandle.setAttribute('data-target-include', include);
+            grabHandle.setAttribute('title', 'Drag include');
+            grabHandle.classList.add('ps-grab');
+            return grabHandle;
         }
 
         Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(include) {
+            include.classList.add('ps-box');
+
+            //edit button
             var editButton = createEditButton(include.getAttribute('data-plugin'),
                 include.getAttribute('data-plugin-name'),
                 include.getAttribute('data-page-id'),
@@ -149,12 +132,99 @@
                 include.getAttribute('data-include'));
             include.insertBefore(editButton, include.firstChild);
 
-            var removeButton = createRemoveButton(include.getAttribute('data-page-id'),
+            //grab handle
+            var grabHandle = createGrabHandle(include.getAttribute('data-page-id'),
                 include.getAttribute('data-region'),
                 include.getAttribute('data-include'));
-            include.insertBefore(removeButton, include.firstChild);
+            include.insertBefore(grabHandle, include.firstChild);
 
-            include.classList.add('ps-box');
+            var dragOverlay = document.createElement('div');
+            dragOverlay.classList.add('ps-drop-overlay');
+            include.insertBefore(dragOverlay, include.firstChild);
+
+            //drag include
+            grabHandle.draggable = true;
+            grabHandle.addEventListener('dragstart', function(ev) {
+                window.parent.postMessage({ name: 'drag-include-start' }, window.location.origin);
+                var includeInfo = {
+                    pageId: this.getAttribute('data-target-page-id'),
+                    region: this.getAttribute('data-target-region'),
+                    includeIndex: this.getAttribute('data-target-include')
+                };
+                ev.dataTransfer.effectAllowed = 'move';
+                ev.dataTransfer.setData('include-info', JSON.stringify(includeInfo));
+                ev.dataTransfer.setDragImage(include, include.offsetWidth - (include.offsetWidth / 9), 8);
+                include.classList.add('ps-no-drop');
+                include.parentNode.classList.add('ps-dragging-include');
+            }, false);
+
+            grabHandle.addEventListener('dragend', function() {
+                window.parent.postMessage({ name: 'drag-include-end' }, window.location.origin);
+                document.body.classList.remove('ps-dragging-include');
+                include.classList.remove('ps-no-drop');
+                include.parentNode.classList.remove('ps-dragging-include');
+            }, false);
+
+            //drop on include
+            var dragCounter = 0;
+            include.addEventListener('dragenter', function(ev) {
+                if(containsType(ev.dataTransfer.types, 'include-info')) {
+                    dragCounter++;
+                    this.classList.add('ps-drag-over');
+                    ev.preventDefault();
+                }
+            });
+            include.addEventListener('dragover', function(ev) {
+                if(containsType(ev.dataTransfer.types, 'include-info')) {
+                    ev.dataTransfer.dropEffect = 'move';
+                    ev.preventDefault();
+                }
+            });
+            include.addEventListener('dragleave', function(ev) {
+                if(containsType(ev.dataTransfer.types, 'include-info')) {
+                    dragCounter--;
+                    if(dragCounter === 0) {
+                        this.classList.remove('ps-drag-over');
+                        ev.preventDefault();
+                    }
+                }
+            });
+            include.addEventListener('drop', function(ev) {
+                var data = getIncludeDragData(ev);
+                if(data) {
+                    var thisRegion = this.getAttribute('data-region');
+                    var thisInclude = this.getAttribute('data-include');
+                    var thatInclude = data.includeIndex;
+                    var thatRegion = data.region;
+                    if((thatRegion === thisRegion) && (thatInclude !== thisInclude)) {
+                        ev.preventDefault();
+                        var message = {
+                            name: 'swap-includes',
+                            pageId: this.getAttribute('data-page-id'),
+                            regionName: thisRegion,
+                            includeOne: thisInclude,
+                            includeTwo: thatInclude
+                        };
+                        window.parent.postMessage(message, window.location.origin);
+                    }
+                }
+                this.classList.remove('ps-drag-over');
+            });
+
+            //utils for drag+drop
+            function getIncludeDragData(ev) {
+                var data = ev.dataTransfer.getData('include-info');
+                return data ? JSON.parse(data) : null;
+            }
+
+            function containsType(list, value) {
+                for( var i = 0; i < list.length; ++i ) {
+                    if(list[i] === value) {
+                        return true;
+                    }
+                }
+                return false;
+            }
         });
     }
 
@@ -162,19 +232,12 @@
      * Decorate regions (add include UI)
      */
     function decorateRegions() {
-        Array.prototype.slice.call(document.querySelectorAll('[data-region]:last-child')).forEach(function(include) {
 
+        Array.prototype.slice.call(document.querySelectorAll('[data-region]:last-child')).forEach(function(include) {
             include.parentNode.classList.add('ps-region');
 
             var pageId = include.getAttribute('data-page-id');
             var region = include.getAttribute('data-region');
-
-            //add include buttons
-            var addButtonIcon = document.createElement('img');
-            addButtonIcon.src = '/_static/dashboard/support/icons/1443751631_icon-plus-round.svg';
-            addButtonIcon.width = 16;
-            addButtonIcon.height = 16;
-            addButtonIcon.setAttribute('data-add-include', pageId);
 
             var addButton = document.createElement('button');
             addButton.setAttribute('data-add-include', pageId);
@@ -182,13 +245,11 @@
             addButton.setAttribute('data-target-region', region);
             addButton.setAttribute('title', 'Add include');
             addButton.classList.add('ps-add');
-            addButton.appendChild(addButtonIcon);
 
             var psAddBox = document.createElement('div');
             psAddBox.classList.add('ps-box');
             psAddBox.classList.add('ps-box-add');
             psAddBox.appendChild(addButton);
-
 
             include.insertAdjacentHTML('afterend', psAddBox.outerHTML);
         });
@@ -232,22 +293,6 @@
         launchIframeModal(iframeSrc, iFrameName, title, startEl, 'medium');
     }
 
-    /**
-     * Launch remove
-     * @param evSrc
-     */
-    function launchRemoveInclude(evSrc) {
-
-        var pageId = evSrc.getAttribute('data-target-page-id');
-        var region = evSrc.getAttribute('data-target-region');
-        var include = evSrc.getAttribute('data-target-include');
-
-        var iFrameName = 'remove_include';
-        var iframeSrc = '/_dashboard/inpage#/remove-include/' + pageId + '/' + region + '/' + include;
-        var startEl = document.querySelectorAll('[data-region=' + region + ']')[0];
-        var title = 'Remove include';
-        launchIframeModal(iframeSrc, iFrameName, title, startEl, 'small');
-    }
     /**
      * Launch iframe
      * @param src
@@ -358,6 +403,7 @@
      * @return {{getData: getData, setData: setData, close: close}}
      */
     function getPluginInterface(plugin, pageId, region, include) {
+
         var query = '?pageId=' + encodeURIComponent(pageId) +
             '&region=' + encodeURIComponent(region) +
             '&include=' + encodeURIComponent(include);

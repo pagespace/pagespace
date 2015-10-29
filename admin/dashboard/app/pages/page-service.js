@@ -60,6 +60,22 @@
             return $http.put('/_api/pages/' + pageId, pageData);
         };
 
+        PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
+
+            //find the region
+            var region = page.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+
+            if(region) {
+                var temp = region.includes[includeOne];
+                region.includes[includeOne] = region.includes[includeTwo];
+                region.includes[includeTwo] = temp;
+            }
+
+            return page;
+        };
+
         PageService.prototype.generateUrl = function(page, parent) {
 
             parent = parent || page.parent;

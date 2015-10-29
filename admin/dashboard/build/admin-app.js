@@ -160,7 +160,7 @@
         });
     }
 
-    adminApp.controller('MainController', function($scope, $location, $timeout, pageService) {
+    adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
             //default page
@@ -245,8 +245,38 @@
                 $scope.message = null;
             }, 1000 * 10);
         });
-    });
 
+        function swapIncludes(pageId, regionName, includeOne, includeTwo) {
+            pageService.getPage(pageId).success(function(page) {
+                page = pageService.swapIncludes(page, regionName, parseInt(includeOne), parseInt(includeTwo));
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).success(function() {
+                    $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
+                        includeOne, includeTwo, pageId, regionName);
+                    window.location.reload();
+                }).error(function(err) {
+                    $scope.err = err;
+                    $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
+                        includeOne, includeTwo, pageId, regionName);
+                });
+            }).error(function(err) {
+                $scope.err = err;
+                $log.error(err, 'Unable to get page: %s', pageId);
+            });
+        }
+
+        window.addEventListener('message', function(ev) {
+            if(ev.origin === window.location.origin) {
+                if(ev.data.name === 'drag-include-start') {
+                    document.body.classList.add('dragging-include');
+                } else if(ev.data.name === 'drag-include-end') {
+                    document.body.classList.remove('dragging-include');
+                } else if(ev.data.name === 'swap-includes') {
+                    swapIncludes(ev.data.pageId, ev.data.regionName, ev.data.includeOne, ev.data.includeTwo);
+                }
+            }
+        });
+    });
 })();
 
 (function() {
@@ -382,38 +412,78 @@
 (function() {
 
     var adminApp = angular.module('adminApp');
-    adminApp.controller('RemoveIncludeController', function($log, $scope, $routeParams, pageService) {
 
-        var pageId = $routeParams.pageId;
-        var regionName = $routeParams.region;
-        var includeIndex =  parseInt($routeParams.include);
+    adminApp.directive('removeIncludeDrop', function() {
+        return {
+            replace: true,
+            transclude: true,
+            template: '<div ng-transclude class="remove-include-drop"></div>',
+            link: function link(scope, element) {
 
-        $scope.page = null;
-        $scope.removed = false;
-
-        pageService.getPage(pageId).success(function(page) {
-            $scope.page = page;
-        }).error(function() {
-            $scope.err = err;
-            $log.error(err, 'Unable to get page: %s', pageId);
-        });
-
-        $scope.remove = function() {
-            if($scope.page) {
-                $scope.page = pageService.removeInclude($scope.page, regionName, includeIndex);
-                $scope.page = pageService.depopulatePage($scope.page);
-                pageService.updatePage(pageId, $scope.page).success(function() {
-                    $scope.removed = true;
-                }).error(function(err) {
-                    $scope.err = err;
-                    $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
-                        pageId, regionName, includeIndex);
+                var dragCounter = 0;
+                element[0].addEventListener('dragenter', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter++
+                        this.classList.add('drag-over');
+                        ev.preventDefault();
+                    }
                 });
-            }
-        };
+                element[0].addEventListener('dragover', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        ev.dataTransfer.dropEffect = 'move';
+                        ev.preventDefault();
+                    }
+                });
+                element[0].addEventListener('dragleave', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter--;
+                        if(dragCounter === 0) {
+                            this.classList.remove('drag-over');
+                            ev.preventDefault();
+                        }
+                    }
+                });
+                element[0].addEventListener('drop', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        var data = ev.dataTransfer.getData('include-info');
+                        data = JSON.parse(data);
+                        var pageId = data.pageId;
+                        var regionName = data.region;
+                        var includeIndex =  parseInt(data.includeIndex);
+                        scope.remove(pageId, regionName, includeIndex);
+                        ev.preventDefault();
+                    }
+                });
 
-        $scope.close = function() {
-            window.parent.parent.location.reload();
+                function containsType(list, value) {
+                    for( var i = 0; i < list.length; ++i ) {
+                        if(list[i] === value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            },
+            controller: function($log, $scope, pageService) {
+                $scope.remove = function(pageId, regionName, includeIndex) {
+                    pageService.getPage(pageId).success(function(page) {
+                        page = pageService.removeInclude(page, regionName, includeIndex);
+                        page = pageService.depopulatePage(page);
+                        pageService.updatePage(pageId, page).success(function() {
+                            $log.info('Include removed for pageId=%s, region=%s, include=%s',
+                                pageId, regionName, includeIndex);
+                            window.location.reload();
+                        }).error(function(err) {
+                            $scope.err = err;
+                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
+                                pageId, regionName, includeIndex);
+                        });
+                    }).error(function(err) {
+                        $scope.err = err;
+                        $log.error(err, 'Unable to get page: %s', pageId);
+                    });
+                };
+            }
         };
     });
 })();
@@ -1099,6 +1169,22 @@ adminApp.controller('PageController',
 
         PageService.prototype.updatePage = function(pageId, pageData) {
             return $http.put('/_api/pages/' + pageId, pageData);
+        };
+
+        PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
+
+            //find the region
+            var region = page.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+
+            if(region) {
+                var temp = region.includes[includeOne];
+                region.includes[includeOne] = region.includes[includeTwo];
+                region.includes[includeTwo] = temp;
+            }
+
+            return page;
         };
 
         PageService.prototype.generateUrl = function(page, parent) {
