@@ -45,7 +45,7 @@
     /*special bg color added by js*/
     background-image: url(/_static/dashboard/support/icons/dots.png);
     width: 16px;
-    cursor: move;
+    cursor: url(img/openhand.cur) 8 8, move;
 }
 .ps-box.ps-box-add {
     min-height: 24px;
