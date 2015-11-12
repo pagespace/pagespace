@@ -44,13 +44,12 @@
 </div>
 
 <!-- Select template -->
-<div ng-if="page.template == null && templates.length > 1" bs-has-error="template">
+<div ng-if="templates.length > 1" bs-has-error="template">
     <div class="form-group">
-        <label class="col-sm-2 control-label">Select template</label>
+        <label class="col-sm-2 control-label">Template</label>
         <div class="col-sm-7">
-            <select ng-model="template" name="template" required
+            <select ng-model="page.template" name="template" required
                     ng-options="template as template.name for template in templates"
-                    ng-change="selectTemplate(template)"
                     class="form-control">
                 <option value="" disabled selected>Choose a template</option>
             </select>
@@ -60,7 +59,7 @@
 
 <div ng-if="page.template == null && templates.length === 0" >
     <div class="form-group">
-        <label class="col-sm-2 control-label">Select template</label>
+        <label class="col-sm-2 control-label">Template</label>
         <div class="col-sm-7">
             <p class="form-control-static text-warning">
                 There are no templates to select. Ask your developer to add some.</p>
@@ -68,7 +67,20 @@
     </div>
 </div>
 
+<div ng-if="page._id == null && allPages.length > 0" bs-has-error="basePage">
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Based on page</label>
+        <div class="col-sm-7">
+            <select ng-model="page.basePage" class="form-control">
+                <option ng-selected="page.basePage == null" value="" disabled selected>Select a page</option>
+                <option ng-selected="page.basePage == ''" value="">None</option>
+                <option ng-selected="page.basePage == page" ng-repeat="page in allPages" value="{{page}}">{{page.name}}</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 <div class="action-buttons">
-    <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
+    <button type="submit" class="btn btn-primary" ng-disabled="page.template == null">Save</button>
     <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
 </div>

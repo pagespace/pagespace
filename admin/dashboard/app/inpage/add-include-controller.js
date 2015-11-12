@@ -38,16 +38,18 @@
 
             //add the new include to the region
             if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
-                $scope.page.regions[regionIndex].includes.push({
-                    plugin: $scope.selectedPlugin,
-                    data: $scope.selectedPlugin.defaultData || {}
-                });
-
-                //save
-                $scope.page = pageService.depopulatePage($scope.page);
-                pageService.updatePage(pageId, $scope.page).success(function() {
+                pageService.createIncludeData($scope.selectedPlugin.defaultData).then(function(res) {
+                    return res.data;
+                }).then(function(includeData) {
+                    $scope.page.regions[regionIndex].includes.push({
+                        plugin: $scope.selectedPlugin,
+                        data: includeData._id
+                    });
+                    $scope.page = pageService.depopulatePage($scope.page);
+                    return pageService.updatePage(pageId, $scope.page)
+                }).then(function() {
                     $scope.added = true;
-                }).error(function(err) {
+                }).catch(function(err) {
                     $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, region);
                 });
             } else {

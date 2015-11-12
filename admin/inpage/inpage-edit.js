@@ -96,7 +96,7 @@
      */
     function decorateIncludes() {
 
-        function createEditButton(plugin, pluginName, pageId, region, include) {
+        function createEditButton(plugin, pluginName, pageId, region, include, dataId) {
             var editButton = document.createElement('button');
             editButton.setAttribute('data-edit-include', 'data-edit-include');
             editButton.setAttribute('data-target-plugin', plugin);
@@ -104,18 +104,20 @@
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.setAttribute('data-target-include', include);
+            editButton.setAttribute('data-target-data-id', dataId);
             editButton.setAttribute('title', 'Edit include');
             editButton.classList.add('ps-edit');
 
             return editButton;
         }
 
-        function createGrabHandle(pageId, region, include) {
+        function createGrabHandle(pageId, region, include, dataId) {
             var grabHandle = document.createElement('div');
             grabHandle.setAttribute('data-grab-include', 'data-grab-include');
             grabHandle.setAttribute('data-target-page-id', pageId);
             grabHandle.setAttribute('data-target-region', region);
             grabHandle.setAttribute('data-target-include', include);
+            grabHandle.setAttribute('data-target-data-id', dataId);
             grabHandle.setAttribute('title', 'Drag include');
             grabHandle.classList.add('ps-grab');
             return grabHandle;
@@ -125,17 +127,21 @@
             include.classList.add('ps-box');
 
             //edit button
-            var editButton = createEditButton(include.getAttribute('data-plugin'),
+            var editButton = createEditButton(
+                include.getAttribute('data-plugin'),
                 include.getAttribute('data-plugin-name'),
                 include.getAttribute('data-page-id'),
                 include.getAttribute('data-region'),
-                include.getAttribute('data-include'));
+                include.getAttribute('data-include'),
+                include.getAttribute('data-data-id'));
             include.insertBefore(editButton, include.firstChild);
 
             //grab handle
-            var grabHandle = createGrabHandle(include.getAttribute('data-page-id'),
+            var grabHandle = createGrabHandle(
+                include.getAttribute('data-page-id'),
                 include.getAttribute('data-region'),
-                include.getAttribute('data-include'));
+                include.getAttribute('data-include'),
+                include.getAttribute('data-data-id'));
             include.insertBefore(grabHandle, include.firstChild);
 
             var dragOverlay = document.createElement('div');
@@ -149,7 +155,8 @@
                 var includeInfo = {
                     pageId: this.getAttribute('data-target-page-id'),
                     region: this.getAttribute('data-target-region'),
-                    includeIndex: this.getAttribute('data-target-include')
+                    includeIndex: this.getAttribute('data-target-include'),
+                    dataId: this.getAttribute('data-target-data-id')
                 };
                 ev.dataTransfer.effectAllowed = 'move';
                 ev.dataTransfer.setData('include-info', JSON.stringify(includeInfo));
@@ -264,17 +271,15 @@
         //data about the plugin from the button that launched the editor
         var plugin = evSrc.getAttribute('data-target-plugin');
         var pluginName = evSrc.getAttribute('data-target-plugin-name') || 'Plugin editor';
-        var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
-        var include = evSrc.getAttribute('data-target-include');
+        var dataId = evSrc.getAttribute('data-target-data-id');
 
-        var iFrameName = region + '_' + plugin + '_' + include;
         var iframeSrc = '/_plugins/static/' + plugin + '/edit.html';
         var startEl = document.querySelectorAll('[data-region=' + region + ']')[0];
-        var iframe = launchIframeModal(iframeSrc, iFrameName, pluginName, startEl, 'full');
+        var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginName, startEl, 'full');
 
         //inject plugin interface
-        iframe.contentWindow.window.pagespace = getPluginInterface(plugin, pageId, region, include);
+        iframe.contentWindow.window.pagespace = getPluginInterface(dataId);
     }
 
     /**
@@ -402,33 +407,37 @@
      * @param include
      * @return {{getData: getData, setData: setData, close: close}}
      */
-    function getPluginInterface(plugin, pageId, region, include) {
-
-        var query = '?pageId=' + encodeURIComponent(pageId) +
-            '&region=' + encodeURIComponent(region) +
-            '&include=' + encodeURIComponent(include);
+    function getPluginInterface(dataId) {
         return {
             getKey: function() {
-                return plugin + '_' + pageId + '_' + region + '_' + include;
+                return dataId;
             },
             getData: function() {
-                console.info('Pagespace getting data for %s', plugin);
-                return fetch('/_plugins/data' + query, {
-                    credentials: 'same-origin'
-                }). then(function(res) {
+                console.info('Pagespace getting data for %s', dataId);
+                return fetch('/_api/datas/' + dataId, {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                }).then(function(res) {
                     return res.json();
+                }).then(function(data) {
+                    return data.data;
                 });
             },
             setData: function(data) {
-                console.info('Pagespace setting data for %s', plugin);
-                return fetch('/_plugins/data' + query, {
+                console.info('Pagespace setting data for %s', dataId);
+                return fetch('/_api/datas' + dataId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        data: data
+                    })
                 }).then(function() {
                     return {
                         status: 'ok'
@@ -436,7 +445,7 @@
                 });
             },
             close: function() {
-                console.info('Pagespace closing plugin editor for %s', plugin);
+                console.info('Pagespace closing plugin editor for %s', dataId);
                 window.parent.location.reload();
             }
         };

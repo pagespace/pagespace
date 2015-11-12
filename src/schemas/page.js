@@ -49,7 +49,8 @@ function generateSchema(modifier) {
                     ref: 'Plugin'
                 },
                 data: {
-                    type: Schema.Types.Mixed
+                    type: Schema.Types.ObjectId,
+                    ref: 'Data' + modifier
                 }
             }]
         }],

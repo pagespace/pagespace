@@ -36,7 +36,7 @@ var url = require('url'),
 
     consts = require('./app-constants'),
     createDbSupport = require('./support/db-support'),
-    createDataSetup = require('./setup/data-setup'),
+    createDbSetup = require('./setup/db-setup'),
     createAclSetup = require('./setup/acl-setup'),
     createViewEngine = require('./support/view-engine'),
     createPluginResolver = require('./support/plugin-resolver');
@@ -184,7 +184,7 @@ Index.prototype.init = function(options) {
     db.once('open', function() {
         var conn = mongoose.connection;
         logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user || 'anon');
-        self.dataSetup = self.dataSetup || createDataSetup({
+        self.dataSetup = self.dataSetup || createDbSetup({
             logger: logger,
             dbSupport: self.dbSupport
         });

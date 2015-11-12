@@ -95,7 +95,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var filter = {
             url: urlPath
         };
-        var query = Page.findOne(filter).populate('template redirect regions.includes.plugin');
+        var query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.data');
         var findPage = Promise.promisify(query.exec, query);
         this._setFindPagePromise(pageQueryCachKey, findPage());
     }
@@ -169,15 +169,15 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
             var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
             var includeId = regionIndex + '_' + includeIndex;
             if (pluginModule) {
-                var regionData = include.data || {};
+                var includeData = include.data && include.data.data ? include.data.data : {};
                 if (typeof pluginModule.process === 'function') {
-                    pageProps[includeId] = pluginModule.process(regionData, {
+                    pageProps[includeId] = pluginModule.process(includeData, {
                         preview: pageProps.previewMode,
                         reqUrl: req.url,
                         reqMethod: req.method
                     });
                 } else {
-                    pageProps[includeId] = regionData;
+                    pageProps[includeId] = includeData;
                 }
             }
         });
@@ -230,17 +230,21 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                     pluginModule.__viewPartial : 'The view partial could not be resolved';
                 if(pageResult.previewMode) {
                     htmlWrapper =
-                        '<div data-plugin="%s" ' +
-                        'div data-plugin-name="%s" ' +
+                        '<div ' +
+                        'data-plugin="%s" ' +
+                        'data-plugin-name="%s" ' +
                         'data-page-id="%s" ' +
                         'data-region="%s" ' +
-                        'data-include="%s">\n%s\n</div>';
+                        'data-include="%s" ' +
+                        'data-data-id="%s" ' +
+                        '>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper,
                                               pluginModule.__config.name,
                                               pluginModule.__config.pagespace.name,
                                               page._id,
                                               region.name,
                                               includeIndex,
+                                              include.data ? include.data._id : null,
                                               viewPartial);
                 } else {
                     htmlWrapper = '<div>\n%s\n</div>';

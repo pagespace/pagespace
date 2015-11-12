@@ -39,7 +39,7 @@ module.exports = consts;
 consts.requests = {
     API: {
         key: 'API',
-        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media|hits)/?(.*)'),
+        regex: new RegExp('^/_api/(sites|pages|plugins|datas|templates|users|media|hits)/?(.*)'),
         handler: require('./request-handlers/api-handler')
     },
     AUTH: {
@@ -79,7 +79,7 @@ consts.requests = {
     },
     TEMPLATES: {
         key: 'TEMPLATES',
-        regex: new RegExp('^/_templates/(available|template-regions|test|preview)'),
+        regex: new RegExp('^/_templates/(available|template-regions)'),
         handler: require('./request-handlers/templates-handler')
     },
     OTHER: {

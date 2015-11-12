@@ -65,21 +65,10 @@
             </div>
         </div>
 
-<!-- Doubtful if I like preview now -->
-<!--
-        <div ng-show="template && template.src">
-            <h3>Preview</h3>
-            <img ng-src="{{getTemplatePreviewUrl()}}" alt="Template preview" style="max-width: 66%">
-        </div>
--->
-
         <div ng-show="template.regions && template.regions.length">
-
-            <div class="row" style="margin-top: 2em">
-                <div class="col-sm-9">
-                    <h3>Regions and includes</h3>
-                </div>
-                <div class="col-sm-3">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Rescan regions</label>
+                <div class="col-sm-10">
                     <button type="button" class="btn btn-primary" ng-click="scanRegions()">
                         <span class="glyphicon glyphicon-refresh"></span> Rescan
                     </button>
@@ -87,51 +76,18 @@
             </div>
 
             <div class="form-group">
-                <div class="col-sm-9">
-                    <select ng-model="selectedRegionIndex"
-                            ng-options="template.regions.indexOf(region) as region.name for region in template.regions"
-                            class="form-control" data-ng-attr-size="{{template.regions.length}}">
-                    </select>
-                </div>
-            </div>
-
-            <div ng-repeat="region in template.regions track by $index">
-                <div ng-show="selectedRegionIndex == $index">
-                    <div ng-repeat="include in region.includes track by $index">
-                        <div class="form-group">
-                            <label class="col-sm-2 control-label">Plugin</label>
-                            <div class="col-sm-7">
-                                <select ng-model="template.regions[$parent.$index].includes[$index].plugin"
-                                        ng-change="setDefaultDataForInclude($parent.$index, $index)"
-                                        ng-options="availablePlugin as availablePlugin.name for availablePlugin in availablePlugins track by availablePlugin._id"
-                                        class="form-control">
-                                    <option value="" disabled selected>Select a plugin</option>
+                <label class="col-sm-2 control-label">Include sharing</label>
+                <div class="col-sm-7">
+                    <div ng-repeat="region in template.regions track by $index">
+                        <div class="row">
+                            <label class="col-xs-3 control-label">{{region.name}}</label>
+                            <div class="col-xs-9">
+                                <select ng-model="region.sharing" class="form-control">
+                                    <option ng-selected="region.sharing == ''" value="">No sharing</option>
+                                    <option ng-selected="region.sharing == 'plugins'" value="plugins">Plugins</option>
+                                    <option ng-selected="region.sharing == 'plugins data'" value="plugins data">Plugins with data</option>
                                 </select>
                             </div>
-                            <div class="col-sm-2">
-                                <button type="button" class="btn btn-danger" ng-click="removeInclude($parent.$index, $index)">
-                                    <span class="glyphicon glyphicon-remove"></span> Delete include
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-2 control-label">Global data</label>
-                            <div class="col-sm-7">
-                                <textarea ng-model="template.regions[$parent.$index].includes[$index].data"
-                                          ui-codemirror
-                                          ui-codemirror-opts="editorOpts"
-                                          class="form-control"
-                                          name="region_{{$parent.$index}}_data"
-                                          placeholder="Edit raw include data (for advanced users)"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-9"></div>
-                        <div class="col-sm-3">
-                            <button type="button" class="btn" ng-click="addInclude($index)">
-                                <span class="glyphicon glyphicon-plus"></span> Add Include
-                            </button>
                         </div>
                     </div>
                 </div>

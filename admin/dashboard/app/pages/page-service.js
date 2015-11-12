@@ -60,6 +60,12 @@
             return $http.put('/_api/pages/' + pageId, pageData);
         };
 
+        PageService.prototype.createIncludeData = function(includeData) {
+            return $http.post('/_api/datas', {
+                data: includeData
+            });
+        };
+
         PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
 
             //find the region
@@ -111,13 +117,16 @@
             return page;
         };
 
-        PageService.prototype.depopulatePage = function(page, templateId) {
+        PageService.prototype.depopulatePage = function(page) {
 
             delete page.createdBy;
             delete page.updatedBy;
             delete page.createdAt;
             delete page.updatedAt;
-            page.template = templateId || page.template._id;
+            delete page.basePage;
+            if(page.template && page.template._id) {
+                page.template = page.template._id;
+            }
             if(page.parent && page.parent._id) {
                 page.parent = page.parent._id;
             }
@@ -128,9 +137,12 @@
                 return typeof region === 'object';
             }).map(function(region) {
                 region.includes = region.includes.map(function(include) {
-                    include.plugin = include.plugin._id;
-                    if(isJson(include.data)) {
-                        include.data = JSON.parse(include.data);
+
+                    if(include.plugin && include.plugin._id) {
+                        include.plugin = include.plugin._id;
+                    }
+                    if(include.data && include.data._id) {
+                        include.data = include.data._id;
                     }
                     return include;
                 });
@@ -161,16 +173,6 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
-    }
-
-
-    function isJson(str) {
-        try {
-            JSON.parse(str);
-        } catch(e) {
-            return false;
-        }
-        return true;
     }
 
 })();
