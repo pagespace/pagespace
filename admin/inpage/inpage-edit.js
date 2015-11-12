@@ -272,6 +272,7 @@
         var plugin = evSrc.getAttribute('data-target-plugin');
         var pluginName = evSrc.getAttribute('data-target-plugin-name') || 'Plugin editor';
         var region = evSrc.getAttribute('data-target-region');
+        var pageId = evSrc.getAttribute('data-target-page-id');
         var dataId = evSrc.getAttribute('data-target-data-id');
 
         var iframeSrc = '/_plugins/static/' + plugin + '/edit.html';
@@ -279,7 +280,7 @@
         var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginName, startEl, 'full');
 
         //inject plugin interface
-        iframe.contentWindow.window.pagespace = getPluginInterface(dataId);
+        iframe.contentWindow.window.pagespace = getPluginInterface(pageId, dataId);
     }
 
     /**
@@ -407,7 +408,7 @@
      * @param include
      * @return {{getData: getData, setData: setData, close: close}}
      */
-    function getPluginInterface(dataId) {
+    function getPluginInterface(pageId, dataId) {
         return {
             getKey: function() {
                 return dataId;
@@ -428,7 +429,7 @@
             },
             setData: function(data) {
                 console.info('Pagespace setting data for %s', dataId);
-                return fetch('/_api/datas' + dataId, {
+                var updateData = fetch('/_api/datas' + dataId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
@@ -438,11 +439,24 @@
                     body: JSON.stringify({
                         data: data
                     })
-                }).then(function() {
+                });
+                var updatePage = fetch('/_api/pages' + pageId, {
+                    method: 'put',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        draft: true
+                    })
+                });
+
+                return Promise.all([ updateData, updatePage ]).then(function() {
                     return {
                         status: 'ok'
-                    };
-                });
+                    }
+                })
             },
             close: function() {
                 console.info('Pagespace closing plugin editor for %s', dataId);

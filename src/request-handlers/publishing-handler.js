@@ -73,14 +73,18 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
     });
 
     var updates = [];
+    var numPageUpdates = 0;
+    var numDataUpdates = 0;
 
     var DraftPage = this.dbSupport.getModel('Page');
-    var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.plugin');
+    var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.data');
     var findPagesToPublish = Promise.promisify(query.exec, query);
     findPagesToPublish().then(function(pages) {
 
         var queuedDraftTemplates = {};
         var LivePage = self.dbSupport.getModel('Page', 'live');
+        var DraftIncludeData = self.dbSupport.getModel('Data');
+        var LiveIncludeData = self.dbSupport.getModel('Data', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
 
@@ -108,6 +112,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             if(!livePage.published) {
                 livePage.createdAt = Date.now();
             }
+
             //initial and subsequent publishing events
             livePage.updatedAt = Date.now();
             livePage.updatedBy = req.user._id;
@@ -133,19 +138,42 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
                 logger.info('Template queued to publish: %s (id=%s)', liveTemplate.name, templateId);
             }
 
+            //page data
+            var saveDraftIncludeData;
+            var saveLiveIncludeData;
+            page.regions.forEach(function(region) {
+                region.includes.forEach(function(include) {
+                    if(include.data && include.data.draft) {
+                        var dataId = include.data._id.toString();
+                        var dataUpdate = include.data.toObject();
+                        dataUpdate.draft = false;
+                        delete dataUpdate._id;
+                        delete dataUpdate.__v;
+                        saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, DraftIncludeData);
+                        saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, LiveIncludeData);
+                        updates.push(saveDraftIncludeData({_id: dataId}, dataUpdate, { upsert: true }));
+                        updates.push(saveLiveIncludeData({_id: dataId}, dataUpdate, { upsert: true }));
+                        numDataUpdates++;
+
+                        logger.info('Include dat queued to publish (id=%s)', dataId);
+                    }
+                });
+            });
+
             //undraft page
             var saveDraftPage = Promise.promisify(page.save, page);
             page.draft = false;
             page.published = true;
             updates.push(saveDraftPage());
+            numPageUpdates++;
         });
 
         return updates;
     }).then(function(updates) {
-        logger.info('Publishing completed. %s pages published', updates.length);
+        logger.info('Publishing completed.Published %s pages and %s data includes', numPageUpdates, numDataUpdates);
         res.status(200);
         res.json({
-            message: util.format('Published %s pages', updates.length),
+            message: util.format('Published %s pages and %s data includes', numPageUpdates, numDataUpdates),
             publishCount: updates.length
         });
     }).catch(function(e) {

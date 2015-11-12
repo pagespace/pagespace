@@ -216,7 +216,7 @@ ApiHandler.prototype.doUpdate = function update(req, res, next, logger, Model, i
         logger.debug('Updating model with data: ');
         var docData = req.body;
         docData.updatedBy = req.user._id;
-        this.draft = true;
+        docData.draft = true;
         logger.debug(req.body);
         Model.findOneAndUpdate({_id: itemId}, docData, { 'new': true }).then(function (doc) {
             logger.info('API PUT OK in %s ms', Date.now() - req.startTime);

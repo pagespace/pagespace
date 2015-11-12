@@ -34,6 +34,10 @@ function generateSchema() {
         },
         updatedAt: {
             type: Date
+        },
+        draft: {
+            type: Boolean,
+            default: true
         }
     });
 
