@@ -338,7 +338,7 @@ Index.prototype._getRequestType = function(url) {
         }
     }
 
-    //default to PAGE requeset
+    //default to PAGE request
     if(!type) {
         type = consts.requests.PAGE;
     }
