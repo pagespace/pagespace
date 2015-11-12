@@ -1,6 +1,5 @@
 /* globals console */
 (function() {
-
     window.pagespace = window.pagespace || {};
     window.pagespace.setupAdminMode = function() {
         //adds various admin functionality to a page
@@ -275,7 +274,7 @@
         var pageId = evSrc.getAttribute('data-target-page-id');
         var dataId = evSrc.getAttribute('data-target-data-id');
 
-        var iframeSrc = '/_plugins/static/' + plugin + '/edit.html';
+        var iframeSrc = '/_static/plugins/' + plugin + '/edit.html';
         var startEl = document.querySelectorAll('[data-region=' + region + ']')[0];
         var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginName, startEl, 'full');
 
@@ -321,9 +320,9 @@
         editor.id = 'include-editor';
         editor.className = 'ps-include-editor';
 
-        var regionPos = getAbsolutePosition(startEl);
-        editor.style.top = regionPos.top + 30 + 'px';
+        var regionPos = startEl.getBoundingClientRect();
         editor.style.left = regionPos.left + 'px';
+        editor.style.top = regionPos.top + 30 + 'px';
         editor.style.width = regionPos.width + 'px';
         editor.style.height = regionPos.height + 'px';
 
@@ -452,41 +451,17 @@
                     })
                 });
 
-                return Promise.all([ updateData, updatePage ]).then(function() {
+                return Promise.all([ updateData, updatePage ]).then(function() { // jshint ignore:line
                     return {
                         status: 'ok'
-                    }
-                })
+                    };
+                });
             },
             close: function() {
                 console.info('Pagespace closing plugin editor for %s', dataId);
                 window.parent.location.reload();
             }
         };
-    }
-
-    /**
-     * Util: getAbsolute position
-     * @param node
-     * @param offset
-     * @return {*}
-     */
-    function getAbsolutePosition(node, offset) {
-
-        offset = offset || {
-            left: 0,
-            top: 0,
-            width: node.offsetWidth,
-            height: node.offsetHeight
-        };
-
-        if(node.offsetParent) {
-            offset.left += node.offsetLeft;
-            offset.top += node.offsetTop;
-            return getAbsolutePosition(node.offsetParent, offset);
-        } else {
-            return offset;
-        }
     }
 
 })();

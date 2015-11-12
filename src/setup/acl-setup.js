@@ -24,7 +24,7 @@ var createAcl = require('../support/acl').acl,
 
 //url patterns
 var ALL_PAGES = new RegExp('^/(?!_)(.*)');
-var DEV_API_REGEX = new RegExp('^/_api/(plugins|templates)/?(.*)');
+var DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)');
 var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|datas|media)/?(.*)');
 
 var LOGIN = new RegExp('^/_auth/login');
@@ -65,7 +65,6 @@ AclSetup.prototype.runSetup = function() {
 
     //common actions requiring auth
     acl.match(consts.requests.MEDIA.regex, [ POST, PUT ]).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.PLUGINS.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.TEMPLATES.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.PUBLISH.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
     acl.match(consts.requests.DASHBOARD.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);

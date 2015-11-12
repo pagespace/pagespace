@@ -25,7 +25,8 @@ var consts = {
     appStates: {
         NOT_READY: 0,
         READY: 1,
-        FAILED: 3
+        FAILED: 3,
+        STOPPED: 4
     },
     DEFAULT_SITE_ID: '1',
     GUEST_USER: {
@@ -62,11 +63,6 @@ consts.requests = {
         regex: null,
         handler: require('./request-handlers/page-handler')
     },
-    PLUGINS: {
-        key: 'PLUGINS',
-        regex: new RegExp('^/_plugins/(static|data|reset)/?([A-z0-9-_]*)/?(.*)'),
-        handler: require('./request-handlers/plugin-handler')
-    },
     PUBLISH: {
         key: 'PUBLISH',
         regex: new RegExp('^/_publish/(pages)'),
@@ -74,7 +70,7 @@ consts.requests = {
     },
     STATIC: {
         key: 'STATIC',
-        regex: new RegExp('^/_static/?(dashboard|inpage|sample|bower_components)?/(.*)'),
+        regex: new RegExp('^/_static/?(dashboard|inpage|plugins|sample|bower_components)/?([A-z0-9-_\\.]*)/?(.*)'),
         handler: require('./request-handlers/static-handler')
     },
     TEMPLATES: {
