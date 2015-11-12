@@ -305,9 +305,14 @@ Index.prototype._doRequest = function(req, res, next) {
         req.originalUrl = req.url;
         if(req.session) {
             req.session.loginToUrl = req.originalUrl;
+            req.method = 'GET';
+            req.url = '/_auth/login';
+        } else {
+            var err = new Error('Not found');
+            err.url = req.url;
+            err.status = 404;
+            return next();
         }
-        req.method = 'GET';
-        req.url = '/_auth/login';
     }
     requestType = this._getRequestType(req.url);
 
