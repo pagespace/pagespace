@@ -423,7 +423,7 @@
                 }).then(function(res) {
                     return res.json();
                 }).then(function(data) {
-                    return data.data;
+                    return data.config;
                 });
             },
             setData: function(data) {
@@ -436,7 +436,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        data: data
+                        config: data
                     })
                 });
                 var updatePage = fetch('/_api/pages' + pageId, {

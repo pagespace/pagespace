@@ -303,7 +303,9 @@ Index.prototype._doRequest = function(req, res, next) {
 
         //force login request type
         req.originalUrl = req.url;
-        req.session.loginToUrl = req.originalUrl;
+        if(req.session) {
+            req.session.loginToUrl = req.originalUrl;
+        }
         req.method = 'GET';
         req.url = '/_auth/login';
     }
@@ -464,6 +466,15 @@ Index.prototype.ready = function(callback) {
             });
         }
     });
+};
+
+/**
+ * Call when server shutsdown
+ */
+Index.prototype.stop = function() {
+    this.mongoose.disconnect();
+    this.appState = consts.appStates.STOPPED;
+    this.logger.info('Pagespace shutdown.');
 };
 
 /**

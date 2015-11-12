@@ -169,7 +169,7 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
             var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
             var includeId = regionIndex + '_' + includeIndex;
             if (pluginModule) {
-                var includeData = include.data && include.data.data ? include.data.data : {};
+                var includeData = include.data && include.data.config ? include.data.config : {};
                 if (typeof pluginModule.process === 'function') {
                     pageProps[includeId] = pluginModule.process(includeData, {
                         preview: pageProps.previewMode,

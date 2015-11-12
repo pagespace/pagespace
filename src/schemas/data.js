@@ -25,7 +25,7 @@ var Schema = mongoose.Schema;
 function generateSchema() {
 
     var dataSchema = Schema({
-        data: {
+        config: {
             type: Schema.Types.Mixed
         },
         createdAt: {
