@@ -82,8 +82,8 @@ var server = app.listen(port, function() {
     }
 }).on('close', function() {
     //disconnnect or gulp jasmine doesn't exit
-    pagespace.shutdown();
-    console.info('Pagesapce server closed');
+    pagespace.mongoose.disconnect();
+    //console.info('Pagesapce server closed');
 });
 
 module.exports = {

@@ -85,23 +85,21 @@ PageHandler.prototype.doRequest = function(req, res, next) {
     var Page = this.dbSupport.getModel('Page', modelModifier);
     var pageQueryCachKey = urlPath + '_' + modelModifier;
 
-    if(previewMode) {
-        ///clear cache if in preview mode
-        this.findPagePromises[pageQueryCachKey] = null;
-    }
-
     //create the page query and execute it and cache it
-    if(!this.findPagePromises[pageQueryCachKey]) {
+    var findPagePromise = this.findPagePromises[pageQueryCachKey];
+    if(previewMode || !findPagePromise) {
         var filter = {
             url: urlPath
         };
         var query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.data');
-        var findPage = Promise.promisify(query.exec, query);
-        this._setFindPagePromise(pageQueryCachKey, findPage());
+        findPagePromise = Promise.promisify(query.exec, query)();
+        if(!previewMode) {
+            this._setFindPagePromise(pageQueryCachKey, findPagePromise);
+        }
     }
 
     //get the page from the db!
-    this.findPagePromises[pageQueryCachKey].then(function(page) {
+    findPagePromise.then(function(page) {
         var status = page ? page.status : httpStatus.NOT_FOUND;
 
         var pageProps = {

@@ -61,7 +61,7 @@ describe('Client sending publishing requests', function() {
             });
         }).then(function (res) {
             //3 x live pages, 3 x live templates, 1 x draft page = 7 updates
-            expect(res.body.publishCount).toBe(7);
+            expect(res.body.publishCount).toBe(31);
             return doGet({
                 user: 'guest',
                 url: '/page-5',

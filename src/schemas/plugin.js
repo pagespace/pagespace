@@ -56,14 +56,14 @@ function generateSchema() {
         next();
     });
 
-    pluginSchema.virtual('defaultData').get(function () {
+    pluginSchema.virtual('config').get(function () {
         var plugin = getPluginModule(this.module);
-        var defaultData;
+        var config;
         if(plugin.__config && plugin.__config.pagespace) {
-            defaultData = plugin.__config.pagespace.defaultData;
+            config = plugin.__config.pagespace.config;
         }
 
-        return defaultData || {};
+        return config || {};
     });
 
     pluginSchema.virtual('name').get(function () {

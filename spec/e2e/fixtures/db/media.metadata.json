@@ -1,1 +1,0 @@
-{ "indexes" : [ { "v" : 1, "key" : { "_id" : 1 }, "ns" : "spec.media", "name" : "_id_" }, { "v" : 1, "key" : { "fileName" : 1 }, "unique" : true, "ns" : "spec.media", "name" : "fileName_1", "background" : true } ] }

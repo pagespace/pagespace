@@ -128,7 +128,7 @@ adminApp.controller('PageController',
         if(pageId) {
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            page = pageService.depopulatePage(page, $scope.template._id);
+            page = pageService.depopulatePage(page);
             pageService.updatePage(pageId, page).success(function() {
                 $log.info('Page successfully updated');
                 $scope.showSuccess('Page: ' + page.name + ' saved.');

@@ -18,6 +18,6 @@ describe('Plugin Resolver', function() {
         expect(module.__dir).toBeDefined();
         expect(module.__config.name).toBe('pagespace-webcopy');
         expect(module.__config.pagespace.name).toBe('Web Copy');
-        expect(module.__config.pagespace.defaultData).toBeDefined();
+        expect(module.__config.pagespace.config).toBeDefined();
     });
 });
