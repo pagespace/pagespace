@@ -18,9 +18,13 @@
  */
 
 'use strict';
+if(!global.Intl) {
+    global.Intl = require('intl');
+}
 
 var fs = require('fs'),
-    handlebars = require('handlebars');
+    handlebars = require('handlebars'),
+    handlebarsIntl = require('handlebars-intl');
 
 //TODO: add debug logging
 function ViewEngine() {
@@ -45,11 +49,13 @@ ViewEngine.prototype.setCommonLocals = function(commonLocals) {
 
 ViewEngine.prototype.getHandlebarsInstance = function(instanceId) {
     instanceId = instanceId || 'default';
-
     if(!this.handlebarsInstances[instanceId]) {
         this.handlebarsInstances[instanceId] = handlebars.create();
         this.handlebarsInstances[instanceId].templateCache = {};
         this.handlebarsInstances[instanceId].regsiteredPartials = {};
+
+        //add formatting helpers
+        handlebarsIntl.registerWith(this.handlebarsInstances[instanceId]);
     }
     return this.handlebarsInstances[instanceId];
 };
