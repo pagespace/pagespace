@@ -38,7 +38,7 @@ var urlToModelMap = {
 //fields to auto populate when making queries to these model names (the keys)
 var populationsMap = {
     Site: '',
-    Page: 'parent template regions.includes.plugin regions.includes.data redirect createdBy updatedBy',
+    Page: 'parent template basePage regions.includes.plugin regions.includes.data redirect createdBy updatedBy',
     Plugin: '',
     Data: '',
     Template: 'regions.includes.plugin',

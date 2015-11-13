@@ -901,8 +901,6 @@ adminApp.controller('PageController',
         mode: 'application/json'
     };
 
-    $scope.basePage = null;
-
     $scope.allPages = [];
     pageService.getPages().success(function(pages) {
         $scope.allPages = pages;
@@ -989,6 +987,60 @@ adminApp.controller('PageController',
         }
     });
 
+    $scope.syncOpts = {
+        cleanRegionsOnSync: false
+    };
+    $scope.syncResult = null;
+
+    $scope.synchronizeWithBasePage = function(page) {
+        function getRegionFromBasePage(regionName) {
+            return page.basePage.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0] || null;
+        }
+
+        $scope.syncResults = [];
+        //get basepage from id value
+        page.regions.forEach(function(region) {
+            var syncResult = {
+                region: region.name,
+                removedCount: 0,
+                sharedCount: 0
+            };
+            var baseRegion = getRegionFromBasePage(region.name);
+            if(baseRegion) {
+                //add additonal non-shared includes at the end
+                var extraIncludes = region.includes.filter(function(include) {
+                    return !include.sharing;
+                });
+                region.includes = [];
+                baseRegion.includes.forEach(function(baseInclude) {
+                    var newInclude = {};
+                    var sharing = region.sharing ? region.sharing.split(/\s+/) : [];
+                    if(sharing.indexOf('plugins') >= 0) {
+                        newInclude.plugin = baseInclude.plugin;
+                    }
+                    if(sharing.indexOf('data') >= 0) {
+                        newInclude.data = baseInclude.data;
+                    }
+                    if(newInclude.plugin || newInclude.data) {
+                        region.includes.push(newInclude);
+                    }
+                });
+                syncResult.sharedCount = region.includes.length;
+                if(!$scope.syncOpts.cleanRegionsOnSync) {
+                    //add back non shared includes
+                    region.includes = region.includes.concat(extraIncludes);
+                } else {
+                    syncResult.removedCount = extraIncludes.length;
+                }
+            }
+            $scope.syncResults.push(syncResult);
+        });
+
+        return page;
+    };
+
     $scope.save = function(form) {
         if(form.$invalid) {
             $scope.submitted = true;
@@ -1017,42 +1069,19 @@ adminApp.controller('PageController',
             $log.info('Creating page...');
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
 
-            page.basePage = JSON.parse(page.basePage);
+            //create regions based on template
+            var pageRegions = [];
+            page.template.regions.forEach(function(regionMeta) {
+                var newRegion = {};
+                newRegion.name = regionMeta.name;
+                newRegion.includes = [];
+                pageRegions.push(newRegion);
+            });
+            page.regions = pageRegions;
 
-             var getRegionFromBasePage = function(regionName) {
-                return page.basePage.regions.filter(function(region) {
-                    return region.name === regionName;
-                })[0] || null;
-            };
             if(page.basePage) {
-                //get basepage from id value
-
-                var pageRegions = [];
-                page.template.regions.forEach(function(regionMeta) {
-                    var newRegion = {};
-                    newRegion.includes = [];
-                    newRegion.name = regionMeta.name;
-                    var baseRegion = getRegionFromBasePage(regionMeta.name);
-                    if(baseRegion) {
-                        baseRegion.includes.forEach(function(baseInclude) {
-                            var newInclude = {};
-                            var sharing = regionMeta.sharing.split(/\s+/);
-                            if(sharing.indexOf('plugins') >= 0) {
-                                newInclude.plugin = baseInclude.plugin;
-                            }
-                            if(sharing.indexOf('data') >= 0) {
-                                newInclude.data = baseInclude.data;
-                            }
-                            if(newInclude.plugin || newInclude.data) {
-                                newRegion.includes.push(newInclude);
-                            }
-                        });
-                    }
-                    pageRegions.push(newRegion);
-                });
-                page.regions = pageRegions;
+                page = $scope.synchronizeWithBasePage(page);
             }
-
 
             page = pageService.depopulatePage(page);
             pageService.createPage(page).then(function(res) {
@@ -1194,12 +1223,15 @@ adminApp.controller('PageController',
             delete page.updatedBy;
             delete page.createdAt;
             delete page.updatedAt;
-            delete page.basePage;
+
             if(page.template && page.template._id) {
                 page.template = page.template._id;
             }
             if(page.parent && page.parent._id) {
                 page.parent = page.parent._id;
+            }
+            if(page.basePage && page.basePage._id) {
+                page.basePage = page.basePage._id;
             }
             if(page.redirect && page.redirect._id) {
                 page.redirect = page.redirect._id;

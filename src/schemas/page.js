@@ -58,6 +58,10 @@ function generateSchema(modifier) {
             type: Schema.Types.ObjectId,
             ref: 'Template' + modifier
         },
+        basePage: {
+            type: Schema.Types.ObjectId,
+            ref: 'Page'
+        },
         url: {
             type: String,
             unique: true,

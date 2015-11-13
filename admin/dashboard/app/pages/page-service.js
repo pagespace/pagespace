@@ -123,12 +123,15 @@
             delete page.updatedBy;
             delete page.createdAt;
             delete page.updatedAt;
-            delete page.basePage;
+
             if(page.template && page.template._id) {
                 page.template = page.template._id;
             }
             if(page.parent && page.parent._id) {
                 page.parent = page.parent._id;
+            }
+            if(page.basePage && page.basePage._id) {
+                page.basePage = page.basePage._id;
             }
             if(page.redirect && page.redirect._id) {
                 page.redirect = page.redirect._id;
