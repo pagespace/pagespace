@@ -60,9 +60,9 @@
             return $http.put('/_api/pages/' + pageId, pageData);
         };
 
-        PageService.prototype.createIncludeData = function(includeData) {
+        PageService.prototype.createIncludeData = function(config) {
             return $http.post('/_api/datas', {
-                data: includeData
+                config: config
             });
         };
 

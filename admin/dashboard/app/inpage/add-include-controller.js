@@ -38,7 +38,7 @@
 
             //add the new include to the region
             if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.defaultData).then(function(res) {
+                pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
                     return res.data;
                 }).then(function(includeData) {
                     $scope.page.regions[regionIndex].includes.push({

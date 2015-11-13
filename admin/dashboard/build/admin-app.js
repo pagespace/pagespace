@@ -280,6 +280,70 @@
 })();
 
 (function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('bsHasError', function() {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                //find parent form
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.bsHasError;
+
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    if(field) {
+                        scope.$watch(function() {
+                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
+                            element.toggleClass('has-success', field.$valid && field.$dirty);
+                        });
+                    }
+                }
+            }
+        };
+    });
+})();
+
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('psFieldMatch', function() {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, model) {
+
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.psFieldMatch;
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    model.$parsers.push(function (value) {
+                        var valid = value === field.$viewValue;
+                        model.$setValidity('psFieldMatch', valid);
+                        return valid ? value : undefined;
+                    });
+                }
+            }
+        };
+    });
+})();
+
+
+(function() {
 
     var adminApp = angular.module('adminApp');
     adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
@@ -319,7 +383,7 @@
 
             //add the new include to the region
             if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.defaultData).then(function(res) {
+                pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
                     return res.data;
                 }).then(function(includeData) {
                     $scope.page.regions[regionIndex].includes.push({
@@ -759,70 +823,6 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
 
 })();
 (function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('bsHasError', function() {
-        return {
-            restrict: 'A',
-            link: function(scope, element, attrs) {
-                //find parent form
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.bsHasError;
-
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    if(field) {
-                        scope.$watch(function() {
-                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
-                            element.toggleClass('has-success', field.$valid && field.$dirty);
-                        });
-                    }
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('psFieldMatch', function() {
-        return {
-            require: 'ngModel',
-            link: function (scope, element, attrs, model) {
-
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.psFieldMatch;
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    model.$parsers.push(function (value) {
-                        var valid = value === field.$viewValue;
-                        model.$setValidity('psFieldMatch', valid);
-                        return valid ? value : undefined;
-                    });
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
 
 /**
  *
@@ -1131,9 +1131,9 @@ adminApp.controller('PageController',
             return $http.put('/_api/pages/' + pageId, pageData);
         };
 
-        PageService.prototype.createIncludeData = function(includeData) {
+        PageService.prototype.createIncludeData = function(config) {
             return $http.post('/_api/datas', {
-                data: includeData
+                config: config
             });
         };
 
