@@ -84,14 +84,14 @@
                 ng-click="synchronizeWithBasePage(page)"
                 ng-disabled="syncResults.length"
                 style="float: left; margin-right: 21px; margin-top: 14px;">
-            <span class="glyphicon glyphicon-refresh"></span> Sync with preview
+            <span class="glyphicon glyphicon-refresh"></span> Sync includes
         </button>
-        <div class="checkbox">
+<!--        <div class="checkbox">
             <label>
                 <input type="checkbox"
                        ng-disabled="syncResults.length" ng-model="syncOpts.cleanRegionsOnSync"> Clean regions
             </label>
-        </div>
+        </div>-->
         <div ng-if="syncResults" class="clearfix" style="margin-top: 1em">
             <h3>Sync summary</h3>
             <div ng-repeat="result in syncResults">
@@ -102,11 +102,6 @@
                                          'one': '1 include will be shared with this region',
                                          'other': '{} includes will be shared with this region.'}">
                     </ng-pluralize>
-                    <br>
-                    <ng-pluralize count="result.removedCount"
-                                  when="{'0': 'No non-shared includes will be removed',
-                                         'one': '1 non-shared include will be removed',
-                                         'other': '{} non-shared includes will be removed.'}">
                 </p>
             </div>
         </div>
