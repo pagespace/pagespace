@@ -143,7 +143,8 @@ ApiHandler.prototype.doGet = function get(req, res, next, logger, Model, itemId)
         logger.info('API request OK in %s ms', Date.now() - req.startTime);
         results = itemId ? results[0] : results;
         if (req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
-            var html = psUtil.htmlStringify(results);
+            var html = util.format('<title>%s: %s (%s)</title>\n%s',
+                Model.modelName, (results.name || ''), (itemId || 'all'), psUtil.htmlStringify(results));
             res.send(html, {
                 'Content-Type': 'text/html'
             }, 200);
