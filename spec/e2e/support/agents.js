@@ -59,7 +59,7 @@ var agents = {
                         console.log('Editor agent created');
                         resolve(editorAgent)
                     } else {
-                        console.log('Failed to create editor agent');
+                        console.log('Failed to create EDITOR agent');
                         reject(err, res);
                     }
                 });
@@ -85,6 +85,7 @@ var agents = {
                         console.log('Admin agent created');
                         resolve(adminAgent)
                     } else {
+                        console.log('Failed to create ADMIN agent');
                         reject(err, res);
                     }
                 });
