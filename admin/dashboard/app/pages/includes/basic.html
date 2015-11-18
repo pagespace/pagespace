@@ -92,8 +92,8 @@
                        ng-disabled="syncResults.length" ng-model="syncOpts.cleanRegionsOnSync"> Clean regions
             </label>
         </div>-->
-        <div ng-if="syncResults" class="clearfix" style="margin-top: 1em">
-            <h3>Sync summary</h3>
+        <div ng-if="syncResults" style="margin-left: -15px">
+            <h3 class="col-sm-12"  style="clear: both; margin-top: 1em">Sync summary</h3>
             <div ng-repeat="result in syncResults">
                 <p class="col-sm-3"><b>{{result.region}}</b></p>
                 <p class="col-sm-9">
