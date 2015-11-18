@@ -1,0 +1,1 @@
+{ "indexes" : [ { "v" : 1, "key" : { "_id" : 1 }, "ns" : "test.plugins", "name" : "_id_" }, { "v" : 1, "key" : { "module" : 1 }, "unique" : true, "ns" : "test.plugins", "name" : "module_1", "background" : true } ] }
