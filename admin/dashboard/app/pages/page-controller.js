@@ -25,14 +25,6 @@ adminApp.controller('PageController',
         mode: 'application/json'
     };
 
-    $scope.editRegions = false;
-    $scope.toggleEditRegions = function() {
-        $scope.editRegions = !$scope.editRegions;
-    };
-
-    $scope.selectedRegionIndex = 0;
-    $scope.template = null;
-
     $scope.allPages = [];
     pageService.getPages().success(function(pages) {
         $scope.allPages = pages;
@@ -75,19 +67,6 @@ adminApp.controller('PageController',
                 if(page.redirect) {
                     page.redirect = page.redirect._id;
                 }
-
-                $scope.template = $scope.templates.filter(function(template) {
-                    return page.template && page.template._id === template._id;
-                })[0] || null;
-
-                page.regions.map(function(region) {
-                    region.includes = region.includes.map(function(include) {
-                        include.data = stringifyData(include.data);
-                        return include;
-                    });
-                    return region;
-                });
-
                 callback();
             });
         });
@@ -113,9 +92,8 @@ adminApp.controller('PageController',
         } else {
             //if there's only one template choose it automatically
             if(!$scope.page.template && $scope.templates.length === 1) {
-                $scope.selectTemplate($scope.templates[0]);
+                $scope.page.template = $scope.templates[0];
             }
-            $scope.updateRegions($scope.template);
         }
     });
 
@@ -123,63 +101,8 @@ adminApp.controller('PageController',
         $scope.page.url = pageService.generateUrl($scope.page);
     };
 
-    $scope.addInclude = function(regionIndex) {
-        $scope.page.regions[regionIndex].includes.push({
-            plugin: null,
-            data: {}
-        });
-    };
-
-    $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var pluginId = $scope.page.regions[regionIndex].includes[includeIndex].plugin._id;
-        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
-            return availablePlugin._id === pluginId;
-        })[0];
-        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
-        $scope.page.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
-    };
-
-    $scope.removeInclude = function(region, includeIndex) {
-        var really = window.confirm('Really delete this include?');
-        if(really) {
-            $scope.page = pageService.removeInclude($scope.page, region, includeIndex);
-        }
-    };
-
     $scope.cancel = function() {
         $location.path('/pages');
-    };
-
-    $scope.updateRegions = function(template) {
-        function isRegionNew(regionName) {
-            return !$scope.page.regions.some(function(region) {
-                return region.name === regionName;
-            });
-        }
-
-        template.regions.forEach(function(templateRegion) {
-            if(isRegionNew(templateRegion.name)) {
-                $scope.page.regions.push(templateRegion);
-            }
-        });
-    };
-
-    $scope.selectTemplate = function(template) {
-
-        template.regions = template.regions.map(function(region) {
-            region.include = region.includes.map(function(include) {
-                include.data = typeof include.data !== 'string' ? stringifyData(include.data) : include.data;
-                return include;
-            });
-
-            return region;
-        });
-
-        $scope.template = template;
-
-        if($scope.page && template) {
-            $scope.updateRegions(template);
-        }
     };
 
     $scope.$watch('page.name', function() {
@@ -188,8 +111,56 @@ adminApp.controller('PageController',
         }
     });
 
-    $scope.save = function(form) {
+    $scope.syncResults = null;
 
+    $scope.synchronizeWithBasePage = function(page) {
+        function getRegionFromBasePage(regionName) {
+            return page.basePage.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0] || null;
+        }
+        function getSharingForRegion(page, regionName) {
+            var region = page.template.regions.filter(function(region) {
+                return region.name === regionName;
+            })[0];
+            if(region) {
+                return (region.sharing || '').split(/\s+/);
+            }
+            return [];
+        }
+        function containsInclude(region, includeToFind) {
+            return region.includes.filter(function(include) {
+                return include.data._id === includeToFind.data_id;
+            }).length > 0;
+        }
+        //get basepage from id value
+        $scope.syncResults = [];
+        page.regions.forEach(function(region) {
+            var syncResult = {
+                region: region.name,
+                removedCount: 0,
+                sharedCount: 0
+            };
+            var sharing = getSharingForRegion(page, region.name);
+            var baseRegion = getRegionFromBasePage(region.name);
+            if(baseRegion) {
+                var startCount = region.includes.length;
+                //add additonal non-shared includes at the end
+                baseRegion.includes.forEach(function(baseInclude) {
+                    if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
+                        !containsInclude(region, baseInclude)) {
+                        region.includes.push(baseInclude);
+                    }
+                });
+                syncResult.sharedCount = region.includes.length - startCount;
+            }
+            $scope.syncResults.push(syncResult);
+        });
+
+        return page;
+    };
+
+    $scope.save = function(form) {
         if(form.$invalid) {
             $scope.submitted = true;
             $window.scrollTo(0,0);
@@ -201,12 +172,10 @@ adminApp.controller('PageController',
             page.order = order;
         }
 
-        //unpopulate
-        page = pageService.depopulatePage(page, $scope.template._id);
-
         if(pageId) {
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            page = pageService.depopulatePage(page);
             pageService.updatePage(pageId, page).success(function() {
                 $log.info('Page successfully updated');
                 $scope.showSuccess('Page: ' + page.name + ' saved.');
@@ -218,11 +187,28 @@ adminApp.controller('PageController',
         } else {
             $log.info('Creating page...');
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            pageService.createPage(page).success(function() {
+
+            //create regions based on template
+            var pageRegions = [];
+            page.template.regions.forEach(function(regionMeta) {
+                var newRegion = {};
+                newRegion.name = regionMeta.name;
+                newRegion.includes = [];
+                pageRegions.push(newRegion);
+            });
+            page.regions = pageRegions;
+
+            if(page.basePage) {
+                page = $scope.synchronizeWithBasePage(page);
+            }
+
+            page = pageService.depopulatePage(page);
+            pageService.createPage(page).then(function(res) {
+                var page = res.data;
                 $log.info('Page successfully created');
                 $scope.showSuccess('Page: ' + page.name + ' created.');
                 $location.path('');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error creating page');
                 $scope.showError('Error adding new page', err);
             });
@@ -230,8 +216,4 @@ adminApp.controller('PageController',
     };
 });
 
-
-    function stringifyData(val) {
-        return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
-    }
 })();

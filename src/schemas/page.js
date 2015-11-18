@@ -49,13 +49,18 @@ function generateSchema(modifier) {
                     ref: 'Plugin'
                 },
                 data: {
-                    type: Schema.Types.Mixed
+                    type: Schema.Types.ObjectId,
+                    ref: 'Data' + modifier
                 }
             }]
         }],
         template: {
             type: Schema.Types.ObjectId,
             ref: 'Template' + modifier
+        },
+        basePage: {
+            type: Schema.Types.ObjectId,
+            ref: 'Page'
         },
         url: {
             type: String,

@@ -36,6 +36,16 @@ app.use(function(err, req, res) {
     });
 });
 
-app.listen(9999, function() {
+var server = app.listen(9999, function() {
     console.log('Pagespace dev app now running on http://localhost:9999');
 });
+
+function shutdown() {
+    server.close(function() {
+        pagespace.stop();
+        process.exit();
+    });
+}
+
+process.on ('SIGTERM', shutdown);
+process.on ('SIGINT', shutdown);

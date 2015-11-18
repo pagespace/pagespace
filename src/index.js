@@ -36,7 +36,7 @@ var url = require('url'),
 
     consts = require('./app-constants'),
     createDbSupport = require('./support/db-support'),
-    createDataSetup = require('./setup/data-setup'),
+    createDbSetup = require('./setup/db-setup'),
     createAclSetup = require('./setup/acl-setup'),
     createViewEngine = require('./support/view-engine'),
     createPluginResolver = require('./support/plugin-resolver');
@@ -184,7 +184,7 @@ Index.prototype.init = function(options) {
     db.once('open', function() {
         var conn = mongoose.connection;
         logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user || 'anon');
-        self.dataSetup = self.dataSetup || createDataSetup({
+        self.dataSetup = self.dataSetup || createDbSetup({
             logger: logger,
             dbSupport: self.dbSupport
         });
@@ -303,9 +303,16 @@ Index.prototype._doRequest = function(req, res, next) {
 
         //force login request type
         req.originalUrl = req.url;
-        req.session.loginToUrl = req.originalUrl;
-        req.method = 'GET';
-        req.url = '/_auth/login';
+        if(req.session) {
+            req.session.loginToUrl = req.originalUrl;
+            req.method = 'GET';
+            req.url = '/_auth/login';
+        } else {
+            var err = new Error('Not found');
+            err.url = req.url;
+            err.status = 404;
+            return next();
+        }
     }
     requestType = this._getRequestType(req.url);
 
@@ -331,7 +338,7 @@ Index.prototype._getRequestType = function(url) {
         }
     }
 
-    //default to PAGE requeset
+    //default to PAGE request
     if(!type) {
         type = consts.requests.PAGE;
     }
@@ -464,6 +471,15 @@ Index.prototype.ready = function(callback) {
             });
         }
     });
+};
+
+/**
+ * Call when server shutsdown
+ */
+Index.prototype.stop = function() {
+    this.mongoose.disconnect();
+    this.appState = consts.appStates.STOPPED;
+    this.logger.info('Pagespace shutdown.');
 };
 
 /**

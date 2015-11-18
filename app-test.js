@@ -20,12 +20,12 @@ app.set('view engine', 'hbs');
 
 app.use(pagespace.init({
     db: 'mongodb://127.0.0.1/test',
-//    dbOptions: {
-//        user: 'tester',
-//        pass: 'test'
-//    },
+    dbOptions: {
+        user: 'tester',
+        pass: 'test'
+    },
     mediaDir: path.join(__dirname, 'media-uploads'),
-    logLevel: 'info',
+    logLevel: 'debug',
     imageVariations: [{
         label: 'header',
         width: 500
@@ -83,7 +83,7 @@ var server = app.listen(port, function() {
 }).on('close', function() {
     //disconnnect or gulp jasmine doesn't exit
     pagespace.mongoose.disconnect();
-    console.info('Pagesapce server closed');
+    //console.info('Pagesapce server closed');
 });
 
 module.exports = {

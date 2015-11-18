@@ -6,21 +6,16 @@
  */
 var adminApp = angular.module('adminApp');
 adminApp.controller('TemplateController', function($log, $scope, $rootScope, $routeParams, $location, $window,
-                                                   templateService, pluginService) {
+                                                   templateService) {
     $log.info('Showing Template View');
 
     var templateId = $routeParams.templateId;
 
-    $scope.selectedRegionIndex = 0;
     $scope.template = {
         properties: [],
         regions: [],
         regionData: []
     };
-
-    pluginService.getPlugins().success(function(availablePlugins) {
-        $scope.availablePlugins = availablePlugins;
-    });
 
     templateService.getTemplateSources().success(function(templateSources) {
         $scope.templateSources = templateSources;
@@ -39,14 +34,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         templateService.getTemplate(templateId).success(function(template) {
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
-
-            $scope.template.regions = template.regions.map(function(region) {
-                region.includes = region.includes.map(function(include) {
-                    include.data = stringifyData(include.data);
-                    return include;
-                });
-                return region;
-            });
         }).error(function(err) {
             $log.error(err, 'Error getting template');
             $scope.showError('Error getting template', err);
@@ -67,20 +54,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         }
     };
 
-    $scope.addRegion = function() {
-        var randTitle = Math.random().toString(36).substr(2,3);
-        $scope.template.regions.push({
-            name: randTitle
-        });
-    };
-
-    $scope.removeRegion = function(region) {
-        for(var i = $scope.template.regions.length - 1; i >= 0; i--) {
-            if($scope.template.regions[i].name === region.name) {
-                $scope.template.regions.splice(i, 1);
-            }
-        }
-    };
 
     $scope.scanRegions = function(templateSrc) {
 
@@ -108,47 +81,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         });
     };
 
-    $scope.addInclude = function(regionIndex) {
-        $scope.template.regions[regionIndex].includes.push({
-            plugin: null,
-            data: {}
-        });
-    };
-
-    $scope.setDefaultDataForInclude = function(regionIndex, includeIndex) {
-        var pluginId = $scope.template.regions[regionIndex].includes[includeIndex].plugin._id;
-        var plugin = $scope.availablePlugins.filter(function(availablePlugin) {
-            return availablePlugin._id === pluginId;
-        })[0];
-        var defaultData = plugin && plugin.defaultData ? plugin.defaultData : {};
-        $scope.template.regions[regionIndex].includes[includeIndex].data = stringifyData(defaultData);
-    };
-
-    $scope.removeInclude = function(regionIndex, includeIndex) {
-        var really = window.confirm('Really delete this include?');
-        if(really) {
-            for(var i = $scope.template.regions[regionIndex].includes.length - 1; i >= 0; i--) {
-                if(i === includeIndex) {
-                    $scope.template.regions[regionIndex].includes.splice(i, 1);
-                }
-            }
-        }
-    };
-
-    $scope.getTemplatePreviewUrl = function() {
-        if($scope.template && $scope.template.src) {
-            var templateSrc = encodeURIComponent($scope.template.src);
-            var regionOutlineColor = encodeURIComponent(localStorage.getItem('specialColor'));
-            var templatePreviewUrl = '/_templates/preview?templateSrc=' + templateSrc +
-                '&regionOutlineColor=' + regionOutlineColor;
-            $log.debug('Template preview url is: %s', templatePreviewUrl);
-            return templatePreviewUrl;
-        } else {
-            return null;
-        }
-
-    };
-
     $scope.cancel = function() {
         $location.path('/templates');
     };
@@ -169,21 +101,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                 template.properties.splice(i, 1);
             }
         }
-
-        //depopulate plugins
-        template.regions = template.regions.filter(function(region) {
-            return typeof region === 'object';
-        }).map(function(region) {
-            region.includes = region.includes.map(function(include) {
-                include.plugin = include.plugin._id;
-                if(isJson(include.data)) {
-                    include.data = JSON.parse(include.data);
-                }
-                return include;
-            });
-
-            return region;
-        });
 
         if(templateId) {
             $log.info('Updating template: %s...', templateId);
@@ -223,19 +140,6 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             });
         }
     };
-
-    function stringifyData(val) {
-        return typeof val === 'object' ? JSON.stringify(val, null, 2) : val;
-    }
-
-    function isJson(str) {
-        try {
-            JSON.parse(str);
-        } catch(e) {
-            return false;
-        }
-        return true;
-    }
 });
 
 })();

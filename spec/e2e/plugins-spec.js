@@ -7,7 +7,7 @@ var page2PluginUrl = '/_plugins/data?pageId=56044a3399d5e6354d960b27&region=Main
 
 describe('Client sending plugin requests', function() {
 
-
+/*
     it('cannot get plugin data as guest', function (done) {
         doGet({
             user: 'guest',
@@ -92,5 +92,5 @@ describe('Client sending plugin requests', function() {
         }).catch(function (err) {
             done.fail(err);
         })
-    });
+    });*/
 });

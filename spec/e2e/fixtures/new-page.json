@@ -22,18 +22,14 @@
             "includes":[
                 {
                     "plugin":"560441fbe4b151164bdb3bf8",
-                    "data":{
-                        "html":"<p>Template B Content</p>"
-                    },
+                    "data": null,
                     "_id":"5604557bb42fff62527b40fa"
                 }
             ],
             "include":[
                 {
                     "plugin":"560441fbe4b151164bdb3bf8",
-                    "data":{
-                        "html":"<p>Template B Content</p>"
-                    },
+                    "data": null,
                     "_id":"5604557bb42fff62527b40fa"
                 }
             ]

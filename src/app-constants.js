@@ -25,7 +25,8 @@ var consts = {
     appStates: {
         NOT_READY: 0,
         READY: 1,
-        FAILED: 3
+        FAILED: 3,
+        STOPPED: 4
     },
     DEFAULT_SITE_ID: '1',
     GUEST_USER: {
@@ -39,7 +40,7 @@ module.exports = consts;
 consts.requests = {
     API: {
         key: 'API',
-        regex: new RegExp('^/_api/(sites|pages|plugins|templates|users|media|hits)/?(.*)'),
+        regex: new RegExp('^/_api/(sites|pages|plugins|datas|templates|users|media|hits)/?(.*)'),
         handler: require('./request-handlers/api-handler')
     },
     AUTH: {
@@ -62,11 +63,6 @@ consts.requests = {
         regex: null,
         handler: require('./request-handlers/page-handler')
     },
-    PLUGINS: {
-        key: 'PLUGINS',
-        regex: new RegExp('^/_plugins/(static|data|reset)/?([A-z0-9-_]*)/?(.*)'),
-        handler: require('./request-handlers/plugin-handler')
-    },
     PUBLISH: {
         key: 'PUBLISH',
         regex: new RegExp('^/_publish/(pages)'),
@@ -74,12 +70,12 @@ consts.requests = {
     },
     STATIC: {
         key: 'STATIC',
-        regex: new RegExp('^/_static/?(dashboard|inpage|sample|bower_components)?/(.*)'),
+        regex: new RegExp('^/_static/?(dashboard|inpage|plugins|sample|bower_components)/?([A-z0-9-_\\.]*)/?(.*)'),
         handler: require('./request-handlers/static-handler')
     },
     TEMPLATES: {
         key: 'TEMPLATES',
-        regex: new RegExp('^/_templates/(available|template-regions|test|preview)'),
+        regex: new RegExp('^/_templates/(available|template-regions)'),
         handler: require('./request-handlers/templates-handler')
     },
     OTHER: {

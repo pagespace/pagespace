@@ -21,11 +21,9 @@
 
 //support
 var fs = require('fs'),
-    util = require('util'),
     path = require('path'),
 
     VError = require('verror'),
-    send = require('send'),
     Promise = require('bluebird'),
 
     consts = require('../app-constants'),
@@ -53,8 +51,6 @@ TemplatesHandler.prototype.init = function(support) {
     this.viewEngine = support.viewEngine;
     this.reqCount = 0;
 
-    this.templateShotsDir = path.join(support.userBasePath, 'tmp/template-shots');
-
     var self = this;
     return function(req, res, next) {
         return self.doRequest(req, res, next);
@@ -74,12 +70,6 @@ TemplatesHandler.prototype.doRequest = function(req, res, next) {
     } else if (reqType === reqTypes.TEMPLATE_REGIONS && req.method === 'GET') {
         logger.info('New getRegionsForTemplate request');
         return this.doGetRegionsForTemplate(req, res, next, logger);
-    } else if (reqType === reqTypes.TEMPLATE_TEST && req.method === 'GET') {
-        logger.info('New templateTest request');
-        return this.doTemplateTest(req, res, next, logger);
-    } else if(reqType === reqTypes.TEMPLATE_PREVIEW && req.method === 'GET') {
-        logger.info('New templatePreview request');
-        return this.doGetTemplatePreview(req, res, next, logger);
     } else {
         var err = new Error('Unrecognized method');
         err.status = 405;
@@ -227,147 +217,3 @@ function getViewDirs(req) {
 
     return views;
 }
-
-/**
- * Responds with a rendered image of a template
- * @param req
- * @param res
- * @param next
- * @param logger
- */
-TemplatesHandler.prototype.doGetTemplatePreview = function(req, res, next, logger) {
-
-    var templateSrc = req.query.templateSrc;
-    var regionOutlineColor = req.query.regionOutlineColor || '#ff005a';
-    var templateShotFile = path.join(this.templateShotsDir, path.basename(templateSrc, '.hbs') + '.png');
-
-    logger.debug('Template source file is %s', templateSrc);
-    logger.info('Preview will be saved to: %s', templateShotFile);
-    logger.debug('Using region outline color: %s', regionOutlineColor);
-
-    //launch phantom
-    var phantom = require('node-phantom');
-    phantom.create(function(err, phantom) {
-
-        if(err) {
-            logger.warn('Cannot do preview, PhantomJS is not available.');
-            err.status = 500;
-            return next(err);
-        }
-
-        logger.info('Launched Phantom instance');
-        return phantom.createPage(function(err, page) {
-            logger.info('Phantom page created');
-
-            //TODO: hard coded address
-            var templatePreviewUrl =
-                (req.secure ? 'https': 'http') + '://' + req.get('host') + '/_templates/test?templateSrc=' +
-                encodeURIComponent(templateSrc) + '&regionOutlineColor=' + encodeURIComponent(regionOutlineColor);
-            logger.info('Opening url [%s]...', templatePreviewUrl);
-
-            page.open(templatePreviewUrl,  function(err, status) {
-
-                if(err) {
-                    return next(err);
-                }
-
-                logger.info('Page opened with status: %s', status);
-                if(status === 'success') {
-                    page.viewportSize = { width: 1920, height: 1080 };
-                    logger.info('Save screenshot of page...');
-                    page.render(templateShotFile, function() {
-                        logger.info('Screenshot saved. Exiting phantom...');
-                        phantom.exit();
-
-                        logger.info('Sending %s to client', templateShotFile);
-                        var stream = send(req, templateShotFile);
-
-                        // forward non-404 errors
-                        stream.on('error', function error(err) {
-                            logger.warn('Error streaming template screenshot for %s', req.url);
-                            next(err.status === 404 ? null : err);
-                        });
-
-                        stream.on('end', function end () {
-                           logger.info('Template screenshot sent.');
-                        });
-
-                        res.type('png');
-                        stream.pipe(res);
-                    });
-                }
-            });
-        });
-    });
-};
-
-/**
- * Renders a test page using a given template
- * This handler is usually called (via phantomjs) from the doGetTemplatePreview method for generating preview
- * images
- * @param req
- * @param res
- * @param next
- * @param logger
- * @returns {*}
- */
-TemplatesHandler.prototype.doTemplateTest = function(req, res, next, logger) {
-
-    var self = this;
-
-    var templateSrc = req.query.templateSrc;
-    var regionOutlineColor = req.query.regionOutlineColor || '#ff005a';
-
-    var err;
-    if(!templateSrc) {
-        err = new Error('No template url given');
-        err.status = 404;
-        next(err);
-    }
-
-    var viewDirs = null;
-    try {
-        viewDirs = getViewDirs(req);
-    } catch(e) {
-        return next(e);
-    }
-
-    this.getRegionsForTemplate(templateSrc, viewDirs).then(function(regions) {
-
-        logger.debug('Rendering template test for [%s] with regions [%s]', templateSrc, regions.join(', '));
-
-        var pageData = {};
-        pageData.__template = '/template-test';
-
-        var REGION_FILLER_HTML =
-            '<div style="height: %spx; outline: 2px solid %s">' +
-                '<div style="text-align: center; padding: 10px"><p><b>%s</b></p></div>' +
-            '</div>';
-
-        regions.forEach(function(region) {
-            pageData[region] = {
-                data: {},
-                edit: false,
-                region: region
-            };
-
-            var partialFillerHtml = util.format(REGION_FILLER_HTML, 200, regionOutlineColor, region);
-            self.viewEngine.registerPartial(region, partialFillerHtml, pageData.__template);
-        });
-
-        //make it make a request to the test url
-        res.render(templateSrc, pageData, function(err, html) {
-            if(err) {
-                logger.error(err, 'Trying to render page');
-                next(err);
-            } else {
-                logger.debug('Sending template test');
-                res.send(html);
-            }
-        });
-    }).catch(function(err) {
-        err = new VError(err, 'Could not find template: "%s"', templateSrc);
-        err.status = 404;
-        return next(err);
-    });
-};

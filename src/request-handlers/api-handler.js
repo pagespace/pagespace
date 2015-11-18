@@ -24,10 +24,11 @@ var util = require('util'),
     psUtil = require('../support/pagespace-util');
 
 //maps model ur namel parts to model names
-var modelMap = {
+var urlToModelMap = {
     sites: 'Site',
     pages: 'Page',
     plugins: 'Plugin',
+    datas: 'Data',
     templates:'Template',
     users: 'User',
     media: 'Media',
@@ -37,8 +38,9 @@ var modelMap = {
 //fields to auto populate when making queries to these model names (the keys)
 var populationsMap = {
     Site: '',
-    Page: 'parent template regions.includes.plugin redirect createdBy updatedBy',
+    Page: 'parent template basePage regions.includes.plugin regions.includes.data redirect createdBy updatedBy',
     Plugin: '',
+    Data: '',
     Template: 'regions.includes.plugin',
     User: '',
     Media: '',
@@ -83,8 +85,8 @@ ApiHandler.prototype.doRequest = function(req, res, next) {
     var itemId = apiInfo[2];
 
     //can now process the supported api type
-    if(modelMap.hasOwnProperty(apiType)) {
-        var modelName = modelMap[apiType];
+    if(urlToModelMap.hasOwnProperty(apiType)) {
+        var modelName = urlToModelMap[apiType];
         var Model = this.dbSupport.getModel(modelName);
 
         //clear props not to write to db
@@ -141,7 +143,8 @@ ApiHandler.prototype.doGet = function get(req, res, next, logger, Model, itemId)
         logger.info('API request OK in %s ms', Date.now() - req.startTime);
         results = itemId ? results[0] : results;
         if (req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
-            var html = psUtil.htmlStringify(results);
+            var html = util.format('<title>%s: %s (%s)</title>\n%s',
+                Model.modelName, (results.name || ''), (itemId || 'all'), psUtil.htmlStringify(results));
             res.send(html, {
                 'Content-Type': 'text/html'
             }, 200);
@@ -179,7 +182,7 @@ ApiHandler.prototype.doCreate = function create(req, res, next, logger, Model, i
         var model = new Model(docData);
         model.createdBy = req.user._id;
         model.save().then(function (model) {
-            logger.info('API post OK in %s ms', Date.now() - req.startTime);
+            logger.info('API POST OK in %s ms', Date.now() - req.startTime);
             res.status(201);
             res.json(model);
         }).then(undefined, function (err) {
@@ -214,7 +217,7 @@ ApiHandler.prototype.doUpdate = function update(req, res, next, logger, Model, i
         logger.debug('Updating model with data: ');
         var docData = req.body;
         docData.updatedBy = req.user._id;
-        this.draft = true;
+        docData.draft = true;
         logger.debug(req.body);
         Model.findOneAndUpdate({_id: itemId}, docData, { 'new': true }).then(function (doc) {
             logger.info('API PUT OK in %s ms', Date.now() - req.startTime);

@@ -44,13 +44,12 @@
 </div>
 
 <!-- Select template -->
-<div ng-if="page.template == null && templates.length > 1" bs-has-error="template">
+<div ng-if="templates.length > 1" bs-has-error="template">
     <div class="form-group">
-        <label class="col-sm-2 control-label">Select template</label>
+        <label class="col-sm-2 control-label">Template</label>
         <div class="col-sm-7">
-            <select ng-model="template" name="template" required
-                    ng-options="template as template.name for template in templates"
-                    ng-change="selectTemplate(template)"
+            <select ng-model="page.template" name="template" required
+                    ng-options="template as template.name for template in templates track by template._id"
                     class="form-control">
                 <option value="" disabled selected>Choose a template</option>
             </select>
@@ -60,7 +59,7 @@
 
 <div ng-if="page.template == null && templates.length === 0" >
     <div class="form-group">
-        <label class="col-sm-2 control-label">Select template</label>
+        <label class="col-sm-2 control-label">Template</label>
         <div class="col-sm-7">
             <p class="form-control-static text-warning">
                 There are no templates to select. Ask your developer to add some.</p>
@@ -68,7 +67,51 @@
     </div>
 </div>
 
+<div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
+    <label class="col-sm-2 control-label">Based on page</label>
+    <div class="col-sm-7">
+        <select ng-model="page.basePage" class="form-control"
+                ng-options="page as page.name for page in allPages track by page._id">
+            <option  value="">None</option>
+        </select>
+    </div>
+</div>
+
+<div class="form-group" ng-if="page._id && page.basePage">
+    <label class="col-sm-2 control-label">Synchronize with base page</label>
+    <div class="col-sm-7">
+        <button type="button" class="btn btn-primary"
+                ng-click="synchronizeWithBasePage(page)"
+                ng-disabled="syncResults.length"
+                style="float: left; margin-right: 21px; margin-top: 14px;">
+            <span class="glyphicon glyphicon-refresh"></span> Sync includes
+        </button>
+<!--        <div class="checkbox">
+            <label>
+                <input type="checkbox"
+                       ng-disabled="syncResults.length" ng-model="syncOpts.cleanRegionsOnSync"> Clean regions
+            </label>
+        </div>-->
+        <div ng-if="syncResults" style="margin-left: -15px">
+            <h3 class="col-sm-12"  style="clear: both; margin-top: 1em">Sync summary</h3>
+            <div ng-repeat="result in syncResults">
+                <p class="col-sm-3"><b>{{result.region}}</b></p>
+                <p class="col-sm-9">
+                    <ng-pluralize count="result.sharedCount"
+                                  when="{'0': 'No includes will be shared with this region',
+                                         'one': '1 include will be shared with this region',
+                                         'other': '{} includes will be shared with this region.'}">
+                    </ng-pluralize>
+                </p>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+
 <div class="action-buttons">
-    <button type="submit" class="btn btn-primary" ng-disabled="template == null">Save</button>
+    <button type="submit" class="btn btn-primary" ng-disabled="page.template == null">Save</button>
     <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
 </div>

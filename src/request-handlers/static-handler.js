@@ -31,9 +31,11 @@ module.exports = new StaticHandler();
 StaticHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
-    this.adminStaticServe = serveStatic(__dirname + '/../../admin', {
+    this.pluginResolver = support.pluginResolver;
+    this.adminStaticServer = serveStatic(__dirname + '/../../admin', {
         index: false
     });
+    this.pluginStaticServers = {};
     this.reqCount = 0;
 
     var self = this;
@@ -50,12 +52,33 @@ StaticHandler.prototype.doRequest = function(req, res, next) {
 
     var apiInfo = consts.requests.STATIC.regex.exec(req.url);
     var staticType = apiInfo[1];
-    var staticPath = apiInfo[2];
-
-    req.url = '/' + staticType + '/' + staticPath;
-    this.adminStaticServe(req, res, function(e) {
-        req.url = req.originalUrl;
-        next(e);
-    });
-
+    var staticPath;
+    if(staticType !== 'plugins') {
+        staticPath = apiInfo[2] + (apiInfo[3] ? '/' + apiInfo[3] : '');
+        req.url = '/' + staticType + '/' + staticPath;
+        this.adminStaticServer(req, res, function(e) {
+            req.url = req.originalUrl;
+            next(e);
+        });
+    } else {
+        var pluginModuleId = apiInfo[2];
+        staticPath = apiInfo[3];
+        if(!this.pluginStaticServers[pluginModuleId]) {
+            var pluginModule = this.pluginResolver.require(pluginModuleId);
+            if(!pluginModule) {
+                var err = new Error('Cannot resolve plugin module for %s', pluginModuleId);
+                err.url = req.url;
+                err.status = 404;
+                return next();
+            }
+            this.pluginStaticServers[pluginModuleId] = serveStatic(pluginModule.__dir, {
+                index: false
+            });
+        }
+        req.url = '/static/' + staticPath;
+        this.pluginStaticServers[pluginModuleId](req, res, function (e) {
+            req.url = req.originalUrl;
+            next(e);
+        });
+    }
 };

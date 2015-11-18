@@ -83,6 +83,7 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                     getPageModel: function(previewMode) {
                         return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
                     },
+                    pluginResolver: self,
                     logger: logger.child({plugin: pluginModuleId}),
                     userBasePath: this.userBasePath
                 }
