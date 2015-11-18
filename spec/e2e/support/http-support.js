@@ -75,6 +75,9 @@ var support = {
                         return resolve(res);
                     });
             });
+        }).catch(function(err) {
+            console.warn('Agent creation error');
+            console.error(err);
         });
 
     },
