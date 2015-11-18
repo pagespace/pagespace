@@ -25,7 +25,7 @@ app.use(pagespace.init({
         pass: 'test'
     },
     mediaDir: path.join(__dirname, 'media-uploads'),
-    logLevel: 'info',
+    logLevel: 'debug',
     imageVariations: [{
         label: 'header',
         width: 500

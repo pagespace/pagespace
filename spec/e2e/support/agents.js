@@ -59,6 +59,7 @@ var agents = {
                         console.log('Editor agent created');
                         resolve(editorAgent)
                     } else {
+                        console.log('Failed to create editor agent');
                         reject(err, res);
                     }
                 });
