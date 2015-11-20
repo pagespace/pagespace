@@ -75,8 +75,8 @@ module.exports = new Index();
 /**
  * Initializes and returns the middleware
  * @param options Configuration object
- * @param options.logStreams Array of additional custom bunyan log streams
- * @param options.logLevel The logging level. See Bunyran
+ * @param options.logger Custom Bunyan logger
+ * @param options.logLevel The logging level. Only applies if not providong a custom logger
  * @param options.env. Set to 'development' to enable development mode
  * @param options.mediaDir A location to save uploaded media items. Defauults to ./media-uploads.
  *                         This directory will be created if it doesn't exist
@@ -99,21 +99,24 @@ Index.prototype.init = function(options) {
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
-    var logStreams = options.logStreams instanceof Array ? options.logStreams : [];
-    var prettyStdOut = new PrettyStream();
-    prettyStdOut.pipe(process.stdout);
-    this.logger =  bunyan.createLogger({
-        name: 'pagespace',
-        streams: [{
-            level: options.logLevel || 'info',
-            stream: prettyStdOut
-        }].concat(logStreams)
-    });
-    this.logger.on('error', function (err) {
+    if(options.logger) {
+        this.logger = options.logger.child();
+    } else {
+        var prettyStdOut = new PrettyStream();
+        prettyStdOut.pipe(process.stdout);
+        this.logger = bunyan.createLogger({
+            name: 'pagespace',
+            streams: [{
+                level: options.logLevel || 'info',
+                stream: prettyStdOut
+            }]
+        });
+    }
+
+    var logger = this.logger;
+    logger.on('error', function (err) {
         self.emit('error', err);
     });
-    var logger = this.logger.child();
-
     logger.info('Initializing the middleware...');
 
     //define where to save media uploads
