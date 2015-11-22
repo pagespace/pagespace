@@ -28,7 +28,6 @@ var consts = {
         FAILED: 3,
         STOPPED: 4
     },
-    DEFAULT_SITE_ID: '1',
     GUEST_USER: {
         username: 'guest',
         role: 'guest'

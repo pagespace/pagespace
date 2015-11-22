@@ -25,7 +25,6 @@ var Schema = mongoose.Schema;
 function generateSchema() {
 
     var siteSchema =  Schema({
-        _id: String,
         name: {
             type: String,
             required: true
@@ -59,7 +58,7 @@ function generateSchema() {
     });
 
     siteSchema.pre('findOneAndUpdate', function (next) {
-        this.update({},{ $set: { updatedAt:  Date.now() }});
+        this.getUpdate().updatedAt = Date.now();
         next();
     });
 

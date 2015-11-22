@@ -6,11 +6,14 @@
 
         }
         SiteService.prototype.getSite = function() {
-            return $http.get('/_api/sites/1');
+            return $http.get('/_api/sites').then(function(res) {
+                return res.data[0];
+            });
         };
 
-        SiteService.prototype.updateSite = function(siteData) {
-            return $http.put('/_api/sites/1', siteData);
+        SiteService.prototype.updateSite = function(siteId, siteData) {
+            delete siteData._id;
+            return $http.put('/_api/sites/' + siteId, siteData);
         };
 
         return new SiteService();

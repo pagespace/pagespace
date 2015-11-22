@@ -17,9 +17,9 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
     };
 
     var getSite = function() {
-        siteService.getSite().success(function(site) {
+        siteService.getSite().then(function(site) {
             $scope.site = site;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting site', err);
         });
     };

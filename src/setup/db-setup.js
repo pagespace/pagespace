@@ -20,8 +20,7 @@
 
 'use strict';
 
-var Promise = require('bluebird'),
-    consts = require('../app-constants');
+var Promise = require('bluebird');
 
 /**
  *
@@ -50,7 +49,7 @@ DataSetup.prototype.runSetup = function() {
     var loadSite = self._loadSite();
 
     //once everything is ready
-    return Promise.join(loadPluginModules, loadAdminUser, loadSite, function(plugins, users, site) {
+    return Promise.join(loadPluginModules, loadAdminUser, loadSite).spread(function(plugins, users, site) {
 
         var promises = [];
 
@@ -64,7 +63,6 @@ DataSetup.prototype.runSetup = function() {
             logger.info('Creating first site');
             var Site = self.dbSupport.getModel('Site');
             var newSite = new Site({
-                _id: consts.DEFAULT_SITE_ID,
                 name: 'New Pagespace site'
             });
             var saveNewSite = Promise.promisify(newSite.save, newSite);
@@ -133,9 +131,6 @@ DataSetup.prototype._loadAdminUser = function() {
  */
 DataSetup.prototype._loadSite = function() {
 
-    //create an admin user on first run
     var Site = this.dbSupport.getModel('Site');
-    var query = Site.findById(consts.DEFAULT_SITE_ID);
-    var getSite = Promise.promisify(query.exec, query);
-    return getSite();
+    return Site.findOne().exec();
 };

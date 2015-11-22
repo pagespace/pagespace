@@ -1296,9 +1296,9 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
     };
 
     var getSite = function() {
-        siteService.getSite().success(function(site) {
+        siteService.getSite().then(function(site) {
             $scope.site = site;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting site', err);
         });
     };
@@ -1748,11 +1748,14 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
         }
         SiteService.prototype.getSite = function() {
-            return $http.get('/_api/sites/1');
+            return $http.get('/_api/sites').then(function(res) {
+                return res.data[0];
+            });
         };
 
-        SiteService.prototype.updateSite = function(siteData) {
-            return $http.put('/_api/sites/1', siteData);
+        SiteService.prototype.updateSite = function(siteId, siteData) {
+            delete siteData._id;
+            return $http.put('/_api/sites/' + siteId, siteData);
         };
 
         return new SiteService();
@@ -1775,7 +1778,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
             redirect: null
         };
 
-        siteService.getSite().success(function(site) {
+        siteService.getSite().then(function(site) {
             $scope.site = site;
         });
 
@@ -1839,7 +1842,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
 
             promise.then(function() {
-                return siteService.updateSite(site);
+                return siteService.updateSite(site._id, site);
             }).then(function() {
                 $scope.showSuccess('Site updated.');
                 $location.path('/');

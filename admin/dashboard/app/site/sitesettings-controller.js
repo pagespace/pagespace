@@ -11,7 +11,7 @@
             redirect: null
         };
 
-        siteService.getSite().success(function(site) {
+        siteService.getSite().then(function(site) {
             $scope.site = site;
         });
 
@@ -75,7 +75,7 @@
 
 
             promise.then(function() {
-                return siteService.updateSite(site);
+                return siteService.updateSite(site._id, site);
             }).then(function() {
                 $scope.showSuccess('Site updated.');
                 $location.path('/');
