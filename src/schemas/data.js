@@ -47,7 +47,7 @@ function generateSchema() {
     });
 
     dataSchema.pre('findOneAndUpdate', function (next) {
-        this.update({},{ $set: { updatedAt:  Date.now() }});
+        this.getUpdate().updatedAt = Date.now();
         next();
     });
 
