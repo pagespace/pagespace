@@ -21,7 +21,8 @@
 
 var vm = require('vm'),
     fs = require('fs'),
-    path = require('path');
+    path = require('path'),
+    resolve = require('resolve');
 
 var instance = null;
 
@@ -53,30 +54,28 @@ PluginResolver.prototype.require = function(pluginModuleId) {
     var pluginModule = this.cache[pluginModuleId];
     if(!pluginModule) {
         try {
-            var pluginPath = require.resolve(pluginModuleId);
+            var pluginPath = resolve.sync(pluginModuleId, {
+                basedir: this.userBasePath
+            });
             var pluginDirPath = path.dirname(pluginPath);
-            var code = fs.readFileSync(require.resolve(pluginPath), 'utf8');
+            var code = fs.readFileSync(pluginPath, 'utf8');
             var sandbox = {
                 console : console,
                 module  : {},
                 __filename: pluginPath,
                 __dirname: pluginDirPath,
                 require : function(modulePath) {
+                    var resolvedPath = resolve.sync(modulePath, {
+                        basedir: pluginDirPath
+                    });
 
                     //TODO: this a quick workaround to require not being in the plugin module context.
                     //it may cause issues if the plugin module requires  a different version of a module already
                     //required by Pagespace
                     try {
-                        return require(modulePath);
+                        return require(resolvedPath);
                     } catch(err){
-                        if(err.code === 'MODULE_NOT_FOUND'){
-                            if(modulePath.indexOf('.') === 0) {
-                                modulePath = path.resolve(pluginDirPath, modulePath);
-                            } else {
-                                modulePath = path.resolve(pluginDirPath, 'node_modules', modulePath);
-                            }
-                            return require(modulePath);
-                        }
+                        logger.error(err, 'Module unable to use require');
                     }
                 },
                 pagespace: {
