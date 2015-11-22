@@ -94,7 +94,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             }
 
             var templateId = null;
-            if(!page.template && page.status === 200) {
+            if(!page.template) {
                 logger.warn('Attempting to publish page without a template: %s', page._id);
                 return;
             } else if(page.status === 200) {
