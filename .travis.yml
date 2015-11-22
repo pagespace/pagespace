@@ -16,3 +16,4 @@ before_script:
   - sleep 15
   - mongod --version
   - ./clean.sh
+  - mongo test --eval 'db.createUser({ user: "tester", pwd: "test", roles: [{ role: "readWrite", db: "test" }]})'
