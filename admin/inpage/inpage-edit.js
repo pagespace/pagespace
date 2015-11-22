@@ -428,7 +428,7 @@
             },
             setData: function(data) {
                 console.info('Pagespace setting data for %s', dataId);
-                var updateData = fetch('/_api/datas' + dataId, {
+                var updateData = fetch('/_api/datas/' + dataId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
@@ -439,7 +439,7 @@
                         config: data
                     })
                 });
-                var updatePage = fetch('/_api/pages' + pageId, {
+                var updatePage = fetch('/_api/pages/' + pageId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
