@@ -95,7 +95,7 @@ Index.prototype.init = function(options) {
         throw new Error('Pagespace must be initialized with at least a mongo connection string (db)');
     }
 
-    //used in downstream request handlers and plugins for loading files relative to the application
+    //used in downstrmeam request handlers and plugins for loading files relative to the application
     this.userBasePath = path.dirname(module.parent.filename);
 
     //logger setup
