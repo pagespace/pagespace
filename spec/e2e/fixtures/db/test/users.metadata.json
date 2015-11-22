@@ -1,1 +1,1 @@
-{ "indexes" : [ { "v" : 1, "key" : { "_id" : 1 }, "ns" : "test.users", "name" : "_id_" }, { "v" : 1, "key" : { "username" : 1 }, "unique" : true, "ns" : "test.users", "name" : "username_1", "background" : true } ] }
+{"options":{},"indexes":[{"v":1,"key":{"_id":1},"name":"_id_","ns":"test.users"},{"v":1,"unique":true,"key":{"username":1},"name":"username_1","ns":"test.users","background":true}]}
