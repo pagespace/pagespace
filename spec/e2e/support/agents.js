@@ -79,7 +79,7 @@ var agents = {
 
             adminAgent = request.agent(server);
             adminAgent.post('/_auth/login')
-                .send({ username: 'admin', password: 'admin' })
+                .send({ username: 'admin', password: 'pagespace' })
                 .end(function (err, res) {
                     if (res.ok) {
                         console.log('Admin agent created');
