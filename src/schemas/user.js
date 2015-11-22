@@ -110,8 +110,28 @@ function generateSchema() {
     });
 
     userSchema.pre('findOneAndUpdate', function (next) {
-        this.update({},{ $set: { updatedAt:  Date.now() }});
-        next();
+
+        var query = this;
+
+        query.getUpdate().updatedAt = Date.now();
+
+        var plainPassword = query.getUpdate().password;
+        if(plainPassword) {
+            bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
+                if (err) {
+                    return next(err);
+                }
+                bcrypt.hash(plainPassword, salt, function (err, hash) {
+                    if (err) {
+                        return next(err);
+                    }
+                    query.getUpdate().password = hash;
+                    next();
+                });
+            });
+        } else {
+            next();
+        }
     });
 
     userSchema.methods.comparePassword = function (candidatePassword, cb) {
