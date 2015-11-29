@@ -25,15 +25,19 @@ var fs = require('fs'),
     Promise = require('bluebird'),
     formidable = require('formidable'),
     sizeOf = require('image-size'),
-    lwip = require('lwip'),
     consts = require('../app-constants'),
     psUtil = require('../support/pagespace-util');
 
 var writeFileAsync = Promise.promisify(fs.writeFile);
 var unlinkAsync = Promise.promisify(fs.unlink);
 var sizeOfAsync = Promise.promisify(sizeOf);
-var openImage = Promise.promisify(lwip.open);
-Promise.promisifyAll(require('lwip/lib/Image').prototype);
+
+var sharp;
+try {
+    sharp = require('sharp');
+} catch(err) {
+    sharp = null;
+}
 
 var MediaHandler = function() {
 };
@@ -191,12 +195,14 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
         return [ fields, files, dimensions ];
     }).spread(function(fields, files, dimensions) {
         //generate thumbnail image
-        var thumb = self.imageVariations.filter(function(variation) {
-            return variation.label && variation.label === 'thumb' && variation.size;
-        })[0];
-        var thumbnailPromise = thumb && dimensions.width && dimensions.height ?
-            resizeImage(files.file.path, 'thumb', dimensions, thumb.size, thumb.format, logger) : null;
-
+        var thumbnailPromise = null;
+        if(files.file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
+            var thumb = self.imageVariations.filter(function(variation) {
+                return variation.label && variation.label === 'thumb' && variation.size;
+            })[0];
+            thumbnailPromise = thumb ?
+                resizeImage(files.file.path, 'thumb', dimensions, thumb.size, thumb.format, logger) : null;
+        }
         return [ fields, files, dimensions, thumbnailPromise ];
     }).spread(function(fields, files, dimensions, thumbnail) {
         //save media to db
@@ -279,11 +285,20 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
 
 function resizeImage(filePath, label, fDim, tDim, format, logger) {
 
+    if(!sharp) {
+        logger.warn('Sharp is not installed, image variations will not be created');
+        return Promise.resolve();
+    }
+
     var dir = path.dirname(filePath);
     var ext = path.extname(filePath);
     var base = path.basename(filePath);
     var newBase = base.substring(0, base.length - ext.length) + '.' + label;
     format = format || ext.substr(1);
+    if(format === 'jpg') {
+        format = 'jpeg';
+    }
+
     var fileName =  newBase + '.' + format;
     var toPath = path.join(dir, fileName);
 
@@ -306,13 +321,11 @@ function resizeImage(filePath, label, fDim, tDim, format, logger) {
         throw new Error('Cannot resize image for %s without a width or height', label);
     }
 
-    return openImage(filePath).then(function(image) {
-        logger.debug('Resizing image @ %s to %s x %s', filePath, toWidth, toHeight);
-        return image.resizeAsync(toWidth, toHeight);
-    }).then(function(image) {
-        logger.debug('Resize OK. Saving image as %s', format);
-        return image.toBufferAsync(format);
+    var image = sharp(filePath);
+    return image.metadata().then(function() {
+        return image.resize(parseInt(toWidth, 10), parseInt(toHeight, 10)).toFormat(format).toBuffer()
     }).then(function(buffer) {
+        logger.debug('Resize OK. Saving image as %s', format);
         newSize = buffer.length;
         return writeFileAsync(toPath, buffer);
     }).then(function() {
