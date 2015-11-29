@@ -1006,7 +1006,7 @@ adminApp.controller('PageController',
         }
         function containsInclude(region, includeToFind) {
             return region.includes.filter(function(include) {
-                return include.data._id === includeToFind.data_id;
+                return include.data._id === includeToFind.data;
             }).length > 0;
         }
         //get basepage from id value

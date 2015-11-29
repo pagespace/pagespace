@@ -232,7 +232,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                         'data-plugin="%s" ' +
                         'data-plugin-name="%s" ' +
                         'data-page-id="%s" ' +
-                        'data-region="%s" ' +
+                        'data-region-name="%s" ' +
                         'data-include="%s" ' +
                         'data-data-id="%s" ' +
                         '>\n%s\n</div>';
@@ -260,8 +260,10 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
             aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
         });
 
-        //each page has its own handlebars instance and partials are cached for that instance usign the url as a key
-        self.viewEngine.registerPartial(region.name, aggregatedViewPartials.join('\n'), pageResult.urlPath);
+        //each page has its own handlebars instance and partials are cached for that instance using the url as a key
+        var regionHtml = util.format('<div data-page-id="%s" data-region="%s">%s</div>',
+            page._id, region.name, aggregatedViewPartials.join('\n'));
+        self.viewEngine.registerPartial(region.name, regionHtml, pageResult.urlPath);
     });
 
     var templateSrc = !page.template ? 'default.hbs' : page.template.src;

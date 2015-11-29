@@ -122,7 +122,7 @@
             return grabHandle;
         }
 
-        Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(include) {
+        Array.prototype.slice.call(document.querySelectorAll('[data-include]')).forEach(function(include) {
             include.classList.add('ps-box');
 
             //edit button
@@ -130,7 +130,7 @@
                 include.getAttribute('data-plugin'),
                 include.getAttribute('data-plugin-name'),
                 include.getAttribute('data-page-id'),
-                include.getAttribute('data-region'),
+                include.getAttribute('data-region-name'),
                 include.getAttribute('data-include'),
                 include.getAttribute('data-data-id'));
             include.insertBefore(editButton, include.firstChild);
@@ -138,7 +138,7 @@
             //grab handle
             var grabHandle = createGrabHandle(
                 include.getAttribute('data-page-id'),
-                include.getAttribute('data-region'),
+                include.getAttribute('data-region-name'),
                 include.getAttribute('data-include'),
                 include.getAttribute('data-data-id'));
             include.insertBefore(grabHandle, include.firstChild);
@@ -198,7 +198,7 @@
             include.addEventListener('drop', function(ev) {
                 var data = getIncludeDragData(ev);
                 if(data) {
-                    var thisRegion = this.getAttribute('data-region');
+                    var thisRegion = this.getAttribute('data-region-name');
                     var thisInclude = this.getAttribute('data-include');
                     var thatInclude = data.includeIndex;
                     var thatRegion = data.region;
@@ -239,16 +239,16 @@
      */
     function decorateRegions() {
 
-        Array.prototype.slice.call(document.querySelectorAll('[data-region]:last-child')).forEach(function(include) {
-            include.parentNode.classList.add('ps-region');
+        Array.prototype.slice.call(document.querySelectorAll('[data-region]')).forEach(function(region) {
+            region.classList.add('ps-region');
 
-            var pageId = include.getAttribute('data-page-id');
-            var region = include.getAttribute('data-region');
+            var pageId = region.getAttribute('data-page-id');
+            var regionName = region.getAttribute('data-region');
 
             var addButton = document.createElement('button');
             addButton.setAttribute('data-add-include', pageId);
             addButton.setAttribute('data-target-page-id', pageId);
-            addButton.setAttribute('data-target-region', region);
+            addButton.setAttribute('data-target-region', regionName);
             addButton.setAttribute('title', 'Add include');
             addButton.classList.add('ps-add');
 
@@ -257,7 +257,7 @@
             psAddBox.classList.add('ps-box-add');
             psAddBox.appendChild(addButton);
 
-            include.insertAdjacentHTML('afterend', psAddBox.outerHTML);
+            region.appendChild(psAddBox);
         });
     }
 
@@ -275,7 +275,7 @@
         var dataId = evSrc.getAttribute('data-target-data-id');
 
         var iframeSrc = '/_static/plugins/' + plugin + '/edit.html';
-        var startEl = document.querySelectorAll('[data-region=' + region + ']')[0];
+        var startEl = document.querySelector('[data-region=' + region + ']');
         var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginName, startEl, 'full');
 
         //inject plugin interface
@@ -293,7 +293,7 @@
 
         var iFrameName = 'add_include';
         var iframeSrc = '/_dashboard/inpage#/add-include/' + pageId + '/' + region;
-        var startEl = document.querySelectorAll('[data-region=' + region + ']')[0];
+        var startEl = document.querySelector('[data-region=' + region + ']');
         var title = 'Add include';
         launchIframeModal(iframeSrc, iFrameName, title, startEl, 'medium');
     }
