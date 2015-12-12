@@ -1,6 +1,6 @@
-#Templates
+# Templates
 
-##Writing a template
+## Writing a template
 
 Pagespace renders each page using a **template***. Each template is a Handlebars template which should render a HTML document.
 
@@ -45,7 +45,7 @@ The page also has an **adminbar** partial. This a special pagespace partial whic
 </html>
 ```
 
-##Regions and Parts
+## Regions and Parts
 
 Pagespace populates each region with a **page part**. The Pagespace data model maps zero or more parts to each 
 region.
@@ -61,7 +61,7 @@ ships with parts for the following features:
 
 Also, [Custom parts are easy to write and publish]()
 
-##Importing a template
+## Importing a template
 
 Once you've written a page template, make sure it is located in a configured [Express views directory](). Then, in the
 Pagespace Dashboard, go to **Templates**, **Create template**. Give your template a name and then select the template
@@ -72,7 +72,7 @@ to populate each region with its default type of page part. Page parts may edite
 
 <<IMG>>
 
-##Using a template
+## Using a template
 
 Now, in the Pagespace Dashboard, go to the **Sitemap** section to add a page. When setting up the new page you will
 be able to select the page template you have just created.
