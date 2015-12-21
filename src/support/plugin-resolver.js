@@ -57,6 +57,7 @@ PluginResolver.prototype.require = function(pluginModuleId) {
             var pluginPath = resolve.sync(pluginModuleId, {
                 basedir: this.userBasePath
             });
+
             var pluginDirPath = path.dirname(pluginPath);
             var code = fs.readFileSync(pluginPath, 'utf8');
             var sandbox = {
@@ -64,6 +65,9 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                 module  : {},
                 __filename: pluginPath,
                 __dirname: pluginDirPath,
+                Buffer: Buffer,
+                setTimeout: setTimeout,
+                setInterval: setInterval,
                 require : function(modulePath) {
                     var resolvedPath = resolve.sync(modulePath, {
                         basedir: pluginDirPath
