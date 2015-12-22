@@ -109,6 +109,12 @@ function generateSchema(modifier) {
         expiresAt: {
             type: Date,
             default: null
+        },
+        publishedAt: {
+            type: Date,
+            default: function() {
+                return this.createdAt;
+            }
         }
     });
 

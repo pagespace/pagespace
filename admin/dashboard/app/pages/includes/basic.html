@@ -33,10 +33,18 @@
         </label>
     </div>
 </div>
-<div class="form-group" bs-has-error="expiresAt">
-    <label class="col-sm-2 control-label">Expires</label>
-    <div class="col-sm-3">
-        <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
+<div class="form-group">
+    <div bs-has-error="publishedAt">
+        <label class="col-sm-2 control-label">Published</label>
+        <div class="col-sm-3">
+            <input type="date" class="form-control" name="publishedAt" ng-model="page.publishedAt">
+        </div>
+    </div>
+    <div bs-has-error="expiresAt">
+        <label class="col-sm-1 control-label">Expires</label>
+        <div class="col-sm-3">
+            <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
+        </div>
     </div>
     <div class="col-sm-3">
         <p class="form-control-static text-muted"><i>optional</i></p>
