@@ -80,6 +80,8 @@ module.exports = new Index();
  * @param options.env. Set to 'development' to enable development mode
  * @param options.mediaDir A location to save uploaded media items. Defauults to ./media-uploads.
  *                         This directory will be created if it doesn't exist
+ * @param options.locale A string contain a BCP47 langugae tag or a function that resolves to one. The function takes
+ *                       two arguments. The Express request object and the page object for the resolved page.
  * @param options.imageVariations When users upload images they will be presented with options for creating resized
  *                                variations of that image, given these sizes. E.g.
  *                                <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
@@ -143,6 +145,11 @@ Index.prototype.init = function(options) {
     //common locals for all templates
     var commonViewLocals = options.commonViewLocals || {};
     this.viewEngine.setCommonLocals(commonViewLocals);
+
+    //locale set up
+    this.localeResolver = typeof options.locale === 'function' ? options.locale : function() {
+        return options.locale || consts.DEFAULT_LOCALE;
+    };
 
     //initialize db
     if(!options.db) {
@@ -212,6 +219,7 @@ Index.prototype.init = function(options) {
                 site: site,
                 mediaDir: self.mediaDir,
                 userBasePath: self.userBasePath,
+                localeResolver: self.localeResolver,
                 analytics: analytics,
                 imageVariations: imageVariations
             };

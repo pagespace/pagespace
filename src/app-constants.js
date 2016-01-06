@@ -31,7 +31,8 @@ var consts = {
     GUEST_USER: {
         username: 'guest',
         role: 'guest'
-    }
+    },
+    DEFAULT_LOCALE: 'en'
 };
 
 module.exports = consts;

@@ -323,7 +323,7 @@ function resizeImage(filePath, label, fDim, tDim, format, logger) {
 
     var image = sharp(filePath);
     return image.metadata().then(function() {
-        return image.resize(parseInt(toWidth, 10), parseInt(toHeight, 10)).toFormat(format).toBuffer()
+        return image.resize(parseInt(toWidth, 10), parseInt(toHeight, 10)).toFormat(format).toBuffer();
     }).then(function(buffer) {
         logger.debug('Resize OK. Saving image as %s', format);
         newSize = buffer.length;

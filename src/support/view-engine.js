@@ -72,11 +72,16 @@ ViewEngine.prototype.__express = function(filename, locals, done) {
 
     var handleBarsInstance = instance.getHandlebarsInstance(locals.__template);
 
+    var intlData = {
+        locales: locals.__locale
+    };
+
     // cached?
-    //template cache not working with multi instances
     var template = handleBarsInstance.templateCache[filename];
     if (template && locals.cache) {
-        return done(null, template(locals));
+        return done(null, template(locals, {
+            data: { intl: intlData }
+        }));
     }
 
     fs.readFile(filename, 'utf8', function(err, file) {
@@ -89,7 +94,9 @@ ViewEngine.prototype.__express = function(filename, locals, done) {
         handleBarsInstance.templateCache[filename] = template;
 
         try {
-            var res = template(locals);
+            var res = template(locals, {
+                data: { intl: intlData }
+            });
             done(null, res);
         } catch (err) {
             err.message = filename + ': ' + err.message;

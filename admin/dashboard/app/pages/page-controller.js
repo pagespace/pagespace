@@ -62,6 +62,9 @@ adminApp.controller('PageController',
                 if(page.expiresAt) {
                     page.expiresAt = new Date(page.expiresAt);
                 }
+                if(page.publishedAt) {
+                    page.publishedAt = new Date(page.publishedAt);
+                }
 
                 //depopulate redirect page
                 if(page.redirect) {
