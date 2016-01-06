@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "./node_modules/jasmine/bin/jasmine.js",
+    "test": "./clean.sh && ./node_modules/jasmine/bin/jasmine.js",
     "start": "node app-test.js"
   },
   "files": [

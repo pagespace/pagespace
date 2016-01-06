@@ -10,4 +10,3 @@ services:
 before_script:
   - sleep 15
   - mongo --version
-  - ./clean.sh
