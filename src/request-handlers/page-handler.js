@@ -52,6 +52,7 @@ PageHandler.prototype.init = function(support) {
     this.userBasePath = support.userBasePath;
     this.site = support.site;
     this.pluginResolver = support.pluginResolver;
+    this.localeResolver = support.localeResolver;
     this.analytics = support.analytics;
     this.reqCount = 0;
     this.findPagePromises = {};
@@ -273,6 +274,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
         templateSrc += '.hbs';
     }
     pageData.__template = pageResult.urlPath;
+    pageData.__locale = this.localeResolver(req, pageResult);
     res.render(templateSrc, pageData, function(err, html) {
         if(err) {
             logger.error(err, 'Unable to render page');

@@ -345,18 +345,6 @@
 
 (function() {
 
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MacrosController', function($scope, $rootScope) {
-        $rootScope.pageTitle = 'Macros';
-    });
-
-})();
-(function() {
-
     var adminApp = angular.module('adminApp');
     adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
 
@@ -500,6 +488,18 @@
             }
         };
     });
+})();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MacrosController', function($scope, $rootScope) {
+        $rootScope.pageTitle = 'Macros';
+    });
+
 })();
 
 (function() {
