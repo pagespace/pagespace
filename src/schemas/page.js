@@ -48,9 +48,9 @@ function generateSchema(modifier) {
                     type: Schema.Types.ObjectId,
                     ref: 'Plugin'
                 },
-                data: {
+                include: {
                     type: Schema.Types.ObjectId,
-                    ref: 'Data' + modifier
+                    ref: 'Include' + modifier
                 }
             }]
         }],

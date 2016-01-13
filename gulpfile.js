@@ -3,7 +3,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat');
 
 gulp.task('lint-client', function() {
-    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js', '!admin/dashboard/app/inpage/*.js'])
+    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });

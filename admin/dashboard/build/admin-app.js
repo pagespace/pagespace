@@ -362,7 +362,7 @@
             $scope.page = results[1].data;
 
             $log.debug('Got available plugins and page ok');
-        }).catch(function() {
+        }).catch(function(err) {
             $scope.err = err;
             $log.error(err, 'Unable to get data');
         });
@@ -388,22 +388,19 @@
                 }).then(function(includeData) {
                     $scope.page.regions[regionIndex].includes.push({
                         plugin: $scope.selectedPlugin,
-                        data: includeData._id
+                        include: includeData._id
                     });
                     $scope.page = pageService.depopulatePage($scope.page);
-                    return pageService.updatePage(pageId, $scope.page)
+                    return pageService.updatePage(pageId, $scope.page);
                 }).then(function() {
                     $scope.added = true;
                 }).catch(function(err) {
-                    $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, region);
+                    $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, regionIndex);
                 });
             } else {
                 $log.error('Unable to determine region index for new include (pageId=%s, region=%s)',
                     pageId, regionName);
             }
-
-
-
         };
 
         $scope.close = function() {
@@ -425,7 +422,7 @@
                 var dragCounter = 0;
                 element[0].addEventListener('dragenter', function(ev) {
                     if(containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter++
+                        dragCounter++;
                         this.classList.add('drag-over');
                         ev.preventDefault();
                     }
@@ -1159,8 +1156,14 @@ adminApp.controller('PageController',
         };
 
         PageService.prototype.createIncludeData = function(config) {
-            return $http.post('/_api/datas', {
-                config: config
+
+            var includeData = config.schema.reduce(function(data, field) {
+                data[field.name] = field.default;
+                return data;
+            }, {});
+
+            return $http.post('/_api/includes', {
+                data: includeData
             });
         };
 
@@ -1237,15 +1240,15 @@ adminApp.controller('PageController',
             page.regions = page.regions.filter(function(region) {
                 return typeof region === 'object';
             }).map(function(region) {
-                region.includes = region.includes.map(function(include) {
+                region.includes = region.includes.map(function(includeWrapper) {
 
-                    if(include.plugin && include.plugin._id) {
-                        include.plugin = include.plugin._id;
+                    if(includeWrapper.plugin && includeWrapper.plugin._id) {
+                        includeWrapper.plugin = includeWrapper.plugin._id;
                     }
-                    if(include.data && include.data._id) {
-                        include.data = include.data._id;
+                    if(includeWrapper.include && includeWrapper.include._id) {
+                        includeWrapper.include = includeWrapper.include._id;
                     }
-                    return include;
+                    return includeWrapper;
                 });
 
                 return region;

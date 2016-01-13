@@ -205,6 +205,7 @@ Index.prototype.init = function(options) {
             if (!pluginModules.length) {
                 logger.info('There are no registered plugin modules. Add some via the dashboard');
             }
+
             pluginModules.forEach(function (pluginModule) {
                 //requires and caches plugin modules for later page requests
                 self.pluginResolver.require(pluginModule);

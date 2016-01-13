@@ -24,8 +24,8 @@ var Schema = mongoose.Schema;
 
 function generateSchema() {
 
-    var dataSchema = Schema({
-        config: {
+    var includeSchema = Schema({
+        data: {
             type: Schema.Types.Mixed
         },
         createdAt: {
@@ -41,17 +41,17 @@ function generateSchema() {
         }
     });
 
-    dataSchema.pre('save', function (next) {
+    includeSchema.pre('save', function (next) {
         this.updatedAt = Date.now();
         next();
     });
 
-    dataSchema.pre('findOneAndUpdate', function (next) {
+    includeSchema.pre('findOneAndUpdate', function (next) {
         this.getUpdate().updatedAt = Date.now();
         next();
     });
 
-    return dataSchema;
+    return includeSchema;
 }
 
 module.exports = generateSchema;

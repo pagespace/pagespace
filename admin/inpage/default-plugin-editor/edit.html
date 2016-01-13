@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html ng-app="defaultPluginApp">
+<head>
+    <title>Default Plugin Editor</title>
+
+    <link rel="stylesheet" type="text/css" href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css">
+    <link href="/_static/inpage/default-plugin-editor/styles.css" type="text/css" rel="stylesheet">
+
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/inpage/default-plugin-editor/edit.js"></script>
+</head>
+<body ng-controller="DefaultPluginController">
+    <div class="container-fluid ps-edit-box" >
+        <main class="main row">
+            <div class="col-sm-12">
+                <form class="form-horizontal">
+                    <div class="form-group" ng-repeat="field in schema">
+                        <label class="col-sm-2 control-label">{{field.title}}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" placeholder=""
+                                   ng-required="field.required"
+                                   ng-model="data[field.name]">
+                        </div>
+                        <p class="help-block" ng-show="schema.description">{{schema.description}}</code></p>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <button type="button" class="btn btn-primary" ng-click="save()">Save and close</button>
+    </footer>
+
+</body>
+
+</html>
