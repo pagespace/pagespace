@@ -2,13 +2,14 @@ language: node_js
 
 node_js:
   - "0.10"
+  - "5.0"
 
 sudo: false
 services:
   - mongodb
 
 before_install:
-  - npm -g install npm@latest-2
+  - ./0.10-support.sh
 
 before_script:
   - sleep 15
