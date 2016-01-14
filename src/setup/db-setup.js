@@ -123,7 +123,7 @@ DataSetup.prototype._loadPluginModules = function() {
         });
 
         if(toInstall.length > 0) {
-            logger.info('Found %s new plugin(s) to install (%s)', toInstall.length, toInstall.join(', '));
+            logger.info('Found %s new plugin(s) to import (%s)', toInstall.length, toInstall.join(', '));
         }
 
         var pluginModels = toInstall.map(function(pluginName) {
@@ -175,7 +175,7 @@ DataSetup.prototype._findPluginModules = function() {
             var modulePath = path.join(localModulesDir, file, 'package.json');
             var module = require(modulePath);
             if(module.keywords && module.keywords.indexOf('pagespace-plugin') > -1) {
-                logger.debug('Found installed module [%s]', module.name);
+                logger.debug('Found installed plugin module [%s]', module.name);
                 pluginModules.push(module.name);
             }
         } catch(err) {
