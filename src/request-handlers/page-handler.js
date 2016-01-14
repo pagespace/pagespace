@@ -92,7 +92,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
         var filter = {
             url: urlPath
         };
-        var query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.data');
+        var query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
         findPagePromise = Promise.promisify(query.exec, query)();
         if(!previewMode) {
             this._setFindPagePromise(pageQueryCachKey, findPagePromise);
@@ -164,11 +164,12 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
 
     //read data for each plugin
     page.regions.forEach(function (region, regionIndex) {
-        region.includes.forEach(function(include, includeIndex) {
-            var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
+        region.includes.forEach(function(includeWrapper, includeIndex) {
+            var pluginModule = self.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
             var includeId = regionIndex + '_' + includeIndex;
             if (pluginModule) {
-                var includeData = include.data && include.data.config ? include.data.config : {};
+                var includeData =
+                        includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
                 if (typeof pluginModule.process === 'function') {
                     pageProps[includeId] = pluginModule.process(includeData, {
                         preview: pageProps.previewMode,
@@ -213,52 +214,47 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
 
     page.regions.forEach(function (region, regionIndex) {
         pageData[region.name] = {
-            data: []
+            ctx: []
         };
 
         var aggregatedViewPartials = [];
-        region.includes.forEach(function(include, includeIndex) {
-            var pluginModule = self.pluginResolver.require(include.plugin ? include.plugin.module : null);
+        region.includes.forEach(function(includeWrappper, includeIndex) {
+            var pluginModule =
+                self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
                 var includeId = regionIndex + '_' + includeIndex;
-                pageData[region.name].data[includeIndex] = {
-                    data: pageResult[includeId] || {}
-                };
-                viewPartial = pluginModule.__viewPartial ?
-                    pluginModule.__viewPartial : 'The view partial could not be resolved';
+                pageData[region.name].ctx[includeIndex] = pageResult[includeId] || {};
+                viewPartial = pluginModule.viewPartial ?
+                    pluginModule.viewPartial : 'The view partial could not be resolved';
                 if(pageResult.previewMode) {
                     htmlWrapper =
                         '<div ' +
                         'data-plugin="%s" ' +
-                        'data-plugin-name="%s" ' +
                         'data-page-id="%s" ' +
                         'data-region-name="%s" ' +
                         'data-include="%s" ' +
                         'data-data-id="%s" ' +
                         '>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper,
-                                              pluginModule.__config.name,
-                                              pluginModule.__config.pagespace.name,
+                                              pluginModule.name,
                                               page._id,
                                               region.name,
                                               includeIndex,
-                                              include.data ? include.data._id : null,
+                                              includeWrappper.include ? includeWrappper.include._id : null,
                                               viewPartial);
                 } else {
                     htmlWrapper = '<div>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper, viewPartial);
                 }
             } else {
-                pageData[region.name].data[includeIndex] = {
-                    data: null
-                };
+                pageData[region.name].ctx[includeIndex] = {};
                 htmlWrapper = '<!-- Region: %s, Include %s -->';
                 viewPartial = util.format(htmlWrapper, region.name, includeIndex);
             }
 
             //wrap each include in a with to give it the correct context
-            aggregatedViewPartials.push('{{#with data.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
+            aggregatedViewPartials.push('{{#with ctx.[' + includeIndex + ']}}' + viewPartial + '{{/with}}');
         });
 
         //each page has its own handlebars instance and partials are cached for that instance using the url as a key

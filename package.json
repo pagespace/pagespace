@@ -6,6 +6,7 @@
   "description": "Manageable and versatile web sites powered by Node.js",
   "main": "src/index",
   "license": "LGPL-3.0",
+  "engines" : { "node" : ">=0.10 <0.12" },
   "repository": {
     "type": "git",
     "url": "https://github.com/pagespace/pagespace"
@@ -54,15 +55,14 @@
     "express-session": "^1.11.3",
     "gulp": "~3.8.8",
     "gulp-concat": "~2.4.2",
-    "gulp-jshint": "^1.11.2",
+    "gulp-jshint": "^2.0.0",
     "gulp-watch": "~3.0.0",
     "jasmine": "^2.3.2",
     "serve-favicon": "^2.3.0",
     "supertest": "^1.1.0",
-    "pagespace-webcopy": "pagespace/pagespace-webcopy",
-    "pagespace-html": "pagespace/pagespace-html",
-    "pagespace-nav": "pagespace/pagespace-nav",
-    "pagespace-markdown": "pagespace/pagespace-markdown"
+    "pagespace-webcopy": "pagespace/pagespace-webcopy#plugin-redesign",
+    "pagespace-html": "pagespace/pagespace-html#plugin-redesign",
+    "pagespace-nav": "pagespace/pagespace-nav#plugin-redesign"
   },
   "peerDependencies": {
     "express": ">4.10",

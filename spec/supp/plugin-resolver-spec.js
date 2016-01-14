@@ -14,10 +14,9 @@ describe('Plugin Resolver', function() {
 
         var module = pluginResolver.require('pagespace-webcopy');
 
-        expect(module.__viewPartial).toBeDefined();
+        expect(module.viewPartial).toBeDefined();
         expect(module.__dir).toBeDefined();
-        expect(module.__config.name).toBe('pagespace-webcopy');
-        expect(module.__config.pagespace.name).toBe('Web Copy');
-        expect(module.__config.pagespace.config).toBeDefined();
+        expect(module.name).toBe('pagespace-webcopy');
+        expect(module.config).toBeDefined();
     });
 });

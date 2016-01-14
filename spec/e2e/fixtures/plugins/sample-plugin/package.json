@@ -1,0 +1,22 @@
+{
+  "name": "sample-plugin",
+  "version": "0.1.0",
+  "description": "Sample plugin for Pagespace",
+  "main": "index.js",
+  "author": "Phil Mander",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^2.9.34"
+  },
+  "keywords" : [ "pagespace-plugin" ],
+  "pagespace" : {
+      "schema" : [{
+          "name": "html",
+          "type": "string",
+          "default": "<p>hello world</p>",
+          "required": true,
+          "title": "HTML",
+          "description": "Add your html"
+      }]
+  }
+}

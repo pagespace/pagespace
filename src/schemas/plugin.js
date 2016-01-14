@@ -58,24 +58,12 @@ function generateSchema() {
 
     pluginSchema.virtual('config').get(function () {
         var plugin = getPluginModule(this.module);
-        var config;
-        if(plugin.__config && plugin.__config.pagespace) {
-            config = plugin.__config.pagespace.config;
-        }
-
-        return config || {};
+        return plugin.config || [];
     });
 
     pluginSchema.virtual('name').get(function () {
         var plugin = getPluginModule(this.module);
-        var name;
-        if(plugin.__config && plugin.__config.pagespace) {
-            name = plugin.__config.pagespace.name;
-        } else if(plugin.__config) {
-            name = plugin.__config.name;
-        }
-
-        return name || 'Unresolved plugin';
+        return plugin.name;
     });
 
     pluginSchema.set('toJSON', {

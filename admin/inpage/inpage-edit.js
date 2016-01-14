@@ -95,11 +95,10 @@
      */
     function decorateIncludes() {
 
-        function createEditButton(plugin, pluginName, pageId, region, include, dataId) {
+        function createEditButton(plugin, pageId, region, include, dataId) {
             var editButton = document.createElement('button');
             editButton.setAttribute('data-edit-include', 'data-edit-include');
             editButton.setAttribute('data-target-plugin', plugin);
-            editButton.setAttribute('data-target-plugin-name', pluginName);
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.setAttribute('data-target-include', include);
@@ -128,7 +127,6 @@
             //edit button
             var editButton = createEditButton(
                 include.getAttribute('data-plugin'),
-                include.getAttribute('data-plugin-name'),
                 include.getAttribute('data-page-id'),
                 include.getAttribute('data-region-name'),
                 include.getAttribute('data-include'),
@@ -268,18 +266,40 @@
     function launchPluginEditor(evSrc) {
 
         //data about the plugin from the button that launched the editor
-        var plugin = evSrc.getAttribute('data-target-plugin');
-        var pluginName = evSrc.getAttribute('data-target-plugin-name') || 'Plugin editor';
+        var pluginName = evSrc.getAttribute('data-target-plugin');
+        var pluginTitle = pluginName.replace('-', ' ') + ' editor';
         var region = evSrc.getAttribute('data-target-region');
         var pageId = evSrc.getAttribute('data-target-page-id');
         var dataId = evSrc.getAttribute('data-target-data-id');
 
-        var iframeSrc = '/_static/plugins/' + plugin + '/edit.html';
-        var startEl = document.querySelector('[data-region=' + region + ']');
-        var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginName, startEl, 'full');
+        //TODO: fetch to check existence of default editor
+        var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
+        var defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
+        fetch(customIframeSrc).then(function(res) {
+            if(res.status !== 200) {
+                var err = new Error(res.statusText);
+                err.status = res.status;
+                throw err;
+            } else {
+                setupIframe(customIframeSrc);
+            }
+        }).catch(function(err) {
+            if(err.status === 404) {
+                setupIframe(defaultIframeSrc);
+            } else {
+                throw err;
+            }
+        }).catch(function(err) {
+            console.error(err);
+        });
 
-        //inject plugin interface
-        iframe.contentWindow.window.pagespace = getPluginInterface(pageId, dataId);
+        function setupIframe(iframeSrc) {
+            var startEl = document.querySelector('[data-region=' + region + ']');
+            var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
+
+            //inject plugin interface
+            iframe.contentWindow.window.pagespace = getPluginInterface(pluginName, pageId, dataId);
+        }
     }
 
     /**
@@ -401,34 +421,50 @@
 
     /**
      * Plugin Interface
-     * @param plugin
+     * @param pluginName
      * @param pageId
      * @param region
      * @param include
      * @return {{getData: getData, setData: setData, close: close}}
      */
-    function getPluginInterface(pageId, dataId) {
+    function getPluginInterface(pluginName, pageId, dataId) {
         return {
             getKey: function() {
                 return dataId;
             },
-            getData: function() {
-                console.info('Pagespace getting data for %s', dataId);
-                return fetch('/_api/datas/' + dataId, {
+            getConfig: function() {
+                console.info('Pagespace getting config for %s', pluginName);
+                return fetch('/_api/plugins', {
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
-                    },
+                    }
                 }).then(function(res) {
                     return res.json();
                 }).then(function(data) {
-                    return data.config;
+                    return data.filter(function(plugin) {
+                        return plugin.name === pluginName;
+                    })[0].config;
+                });
+            },
+            getData: function() {
+                console.info('Pagespace getting config for %s', dataId);
+                return fetch('/_api/includes/' + dataId, {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(include) {
+                    return include.data || {};
                 });
             },
             setData: function(data) {
-                console.info('Pagespace setting data for %s', dataId);
-                var updateData = fetch('/_api/datas/' + dataId, {
+                console.info('Pagespace setting config for %s', dataId);
+                var updateData = fetch('/_api/includes/' + dataId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
@@ -436,7 +472,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        config: data
+                        data: data
                     })
                 });
                 var updatePage = fetch('/_api/pages/' + pageId, {

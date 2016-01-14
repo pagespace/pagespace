@@ -74,9 +74,6 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                         basedir: pluginDirPath
                     });
 
-                    //TODO: this a quick workaround to require not being in the plugin module context.
-                    //it may cause issues if the plugin module requires  a different version of a module already
-                    //required by Pagespace
                     try {
                         return require(resolvedPath);
                     } catch(err){
@@ -84,6 +81,9 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                     }
                 },
                 pagespace: {
+                    getModel: function(name, previewMode) {
+                        return self.dbSupport.getModel(name, previewMode ? '' : 'live');
+                    },
                     getPageModel: function(previewMode) {
                         return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
                     },
@@ -120,9 +120,10 @@ PluginResolver.prototype.initPluginModule = function(pluginModule, pluginDirPath
 
     var pluginConfigPath = path.join(pluginDirPath, 'package.json');
     try {
-        pluginModule.__config = require(pluginConfigPath);
-        pluginModule.__config.pagespace = pluginModule.__config.pagespace || {};
-        pluginModule.__config.pagespace.name = pluginModule.__config.pagespace.name || pluginModule.__config.name;
+        var packageConf = require(pluginConfigPath);
+        pluginModule.name = packageConf.name;
+        pluginModule.description = packageConf.description;
+        pluginModule.config =  packageConf.pagespace || {};
     } catch(err) {
         logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
     }
@@ -131,7 +132,7 @@ PluginResolver.prototype.initPluginModule = function(pluginModule, pluginDirPath
     var pluginViewPath = path.join(pluginDirPath, 'index.hbs');
     logger.debug('Loading plugin view partial from %s...', pluginViewPath);
     try {
-        pluginModule.__viewPartial = fs.readFileSync(pluginViewPath, 'utf8');
+        pluginModule.viewPartial = fs.readFileSync(pluginViewPath, 'utf8');
     } catch(err) {
         logger.warn('Cannot find an index template (index.hbs) for the plugin module for [%s]', pluginDirPath);
     }
