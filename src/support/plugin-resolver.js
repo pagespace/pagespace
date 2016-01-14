@@ -22,7 +22,8 @@
 var vm = require('vm'),
     fs = require('fs'),
     path = require('path'),
-    resolve = require('resolve');
+    resolve = require('resolve'),
+    semver = require('semver');
 
 var instance = null;
 
@@ -91,7 +92,15 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                     userBasePath: this.userBasePath
                 }
             };
-            vm.runInNewContext(code, sandbox, __filename); //TODO: make filename an opts object in Node 4+
+            var ctxOpts = semver.lt('0.12.0', process.versions.node) ?
+                // < 0.12 API
+                __filename :
+                // > 0.10 API
+                {
+                    filename: __filename
+                };
+                vm.runInNewContext(code, sandbox, ctxOpts)
+
             pluginModule = sandbox.module.exports;
 
             this.initPluginModule(pluginModule, pluginDirPath);
