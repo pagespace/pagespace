@@ -8,6 +8,6 @@ services:
 - mongodb
 
 before_script:
-  - npm -g update npm@latest-2
+  - npm -g install npm@latest-2
   - sleep 15
   - mongo --version
