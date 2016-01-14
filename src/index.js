@@ -194,10 +194,13 @@ Index.prototype.init = function(options) {
     db.once('open', function() {
         var conn = mongoose.connection;
         logger.info('DB connection established to %s:%s as %s', conn.host, conn.port, conn.user || 'anon');
+
         self.dataSetup = self.dataSetup || createDbSetup({
             logger: logger,
-            dbSupport: self.dbSupport
+            dbSupport: self.dbSupport,
+            userBasePath: self.userBasePath
         });
+
         self.dataSetup.runSetup().spread(function(pluginModules, site) {
 
             //pre-resolve plugin modules (
