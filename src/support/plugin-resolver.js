@@ -95,11 +95,11 @@ PluginResolver.prototype.require = function(pluginModuleId) {
             var ctxOpts = semver.lt('0.12.0', process.versions.node) ?
                 // < 0.12 API
                 __filename :
-                // > 0.10 API
+                // > 0.11 API
                 {
                     filename: __filename
                 };
-                vm.runInNewContext(code, sandbox, ctxOpts)
+                vm.runInNewContext(code, sandbox, ctxOpts);
 
             pluginModule = sandbox.module.exports;
 
