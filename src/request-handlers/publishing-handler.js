@@ -149,7 +149,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
                         includeUpdate.draft = false;
                         delete includeUpdate._id;
                         delete includeUpdate.__v;
-                        saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, { context: DraftIncludeData });
+                        saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, { context: DraftIncludeData});
                         saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, { context: LiveIncludeData });
                         updates.push(saveDraftIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
                         updates.push(saveLiveIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
