@@ -93,7 +93,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             url: urlPath
         };
         var query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
-        findPagePromise = Promise.promisify(query.exec, query)();
+        findPagePromise = Promise.promisify(query.exec, { context: query })();
         if(!previewMode) {
             this._setFindPagePromise(pageQueryCachKey, findPagePromise);
         }

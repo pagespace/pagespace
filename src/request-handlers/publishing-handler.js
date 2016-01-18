@@ -78,7 +78,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
 
     var DraftPage = this.dbSupport.getModel('Page');
     var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.include');
-    var findPagesToPublish = Promise.promisify(query.exec, query);
+    var findPagesToPublish = Promise.promisify(query.exec, { context: query });
     findPagesToPublish().then(function(pages) {
 
         var queuedDraftTemplates = {};
@@ -120,7 +120,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             //no longer a draft
             livePage.draft = false;
             livePage.template = templateId;
-            var saveLivePage = Promise.promisify(LivePage.update, LivePage);
+            var saveLivePage = Promise.promisify(LivePage.update, { context: LivePage });
             updates.push(saveLivePage({_id: pageId}, livePage, { upsert: true }));
             logger.info('Page queued to publish: %s (id=%s) @ \'%s\'', livePage.name, pageId, livePage.url);
 
@@ -131,7 +131,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
                 delete liveTemplate._id;
                 delete liveTemplate.__v;
                 liveTemplate.draft = false;
-                var saveLiveTemplate = Promise.promisify(LiveTemplate.update, LiveTemplate);
+                var saveLiveTemplate = Promise.promisify(LiveTemplate.update, { context: LiveTemplate});
                 updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true }));
                 queuedDraftTemplates[templateId] = true;
 
@@ -149,8 +149,8 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
                         includeUpdate.draft = false;
                         delete includeUpdate._id;
                         delete includeUpdate.__v;
-                        saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, DraftIncludeData);
-                        saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, LiveIncludeData);
+                        saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, { context: DraftIncludeData });
+                        saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, { context: LiveIncludeData });
                         updates.push(saveDraftIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
                         updates.push(saveLiveIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
                         numDataUpdates++;
@@ -161,7 +161,7 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             });
 
             //undraft page
-            var saveDraftPage = Promise.promisify(page.save, page);
+            var saveDraftPage = Promise.promisify(page.save, { context: page });
             page.draft = false;
             page.published = true;
             updates.push(saveDraftPage());
