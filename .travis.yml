@@ -5,7 +5,10 @@ node_js:
 
 sudo: false
 services:
-- mongodb
+  - mongodb
+
+before_install:
+  - npm -g install npm@latest-2
 
 before_script:
   - sleep 15

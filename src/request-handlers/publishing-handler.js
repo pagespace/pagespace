@@ -77,14 +77,14 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
     var numDataUpdates = 0;
 
     var DraftPage = this.dbSupport.getModel('Page');
-    var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.data');
+    var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.include');
     var findPagesToPublish = Promise.promisify(query.exec, query);
     findPagesToPublish().then(function(pages) {
 
         var queuedDraftTemplates = {};
         var LivePage = self.dbSupport.getModel('Page', 'live');
-        var DraftIncludeData = self.dbSupport.getModel('Data');
-        var LiveIncludeData = self.dbSupport.getModel('Data', 'live');
+        var DraftIncludeData = self.dbSupport.getModel('Include');
+        var LiveIncludeData = self.dbSupport.getModel('Include', 'live');
         var LiveTemplate = self.dbSupport.getModel('Template', 'live');
         pages.forEach(function(page) {
 
@@ -142,17 +142,17 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             var saveDraftIncludeData;
             var saveLiveIncludeData;
             page.regions.forEach(function(region) {
-                region.includes.forEach(function(include) {
-                    if(include.data && include.data.draft) {
-                        var dataId = include.data._id.toString();
-                        var dataUpdate = include.data.toObject();
-                        dataUpdate.draft = false;
-                        delete dataUpdate._id;
-                        delete dataUpdate.__v;
+                region.includes.forEach(function(includeWrapper) {
+                    if(includeWrapper.include && includeWrapper.include.draft) {
+                        var dataId = includeWrapper.include._id.toString();
+                        var includeUpdate = includeWrapper.include.toObject();
+                        includeUpdate.draft = false;
+                        delete includeUpdate._id;
+                        delete includeUpdate.__v;
                         saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, DraftIncludeData);
                         saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, LiveIncludeData);
-                        updates.push(saveDraftIncludeData({_id: dataId}, dataUpdate, { upsert: true }));
-                        updates.push(saveLiveIncludeData({_id: dataId}, dataUpdate, { upsert: true }));
+                        updates.push(saveDraftIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
+                        updates.push(saveLiveIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
                         numDataUpdates++;
 
                         logger.info('Include dat queued to publish (id=%s)', dataId);

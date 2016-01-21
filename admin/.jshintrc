@@ -12,7 +12,7 @@
     "globals"       : {
         "angular" : true,
         "bunyan" : true,
-        "async" : true,
-        "Promise" : true
-    }
+        "async" : true
+    },
+    "predef": [ "-Promise" ]
 }

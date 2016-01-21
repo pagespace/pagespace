@@ -61,8 +61,14 @@
         };
 
         PageService.prototype.createIncludeData = function(config) {
-            return $http.post('/_api/datas', {
-                config: config
+
+            var includeData = config.schema.reduce(function(data, field) {
+                data[field.name] = field.default;
+                return data;
+            }, {});
+
+            return $http.post('/_api/includes', {
+                data: includeData
             });
         };
 
@@ -139,15 +145,15 @@
             page.regions = page.regions.filter(function(region) {
                 return typeof region === 'object';
             }).map(function(region) {
-                region.includes = region.includes.map(function(include) {
+                region.includes = region.includes.map(function(includeWrapper) {
 
-                    if(include.plugin && include.plugin._id) {
-                        include.plugin = include.plugin._id;
+                    if(includeWrapper.plugin && includeWrapper.plugin._id) {
+                        includeWrapper.plugin = includeWrapper.plugin._id;
                     }
-                    if(include.data && include.data._id) {
-                        include.data = include.data._id;
+                    if(includeWrapper.include && includeWrapper.include._id) {
+                        includeWrapper.include = includeWrapper.include._id;
                     }
-                    return include;
+                    return includeWrapper;
                 });
 
                 return region;

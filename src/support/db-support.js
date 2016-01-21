@@ -24,7 +24,7 @@ var toCollectionName = require('mongoose/lib/utils').toCollectionName;
 var siteSchema = require('../schemas/site'),
     pageSchema = require('../schemas/page'),
     pluginSchema = require('../schemas/plugin'),
-    dataSchema = require('../schemas/data'),
+    includeSchema = require('../schemas/include'),
     templateSchema = require('../schemas/template'),
     userSchema = require('../schemas/user'),
     mediaSchema = require('../schemas/media'),
@@ -47,8 +47,8 @@ var modelData = [{
     schema: pluginSchema,
     publishable: false
 }, {
-    name: 'Data',
-    schema: dataSchema,
+    name: 'Include',
+    schema: includeSchema,
     publishable: true
 }, {
     name: 'User',

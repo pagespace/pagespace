@@ -12,7 +12,7 @@
                 var dragCounter = 0;
                 element[0].addEventListener('dragenter', function(ev) {
                     if(containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter++
+                        dragCounter++;
                         this.classList.add('drag-over');
                         ev.preventDefault();
                     }

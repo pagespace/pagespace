@@ -1,1 +1,1 @@
-{"options":{},"indexes":[{"v":1,"key":{"_id":1},"name":"_id_","ns":"test.templates"},{"v":1,"unique":true,"key":{"name":1},"name":"name_1","ns":"test.templates","background":true}]}
+{"options":{},"indexes":[{"v":1,"key":{"_id":1},"name":"_id_","ns":"test.templates"},{"v":1,"unique":true,"key":{"name":1},"name":"name_1","background":true,"ns":"test.templates"}]}

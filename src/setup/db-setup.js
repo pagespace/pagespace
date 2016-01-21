@@ -20,7 +20,9 @@
 
 'use strict';
 
-var Promise = require('bluebird');
+var path = require('path'),
+    fs = require('fs'),
+    Promise = require('bluebird');
 
 /**
  *
@@ -30,6 +32,7 @@ var Promise = require('bluebird');
 var DataSetup = function(opts) {
     this.logger = opts.logger;
     this.dbSupport = opts.dbSupport;
+    this.userBasePath = opts.userBasePath;
 };
 
 module.exports = function(opts) {
@@ -44,12 +47,9 @@ DataSetup.prototype.runSetup = function() {
     var self = this;
     var logger = this.logger;
 
-    var loadPluginModules = self._loadPluginModules();
-    var loadAdminUser = self._loadAdminUser();
-    var loadSite = self._loadSite();
-
     //once everything is ready
-    return Promise.join(loadPluginModules, loadAdminUser, loadSite).spread(function(plugins, users, site) {
+    var loadingPromises = Promise.join(self._loadPluginModules(), self._loadAdminUser(), self._loadSite());
+    return loadingPromises.spread(function(plugins, users, site) {
 
         var promises = [];
 
@@ -106,10 +106,36 @@ DataSetup.prototype.runSetup = function() {
  */
 DataSetup.prototype._loadPluginModules = function() {
 
-    var Plugin = this.dbSupport.getModel('Plugin');
-    var query = Plugin.find({});
+    var logger = this.logger;
+
+    var PluginModel = this.dbSupport.getModel('Plugin');
+    var query = PluginModel.find({});
     var getPlugins = Promise.promisify(query.exec, query);
-    return getPlugins();
+
+    return Promise.join(this._findPluginModules(), getPlugins()).spread(function(newPluginsNames, dbPlugins) {
+
+        var dbPluginNames = dbPlugins.map(function(dbPlugin) {
+            return dbPlugin.module;
+        });
+
+        var toInstall = newPluginsNames.filter(function(newPlugin) {
+            return dbPluginNames.indexOf(newPlugin) < 0;
+        });
+
+        if(toInstall.length > 0) {
+            logger.info('Found %s new plugin(s) to import (%s)', toInstall.length, toInstall.join(', '));
+        }
+
+        var pluginModels = toInstall.map(function(pluginName) {
+            return {
+                module: pluginName
+            };
+        });
+        var createPlugins = Promise.promisify(PluginModel.create, PluginModel);
+        return createPlugins(pluginModels);
+    }).then(function() {
+        return getPlugins();
+    });
 };
 
 /**
@@ -133,4 +159,30 @@ DataSetup.prototype._loadSite = function() {
 
     var Site = this.dbSupport.getModel('Site');
     return Site.findOne().exec();
+};
+
+/**
+ * Finds all the locally installed modules which are pagespace plugins and adds them to the `plugins` collection
+ * @private
+ */
+DataSetup.prototype._findPluginModules = function() {
+
+    var logger = this.logger;
+    var localModulesDir = path.join(this.userBasePath, 'node_modules');
+
+    return fs.readdirSync(localModulesDir).reduce(function(pluginModules, file) {
+        try {
+            var modulePath = path.join(localModulesDir, file, 'package.json');
+            var module = require(modulePath);
+            if(module.keywords && module.keywords.indexOf('pagespace-plugin') > -1) {
+                logger.debug('Found installed plugin module [%s]', module.name);
+                pluginModules.push(module.name);
+            }
+        } catch(err) {
+            if(err.code !== 'MODULE_NOT_FOUND') {
+                throw err;
+            }
+        }
+        return pluginModules;
+    }, []);
 };
