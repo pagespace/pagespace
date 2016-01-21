@@ -65,7 +65,7 @@ DataSetup.prototype.runSetup = function() {
             var newSite = new Site({
                 name: 'New Pagespace site'
             });
-            var saveNewSite = Promise.promisify(newSite.save, newSite);
+            var saveNewSite = Promise.promisify(newSite.save, { context: newSite });
             var saveSitePromise = saveNewSite();
             promises.push(saveSitePromise);
             saveSitePromise.then(function () {
@@ -86,7 +86,7 @@ DataSetup.prototype.runSetup = function() {
                 name: 'Administrator',
                 updatePassword: true
             });
-            var saveAdminUser = Promise.promisify(defaultAdmin.save, defaultAdmin);
+            var saveAdminUser = Promise.promisify(defaultAdmin.save, { context: defaultAdmin });
             var saveAdminUserPromise = saveAdminUser();
             promises.push(saveAdminUser());
             saveAdminUserPromise.then(function () {
@@ -110,7 +110,7 @@ DataSetup.prototype._loadPluginModules = function() {
 
     var PluginModel = this.dbSupport.getModel('Plugin');
     var query = PluginModel.find({});
-    var getPlugins = Promise.promisify(query.exec, query);
+    var getPlugins = Promise.promisify(query.exec, { context: query });
 
     return Promise.join(this._findPluginModules(), getPlugins()).spread(function(newPluginsNames, dbPlugins) {
 
@@ -131,7 +131,7 @@ DataSetup.prototype._loadPluginModules = function() {
                 module: pluginName
             };
         });
-        var createPlugins = Promise.promisify(PluginModel.create, PluginModel);
+        var createPlugins = Promise.promisify(PluginModel.create, { context: PluginModel });
         return createPlugins(pluginModels);
     }).then(function() {
         return getPlugins();
@@ -147,7 +147,7 @@ DataSetup.prototype._loadAdminUser = function() {
     //create an admin user on first run
     var User = this.dbSupport.getModel('User');
     var query = User.find({ role: 'admin'}, 'username');
-    var getAdminUser = Promise.promisify(query.exec, query);
+    var getAdminUser = Promise.promisify(query.exec, { context: query });
     return getAdminUser();
 };
 

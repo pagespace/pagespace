@@ -84,7 +84,7 @@ MediaHandler.prototype.doRequest = function(req, res, next) {
 MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
-    var itemFileName = apiInfo[1];
+    var itemFileName = decodeURIComponent(apiInfo[1]);
     var Media = this.dbSupport.getModel('Media');
     Media.findOne({
         fileName: itemFileName
@@ -169,7 +169,7 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
     form.keepExtensions = true;
     form.type = 'multipart';
 
-    var formParseAsync = Promise.promisify(form.parse, form);
+    var formParseAsync = Promise.promisify(form.parse, { context: form, multiArgs: true });
     formParseAsync(req).catch(function(err) {
         //catch upload errors immediately
         logger.error(err, 'Error uploading media item');
@@ -178,7 +178,10 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
         //get image dimensions
         var dimensions =  files.file.type.indexOf('image') === 0 ? sizeOfAsync(files.file.path) : {};
         logger.debug('Dimensions of %s are w:%s, h:%s', files.file.path, dimensions.width, dimensions.height);
-        return Promise.settle([ fields,  files, dimensions ]);
+
+        return Promise.all([ fields,  files, dimensions ].map(function(promise) {
+            return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
+        }));
     }).then(function(promises) {
         //step to handle unknown image dimensions
         var fields = promises[0].value();
@@ -228,13 +231,15 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             variations: variations
         });
 
-        var saveAsync = Promise.promisify(media.save, media);
-        return Promise.settle([ saveAsync(), files.file.path, thumbnail ]);
+        var saveAsync = Promise.promisify(media.save, { context: media });
+        return Promise.all([ saveAsync(), files.file.path, thumbnail ].map(function(promise) {
+            return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
+        }));
     }).then(function(result) {
         //send response
         var savePromise = result[0];
         if(savePromise.isFulfilled()) {
-            var model = savePromise.value()[0];
+            var model = savePromise.value();
             //don't send local path to client
             delete model.path;
             model.variations = model.variations.map(function(variation) {
@@ -245,7 +250,7 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             res.json(model);
         } else {
             var filePath = result[1].value();
-            var thumbnailPath = result[2] && result[2].value().path;
+            var thumbnailPath = result[2].value() && result[2].value().path;
             var err = savePromise.reason();
             err.fileUploadPath = filePath;
             err.thumnailPath = thumbnailPath;
