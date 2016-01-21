@@ -2,14 +2,24 @@ language: node_js
 
 node_js:
   - "0.10"
+  - "4.2"
 
 sudo: false
 services:
   - mongodb
 
 before_install:
-  - npm -g install npm@latest-2
+  - ./0.10-support.sh
 
 before_script:
   - sleep 15
   - mongo --version
+
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
