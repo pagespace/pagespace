@@ -77,13 +77,11 @@ module.exports = new Index();
  * @param options Configuration object
  * @param options.logger Custom Bunyan logger
  * @param options.logLevel The logging level. Only applies if not providong a custom logger
- * @param options.env. Set to 'development' to enable development mode
  * @param options.mediaDir A location to save uploaded media items. Defauults to ./media-uploads.
  *                         This directory will be created if it doesn't exist
  * @param options.locale A string contain a BCP47 langugae tag or a function that resolves to one. The function takes
  *                       two arguments. The Express request object and the page object for the resolved page.
- * @param options.imageVariations When users upload images they will be presented with options for creating resized
- *                                variations of that image, given these sizes. E.g.
+ * @param options.imageVariations When users upload images variations of that image can be created, given these sizes. E.g.
  *                                <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
  *                                Resize objects with the label 'thumb' will be automatically applied when an image is
  *                                uploaded
@@ -138,7 +136,7 @@ Index.prototype.init = function(options) {
 
     //configure the view engine
     var viewOpts = options.viewOpts || {};
-    //default handlbars data option to false
+    //default handlebars data option to false
     viewOpts.data = viewOpts.data !== 'boolean';
     this.viewEngine.setOpts(viewOpts);
 

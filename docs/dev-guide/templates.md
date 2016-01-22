@@ -2,23 +2,27 @@
 
 ## Writing a template
 
-Pagespace renders each page using a **template***. Each template is a Handlebars template which should render a HTML document.
+Pagespace renders each page using [Handlebars]() **templates**.
 
 You can use the Handlebars template to include meta data about the page or define page **regions** using Handlebars partials. For 
 example, the following template will:
-* print the site name and page name in the HTML title tag
-* print the page name in the header 
-* defines the regions *Sidebar* and *Region* using partials 
-* include an analytics scriptlet at the end of the document
-
-The page also has an **adminbar** partial. This a special pagespace partial which includes all the editing functionality in preview mode.
+1. print the site name and page name in the HTML title tag
+2. print the site description in a meta tag
+3. print the page name in the header 
+4. define a  *Sidebar* region and a *Region* region using partials 
+5. include an analytics scriptlet at the end of the document
 
 ```html
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{site.name}} - {{page.name}}</title>
-        {{> adminbar}}
+        <meta charset="utf-8">
+        <meta name="generator" content="Pagespace">
+        <meta name="description" content="{{ site.description }}">
+        
+        <title>{{ site.name }} | {{page.name}}</title>
+        
+        <link type="text/css" rel="stylesheet" href="/css/site.css">
     </head>
     <body>
         <div class="wrap">
@@ -45,38 +49,44 @@ The page also has an **adminbar** partial. This a special pagespace partial whic
 </html>
 ```
 
-## Regions and Parts
+## Regions and Includes
 
-Pagespace populates each region with a **page part**. The Pagespace data model maps zero or more parts to each 
-region.
-
-Parts are essentially plugins which form the content of a web site, each part includes the ability to display and 
-edit its data. Page parts are written as CommonJS packages and can be distributed and installed using NPM. Pagespace 
-ships with parts for the following features:
-
-* Manage web copy
-* Include external content
-* Display navigation
-* Display a blogroll
-
-Also, [Custom parts are easy to write and publish]()
+Pagespace populates each region with zero or more **includes**, as configured by editing a page in the Dashboard. 
+[See the tour]() for more information.
 
 ## Importing a template
 
-Once you've written a page template, make sure it is located in a configured [Express views directory](). Then, in the
-Pagespace Dashboard, go to **Templates**, **Create template**. Give your template a name and then select the template
-file from the **source** dropdown
+Once you've written a page template, make sure it is located in a configured 
+[Express views directory](http://expressjs.com/en/4x/api.html#app.set). Then, in the
+Pagespace Dashboard, go to **Templates** | **Create template**. Give your template a name and then select the template
+file from the *source* select box.
 
-Pagespace will automatically scan your template for its defined regions. It will then generate a preview and allow you
-to populate each region with its default type of page part. Page parts may edited on a per-page basis later on.
+Pagespace will automatically scan your template for its defined regions. From here you can define the template 
+properties and the sharing strategy for each region.
 
-<<IMG>>
+## Template properties
+
+Template properties can be used to make different templates based on the same template source file. For example,
+we could create two identical templates, with the exception that one is configured to display the date it was created:
+
+<img src="">
+
+```html
+<p class="date">
+    {{#if template.showDate }}
+        {{ formatDate page.publishedAt day="numeric" month="long" year="numeric" }}
+    {{/if}}
+</p>
+```
+
+## Include sharing
+
+When one page is based on another the includes in a given region may be shared between both pages. Meaning common page
+elements, such as navigation and footer content, do not need to recreated and duplicated for each page.
+
+<img src="">
 
 ## Using a template
 
-Now, in the Pagespace Dashboard, go to the **Sitemap** section to add a page. When setting up the new page you will
+In the Pagespace Dashboard, go to the **Sitemap** section to add a page. When setting up the new page you will
 be able to select the page template you have just created.
-
-To change the page parts mapped to regions for a specific page, use the edit regions feature.
-
-<<IMG>>
