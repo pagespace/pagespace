@@ -81,10 +81,10 @@ module.exports = new Index();
  *                         This directory will be created if it doesn't exist
  * @param options.locale A string contain a BCP47 langugae tag or a function that resolves to one. The function takes
  *                       two arguments. The Express request object and the page object for the resolved page.
- * @param options.imageVariations When users upload images variations of that image can be created, given these sizes. E.g.
- *                                <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
- *                                Resize objects with the label 'thumb' will be automatically applied when an image is
- *                                uploaded
+ * @param options.imageVariations When users upload images variations of that image can be created, given these sizes.
+ *                      E.g.
+ *                      <code>[{ label: 'header', width: '100', height: 'auto' }]</cod
+ *                      Resize objects with the label 'thumb' will be automatically applied when an image is uploaded
  * @param options.commonViewLocals Locals to make available in every handlebars template
  */
 Index.prototype.init = function(options) {
