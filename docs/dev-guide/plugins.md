@@ -79,7 +79,8 @@ plugins configuration:
             "title" "Include heading",
             "default" : "Got this HTML",
             "type" : "string"
-        }]
+        }],
+        "cacheTtl" : 60000
     }
 ```
 
@@ -97,46 +98,55 @@ var http = require('http')
 
 module.exports = {
     process: function(config) {
-    
-        var urlParts = url.parse(config.url);
-        var requestOpts = {
-            hostname: urlParts.hostname,
-            port: urlParts.port,
-            path: urlParts.path,
-            method: 'GET'
-        };
-    
-        return new Promise(function(resolve) {
-            var req = http.request(requestOpts, function(res) {
-                var body = '';
-    
-                res.on('data', function(chunk) {
-                    body += chunk;
+        pagesapce.cache.get().then(function(result) {
+            
+            if(result) {
+                return result;
+            }
+        
+            var urlParts = url.parse(config.url);
+            var requestOpts = {
+                hostname: urlParts.hostname,
+                port: urlParts.port,
+                path: urlParts.path,
+                method: 'GET'
+            };
+        
+            return new Promise(function(resolve) {
+                var req = http.request(requestOpts, function(res) {
+                    var body = '';
+        
+                    res.on('data', function(chunk) {
+                        body += chunk;
+                    });
+        
+                    res.on('end', function() {
+                        result = {
+                            html: body,
+                            heading: config.heading
+                        };
+                        pagespace.cache.set(result);
+                        resolve(result);
+                    });
                 });
-    
-                res.on('end', function() {
+        
+                req.on('error', function(err) {
                     resolve({
-                        html: body,
+                        html: '<!-- Unable to resolve HTML include-->',
                         heading: config.heading
                     });
                 });
+        
+                req.end();
             });
-    
-            req.on('error', function(err) {
-                resolve({
-                    html: '<!-- Unable to resolve HTML include-->',
-                    heading: config.heading
-                });
-            });
-    
-            req.end();
+        }).catch(function(err) {
+            pagesapce.logger.warn(err);
         });
     }
 };
 ```
 
 If the plugin performs an asynchronous operation, it may return a promise.
-
 
 ### 4. Create the partial template
 
