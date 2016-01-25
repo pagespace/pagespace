@@ -23,7 +23,8 @@ var util = require('util'),
     url = require('url'),
     Promise = require('bluebird'),
     psUtil = require('../support/pagespace-util'),
-    consts = require('../app-constants');
+    consts = require('../app-constants'),
+    pluginCache = require('../support/plugin-cache');
 
 var httpStatus = {
     OK: 200,
@@ -165,25 +166,50 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
     //read data for each plugin
     page.regions.forEach(function (region, regionIndex) {
         region.includes.forEach(function(includeWrapper, includeIndex) {
-            var pluginModule = self.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
-            var includeId = regionIndex + '_' + includeIndex;
-            if (pluginModule) {
-                var includeData =
-                        includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
-                if (typeof pluginModule.process === 'function') {
-                    pageProps[includeId] = pluginModule.process(includeData, {
-                        preview: pageProps.previewMode,
-                        reqUrl: req.url,
-                        reqMethod: req.method
-                    });
-                } else {
-                    pageProps[includeId] = includeData;
-                }
-            }
+            var includeId = constructIndcludeId(req, regionIndex, includeIndex);
+            pageProps[includeId] = self.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
         });
     });
 
     return pageProps;
+};
+
+/**
+ * Processes a single include
+ */
+PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, previewMode) {
+
+    var self = this;
+
+    var pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
+    if(pluginModule) {
+        var cache = pluginCache.getCache(pluginModule.name, {
+            ttl: pluginModule.ttl
+        });
+        return cache.get(includeId).then(function(result) {
+            if(result) {
+                return result;
+            }
+
+            var includeData = includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
+            if (typeof pluginModule.process === 'function') {
+                result = pluginModule.process(includeData, {
+                    preview: previewMode,
+                    reqUrl: req.url,
+                    reqMethod: req.method
+                }).then(function(val) {
+                    return cache.set(includeId, val);
+                }).then(null, function(err) { //not catch, this might not be a Bluebird promise
+                    self.logger.warn(err, 'Could not process include for %s (%s) at %s',
+                        pluginModule.name, includeId, req.url);
+                    return {};
+                });
+            } else {
+                result = includeData;
+            }
+            return result;
+        });
+    }
 };
 
 /**
@@ -223,7 +249,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
-                var includeId = regionIndex + '_' + includeIndex;
+                var includeId = constructIndcludeId(req, regionIndex, includeIndex);
                 pageData[region.name].ctx[includeIndex] = pageResult[includeId] || {};
                 viewPartial = pluginModule.viewPartial ?
                     pluginModule.viewPartial : 'The view partial could not be resolved';
@@ -372,4 +398,12 @@ function sessionValueSwitch(req, queryParam, sessionKey) {
         }
     }
     return req.session[sessionKey] || false;
+}
+
+function constructIndcludeId(req, regionIndex, includeIndex) {
+    return JSON.stringify({
+        url: req.url,
+        regionIndex: regionIndex,
+        includeIndex: includeIndex
+    })
 }

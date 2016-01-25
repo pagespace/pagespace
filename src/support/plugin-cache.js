@@ -1,31 +1,30 @@
 var Promise = require('bluebird');
 var Cacheman = require('cacheman');
 
-var cache = new Cacheman('plugins');
-
 var pluginCaches = {};
 
 module.exports = {
-    getCache: function (pluginId, opts) {
+    getCache: function (pluginName, opts) {
         opts = opts || {};
 
-        if(typeof pluginCaches[pluginId] === 'undefined') {
-            pluginCaches[pluginId] = new PluginCache(pluginId, opts.ttl);
+        if(typeof pluginCaches[pluginName] === 'undefined') {
+            pluginCaches[pluginName] = new PluginCache(pluginName, opts.ttl);
         }
 
-        return pluginCaches[pluginId];
+        return pluginCaches[pluginName];
     }
 };
 
-var PluginCache = function(pluginId, ttl) {
-    this.ttl = ttl;
-    this.pluginId = pluginId;
+var PluginCache = function(pluginName, ttl) {
+    this.cache = new Cacheman(pluginName, {
+        ttl: ttl
+    });
 };
 
-PluginCache.prototype.get = function() {
+PluginCache.prototype.get = function(key) {
     var self = this;
     return new Promise(function(resolve, reject) {
-        cache.get(self.pluginId, function(err, val) {
+        self.cache.get(key, function(err, val) {
             if(err) {
                 reject(err);
             } else {
@@ -35,10 +34,23 @@ PluginCache.prototype.get = function() {
     });
 };
 
-PluginCache.prototype.set = function(val) {
+PluginCache.prototype.set = function(key, val) {
     var self = this;
     return new Promise(function(resolve, reject) {
-        cache.set(self.pluginId, val, self.ttl, function(err, val) {
+        self.cache.set(key, val, function(err, val) {
+            if(err) {
+                reject(err);
+            } else {
+                resolve(val);
+            }
+        });
+    });
+};
+
+PluginCache.prototype.del = function(key) {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+        self.cache.del(key, function(err, val) {
             if(err) {
                 reject(err);
             } else {
@@ -51,7 +63,7 @@ PluginCache.prototype.set = function(val) {
 PluginCache.prototype.clear = function() {
     var self = this;
     return new Promise(function(resolve, reject) {
-        cache.del(self.pluginId, function(err, val) {
+        self.cache.clear(function(err, val) {
             if(err) {
                 reject(err);
             } else {

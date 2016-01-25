@@ -25,7 +25,6 @@ var vm = require('vm'),
     resolve = require('resolve'),
     semver = require('semver'),
     psUtil = require('./pagespace-util'),
-    pluginCache = require('./plugin-cache'),
     appConsts = require('../app-constants');
 
 var instance = null;
@@ -95,7 +94,6 @@ PluginResolver.prototype.require = function(pluginModuleId) {
                         return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
                     },
                     pluginResolver: self,
-                    cache: pluginCache.getCache(pluginModuleId, pluginConfig.ttl),
                     logger: logger.child({plugin: pluginModuleId}),
                     userBasePath: this.userBasePath
                 }
