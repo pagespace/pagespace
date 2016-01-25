@@ -25,7 +25,7 @@ var createAcl = require('../support/acl').acl,
 //url patterns
 var ALL_PAGES = new RegExp('^/(?!_)(.*)');
 var DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)');
-var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|datas|media)/?(.*)');
+var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)');
 
 var LOGIN = new RegExp('^/_auth/login');
 var LOGOUT = new RegExp('^/_auth/logout');
