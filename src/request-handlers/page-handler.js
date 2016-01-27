@@ -166,8 +166,11 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
     //read data for each plugin
     page.regions.forEach(function (region) {
         region.includes.forEach(function(includeWrapper) {
-            var includeId = includeWrapper.include._id.toString();
-            pageProps[includeId] = self.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
+
+            if(includeWrapper.include) {
+                var includeId = includeWrapper.include._id.toString();
+                pageProps[includeId] = self.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
+            }
         });
     });
 
@@ -183,9 +186,7 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
 
     var pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
     if(pluginModule) {
-        var cache = includeCache.getCache(pluginModule.name, {
-            ttl: pluginModule.ttl
-        });
+        var cache = includeCache.getCache();
         return cache.get(includeId).then(function(result) {
             if(result && !previewMode) {
                 return result;
@@ -199,7 +200,7 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
                     reqMethod: req.method
                 }).then(function(val) {
                     //don't cache in preview mode
-                    return !previewMode ? cache.set(includeId, val) : val;
+                    return !previewMode ? cache.set(includeId, val, pluginModule.ttl) : val;
                 }).then(null, function(err) { //not 'catch', this might not be a Bluebird promise
                     self.logger.warn(err, 'Could not process include for %s (%s) at %s',
                         pluginModule.name, includeId, req.url);
@@ -250,8 +251,8 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
-                var includeId = includeWrappper.include._id.toString();
-                pageData[region.name].ctx[includeIndex] = pageResult[includeId] || {};
+                pageData[region.name].ctx[includeIndex] = includeWrappper.include ?
+                    pageResult[includeWrappper.include._id.toString()] : {};
                 viewPartial = pluginModule.viewPartial ?
                     pluginModule.viewPartial : 'The view partial could not be resolved';
                 if(pageResult.previewMode) {
@@ -261,7 +262,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                         'data-page-id="%s" ' +
                         'data-region-name="%s" ' +
                         'data-include="%s" ' +
-                        'data-data-id="%s" ' +
+                        'data-include-id="%s" ' +
                         '>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper,
                                               pluginModule.name,

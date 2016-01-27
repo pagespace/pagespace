@@ -73,6 +73,12 @@ Locals that should be made available for every Handlebars template
 [BCP47 Language tag] (https://www.w3.org/International/articles/language-tags/) to use with 
 [Format.JS](http://formatjs.io/handlebars/) Handlebars helpers, which may be used in templates.
 
+#### opts.cacheOpts
+
+Live plugin results are cached per include. Internally Pagespace uses Cacheman for this. By default these are 
+cached in memory, but you can uses an alternative Cacheman engine implementation such as Redis.
+See [Cacheman options](https://github.com/cayasso/cacheman#api)
+
 ### pagespace.ready(callback)
 
 Fires a node style callback when Pagespace is ready (it will be ready shortly after the Express server has started.

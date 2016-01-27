@@ -4,21 +4,19 @@ var Cacheman = require('cacheman');
 var cache = null;
 
 module.exports = {
-    getCache: function (opts) {
+
+    init: function(opts) {
         opts = opts || {};
-
-        if(!cache) {
-            cache = new IncludeCache(opts.ttl);
-        }
-
+        cache = new IncludeCache(opts);
+    },
+    getCache: function () {
         return cache;
     }
 };
 
-var IncludeCache = function(ttl) {
-    this.cache = new Cacheman('includes', {
-        ttl: ttl
-    });
+var IncludeCache = function(opts) {
+    opts = opts || {};
+    this.cache = new Cacheman('includes', opts);
 };
 
 IncludeCache.prototype.get = function(key) {
@@ -34,10 +32,10 @@ IncludeCache.prototype.get = function(key) {
     });
 };
 
-IncludeCache.prototype.set = function(key, val) {
+IncludeCache.prototype.set = function(key, val, ttl) {
     var self = this;
     return new Promise(function(resolve, reject) {
-        self.cache.set(key, val, function(err, val) {
+        self.cache.set(key, val, ttl, function(err, val) {
             if(err) {
                 reject(err);
             } else {
