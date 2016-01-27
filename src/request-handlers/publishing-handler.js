@@ -172,10 +172,10 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
 
         return updates;
     }).then(function(updates) {
-        logger.info('Publishing completed.Published %s pages and %s data includes', pageUpdateCount, includeUpdateCount);
+        logger.info('Publishing completed. Published %s pages and %s includes', pageUpdateCount, includeUpdateCount);
         res.status(200);
         res.json({
-            message: util.format('Published %s pages and %s data includes', pageUpdateCount, includeUpdateCount),
+            message: util.format('Published %s pages and %s includes', pageUpdateCount, includeUpdateCount),
             publishCount: updates.length
         });
     }).catch(function(e) {
