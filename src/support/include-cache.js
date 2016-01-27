@@ -1,27 +1,27 @@
 var Promise = require('bluebird');
 var Cacheman = require('cacheman');
 
-var pluginCaches = {};
+var cache = null;
 
 module.exports = {
-    getCache: function (pluginName, opts) {
+    getCache: function (opts) {
         opts = opts || {};
 
-        if(typeof pluginCaches[pluginName] === 'undefined') {
-            pluginCaches[pluginName] = new PluginCache(pluginName, opts.ttl);
+        if(!cache) {
+            cache = new IncludeCache(opts.ttl);
         }
 
-        return pluginCaches[pluginName];
+        return cache;
     }
 };
 
-var PluginCache = function(pluginName, ttl) {
-    this.cache = new Cacheman(pluginName, {
+var IncludeCache = function(ttl) {
+    this.cache = new Cacheman('includes', {
         ttl: ttl
     });
 };
 
-PluginCache.prototype.get = function(key) {
+IncludeCache.prototype.get = function(key) {
     var self = this;
     return new Promise(function(resolve, reject) {
         self.cache.get(key, function(err, val) {
@@ -34,7 +34,7 @@ PluginCache.prototype.get = function(key) {
     });
 };
 
-PluginCache.prototype.set = function(key, val) {
+IncludeCache.prototype.set = function(key, val) {
     var self = this;
     return new Promise(function(resolve, reject) {
         self.cache.set(key, val, function(err, val) {
@@ -47,7 +47,7 @@ PluginCache.prototype.set = function(key, val) {
     });
 };
 
-PluginCache.prototype.del = function(key) {
+IncludeCache.prototype.del = function(key) {
     var self = this;
     return new Promise(function(resolve, reject) {
         self.cache.del(key, function(err, val) {
@@ -60,7 +60,7 @@ PluginCache.prototype.del = function(key) {
     });
 };
 
-PluginCache.prototype.clear = function() {
+IncludeCache.prototype.clear = function() {
     var self = this;
     return new Promise(function(resolve, reject) {
         self.cache.clear(function(err, val) {

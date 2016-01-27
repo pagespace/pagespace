@@ -22,6 +22,7 @@
 //support
 var Promise = require('bluebird'),
     util = require('util'),
+    includeCache = require('../support/include-cache'),
     psUtil = require('../support/pagespace-util');
 
 var PublishingHandler = function() {
@@ -73,8 +74,8 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
     });
 
     var updates = [];
-    var numPageUpdates = 0;
-    var numDataUpdates = 0;
+    var pageUpdateCount = 0;
+    var includeUpdateCount = 0;
 
     var DraftPage = this.dbSupport.getModel('Page');
     var query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.include');
@@ -144,18 +145,19 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             page.regions.forEach(function(region) {
                 region.includes.forEach(function(includeWrapper) {
                     if(includeWrapper.include && includeWrapper.include.draft) {
-                        var dataId = includeWrapper.include._id.toString();
+                        var includeId = includeWrapper.include._id.toString();
                         var includeUpdate = includeWrapper.include.toObject();
                         includeUpdate.draft = false;
                         delete includeUpdate._id;
                         delete includeUpdate.__v;
                         saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, { context: DraftIncludeData});
                         saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, { context: LiveIncludeData });
-                        updates.push(saveDraftIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
-                        updates.push(saveLiveIncludeData({_id: dataId}, includeUpdate, { upsert: true }));
-                        numDataUpdates++;
+                        updates.push(saveDraftIncludeData({_id: includeId}, includeUpdate, { upsert: true }));
+                        updates.push(saveLiveIncludeData({_id: includeId}, includeUpdate, { upsert: true }));
+                        includeCache.getCache().del(includeId);
+                        includeUpdateCount++;
 
-                        logger.info('Include dat queued to publish (id=%s)', dataId);
+                        logger.info('Include data queued to publish (id=%s)', includeId);
                     }
                 });
             });
@@ -165,15 +167,15 @@ PublishingHandler.prototype.doPublishDrafts = function(req, res, next, logger) {
             page.draft = false;
             page.published = true;
             updates.push(saveDraftPage());
-            numPageUpdates++;
+            pageUpdateCount++;
         });
 
         return updates;
     }).then(function(updates) {
-        logger.info('Publishing completed.Published %s pages and %s data includes', numPageUpdates, numDataUpdates);
+        logger.info('Publishing completed.Published %s pages and %s data includes', pageUpdateCount, includeUpdateCount);
         res.status(200);
         res.json({
-            message: util.format('Published %s pages and %s data includes', numPageUpdates, numDataUpdates),
+            message: util.format('Published %s pages and %s data includes', pageUpdateCount, includeUpdateCount),
             publishCount: updates.length
         });
     }).catch(function(e) {

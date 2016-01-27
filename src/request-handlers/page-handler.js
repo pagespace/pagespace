@@ -24,7 +24,7 @@ var util = require('util'),
     Promise = require('bluebird'),
     psUtil = require('../support/pagespace-util'),
     consts = require('../app-constants'),
-    pluginCache = require('../support/plugin-cache');
+    includeCache = require('../support/include-cache');
 
 var httpStatus = {
     OK: 200,
@@ -164,9 +164,9 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
     var self = this;
 
     //read data for each plugin
-    page.regions.forEach(function (region, regionIndex) {
-        region.includes.forEach(function(includeWrapper, includeIndex) {
-            var includeId = constructIndcludeId(req, regionIndex, includeIndex);
+    page.regions.forEach(function (region) {
+        region.includes.forEach(function(includeWrapper) {
+            var includeId = includeWrapper.include._id.toString();
             pageProps[includeId] = self.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
         });
     });
@@ -183,11 +183,11 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
 
     var pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
     if(pluginModule) {
-        var cache = pluginCache.getCache(pluginModule.name, {
+        var cache = includeCache.getCache(pluginModule.name, {
             ttl: pluginModule.ttl
         });
         return cache.get(includeId).then(function(result) {
-            if(result) {
+            if(result && !previewMode) {
                 return result;
             }
 
@@ -198,8 +198,9 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
                     reqUrl: req.url,
                     reqMethod: req.method
                 }).then(function(val) {
-                    return cache.set(includeId, val);
-                }).then(null, function(err) { //not catch, this might not be a Bluebird promise
+                    //don't cache in preview mode
+                    return !previewMode ? cache.set(includeId, val) : val;
+                }).then(null, function(err) { //not 'catch', this might not be a Bluebird promise
                     self.logger.warn(err, 'Could not process include for %s (%s) at %s',
                         pluginModule.name, includeId, req.url);
                     return {};
@@ -238,7 +239,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
         pageData.template[prop.name] = prop.value;
     });
 
-    page.regions.forEach(function (region, regionIndex) {
+    page.regions.forEach(function (region) {
         pageData[region.name] = {
             ctx: []
         };
@@ -249,7 +250,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
-                var includeId = constructIndcludeId(req, regionIndex, includeIndex);
+                var includeId = includeWrappper.include._id.toString();
                 pageData[region.name].ctx[includeIndex] = pageResult[includeId] || {};
                 viewPartial = pluginModule.viewPartial ?
                     pluginModule.viewPartial : 'The view partial could not be resolved';
@@ -398,12 +399,4 @@ function sessionValueSwitch(req, queryParam, sessionKey) {
         }
     }
     return req.session[sessionKey] || false;
-}
-
-function constructIndcludeId(req, regionIndex, includeIndex) {
-    return JSON.stringify({
-        url: req.url,
-        regionIndex: regionIndex,
-        includeIndex: includeIndex
-    })
 }
