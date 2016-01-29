@@ -10,7 +10,7 @@ commonly used to edit web copy, include HTML, aggregate content, but can do virt
 
 Besides the technologies already mentioned on this page, Pagespace does not dictate the use of any other 
 technologies. Templates are blank canvases, for you to create any website you want, powered by any client side 
-technology. The HTML sent to the client contains no bloat added by Pagespace. Templates are as clean or bloated as you
+technology. The HTML sent to the client contains no added bloat. Templates are as clean or bloated as you
 wish to make them.
 
 **Website managers** benefit from an admin dashboard where they can manage pages, media and content. 

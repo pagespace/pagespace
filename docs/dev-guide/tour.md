@@ -86,7 +86,7 @@ A page's data model may contain a **base-page**. When creating a new page, if a 
 share the contents of the regions based on their sharing strategy.
 
 <a id=handling-requests></a>
-## Handling Requests 
+## Request Handling 
 
 Pagespace attempts to handle each request, via its [Express](http://expressjs.com/) middleware, by internally 
 matching it to one of the following URL patterns:

@@ -80,7 +80,7 @@ plugins configuration:
             "default" : "Got this HTML",
             "type" : "string"
         }],
-        "cacheTtl" : 60000
+        "ttl" : 60000
     }
 ```
 
