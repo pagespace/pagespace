@@ -1,12 +1,12 @@
 # Media
 
-Media consists of **image**, **videos**, **documents**, etc that a web-site visitor may want to view or download.
+Media consists of **image**, **videos**, **documents**, etc that a website visitor may want to view or download.
 
-Upload files to the media library so plugins can display or link to these media files.
+Upload files to the media library so plugins can display or link to these media files on web pages.
 
 To upload a media:
 
-1. Select the **Media** tab
-2. Select **Upload** in the left hand side menu
-3. Select a file from your hard drive
-4. Give the media item at least a name and press **Upload**
+1. Select the <i>Media</i> tab.
+2. Select <i>Upload</i> in the side menu.
+3. Select a file from your hard drive.
+4. Give the media item at least a name and press <i>Upload</i>.
