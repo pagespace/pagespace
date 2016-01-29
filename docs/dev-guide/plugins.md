@@ -64,7 +64,7 @@ npm init
 Add a `pagesapce` block in your `package.json` file with a `schema` block. The schema block defines the fields of the 
 plugins configuration:
 
-```
+```javascript
     "name" : "pagespace-fetch-html",
     "keywords" : [ "pagespace-plugin" ],
     ...
@@ -166,7 +166,7 @@ TBD
 You can publish and install your plugin via the NPM registry, but its also easier to get started by installing your 
 module from a local path:
 
-```
+```bash
 npm install path/to/html-fetch-include
 ```
 
