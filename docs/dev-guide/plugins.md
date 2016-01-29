@@ -48,7 +48,7 @@ npm install pagespace-posts --save
 
 Custom plugins are easy to create.
 
-### Steps to create a custom plugins
+### Steps to create a custom plugin
 
 #### 1. Initialize a Node package
 
