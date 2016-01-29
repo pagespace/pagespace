@@ -70,7 +70,7 @@ Locals that should be made available for every Handlebars template
 
 #### opts.locale
 
-[BCP47 Language tag] (https://www.w3.org/International/articles/language-tags/) to use with 
+[BCP47 Language tag](https://www.w3.org/International/articles/language-tags/) to use with 
 [Format.JS](http://formatjs.io/handlebars/) Handlebars helpers, which may be used in templates.
 
 #### opts.cacheOpts
@@ -122,8 +122,9 @@ When authoring Pagespace plugins, a utility API is available on the `pagespace` 
 
 Get a [Mongoose model](http://mongoosejs.com/docs/models.html) to interact with the database
 
-```
+```javascript
 pagespace.getModel('Page');
+```
 
 ### pagespace.cache
 
