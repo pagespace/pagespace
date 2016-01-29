@@ -52,7 +52,7 @@ Custom plugins are easy to create.
 
 ### 1. Initialize a Node package
 
-```
+```bash
 npm init
 ```
 
@@ -64,7 +64,7 @@ npm init
 Add a `pagesapce` block in your `package.json` file with a `schema` block. The schema block defines the fields of the 
 plugins configuration:
 
-```json
+```
     "name" : "pagespace-fetch-html",
     "keywords" : [ "pagespace-plugin" ],
     ...
@@ -86,13 +86,13 @@ plugins configuration:
 
 ### 3. Create the module's entry point:
 
-```
+```bash
 touch index.js
 ```
 
 and implement the `process()` method which should return the rendering context for the partial template:
 
-```
+```javascript
 var url = require('url');
 var http = require('http')
 
