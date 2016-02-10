@@ -80,7 +80,7 @@ Template properties can be used to make different templates based on the same te
 we could create two identical templates, with the exception that one is configured to display the date of the page it 
 is rendering:
 
-<img src="">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/template-properties.png width=100% alt="Template properties">
 
 ```html
 <p class="date">
@@ -96,7 +96,7 @@ is rendering:
 When one page is based on another the includes in a given region may be shared between both pages. Meaning common page
 elements, such as navigation and footer content, do not need to recreated and duplicated for each page.
 
-<img src="">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/template-include-sharing.png width=100% alt="Template include sharing">
 
 <a id=using-a-template></a>
 ## Using a template
