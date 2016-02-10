@@ -1,4 +1,4 @@
-# API
+# APIs
 
 1. [Middleware API](#middleware)
 2. [Plugin API](#plugin)
@@ -125,22 +125,6 @@ Get a [Mongoose model](http://mongoosejs.com/docs/models.html) to interact with 
 ```javascript
 pagespace.getModel('Page');
 ```
-
-### pagespace.cache
-
-Use to cache the plugins resolved result
-
-#### pagespace.cache.get()
-
-Gets the current cached result. Returns a *Promise*
-
-#### pagespace.cache.set(value)
-
-Sets a result to cache. The value must be serializable as JSON. Returns a *Promise*
-
-#### pagespace.cache.clear()
-
-Clears the cache.  Returns a *Promise*
 
 ### pagespace.logger
 

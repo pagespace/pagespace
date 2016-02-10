@@ -33,10 +33,10 @@ Field             | Description
 ------------------|------------------
 Title             | The name of the page. This is likely to be displayed on the page itself, by the template.
 Url               | This URL relative to the site's domain. It will be automatically generated based on the *Title*. The <i>Revert</i> button will revert the URL back to the automatically generated one.
-Use in Navigation | Should navigation menus display a link to this page?
+Use in Nav        | Should navigation menus display a link to this page?
 Published date    | If the page template displays a date associated with this page, you can choose what that date should be. This is an optional setting.
 Expires date      | If the page is used to display a blog post, for example, this setting can specify a date when the page should no longer appear on the blog roll. This is an optional setting.
-Template          | You must choose a template. Templates are configured by the site administrator or developer.
+Template          | You must choose a template. Templates are configured by the site administrator or developer.<br>(If there is only one template in the system, this will be chosen automatically and this field will not appear)
 Based on page     | If a similar page already exists, choose a base page. If the template is configured accordingly, common page elements such as a navigation that exist on the base page will be automatically added to the new page.
 
 <ol start=4>
@@ -46,8 +46,9 @@ Based on page     | If a similar page already exists, choose a base page. If the
 <a id=view-and-edit></a>
 ## View and edit page content
 
-Pressing the title of a page opens a preview of the page with the ability to edit its content. [Read more about
-editing page content](/user-guide/page-editing).
+Pressing the title of a page opens a preview of the page with the ability to edit its content. 
+
+[Read more about editing page content](/user-guide/page-editing).
 
 <a id=page-settings></a>
 ## Configure page settings
@@ -118,4 +119,4 @@ To setup a redirect:
 4. Choose the page to redirect to and if the redirect is permanent (301 HTTP status) or temporary (302 HTTP status).
 5. Press <i>Save</i> to complete the action.
 
- 
+A redirected page will be marked on the sitemap:

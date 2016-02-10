@@ -2,7 +2,7 @@
 
 Website editors have complete control over the structure and content of their website. This guide explains how to:
 
-* [Configure the site](/user-guide/site-settins)
+* [Configure the site](/user-guide/site-settings)
 * [Manage page and site structure](/user-guide/page-management)
 * [Edit page content](/user-guide/page-editing)
 * [Publish changes](/user-guide/publishing)
