@@ -26,7 +26,7 @@ To add a new include:
 
 You may now edit the include as detailed in the (next section)[#edit-include].
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/add-include.png width=100% alt="Add include">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/add-include.png width=100% alt="Add include">
 
 <a id=edit-include></a>
 ## Editing includes
@@ -37,7 +37,7 @@ button and a drag grippy.
 Press the <i>Launch editor</i> button to edit the content or configuration of an include. Each include is controlled by a 
 Pagespace plugin. The interface to edit different types of include will vary given the plugin it uses.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/edit-include.png width=100% alt="Edit include">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/edit-include.png width=100% alt="Edit include">
 
 <a id=remove-include></a>
 ## Remove an include
@@ -48,7 +48,7 @@ Pagespace plugin. The interface to edit different types of include will vary giv
 
 If removing a shared include, it will still exist on the other pages where it is used.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/remove-include.png width=100% alt="Remove include">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/remove-include.png width=100% alt="Remove include">
 
 <a id=change-position></a>
 ## Change the position of an include
@@ -58,7 +58,7 @@ Change the position of an include by swapping it with another include in the sam
 1. Use the drag grippy to drag the include. 
 2. Drop it on the include you wish to swap it with.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/reorder-include.png width=100% alt="Change include position">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/reorder-include.png width=100% alt="Change include position">
 
 <a id=preview-page></a>
 ## Preview the page without editing
@@ -69,6 +69,6 @@ controls.
 If the page has been published, press *Live*. This will open a new tab containing the current live version of the page, 
 that visitors to the website will currently see.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/preview.png width=50% alt="Preview page">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/preview.png width=50% alt="Preview page">
 
 

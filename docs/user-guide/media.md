@@ -12,4 +12,4 @@ To upload a media:
 4. Give the media item at least a name and press <i>Upload</i>.
 
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/media-upload.png width=100% alt="Uploading an image">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/media-upload.png width=100% alt="Uploading an image">

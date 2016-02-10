@@ -12,4 +12,4 @@ To publish a page:
 3. Select one or more page that you wish to publish. Items which are selected to publish appear in green.
 4. Press the <i>Publish</i> button to complete the process.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/publishing.png width=100% alt="Publishing view">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/user-guide/images/publishing.png width=100% alt="Publishing view">
