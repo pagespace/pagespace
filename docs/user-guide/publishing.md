@@ -5,6 +5,8 @@ must first be **published**.
 
 Pages with unpublished changes are visible in the sitemap by the presence of the <i>Publish</i> button.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/publishing.png width=100% alt="Publishing view">
+
 To publish a page:
 
 1. Press a page's <i>Publish</i> button or go to the main <i>Publishing</i> tab.

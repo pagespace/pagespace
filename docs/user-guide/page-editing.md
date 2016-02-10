@@ -69,6 +69,6 @@ controls.
 If the page has been published, press *Live*. This will open a new tab containing the current live version of the page, 
 that visitors to the website will currently see.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/preview.png width=100% alt="Preview page">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/preview.png width=50% alt="Preview page">
 
 
