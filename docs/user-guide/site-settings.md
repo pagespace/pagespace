@@ -2,11 +2,11 @@
 
 The top-left furthest node in the site-map represent the website as a whole. 
 
-<img>
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/site-settings-node.png width=100% alt="Site settings node">
 
 Pressing it will open the site settings form with the following fields:
 
-<img>
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/site-settings-form.png width=100% alt="Site settings form">
 
 ## Available settings
 

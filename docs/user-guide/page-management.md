@@ -18,12 +18,14 @@ performing the following tasks:
 The Sitemap displays a visual overview of a website's page structure. This is typically a tree-like structure with
 a set of top level pages which may have sub pages and, in turn, they may have more sub pages.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/site-map.png width=100% alt="Site map">
+
 To add a page:
 
 1. Select <i>Add and remove</i> in the left hand side menu.
 2. Press the <i>Add page</i> button on the page you would like to add a sub page to. To add a top-level page, click the <i>Add page</i> button on the site node at the most top-left.
 
-Foo
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/site-map-add.png width=75% alt="Add page on site map">
 
 <ol start=3>
 <li> Complete the fields of the *Add page* form:
@@ -59,6 +61,8 @@ The configuration used to create a page can be modified:
 1. On the pages tab, viewing the sitemap, press the <i>settings</i> button on the page you would like to configure.
 2. Change the necessary settings and save.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/configure-page.png width=100% alt="Configure page">
+
 ### Synchronizing includes
 
 If the page uses a *base page* and the includes configured to be shared have become out of sync, they can be 
@@ -74,6 +78,8 @@ the page and when it was last changed.
 More advanced users may select <i>View JSON</i> to see the <abbr title="Javascript Object Notation">JSON</abbr> 
 notation of how the page is stored in the database.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/page-details.png width=100% alt="Add page on site map">
+
 <a id=remove-pages></a>
 ## Remove pages
 
@@ -81,6 +87,8 @@ To remove a page:
 
 1. Select <i>Add and remove</i> in the side menu
 2. Click the <i>>Remove page</i> button on the page to remove.
+
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/remove-page.png width=50% alt="Remove page on site map">
 
 If a page has not yet been published it will be removed immediately. If a page has been published, that is it is 
 live on the internet, some options are presented before the page is removed. This is so visitors and search engines 
@@ -106,6 +114,8 @@ To move a page:
 1. Select <i>Re-order</i> in the left hand side menu.
 2. Press the arrow button on the page until the page is in the desired position.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/reorder-page.png width=75% alt="Re-order pages">
+
 <a id=page-redirects></a>
 ## Page redirects
 
@@ -119,4 +129,8 @@ To setup a redirect:
 4. Choose the page to redirect to and if the redirect is permanent (301 HTTP status) or temporary (302 HTTP status).
 5. Press <i>Save</i> to complete the action.
 
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/redirect.png width=100% alt="Redirect page">
+
 A redirected page will be marked on the sitemap:
+
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/sitemap-redirect-page.png width=50% alt="Redirect page on sitemap">
