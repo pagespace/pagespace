@@ -16,7 +16,7 @@ This page summarizes the key technical concepts of Pagespace.
 
 Pagespace's data model looks like this:
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/data-model.svg width=100% alt="Data model">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/data-model.png width=100% alt="Data model">
 
 A Pagespace website is composed of a number of **pages**. Pages contain **regions** which, in turn, contain 
 zero or more **includes**. Includes are responsible for displaying the functional components and the content of a 
@@ -26,7 +26,7 @@ The data that an include owns is managed by a **plugin**. Plugins define how an 
 managed. Plugins manage content or components of a web site such as navigation, HTML copy, markdown, image galleries or
 blog rolls.
 
-<img src="https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/wireframe-regions.svg" width=100% alt="Regions wireframe">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/dev-guide/images/wireframe-regions.png width=100% alt="Regions wireframe">
 
 <a id=templates></a>
 ## Templates 
