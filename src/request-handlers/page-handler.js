@@ -147,6 +147,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             next(err);
         }
     }).catch(function(err) {
+        self.logger.error(err);
         next(err);
     });
 };
@@ -238,6 +239,22 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
     pageData.template = {};
     page.template.properties.forEach(function(prop) {
         pageData.template[prop.name] = prop.value;
+    });
+
+    //add missing regions from the template
+    page.template.regions.forEach(function(templateRegion) {
+        function regionMissingFromPage(regionName) {
+            return page.regions.every(function(region) {
+                return region.name !== regionName;
+            });
+        }
+
+        if(regionMissingFromPage(templateRegion.name)) {
+            page.regions.push({
+                name: templateRegion.name,
+                includes: []
+            });
+        }
     });
 
     page.regions.forEach(function (region) {
