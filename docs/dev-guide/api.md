@@ -1,4 +1,4 @@
-# API
+# APIs
 
 1. [Middleware API](#middleware)
 2. [Plugin API](#plugin)
@@ -70,8 +70,14 @@ Locals that should be made available for every Handlebars template
 
 #### opts.locale
 
-[BCP47 Language tag] (https://www.w3.org/International/articles/language-tags/) to use with 
+[BCP47 Language tag](https://www.w3.org/International/articles/language-tags/) to use with 
 [Format.JS](http://formatjs.io/handlebars/) Handlebars helpers, which may be used in templates.
+
+#### opts.cacheOpts
+
+Live plugin results are cached per include. Internally Pagespace uses Cacheman for this. By default these are 
+cached in memory, but you can uses an alternative Cacheman engine implementation such as Redis.
+See [Cacheman options](https://github.com/cayasso/cacheman#api)
 
 ### pagespace.ready(callback)
 
@@ -116,24 +122,9 @@ When authoring Pagespace plugins, a utility API is available on the `pagespace` 
 
 Get a [Mongoose model](http://mongoosejs.com/docs/models.html) to interact with the database
 
-```
+```javascript
 pagespace.getModel('Page');
-
-### pagespace.cache
-
-Use to cache the plugins resolved result
-
-#### pagespace.cache.get()
-
-Gets the current cached result. Returns a *Promise*
-
-#### pagespace.cache.set(value)
-
-Sets a result to cache. The value must be serializable as JSON. Returns a *Promise*
-
-#### pagespace.cache.clear()
-
-Clears the cache.  Returns a *Promise*
+```
 
 ### pagespace.logger
 

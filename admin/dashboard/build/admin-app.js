@@ -381,8 +381,17 @@
                 }
             }
 
+            //add a new region
+            if(!regionIndex) {
+                $scope.page.regions.push({
+                    name: regionName,
+                    includes: []
+                });
+                regionIndex = $scope.page.regions.length - 1;
+            }
+
             //add the new include to the region
-            if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
+            if($scope.selectedPlugin) {
                 pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
                     return res.data;
                 }).then(function(includeData) {
@@ -948,7 +957,8 @@ adminApp.controller('PageController',
         });
     } else {
         $scope.page = {
-            regions: []
+            regions: [],
+            useInNav: true
         };
         if(parentPageId) {
             pageSetupFunctions.push(function getParentPage(callback) {
@@ -990,19 +1000,10 @@ adminApp.controller('PageController',
     $scope.syncResults = null;
 
     $scope.synchronizeWithBasePage = function(page) {
-        function getRegionFromBasePage(regionName) {
-            return page.basePage.regions.filter(function(region) {
+        function getRegionFromPage(page, regionName) {
+            return page.regions.filter(function(region) {
                 return region.name === regionName;
             })[0] || null;
-        }
-        function getSharingForRegion(page, regionName) {
-            var region = page.template.regions.filter(function(region) {
-                return region.name === regionName;
-            })[0];
-            if(region) {
-                return (region.sharing || '').split(/\s+/);
-            }
-            return [];
         }
         function containsInclude(region, includeToFind) {
             return region.includes.filter(function(include) {
@@ -1011,24 +1012,32 @@ adminApp.controller('PageController',
         }
         //get basepage from id value
         $scope.syncResults = [];
-        page.regions.forEach(function(region) {
+        page.template.regions.forEach(function(templateRegion) {
             var syncResult = {
-                region: region.name,
+                region: templateRegion.name,
                 removedCount: 0,
                 sharedCount: 0
             };
-            var sharing = getSharingForRegion(page, region.name);
-            var baseRegion = getRegionFromBasePage(region.name);
+            var sharing = (templateRegion.sharing || '').split(/\s+/);
+            var pageRegion = getRegionFromPage(page, templateRegion.name);
+            if(!pageRegion) {
+                pageRegion = {
+                    name: templateRegion.name,
+                    includes: []
+                };
+                page.regions.push(pageRegion);
+            }
+            var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
             if(baseRegion) {
-                var startCount = region.includes.length;
-                //add additonal non-shared includes at the end
+                var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                //add additional non-shared includes at the end
                 baseRegion.includes.forEach(function(baseInclude) {
                     if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
-                        !containsInclude(region, baseInclude)) {
-                        region.includes.push(baseInclude);
+                        !containsInclude(pageRegion, baseInclude)) {
+                        pageRegion.includes.push(baseInclude);
                     }
                 });
-                syncResult.sharedCount = region.includes.length - startCount;
+                syncResult.sharedCount = pageRegion.includes.length - startCount;
             }
             $scope.syncResults.push(syncResult);
         });

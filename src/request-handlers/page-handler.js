@@ -23,7 +23,8 @@ var util = require('util'),
     url = require('url'),
     Promise = require('bluebird'),
     psUtil = require('../support/pagespace-util'),
-    consts = require('../app-constants');
+    consts = require('../app-constants'),
+    includeCache = require('../support/include-cache');
 
 var httpStatus = {
     OK: 200,
@@ -146,6 +147,7 @@ PageHandler.prototype.doRequest = function(req, res, next) {
             next(err);
         }
     }).catch(function(err) {
+        self.logger.error(err);
         next(err);
     });
 };
@@ -163,27 +165,54 @@ PageHandler.prototype.getProcessedPageRegions = function(req, logger, page, page
     var self = this;
 
     //read data for each plugin
-    page.regions.forEach(function (region, regionIndex) {
-        region.includes.forEach(function(includeWrapper, includeIndex) {
-            var pluginModule = self.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
-            var includeId = regionIndex + '_' + includeIndex;
-            if (pluginModule) {
-                var includeData =
-                        includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
-                if (typeof pluginModule.process === 'function') {
-                    pageProps[includeId] = pluginModule.process(includeData, {
-                        preview: pageProps.previewMode,
-                        reqUrl: req.url,
-                        reqMethod: req.method
-                    });
-                } else {
-                    pageProps[includeId] = includeData;
-                }
+    page.regions.forEach(function (region) {
+        region.includes.forEach(function(includeWrapper) {
+
+            if(includeWrapper.include) {
+                var includeId = includeWrapper.include._id.toString();
+                pageProps[includeId] = self.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
             }
         });
     });
 
     return pageProps;
+};
+
+/**
+ * Processes a single include
+ */
+PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, previewMode) {
+
+    var self = this;
+
+    var pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
+    if(pluginModule) {
+        var cache = includeCache.getCache();
+        return cache.get(includeId).then(function(result) {
+            if(result && !previewMode) {
+                return result;
+            }
+
+            var includeData = includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
+            if (typeof pluginModule.process === 'function') {
+                result = pluginModule.process(includeData, {
+                    preview: previewMode,
+                    reqUrl: req.url,
+                    reqMethod: req.method
+                }).then(function(val) {
+                    //don't cache in preview mode
+                    return !previewMode ? cache.set(includeId, val, pluginModule.ttl) : val;
+                }).then(null, function(err) { //not 'catch', this might not be a Bluebird promise
+                    self.logger.warn(err, 'Could not process include for %s (%s) at %s',
+                        pluginModule.name, includeId, req.url);
+                    return {};
+                });
+            } else {
+                result = includeData;
+            }
+            return result;
+        });
+    }
 };
 
 /**
@@ -212,7 +241,23 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
         pageData.template[prop.name] = prop.value;
     });
 
-    page.regions.forEach(function (region, regionIndex) {
+    //add missing regions from the template
+    page.template.regions.forEach(function(templateRegion) {
+        function regionMissingFromPage(regionName) {
+            return page.regions.every(function(region) {
+                return region.name !== regionName;
+            });
+        }
+
+        if(regionMissingFromPage(templateRegion.name)) {
+            page.regions.push({
+                name: templateRegion.name,
+                includes: []
+            });
+        }
+    });
+
+    page.regions.forEach(function (region) {
         pageData[region.name] = {
             ctx: []
         };
@@ -223,8 +268,8 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                 self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
             var htmlWrapper, viewPartial;
             if(pluginModule) {
-                var includeId = regionIndex + '_' + includeIndex;
-                pageData[region.name].ctx[includeIndex] = pageResult[includeId] || {};
+                pageData[region.name].ctx[includeIndex] = includeWrappper.include ?
+                    pageResult[includeWrappper.include._id.toString()] : {};
                 viewPartial = pluginModule.viewPartial ?
                     pluginModule.viewPartial : 'The view partial could not be resolved';
                 if(pageResult.previewMode) {
@@ -234,7 +279,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                         'data-page-id="%s" ' +
                         'data-region-name="%s" ' +
                         'data-include="%s" ' +
-                        'data-data-id="%s" ' +
+                        'data-include-id="%s" ' +
                         '>\n%s\n</div>';
                     viewPartial = util.format(htmlWrapper,
                                               pluginModule.name,

@@ -36,8 +36,17 @@
                 }
             }
 
+            //add a new region
+            if(!regionIndex) {
+                $scope.page.regions.push({
+                    name: regionName,
+                    includes: []
+                });
+                regionIndex = $scope.page.regions.length - 1;
+            }
+
             //add the new include to the region
-            if(typeof regionIndex === 'number' && $scope.selectedPlugin) {
+            if($scope.selectedPlugin) {
                 pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
                     return res.data;
                 }).then(function(includeData) {

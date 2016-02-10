@@ -48,23 +48,23 @@ npm install pagespace-posts --save
 
 Custom plugins are easy to create.
 
-## Steps to create a custom plugins
+### Steps to create a custom plugin
 
-### 1. Initialize a Node package
+#### 1. Initialize a Node package
 
-```
+```bash
 npm init
 ```
 
 * By convention, prefix the module name with `pagespace-`
 * Include the keyword `pagespace-plugin`
 
-### 2. Create the schema
+#### 2. Create the schema
 
 Add a `pagesapce` block in your `package.json` file with a `schema` block. The schema block defines the fields of the 
 plugins configuration:
 
-```json
+```javascript
     "name" : "pagespace-fetch-html",
     "keywords" : [ "pagespace-plugin" ],
     ...
@@ -80,19 +80,19 @@ plugins configuration:
             "default" : "Got this HTML",
             "type" : "string"
         }],
-        "cacheTtl" : 60000
+        "ttl" : 60000
     }
 ```
 
-### 3. Create the module's entry point:
+#### 3. Create the module's entry point:
 
-```
+```bash
 touch index.js
 ```
 
 and implement the `process()` method which should return the rendering context for the partial template:
 
-```
+```javascript
 var url = require('url');
 var http = require('http')
 
@@ -148,7 +148,7 @@ module.exports = {
 
 If the plugin performs an asynchronous operation, it may return a promise.
 
-### 4. Create the partial template
+#### 4. Create the partial template
 
 ```html
 <div class="html-include">
@@ -157,16 +157,16 @@ If the plugin performs an asynchronous operation, it may return a promise.
 </div>
 ```
 
-### 5. Create a static editor (optional)
+#### 5. Create a static editor (optional)
 
 TBD
 
-### 6. Install the plugin
+#### 6. Install the plugin
 
 You can publish and install your plugin via the NPM registry, but its also easier to get started by installing your 
 module from a local path:
 
-```
+```bash
 npm install path/to/html-fetch-include
 ```
 

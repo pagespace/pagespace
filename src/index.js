@@ -39,7 +39,8 @@ var url = require('url'),
     createDbSetup = require('./setup/db-setup'),
     createAclSetup = require('./setup/acl-setup'),
     createViewEngine = require('./support/view-engine'),
-    createPluginResolver = require('./support/plugin-resolver');
+    createPluginResolver = require('./support/plugin-resolver'),
+    includeCache = require('./support/include-cache');
 
 /**
  * The App. This is the root of Pagespace.
@@ -81,10 +82,11 @@ module.exports = new Index();
  *                         This directory will be created if it doesn't exist
  * @param options.locale A string contain a BCP47 langugae tag or a function that resolves to one. The function takes
  *                       two arguments. The Express request object and the page object for the resolved page.
- * @param options.imageVariations When users upload images variations of that image can be created, given these sizes. E.g.
- *                                <code>[{ label: 'header', width: '100', height: 'auto' }]</code>
- *                                Resize objects with the label 'thumb' will be automatically applied when an image is
- *                                uploaded
+ * @param options.cacheOpts Caching options. See Cacheman (https://github.com/cayasso/cacheman)
+ * @param options.imageVariations When users upload images variations of that image can be created, given these sizes.
+ *                      E.g.
+ *                      <code>[{ label: 'header', width: '100', height: 'auto' }]</cod
+ *                      Resize objects with the label 'thumb' will be automatically applied when an image is uploaded
  * @param options.commonViewLocals Locals to make available in every handlebars template
  */
 Index.prototype.init = function(options) {
@@ -144,10 +146,13 @@ Index.prototype.init = function(options) {
     var commonViewLocals = options.commonViewLocals || {};
     this.viewEngine.setCommonLocals(commonViewLocals);
 
-    //locale set up
+    //locale setup
     this.localeResolver = typeof options.locale === 'function' ? options.locale : function() {
         return options.locale || consts.DEFAULT_LOCALE;
     };
+
+    //cache setup
+    includeCache.init(options.cacheOpts);
 
     //initialize db
     if(!options.db) {

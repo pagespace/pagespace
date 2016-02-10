@@ -32,7 +32,8 @@ var consts = {
         username: 'guest',
         role: 'guest'
     },
-    DEFAULT_LOCALE: 'en'
+    DEFAULT_LOCALE: 'en',
+    DEFAULT_PLUGIN_CACHE_TTL: 60 * 10 //10 minutes
 };
 
 module.exports = consts;

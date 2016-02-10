@@ -102,7 +102,7 @@
             editButton.setAttribute('data-target-page-id', pageId);
             editButton.setAttribute('data-target-region', region);
             editButton.setAttribute('data-target-include', include);
-            editButton.setAttribute('data-target-data-id', dataId);
+            editButton.setAttribute('data-target-include-id', dataId);
             editButton.setAttribute('title', 'Edit include');
             editButton.classList.add('ps-edit');
 
@@ -115,7 +115,7 @@
             grabHandle.setAttribute('data-target-page-id', pageId);
             grabHandle.setAttribute('data-target-region', region);
             grabHandle.setAttribute('data-target-include', include);
-            grabHandle.setAttribute('data-target-data-id', dataId);
+            grabHandle.setAttribute('data-target-include-id', dataId);
             grabHandle.setAttribute('title', 'Drag include');
             grabHandle.classList.add('ps-grab');
             return grabHandle;
@@ -130,7 +130,7 @@
                 include.getAttribute('data-page-id'),
                 include.getAttribute('data-region-name'),
                 include.getAttribute('data-include'),
-                include.getAttribute('data-data-id'));
+                include.getAttribute('data-include-id'));
             include.insertBefore(editButton, include.firstChild);
 
             //grab handle
@@ -138,7 +138,7 @@
                 include.getAttribute('data-page-id'),
                 include.getAttribute('data-region-name'),
                 include.getAttribute('data-include'),
-                include.getAttribute('data-data-id'));
+                include.getAttribute('data-include-id'));
             include.insertBefore(grabHandle, include.firstChild);
 
             var dragOverlay = document.createElement('div');
@@ -153,7 +153,7 @@
                     pageId: this.getAttribute('data-target-page-id'),
                     region: this.getAttribute('data-target-region'),
                     includeIndex: this.getAttribute('data-target-include'),
-                    dataId: this.getAttribute('data-target-data-id')
+                    includeId: this.getAttribute('data-target-include-id')
                 };
                 ev.dataTransfer.effectAllowed = 'move';
                 ev.dataTransfer.setData('include-info', JSON.stringify(includeInfo));
@@ -270,7 +270,7 @@
         var pluginTitle = pluginName.replace('-', ' ') + ' editor';
         var region = evSrc.getAttribute('data-target-region');
         var pageId = evSrc.getAttribute('data-target-page-id');
-        var dataId = evSrc.getAttribute('data-target-data-id');
+        var includeId = evSrc.getAttribute('data-target-include-id');
 
         //TODO: fetch to check existence of default editor
         var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
@@ -298,7 +298,7 @@
             var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
 
             //inject plugin interface
-            iframe.contentWindow.window.pagespace = getPluginInterface(pluginName, pageId, dataId);
+            iframe.contentWindow.window.pagespace = getPluginInterface(pluginName, pageId, includeId);
         }
     }
 
@@ -427,10 +427,10 @@
      * @param include
      * @return {{getData: getData, setData: setData, close: close}}
      */
-    function getPluginInterface(pluginName, pageId, dataId) {
+    function getPluginInterface(pluginName, pageId, includeId) {
         return {
             getKey: function() {
-                return dataId;
+                return includeId;
             },
             getConfig: function() {
                 console.info('Pagespace getting config for %s', pluginName);
@@ -449,8 +449,8 @@
                 });
             },
             getData: function() {
-                console.info('Pagespace getting config for %s', dataId);
-                return fetch('/_api/includes/' + dataId, {
+                console.info('Pagespace getting config for %s', includeId);
+                return fetch('/_api/includes/' + includeId, {
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
@@ -463,8 +463,8 @@
                 });
             },
             setData: function(data) {
-                console.info('Pagespace setting config for %s', dataId);
-                var updateData = fetch('/_api/includes/' + dataId, {
+                console.info('Pagespace setting config for %s', includeId);
+                var updateData = fetch('/_api/includes/' + includeId, {
                     method: 'put',
                     credentials: 'same-origin',
                     headers: {
@@ -494,7 +494,7 @@
                 });
             },
             close: function() {
-                console.info('Pagespace closing plugin editor for %s', dataId);
+                console.info('Pagespace closing plugin editor for %s', includeId);
                 window.parent.location.reload();
             }
         };
