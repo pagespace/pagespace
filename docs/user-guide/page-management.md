@@ -114,7 +114,7 @@ To move a page:
 1. Select <i>Re-order</i> in the left hand side menu.
 2. Press the arrow button on the page until the page is in the desired position.
 
-<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/reorder-page.png width=75% alt="Re-order pages">
+<img src=https://raw.githubusercontent.com/pagespace/pagespace/plugin-caching/docs/user-guide/images/reorder-pages.png width=75% alt="Re-order pages">
 
 <a id=page-redirects></a>
 ## Page redirects
