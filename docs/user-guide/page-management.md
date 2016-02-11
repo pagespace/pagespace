@@ -50,7 +50,7 @@ Based on page     | If a similar page already exists, choose a base page. If the
 
 Pressing the title of a page opens a preview of the page with the ability to edit its content. 
 
-[Read more about editing page content](/user-guide/page-editing).
+[Read more about editing page content](page-editing).
 
 <a id=page-settings></a>
 ## Configure page settings
