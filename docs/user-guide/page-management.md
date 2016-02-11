@@ -3,7 +3,7 @@
 Selecting the <i>Pages</i> tab displays the page of the website in the Sitemap. The Sitemap is an entry point to 
 performing the following tasks:
 
-* [Configure site settings](/user-guide/site-settings)
+* [Configure site settings](site-settings)
 * [Add pages](#add-pages)
 * [View and edit page content](#view-and-edit)
 * [Configure page settings](#page-settings)
