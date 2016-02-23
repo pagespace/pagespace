@@ -1,11 +1,12 @@
 {
   "name": "pagespace",
   "version": "1.0.0-beta.3",
-  "homepage": "https://github.com/pagespace/pagespace",
+  "homepage": "https://page.space",
   "author": "Phil Mander <philip.mander@gmail.com>",
   "description": "Manageable web sites powered by Node.js",
   "main": "src/index",
   "license": "LGPL-3.0",
+  "keywords" : [ "website", "cms", "pagespace", "page", "space", "management", "wordpress", "blog"],
   "engines": {
     "node": ">=0.10"
   },
