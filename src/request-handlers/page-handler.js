@@ -195,17 +195,22 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
 
             var includeData = includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
             if (typeof pluginModule.process === 'function') {
-                result = pluginModule.process(includeData, {
-                    preview: previewMode,
-                    reqUrl: req.url,
-                    reqMethod: req.method
+                result = Promise.try(function() {
+                    return pluginModule.process(includeData, {
+                        preview: previewMode,
+                        reqUrl: req.url,
+                        reqMethod: req.method
+                    });
                 }).then(function(val) {
                     //don't cache in preview mode
                     return !previewMode ? cache.set(includeId, val, pluginModule.ttl) : val;
-                }).then(null, function(err) { //not 'catch', this might not be a Bluebird promise
-                    self.logger.warn(err, 'Could not process include for %s (%s) at %s',
-                        pluginModule.name, includeId, req.url);
-                    return {};
+                }).catch(function(err) {
+                    self.logger.warn('Could not process include for %s (%s) at %s (%s)',
+                        pluginModule.name, includeId, req.url, err.message);
+                    self.logger.error(err);
+                    return {
+                        error: err.message
+                    };
                 });
             } else {
                 result = includeData;
@@ -266,12 +271,11 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
         region.includes.forEach(function(includeWrappper, includeIndex) {
             var pluginModule =
                 self.pluginResolver.require(includeWrappper.plugin ? includeWrappper.plugin.module : null);
-            var htmlWrapper, viewPartial;
+            var htmlWrapper, viewPartial, includeId;
             if(pluginModule) {
-                pageData[region.name].ctx[includeIndex] = includeWrappper.include ?
-                    pageResult[includeWrappper.include._id.toString()] : {};
-                viewPartial = pluginModule.viewPartial ?
-                    pluginModule.viewPartial : 'The view partial could not be resolved';
+                includeId = includeWrappper.include._id.toString();
+                pageData[region.name].ctx[includeIndex] = includeWrappper.include ? pageResult[includeId] : {};
+                viewPartial = pluginModule.viewPartial ? pluginModule.viewPartial : 'Could not resolve view partial';
                 if(pageResult.previewMode) {
                     htmlWrapper =
                         '<div ' +
@@ -286,7 +290,7 @@ PageHandler.prototype.doPage = function(req, res, next, logger, pageResult) {
                                               page._id,
                                               region.name,
                                               includeIndex,
-                                              includeWrappper.include ? includeWrappper.include._id : null,
+                                              includeWrappper.include ? includeId : null,
                                               viewPartial);
                 } else {
                     htmlWrapper = '<div>\n%s\n</div>';
