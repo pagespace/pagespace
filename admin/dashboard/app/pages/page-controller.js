@@ -124,9 +124,9 @@ adminApp.controller('PageController',
             })[0] || null;
         }
         function containsInclude(region, includeToFind) {
-            return region.includes.filter(function(include) {
-                return include.data._id === includeToFind.data;
-            }).length > 0;
+            return region.includes.some(function(include) {
+                return include._id === includeToFind._id;
+            });
         }
         //get basepage from id value
         $scope.syncResults = [];

@@ -62,10 +62,15 @@
 
         PageService.prototype.createIncludeData = function(config) {
 
-            var includeData = config.schema.reduce(function(data, field) {
-                data[field.name] = field.default;
-                return data;
-            }, {});
+            var includeData = {};
+
+            var schemaProps = config.schema.properties || {};
+            for(var name in schemaProps) {
+                if(schemaProps.hasOwnProperty(name)) {
+                    includeData[name] =
+                            typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                }
+            }
 
             return $http.post('/_api/includes', {
                 data: includeData
@@ -109,6 +114,7 @@
                 }
             }
 
+            //remove that index from the regions array
             if(typeof regionIndex === 'number') {
                 for(i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
                     if(i === includeIndex) {

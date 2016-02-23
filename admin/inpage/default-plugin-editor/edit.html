@@ -7,30 +7,25 @@
     <link href="/_static/inpage/default-plugin-editor/styles.css" type="text/css" rel="stylesheet">
 
     <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-sanitize/angular-sanitize.min.js"></script>
+    <script src="/_static/bower_components/tv4/tv4.js"></script>
+    <script src="/_static/bower_components/objectpath/lib/ObjectPath.js"></script>
+    <script src="/_static/bower_components/angular-schema-form/dist/schema-form.min.js"></script>
+    <script src="/_static/bower_components/angular-schema-form/dist/bootstrap-decorator.min.js"></script>
     <script src="/_static/inpage/default-plugin-editor/edit.js"></script>
 </head>
-<body ng-controller="DefaultPluginController">
+<body>
     <div class="container-fluid ps-edit-box" >
         <main class="main row">
-            <div class="col-sm-12">
-                <form class="form-horizontal">
-                    <div class="form-group" ng-repeat="field in schema">
-                        <label class="col-sm-2 control-label">{{field.title}}</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" placeholder=""
-                                   ng-required="field.required"
-                                   ng-model="data[field.name]">
-                        </div>
-                        <p class="help-block" ng-show="schema.description">{{schema.description}}</code></p>
-                    </div>
-                </form>
+            <div class="col-sm-9" ng-controller="FormController">
+                <form name="myForm"
+                      sf-schema="schema"
+                      sf-form="form"
+                      sf-model="data"
+                      ng-submit="onSubmit(myForm)"></form>
             </div>
         </main>
     </div>
-
-    <footer class="footer">
-        <button type="button" class="btn btn-primary" ng-click="save()">Save and close</button>
-    </footer>
 
 </body>
 

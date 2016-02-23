@@ -382,7 +382,7 @@
             }
 
             //add a new region
-            if(!regionIndex) {
+            if(regionIndex === null) {
                 $scope.page.regions.push({
                     name: regionName,
                     includes: []
@@ -1006,9 +1006,9 @@ adminApp.controller('PageController',
             })[0] || null;
         }
         function containsInclude(region, includeToFind) {
-            return region.includes.filter(function(include) {
-                return include.data._id === includeToFind.data;
-            }).length > 0;
+            return region.includes.some(function(include) {
+                return include._id === includeToFind._id;
+            });
         }
         //get basepage from id value
         $scope.syncResults = [];
@@ -1166,10 +1166,15 @@ adminApp.controller('PageController',
 
         PageService.prototype.createIncludeData = function(config) {
 
-            var includeData = config.schema.reduce(function(data, field) {
-                data[field.name] = field.default;
-                return data;
-            }, {});
+            var includeData = {};
+
+            var schemaProps = config.schema.properties || {};
+            for(var name in schemaProps) {
+                if(schemaProps.hasOwnProperty(name)) {
+                    includeData[name] =
+                            typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                }
+            }
 
             return $http.post('/_api/includes', {
                 data: includeData
@@ -1213,6 +1218,7 @@ adminApp.controller('PageController',
                 }
             }
 
+            //remove that index from the regions array
             if(typeof regionIndex === 'number') {
                 for(i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
                     if(i === includeIndex) {

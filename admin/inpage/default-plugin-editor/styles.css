@@ -14,10 +14,16 @@ body {
 .main {
     position: absolute;
     top: 0;
-    bottom: 60px;
+    bottom: 0;
     width: 100%;
     overflow: auto;
     padding: 28px 0;
+}
+
+
+button[type=submit],
+input[type=submit] {
+    float: right;
 }
 
 .footer {
