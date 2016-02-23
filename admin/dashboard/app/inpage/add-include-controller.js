@@ -37,7 +37,7 @@
             }
 
             //add a new region
-            if(!regionIndex) {
+            if(regionIndex === null) {
                 $scope.page.regions.push({
                     name: regionName,
                     includes: []
