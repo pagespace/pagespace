@@ -449,7 +449,7 @@
                 });
             },
             getData: function() {
-                console.info('Pagespace getting config for %s', includeId);
+                console.info('Pagespace getting data for %s', includeId);
                 return fetch('/_api/includes/' + includeId, {
                     credentials: 'same-origin',
                     headers: {
@@ -463,7 +463,7 @@
                 });
             },
             setData: function(data) {
-                console.info('Pagespace setting config for %s', includeId);
+                console.info('Pagespace setting data for %s', includeId);
                 var updateData = fetch('/_api/includes/' + includeId, {
                     method: 'put',
                     credentials: 'same-origin',
