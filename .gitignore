@@ -47,6 +47,7 @@ static/bower_components
 !static/bower_components/angular-schema-form/dist/bootstrap-decorator.min.js
 !static/bower_components/angular-touch/angular-touch.min.js
 !static/bower_components/ng-tags-input/ng-tags-input.min.js
+
 !static/bower_components/ng-focus-if/focusIf.min.js
 !static/bower_components/codemirror/lib/codemirror.js
 !static/bower_components/codemirror/mode/xml/xml.js
