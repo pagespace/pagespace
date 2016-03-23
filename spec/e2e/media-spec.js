@@ -77,7 +77,7 @@ describe('Client sending media requests', function() {
             var images =  uploads.filter(function(file) {
                 return /upload_(.+)\.png/.test(file);
             });
-            expect(images.length).toBe(2);
+            expect(images.length).toBe(3);
 
             done();
         }).catch(function(err) {
@@ -91,7 +91,7 @@ describe('Client sending media requests', function() {
         var docs =  uploads.filter(function(file) {
             return /upload_(.+)\.png/.test(file);
         });
-        expect(docs.length).toBe(2);
+        expect(docs.length).toBe(3);
 
         doPost({
             user: 'editor',
@@ -138,7 +138,7 @@ describe('Client sending media requests', function() {
     it('cannot upload the same file name twice', function(done) {
 
         var uploads = fs.readdirSync(__dirname + '/../../media-uploads');
-        expect(uploads.length).toBe(3);
+        expect(uploads.length).toBe(4);
 
         doPost({
             user: 'editor',
@@ -158,7 +158,7 @@ describe('Client sending media requests', function() {
 
             //ensures the rollback occurred
             var uploads = fs.readdirSync(__dirname + '/../../media-uploads');
-            expect(uploads.length).toBe(3);
+            expect(uploads.length).toBe(4);
 
             done();
         }).catch(function(err) {
