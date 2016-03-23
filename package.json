@@ -20,7 +20,7 @@
     "start": "node app-test.js"
   },
   "files": [
-    "admin",
+    "static",
     "views",
     "src",
     "LICENSE"
