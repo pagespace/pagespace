@@ -220,9 +220,10 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
     }).spread(function(fields, files, dimensions) {
         //generate image variations
         var variationPromises = [];
-        if(files.file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
+        var file = files.file;
+        if(file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
             variationPromises = self.imageVariations.map(function(variation) {
-                return resizeImage(files.file.path, variation.label, dimensions, variation.size, variation.format, logger);
+                return resizeImage(file.path, variation.label, dimensions, variation.size, variation.format, logger);
             });
         }
         return [ fields, files, dimensions ].concat(variationPromises);
