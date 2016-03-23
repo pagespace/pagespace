@@ -3,7 +3,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat');
 
 gulp.task('lint-client', function() {
-    return gulp.src(['admin/dashboard/app/**/*.js', 'admin/inpage/**/*.js'])
+    return gulp.src(['static/dashboard/app/**/*.js', 'static/inpage/**/*.js'])
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
@@ -15,13 +15,13 @@ gulp.task('lint-server', function() {
 });
 
 gulp.task('build-client', [ 'lint-client' ], function() {
-    return gulp.src('./admin/dashboard/app/**/*.js')
+    return gulp.src('./static/dashboard/app/**/*.js')
         .pipe(concat('admin-app.js'))
-        .pipe(gulp.dest('./admin/dashboard/build'));
+        .pipe(gulp.dest('./static/dashboard/build'));
 });
 
 gulp.task('watch', [ 'build-client' ], function() {
-    gulp.watch('./admin/dashboard/app/**/*.js', ['build-client']);
+    gulp.watch('./static/dashboard/app/**/*.js', ['build-client']);
 });
 
 gulp.task('default', [ 'build-client', 'lint-server'], function() {
