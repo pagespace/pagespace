@@ -40,7 +40,7 @@ var consts = {
         size: 200
     }, {
         label: 'large',
-        size: 1200
+        size: 1000
     }]
 };
 
