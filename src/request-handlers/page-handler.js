@@ -215,6 +215,7 @@ PageHandler.prototype.processInclude = function(req, includeWrapper, includeId, 
             } else {
                 result = includeData;
             }
+            result._id = includeId;
             return result;
         });
     }
