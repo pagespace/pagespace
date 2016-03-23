@@ -10,6 +10,12 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
 
     $scope.media = {};
 
+    function generateName(fileName) {
+        return fileName.split('.')[0].split('-').map(function (part) {
+            return part.charAt(0).toUpperCase() + part.slice(1);
+        }).join(' ');
+    }
+
     var availableTags = [];
     mediaService.getItems().success(function(items) {
         var seen = {};
@@ -46,8 +52,9 @@ adminApp.controller('MediaUploadController', function($scope, $rootScope, $q, $l
             };
         } else {
             $scope.fileSrc = null;
-            $scope.$apply();
         }
+        $scope.media.name = generateName($scope.fileName);
+        $scope.$apply();
     };
 
     $scope.upload = function(form) {
