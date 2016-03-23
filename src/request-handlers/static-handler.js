@@ -32,7 +32,7 @@ StaticHandler.prototype.init = function(support) {
 
     this.logger = support.logger;
     this.pluginResolver = support.pluginResolver;
-    this.adminStaticServer = serveStatic(__dirname + '/../../admin', {
+    this.adminStaticServer = serveStatic(__dirname + '/../../static', {
         index: false
     });
     this.pluginStaticServers = {};

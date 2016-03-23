@@ -33,7 +33,15 @@ var consts = {
         role: 'guest'
     },
     DEFAULT_LOCALE: 'en',
-    DEFAULT_PLUGIN_CACHE_TTL: 60 * 10 //10 minutes
+    DEFAULT_PLUGIN_CACHE_TTL: 60 * 10, //10 minutes
+    
+    DEFAULT_IMAGE_VARIATIONS: [{
+        label: 'thumb',
+        size: 200
+    }, {
+        label: 'large',
+        size: 1200
+    }]
 };
 
 module.exports = consts;

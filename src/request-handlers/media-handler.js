@@ -39,6 +39,26 @@ try {
     sharp = null;
 }
 
+//quick polyfill if isAbsolute. Remove when dropping support for 0.12
+path.isAbsolute = path.isAbsolute || function(path) {
+    function posix(path) {
+        return path.charAt(0) === '/';
+    }
+
+    function win32(path) {
+        // https://github.com/joyent/node/blob/b3fcc245fb25539909ef1d5eaa01dbf92e168633/lib/path.js#L56
+        var splitDeviceRe = /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
+        var result = splitDeviceRe.exec(path);
+        var device = result[1] || '';
+        var isUnc = !!device && device.charAt(1) !== ':';
+
+        // UNC paths are always absolute
+        return !!result[2] || isUnc;
+    }
+
+    return process.platform === 'win32' ? win32(path) : posix(path);
+};
+
 var MediaHandler = function() {
 };
 
@@ -85,6 +105,7 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = decodeURIComponent(apiInfo[1]);
+    var mediaDir = this.mediaDir;
     var Media = this.dbSupport.getModel('Media');
     Media.findOne({
         fileName: itemFileName
@@ -95,7 +116,7 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
         }
 
         if(model) {
-            var path = null;
+            var mediaPath = null;
 
             //find the variation path for this label
             if(req.query.label) {
@@ -103,23 +124,23 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
                    return variation.label === req.query.label.trim();
                 })[0];
                 if(variation) {
-                    path = variation.path;
+                    mediaPath = path.isAbsolute(variation.path) ?  variation.path : path.join(mediaDir, variation.path);
                 }
             }
 
             //revert to original if there is no variation
-            path = path || model.path;
+            mediaPath = mediaPath || (path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path));
 
-            var stream = send(req, path);
+            var stream = send(req, mediaPath);
 
             // forward non-404 errors
             stream.on('error', function error(err) {
-                logger.warn('Error streaming media for %s (%s)', req.url, path);
+                logger.warn('Error streaming media for %s (%s)', req.url, mediaPath);
                 next(err.status === 404 ? null : err);
             });
 
             // pipe
-            logger.debug('Streaming media to client for  %s', model.path);
+            logger.debug('Streaming media to client for  %s', mediaPath);
             stream.pipe(res);
         } else {
             err = new Error(itemFileName + ' not found');
@@ -197,26 +218,22 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
         }
         return [ fields, files, dimensions ];
     }).spread(function(fields, files, dimensions) {
-        //generate thumbnail image
-        var thumbnailPromise = null;
-        if(files.file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
-            var thumb = self.imageVariations.filter(function(variation) {
-                return variation.label && variation.label === 'thumb' && variation.size;
-            })[0];
-            thumbnailPromise = thumb ?
-                resizeImage(files.file.path, 'thumb', dimensions, thumb.size, thumb.format, logger) : null;
+        //generate image variations
+        var variationPromises = [];
+        var file = files.file;
+        if(file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
+            variationPromises = self.imageVariations.map(function(variation) {
+                return resizeImage(file.path, variation.label, dimensions, variation.size, variation.format, logger);
+            });
         }
-        return [ fields, files, dimensions, thumbnailPromise ];
-    }).spread(function(fields, files, dimensions, thumbnail) {
+        return [ fields, files, dimensions ].concat(variationPromises);
+    }).spread(function(fields, files, dimensions) {
         //save media to db
         var tags = fields.tags ? JSON.parse(fields.tags) : [];
 
         var Media = self.dbSupport.getModel('Media');
 
-        var variations = [];
-        if(thumbnail) {
-            variations.push(thumbnail);
-        }
+        var variations = [].slice.call(arguments, 3); //extra args are the possible image variations
 
         var media = new Media({
             name: fields.name,
@@ -224,36 +241,38 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             tags: tags,
             type: files.file.type,
             path: files.file.path,
-            fileName: files.file.name,
+            fileName: path.basename(files.file.name), //save path relative to media dir
             size: files.file.size,
             width: dimensions.width || null,
             height: dimensions.height || null,
-            variations: variations
+            variations: variations.map(function(variation) {
+                //save paths relative to media dir
+                var updatedVariation = JSON.parse(JSON.stringify(variation)); //until Object.assign is native
+                updatedVariation.path = path.basename(variation.path);
+                return updatedVariation;
+            })
         });
 
         var saveAsync = Promise.promisify(media.save, { context: media });
-        return Promise.all([ saveAsync(), files.file.path, thumbnail ].map(function(promise) {
+        return Promise.all([ saveAsync(), files.file ].concat(variations).map(function(promise) {
             return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
         }));
     }).then(function(result) {
         //send response
         var savePromise = result[0];
         if(savePromise.isFulfilled()) {
+            //success
             var model = savePromise.value();
-            //don't send local path to client
-            delete model.path;
-            model.variations = model.variations.map(function(variation) {
-                delete variation.path;
-                return variation;
-            });
             res.status(201);
             res.json(model);
         } else {
-            var filePath = result[1].value();
-            var thumbnailPath = result[2].value() && result[2].value().path;
+            //failure
+            //collect new files to rollback (remove)
+            var newUploadPaths = result.slice(1).map(function(pathResult) {
+                return pathResult.value().path;
+            });
             var err = savePromise.reason();
-            err.fileUploadPath = filePath;
-            err.thumnailPath = thumbnailPath;
+            err.paths = newUploadPaths;
             //next catch will handle the mongoose failure
             throw err;
         }
@@ -265,18 +284,10 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             err.message = 'This file has already been uploaded';
             err.status = 400;
         }
-        var rollbackPromises = [];
-        rollbackPromises.push(err);
-        if(err.fileUploadPath) {
-            //rollback file upload
-            logger.debug('Rolling back file upload after mongoose save failure (%s)', err.fileUploadPath);
-            rollbackPromises.push(unlinkAsync(err.fileUploadPath));
-        }
-        if(err.thumnailPath) {
-            //rollback thumbnail creation
-            logger.debug('Rolling back file upload thumnbnail after mongoose save failure (%s)', err.thumnailPath);
-            rollbackPromises.push(unlinkAsync(err.thumnailPath));
-        }
+        var rollbackPromises = err.paths.map(function(path) {
+            logger.debug('Rolling back file upload after mongoose save failure (%s)', path);
+            return unlinkAsync(path);
+        });
         Promise.all(rollbackPromises).then(function() {
             //successful rollback
             logger.debug('Roll back file upload after mongoose save failure was successful');
@@ -288,7 +299,7 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
     });
 };
 
-function resizeImage(filePath, label, fDim, tDim, format, logger) {
+function resizeImage(filePath, label, fromDim, toDim, format, logger) {
 
     if(!sharp) {
         logger.warn('Sharp is not installed, image variations will not be created');
@@ -308,20 +319,20 @@ function resizeImage(filePath, label, fDim, tDim, format, logger) {
     var toPath = path.join(dir, fileName);
 
     var newSize = 0;
-    var ratio = fDim.width / fDim.height;
+    var ratio = fromDim.width / fromDim.height;
 
     var toWidth, toHeight;
-    if(typeof tDim === 'number') {
-        if(fDim.width > fDim.height) {
-            toWidth = tDim;
-            toHeight = tDim / ratio;
+    if(typeof toDim === 'number') {
+        if(fromDim.width > fromDim.height) {
+            toWidth = toDim;
+            toHeight = toDim / ratio;
         } else {
-            toHeight = tDim;
-            toWidth = tDim * ratio;
+            toHeight = toDim;
+            toWidth = toDim * ratio;
         }
-    } else if(typeof tDim.width === 'number' && typeof tDim.height === 'number') {
-        toWidth = tDim.width;
-        toHeight = tDim.height;
+    } else if(typeof toDim.width === 'number' && typeof toDim.height === 'number') {
+        toWidth = toDim.width;
+        toHeight = toDim.height;
     } else {
         throw new Error('Cannot resize image for %s without a width or height', label);
     }

@@ -177,15 +177,7 @@ Index.prototype.init = function(options) {
 
     //other settings
     //define a default thumbnail size
-    var imageVariations = options.imageVariations || [];
-    if(imageVariations.filter(function(variation) {
-        return variation.label === 'thumb';
-    }).length === 0) {
-        imageVariations.push({
-            label: 'thumb',
-            size: 200
-        });
-    }
+    var imageVariations = options.imageVariations || consts.DEFAULT_IMAGE_VARIATIONS;
 
     //db
     var db = this.mongoose.connection;

@@ -42,8 +42,6 @@ DashboardHandler.prototype.init = function(support) {
 
     this.reqCount = 0;
 
-    this.staticServers = {};
-
     var self = this;
     return function(req, res, next) {
         return self.doRequest(req, res, next);
