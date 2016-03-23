@@ -39,6 +39,26 @@ try {
     sharp = null;
 }
 
+//quick polyfill if isAbsolute. Remove when dropping support for 0.12
+path.isAbsolute = path.isAbsolute || function(path) {
+    function posix(path) {
+        return path.charAt(0) === '/';
+    }
+
+    function win32(path) {
+        // https://github.com/joyent/node/blob/b3fcc245fb25539909ef1d5eaa01dbf92e168633/lib/path.js#L56
+        var splitDeviceRe = /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
+        var result = splitDeviceRe.exec(path);
+        var device = result[1] || '';
+        var isUnc = !!device && device.charAt(1) !== ':';
+
+        // UNC paths are always absolute
+        return !!result[2] || isUnc;
+    }
+
+    return process.platform === 'win32' ? win32(path) : posix(path);
+};
+
 var MediaHandler = function() {
 };
 
@@ -85,6 +105,7 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
 
     var apiInfo = consts.requests.MEDIA.regex.exec(req.url);
     var itemFileName = decodeURIComponent(apiInfo[1]);
+    var mediaDir = this.mediaDir;
     var Media = this.dbSupport.getModel('Media');
     Media.findOne({
         fileName: itemFileName
@@ -95,7 +116,7 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
         }
 
         if(model) {
-            var path = null;
+            var mediaPath = null;
 
             //find the variation path for this label
             if(req.query.label) {
@@ -103,23 +124,23 @@ MediaHandler.prototype.doServeResource = function(req, res, next, logger) {
                    return variation.label === req.query.label.trim();
                 })[0];
                 if(variation) {
-                    path = variation.path;
+                    mediaPath = path.isAbsolute(variation.path) ?  variation.path : path.join(mediaDir, variation.path);
                 }
             }
 
             //revert to original if there is no variation
-            path = path || model.path;
+            mediaPath = mediaPath || (path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path));
 
-            var stream = send(req, path);
+            var stream = send(req, mediaPath);
 
             // forward non-404 errors
             stream.on('error', function error(err) {
-                logger.warn('Error streaming media for %s (%s)', req.url, path);
+                logger.warn('Error streaming media for %s (%s)', req.url, mediaPath);
                 next(err.status === 404 ? null : err);
             });
 
             // pipe
-            logger.debug('Streaming media to client for  %s', model.path);
+            logger.debug('Streaming media to client for  %s', mediaPath);
             stream.pipe(res);
         } else {
             err = new Error(itemFileName + ' not found');
@@ -219,11 +240,16 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             tags: tags,
             type: files.file.type,
             path: files.file.path,
-            fileName: files.file.name,
+            fileName: path.basename(files.file.name), //save path relative to media dir
             size: files.file.size,
             width: dimensions.width || null,
             height: dimensions.height || null,
-            variations: variations
+            variations: variations.map(function(variation) {
+                //save paths relative to media dir
+                var updatedVariation = JSON.parse(JSON.stringify(variation)); //until Object.assign is native
+                updatedVariation.path = path.basename(variation.path);
+                return updatedVariation;
+            })
         });
 
         var saveAsync = Promise.promisify(media.save, { context: media });
@@ -236,21 +262,16 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
         if(savePromise.isFulfilled()) {
             //success
             var model = savePromise.value();
-            //don't send local path to client
-            delete model.path;
-            model.variations = model.variations.map(function(variation) {
-                delete variation.path;
-                return variation;
-            });
             res.status(201);
             res.json(model);
         } else {
             //failure
-            var filePaths = result.slice(1).map(function(pathResult) {
+            //collect new files to rollback (remove)
+            var newUploadPaths = result.slice(1).map(function(pathResult) {
                 return pathResult.value().path;
             });
             var err = savePromise.reason();
-            err.filePaths = filePaths;
+            err.paths = newUploadPaths;
             //next catch will handle the mongoose failure
             throw err;
         }
@@ -262,7 +283,7 @@ MediaHandler.prototype.doUploadResource = function(req, res, next, logger) {
             err.message = 'This file has already been uploaded';
             err.status = 400;
         }
-        var rollbackPromises = err.filePaths.map(function(path) {
+        var rollbackPromises = err.paths.map(function(path) {
             logger.debug('Rolling back file upload after mongoose save failure (%s)', path);
             return unlinkAsync(path);
         });
