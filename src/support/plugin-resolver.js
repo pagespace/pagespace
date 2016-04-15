@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -23,7 +23,7 @@ const vm = require('vm'),
     fs = require('fs'),
     path = require('path'),
     resolve = require('resolve'),
-    appConsts = require('../app-constants');
+    consts = require('../app-constants');
 
 let instance = null;
 
@@ -117,7 +117,7 @@ class PluginResolver {
             pluginConf.name = packageConf.name;
             pluginConf.description = packageConf.description;
             pluginConf.config =  packageConf.pagespace || {};
-            pluginConf.config.ttl = pluginConf.config.ttl || appConsts.DEFAULT_PLUGIN_CACHE_TTL;
+            pluginConf.config.ttl = pluginConf.config.ttl || consts.DEFAULT_PLUGIN_CACHE_TTL;
         } catch(err) {
             logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
         }

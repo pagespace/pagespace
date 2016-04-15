@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the Lesser GNU General Public License as published by

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -56,7 +56,6 @@ class PageHandler extends BaseHandler {
         this.pluginResolver = support.pluginResolver;
         this.localeResolver = support.localeResolver;
         this.analytics = support.analytics;
-        this.reqCount = 0;
         this.findPagePromises = {};
     }
 

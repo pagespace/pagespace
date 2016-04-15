@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -140,8 +140,6 @@ class TemplatesHandler extends BaseHandler {
 }
 
 module.exports = new TemplatesHandler();
-
-
 
 //walk the dir and gets
 const readdirAsync = Promise.promisify(fs.readdir);

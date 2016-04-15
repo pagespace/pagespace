@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -97,7 +97,6 @@ class DbSupport {
     }
 
     getModel(name, modifier) {
-
         const modelName = name + (modifier ? '_' + modifier : '');
         const model = this.cache[modelName];
 

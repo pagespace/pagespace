@@ -3,7 +3,7 @@
 const express = require('express'),
     passport = require('passport'),
     createAcl = require('./setup/acl-setup'),
-    authStrategies = require('./auth/auth-strategies');
+    authStrategies = require('./support/auth-strategies');
 
 //middleware
 const middlewareMap = new Map([
