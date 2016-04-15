@@ -1,15 +1,11 @@
 language: node_js
 
 node_js:
-  - "0.10"
   - "4.2"
 
 sudo: false
 services:
   - mongodb
-
-before_install:
-  - ./0.10-support.sh
 
 before_script:
   - sleep 15

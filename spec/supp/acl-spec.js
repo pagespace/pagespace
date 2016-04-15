@@ -1,4 +1,4 @@
-var createAcl = require('../../src/support/acl').acl;
+var createAcl = require('a-seal');
 
 var GET = 'GET';
 var POST = 'POST';
@@ -17,7 +17,7 @@ describe('ACL', function() {
         var acl = createAcl();
 
         //all everything
-        acl.match(/.*/, ALL_ACTIONS).thenOnlyAllow([ editor, admin, guest]);
+        acl.match(/.*/).for(ALL_ACTIONS).thenAllow(editor, admin, guest);
 
         expect(acl.isAllowed(editor, '/foo', GET)).toBe(true);
         expect(acl.isAllowed(editor, '/foo', POST)).toBe(true);
@@ -35,7 +35,7 @@ describe('ACL', function() {
         expect(acl.isAllowed(guest, '/foo', DELETE)).toBe(true);
 
         //restrict guest
-        acl.match(/.*/, ALL_ACTIONS).thenOnlyAllow([ editor, admin]);
+        acl.match(/.*/).for(ALL_ACTIONS).thenAllow(editor, admin);
 
         expect(acl.isAllowed(editor, '/foo', GET)).toBe(true);
         expect(acl.isAllowed(editor, '/foo', POST)).toBe(true);
@@ -53,7 +53,7 @@ describe('ACL', function() {
         expect(acl.isAllowed(guest, '/foo', DELETE)).toBe(false);
 
         //prevent editor from deleting
-        acl.match(/.*/, [ DELETE ]).thenOnlyAllow([ admin ]);
+        acl.match(/.*/).for([ DELETE ]).thenAllow(admin);
 
         expect(acl.isAllowed(editor, '/foo', GET)).toBe(true);
         expect(acl.isAllowed(editor, '/foo', POST)).toBe(true);
@@ -71,7 +71,7 @@ describe('ACL', function() {
         expect(acl.isAllowed(guest, '/foo', DELETE)).toBe(false);
 
         //prevent editor from accessing /foo/bar
-        acl.match(/^\/foo\/bar$/, ALL_ACTIONS).thenOnlyAllow([ admin, guest ]);
+        acl.match(/^\/foo\/bar$/).for(ALL_ACTIONS).thenAllow(admin, guest);
 
         expect(acl.isAllowed(editor, '/foo/bar', GET)).toBe(false);
         expect(acl.isAllowed(editor, '/foo/bar', POST)).toBe(false);

@@ -135,6 +135,8 @@ class MediaHandler extends BaseHandler {
 
     doPost(req, res, next) {
 
+        const self = this;
+
         const logger = this.getRequestLogger(this.logger, req);
     
         if(!this.mediaDir) {
@@ -177,7 +179,7 @@ class MediaHandler extends BaseHandler {
             }
             return [ fields, files, dimensions ];
         }).spread((fields, files, dimensions) => {
-            //generate image constiations
+            //generate image variatiations
             let variationPromises = [];
             const file = files.file;
             if(file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
@@ -186,13 +188,13 @@ class MediaHandler extends BaseHandler {
                 });
             }
             return [ fields, files, dimensions ].concat(variationPromises);
-        }).spread((fields, files, dimensions) => {
+        }).spread(function(fields, files, dimensions) {
             //save media to db
             const tags = fields.tags ? JSON.parse(fields.tags) : [];
     
-            const Media = this.dbSupport.getModel('Media');
-    
-            const variations = [].slice.call(arguments, 3); //extra args are the possible image variations
+            const Media = self.dbSupport.getModel('Media');
+
+            const variations = [].slice.call(arguments).slice(3); //extra args are the possible image variations
     
             const media = new Media({
                 name: fields.name,
