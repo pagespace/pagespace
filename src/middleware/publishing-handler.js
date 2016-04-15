@@ -47,15 +47,14 @@ class PublishingHandler extends BaseHandler{
             _id: id
         }));
     
-        let updates = [];
-        let pageUpdateCount = 0;
-        let includeUpdateCount = 0;
-    
         const DraftPage = this.dbSupport.getModel('Page');
         const query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.include');
         const findPagesToPublish = Promise.promisify(query.exec, { context: query });
         findPagesToPublish().then((pages) => {
-    
+            let updates = [];
+            let pageUpdateCount = 0;
+            let includeUpdateCount = 0;
+            
             const queuedDraftTemplates = {};
             const LivePage = this.dbSupport.getModel('Page', 'live');
             const DraftIncludeData = this.dbSupport.getModel('Include');
@@ -63,14 +62,14 @@ class PublishingHandler extends BaseHandler{
             const LiveTemplate = this.dbSupport.getModel('Template', 'live');
             for(let page of pages) {
                 if(!page.draft) {
-                    logger.warn('Aborted publishing page %s. It is not a draft', page._id);
-                    return;
+                    logger.warn(`Aborted publishing page ${page._id}. It is not a draft`);
+                    continue;
                 }
     
                 let templateId = null;
                 if(!page.template) {
-                    logger.warn('Attempting to publish page without a template: %s', page._id);
-                    return;
+                    logger.warn(`Attempting to publish page without a template: ${page._id}`);
+                    continue;
                 } else if(page.status === 200) {
                     templateId = page.template._id.toString();
                 }
@@ -96,7 +95,7 @@ class PublishingHandler extends BaseHandler{
                 livePage.template = templateId;
                 const saveLivePage = Promise.promisify(LivePage.update, { context: LivePage });
                 updates.push(saveLivePage({_id: pageId}, livePage, { upsert: true }));
-                logger.info('Page queued to publish: %s (id=%s) @ \'%s\'', livePage.name, pageId, livePage.url);
+                logger.info(`Page queued to publish: ${livePage.name} (id=${pageId}) @ '${livePage.url}'`);
     
                 //page template
                 if(templateId && !queuedDraftTemplates[templateId]) {
@@ -143,8 +142,8 @@ class PublishingHandler extends BaseHandler{
                 pageUpdateCount++;
             }
     
-            return updates;
-        }).then((updates) => {
+            return [ updates, pageUpdateCount, includeUpdateCount ];
+        }).spread((updates, pageUpdateCount, includeUpdateCount) => {
             logger.info(`Publishing completed. Published ${pageUpdateCount} pages and ${includeUpdateCount} includes`);
             res.status(200);
             res.json({
