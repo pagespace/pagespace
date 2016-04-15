@@ -19,9 +19,9 @@
 
 'use strict';
 
-var toCollectionName = require('mongoose/lib/utils').toCollectionName;
+const toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
-var siteSchema = require('../schemas/site'),
+const siteSchema = require('../schemas/site'),
     pageSchema = require('../schemas/page'),
     pluginSchema = require('../schemas/plugin'),
     includeSchema = require('../schemas/include'),
@@ -30,7 +30,7 @@ var siteSchema = require('../schemas/site'),
     mediaSchema = require('../schemas/media'),
     hitSchema = require('../schemas/hit');
 
-var modelData = [{
+const modelData = [{
     name: 'Site',
     schema: siteSchema,
     publishable: false
@@ -64,51 +64,51 @@ var modelData = [{
     publishable: false
 }];
 
-var DbSupport = function(opts) {
+class DbSupport {
 
-    this.mongoose = opts.mongoose;
-    this.cache = {};
+    constructor(opts) {
+        this.mongoose = opts.mongoose;
+        this.cache = {};
 
-    this.logger =  opts.logger;
-};
+        this.logger =  opts.logger;
+    }
+
+    initModels() {
+
+        const logger = this.logger;
+        const mongoose = this.mongoose;
+
+        const liveModifier = '_live';
+
+        modelData.forEach((modelDatum) => {
+            const name = modelDatum.name;
+            const schema = modelDatum.schema();
+            const collectionName = toCollectionName(name);
+            this.cache[name] = mongoose.model(name, schema, collectionName);
+            logger.debug('Mongoose model with name [%s] and collection [%s] created', name, collectionName);
+            if(modelDatum.publishable) {
+                const liveName = name + liveModifier;
+                const liveCollectionName = collectionName + liveModifier;
+                const liveSchema = modelDatum.schema(liveModifier);
+                this.cache[liveName] = mongoose.model(liveName, liveSchema, liveCollectionName);
+                logger.debug('Mongoose model with name [%s] and collection [%s] created', liveName, liveCollectionName);
+            }
+        });
+    }
+
+    getModel(name, modifier) {
+
+        const modelName = name + (modifier ? '_' + modifier : '');
+        const model = this.cache[modelName];
+
+        if(!model) {
+            throw new Error('No schema is associated with the model with name ' + name + ' [' + modelName + ']');
+        }
+
+        return model;
+    }
+}
 
 module.exports = function(opts) {
     return new DbSupport(opts);
-};
-
-DbSupport.prototype.initModels = function() {
-
-    var self = this;
-    var logger = this.logger;
-    var mongoose = this.mongoose;
-    
-    var liveModifier = '_live';
-    
-    modelData.forEach(function(modelDatum) {
-
-        var name = modelDatum.name;
-        var schema = modelDatum.schema();
-        var collectionName = toCollectionName(name);
-        self.cache[name] = mongoose.model(name, schema, collectionName);
-        logger.debug('Mongoose model with name [%s] and collection [%s] created', name, collectionName);
-        if(modelDatum.publishable) {
-            var liveName = name + liveModifier;
-            var liveCollectionName = collectionName + liveModifier;
-            var liveSchema = modelDatum.schema(liveModifier);
-            self.cache[liveName] = mongoose.model(liveName, liveSchema, liveCollectionName);
-            logger.debug('Mongoose model with name [%s] and collection [%s] created', liveName, liveCollectionName);
-        }
-    });
-};
-
-DbSupport.prototype.getModel = function(name, modifier) {
-
-    var modelName = name + (modifier ? '_' + modifier : '');
-    var model = this.cache[modelName];
-
-    if(!model) {
-        throw new Error('No schema is associated with the model with name ' + name + ' [' + modelName + ']');
-    }
-
-    return model;
 };

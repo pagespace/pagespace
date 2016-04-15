@@ -19,61 +19,58 @@
 
 'use strict';
 
-var createAcl = require('../support/acl').acl,
-    consts = require('../app-constants');
+//deps
+const 
+    createAcl = require('a-seal');
 
 //url patterns
-var ALL_PAGES = new RegExp('^/(?!_)(.*)');
-var DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)');
-var EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)');
-
-var LOGIN = new RegExp('^/_auth/login');
-var LOGOUT = new RegExp('^/_auth/logout');
+const 
+    ALL_PAGES = new RegExp('^/(?!_)(.*)'),
+    DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)'),
+    EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)'),
+    LOGIN = new RegExp('^/_auth/login'),
+    LOGOUT = new RegExp('^/_auth/logout');
 
 //actions
-var GET = 'GET', PUT = 'PUT', POST = 'POST', DELETE = 'DELETE';
-var ALL_ACTIONS = [ GET, POST, PUT, DELETE ];
+const 
+    GET = 'GET', 
+    PUT = 'PUT', 
+    POST = 'POST', 
+    DELETE = 'DELETE', 
+    ALL_ACTIONS = [ GET, POST, PUT, DELETE ];
 
 //users
-var admin = 'admin', developer = 'developer', editor = 'editor', guest = 'guest';
-var ALL_ROLES = [ admin, developer, editor, guest ];
+const 
+    ADMIN = 'admin', 
+    DEVELOPER = 'developer', 
+    EDITOR = 'editor', 
+    GUEST = 'guest',
+    ALL_ROLES = [ ADMIN, DEVELOPER, EDITOR, GUEST ];
 
-/**
- *
- * @param opts
- * @constructor
- */
-var AclSetup = function() {
-};
+module.exports = function(middlwareMap) {
 
-module.exports = function() {
-    return new AclSetup();
-};
-
-AclSetup.prototype.runSetup = function() {
-
-    var acl = createAcl();
+    const acl = createAcl();
 
     //all
-    acl.match(ALL_PAGES, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
-    acl.match(consts.requests.STATIC.regex, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
-    acl.match(consts.requests.MEDIA.regex, ALL_ACTIONS).thenOnlyAllow(ALL_ROLES);
+    acl.match(ALL_PAGES).for(ALL_ACTIONS).thenAllow(ALL_ROLES);
+    acl.match(middlwareMap.get('static').pattern).for(ALL_ACTIONS).thenAllow(ALL_ROLES);
+    acl.match(middlwareMap.get('media').pattern).for(ALL_ACTIONS).thenAllow(ALL_ROLES);
 
     //auth
-    acl.match(LOGIN, [ GET, POST ]).thenOnlyAllow([ guest ]);
-    acl.match(LOGOUT, [ GET ]).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(LOGIN).for(GET, POST).thenAllow(GUEST);
+    acl.match(LOGOUT).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //common actions requiring auth
-    acl.match(consts.requests.MEDIA.regex, [ POST, PUT ]).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.TEMPLATES.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.PUBLISH.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(consts.requests.DASHBOARD.regex, ALL_ACTIONS).thenOnlyAllow([ editor, developer, admin ]);
+    acl.match(middlwareMap.get('media').pattern).for(POST, PUT).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('templates').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('publishing').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('dashboard').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //api
-    acl.match(consts.requests.API.regex, [ PUT, POST, DELETE ]).thenOnlyAllow([ admin ]);
-    acl.match(EDITOR_API_REGEX, [ PUT, POST, DELETE ]).thenOnlyAllow([ editor, developer, admin ]);
-    acl.match(DEV_API_REGEX, [ PUT, POST, DELETE ]).thenOnlyAllow([ developer, admin ]);
-    acl.match(consts.requests.API.regex, [ GET ]).thenOnlyAllow([ admin, developer, editor ]);
+    acl.match(middlwareMap.get('api').pattern).for(PUT, POST, DELETE).thenAllow(ADMIN);
+    acl.match(EDITOR_API_REGEX).for(PUT, POST, DELETE).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(DEV_API_REGEX).for(PUT, POST, DELETE).thenAllow(DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('api').pattern).for(GET).thenAllow(ADMIN, DEVELOPER, EDITOR);
 
     return acl;
 };

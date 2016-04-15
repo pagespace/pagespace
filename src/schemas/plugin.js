@@ -19,11 +19,11 @@
 
 'use strict';
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 function generateSchema() {
-    var pluginSchema = Schema({
+    const pluginSchema = Schema({
         module: {
             type: String,
             unique: true,
@@ -57,12 +57,12 @@ function generateSchema() {
     });
 
     pluginSchema.virtual('config').get(function () {
-        var plugin = getPluginModule(this.module);
+        const plugin = getPluginModule(this.module);
         return plugin.config || [];
     });
 
     pluginSchema.virtual('name').get(function () {
-        var plugin = getPluginModule(this.module);
+        const plugin = getPluginModule(this.module);
         return plugin.name;
     });
 
@@ -71,7 +71,7 @@ function generateSchema() {
     });
 
     function getPluginModule(pluginModule) {
-        var pluginResolver = require('../support/plugin-resolver')();
+        const pluginResolver = require('../support/plugin-resolver')();
         return pluginResolver.require(pluginModule) || {};
     }
 

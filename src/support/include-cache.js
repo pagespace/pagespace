@@ -1,10 +1,13 @@
-var Promise = require('bluebird');
-var Cacheman = require('cacheman');
+'use strict';
 
-var cache = null;
+//de[s
+const 
+    Promise = require('bluebird'),
+    Cacheman = require('cacheman');
+
+let cache = null;
 
 module.exports = {
-
     init: function(opts) {
         opts = opts || {};
         cache = new IncludeCache(opts);
@@ -14,59 +17,58 @@ module.exports = {
     }
 };
 
-var IncludeCache = function(opts) {
-    opts = opts || {};
-    this.cache = new Cacheman('includes', opts);
-};
+class IncludeCache {
+    
+    constructor(opts) {
+        opts = opts || {};
+        this.cache = new Cacheman('includes', opts);      
+    }
 
-IncludeCache.prototype.get = function(key) {
-    var self = this;
-    return new Promise(function(resolve, reject) {
-        self.cache.get(key, function(err, val) {
-            if(err) {
-                reject(err);
-            } else {
-                resolve(val);
-            }
+    get(key) {
+        return new Promise((resolve, reject) => {
+            this.cache.get(key, (err, val) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(val);
+                }
+            });
         });
-    });
-};
+    }
 
-IncludeCache.prototype.set = function(key, val, ttl) {
-    var self = this;
-    return new Promise(function(resolve, reject) {
-        self.cache.set(key, val, ttl, function(err, val) {
-            if(err) {
-                reject(err);
-            } else {
-                resolve(val);
-            }
+    set(key, val, ttl) {
+        return new Promise((resolve, reject) => {
+            this.cache.set(key, val, ttl, (err, val) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(val);
+                }
+            });
         });
-    });
-};
+    }
 
-IncludeCache.prototype.del = function(key) {
-    var self = this;
-    return new Promise(function(resolve, reject) {
-        self.cache.del(key, function(err, val) {
-            if(err) {
-                reject(err);
-            } else {
-                resolve(val);
-            }
+    del(key) {
+        return new Promise((resolve, reject) => {
+            this.cache.del(key, (err, val) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(val);
+                }
+            });
         });
-    });
-};
+    }
 
-IncludeCache.prototype.clear = function() {
-    var self = this;
-    return new Promise(function(resolve, reject) {
-        self.cache.clear(function(err, val) {
-            if(err) {
-                reject(err);
-            } else {
-                resolve(val);
-            }
+    clear() {
+        return new Promise((resolve, reject) => {
+            this.cache.clear((err, val) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(val);
+                }
+            });
         });
-    });
-};
+    }
+}

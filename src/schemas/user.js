@@ -19,13 +19,13 @@
 
 'use strict';
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var bcrypt = require('bcrypt');
-var SALT_WORK_FACTOR = 10;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const bcrypt = require('bcrypt');
+const SALT_WORK_FACTOR = 10;
 
 function generateSchema() {
-    var userSchema = Schema({
+    const userSchema = Schema({
         username: {
             type: String, required: true,
             index: { unique: true }
@@ -71,7 +71,7 @@ function generateSchema() {
     });
 
     userSchema.set('toJSON', {
-        transform: function(doc, user) {
+        transform: (doc, user) => {
             delete user.rememberToken;
             delete user.updatePassword;
             delete user.password;
@@ -80,7 +80,7 @@ function generateSchema() {
     });
 
     userSchema.pre('save', function (next) {
-        var user = this;
+        const user = this;
 
         user.updatedAt = Date.now();
 
@@ -91,13 +91,13 @@ function generateSchema() {
         }
 
         // generate a salt
-        bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
+        bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
             if (err) {
                 return next(err);
             }
 
             // hash the password using our new salt
-            bcrypt.hash(user.password, salt, function (err, hash) {
+            bcrypt.hash(user.password, salt, (err, hash) => {
                 if (err) {
                     return next(err);
                 }
@@ -111,17 +111,17 @@ function generateSchema() {
 
     userSchema.pre('findOneAndUpdate', function (next) {
 
-        var query = this;
+        const query = this;
 
         query.getUpdate().updatedAt = Date.now();
 
-        var plainPassword = query.getUpdate().password;
+        const plainPassword = query.getUpdate().password;
         if(plainPassword) {
-            bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
+            bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
                 if (err) {
                     return next(err);
                 }
-                bcrypt.hash(plainPassword, salt, function (err, hash) {
+                bcrypt.hash(plainPassword, salt, (err, hash) => {
                     if (err) {
                         return next(err);
                     }
@@ -135,8 +135,8 @@ function generateSchema() {
     });
 
     userSchema.methods.comparePassword = function (candidatePassword, cb) {
-        var self = this;
-        bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
+        const self = this;
+        bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
             if (err) {
                 return cb(err);
             }
@@ -149,6 +149,15 @@ function generateSchema() {
 
     userSchema.methods.generateToken = function () {
         return bcrypt.hashSync(this.username + Math.random().toString(), 1);
+    };
+
+    userSchema.statics.serialize = function (user) {
+        return {
+            username: user.username,
+            role: user.role,
+            name: user.name,
+            _id: user._id.toString()
+        };
     };
 
     return userSchema;

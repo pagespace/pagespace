@@ -6,7 +6,16 @@
   "description": "Manageable web sites powered by Node.js",
   "main": "src/index",
   "license": "LGPL-3.0",
-  "keywords" : [ "website", "cms", "pagespace", "page", "space", "management", "wordpress", "blog"],
+  "keywords": [
+    "website",
+    "cms",
+    "pagespace",
+    "page",
+    "space",
+    "management",
+    "wordpress",
+    "blog"
+  ],
   "engines": {
     "node": ">=0.10"
   },
@@ -26,7 +35,6 @@
     "LICENSE"
   ],
   "dependencies": {
-    "async": "^1.5.2",
     "bcrypt": "^0.8.5",
     "bluebird": "^3.1.1",
     "bunyan": "^1.2.3",
@@ -36,18 +44,15 @@
     "handlebars": "^4.0.5",
     "handlebars-intl": "^1.1.1",
     "image-size": "^0.4.0",
-    "intl": "^1.0.1",
-    "mkdirp": "~0.5.0",
+    "mkdirp": "^0.5.0",
     "mongoose": "^4.2.7",
     "passport": "^0.3.2",
     "passport-http": "^0.3.0",
-    "passport-local": "~1.0.0",
-    "passport-remember-me": "~0.0.1",
+    "passport-local": "^1.0.0",
+    "passport-remember-me": "^0.0.1",
     "resolve": "^1.1.6",
-    "semver": "^5.1.0",
     "send": "^0.13.1",
-    "serve-static": "~1.10.0",
-    "verror": "^1.6.0"
+    "serve-static": "^1.10.0"
   },
   "optionalDependencies": {
     "sharp": "^0.12.2"
@@ -62,11 +67,12 @@
     "gulp-jshint": "^2.0.0",
     "gulp-watch": "^3.0.0",
     "jasmine": "^2.3.2",
-    "serve-favicon": "^2.3.0",
-    "supertest": "^1.1.0",
-    "pagespace-webcopy": "pagespace/pagespace-webcopy",
+    "jshint": "^2.9.1",
     "pagespace-html": "pagespace/pagespace-html",
-    "pagespace-nav": "pagespace/pagespace-nav"
+    "pagespace-nav": "pagespace/pagespace-nav",
+    "pagespace-webcopy": "pagespace/pagespace-webcopy",
+    "serve-favicon": "^2.3.0",
+    "supertest": "^1.1.0"
   },
   "peerDependencies": {
     "express": ">4.10",
