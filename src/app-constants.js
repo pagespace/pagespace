@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -19,7 +19,7 @@
 
 'use strict';
 
-var consts = {
+module.exports = {
     TAB: '\t',
 
     appStates: {
@@ -42,53 +42,4 @@ var consts = {
         label: 'large',
         size: 1000
     }]
-};
-
-module.exports = consts;
-
-consts.requests = {
-    API: {
-        key: 'API',
-        regex: new RegExp('^/_api/(sites|pages|plugins|includes|templates|users|media|hits)/?(.*)'),
-        handler: require('./request-handlers/api-handler')
-    },
-    AUTH: {
-        key: 'AUTH',
-        regex: new RegExp('^/_auth/(login|logout)'),
-        handler: require('./request-handlers/auth-handler')
-    },
-    DASHBOARD: {
-        key: 'DASHBOARD',
-        regex: new RegExp('^/_dashboard/?(inpage|settings)?'),
-        handler: require('./request-handlers/dashboard-handler')
-    },
-    MEDIA: {
-        key: 'MEDIA',
-        regex: new RegExp('^/_media/?(.*)'),
-        handler: require('./request-handlers/media-handler')
-    },
-    PAGE: {
-        key: 'PAGE',
-        regex: null,
-        handler: require('./request-handlers/page-handler')
-    },
-    PUBLISH: {
-        key: 'PUBLISH',
-        regex: new RegExp('^/_publish/(pages)'),
-        handler: require('./request-handlers/publishing-handler')
-    },
-    STATIC: {
-        key: 'STATIC',
-        regex: new RegExp('^/_static/?(dashboard|inpage|plugins|sample|bower_components)/?([A-z0-9-_\\.]*)/?(.*)'),
-        handler: require('./request-handlers/static-handler')
-    },
-    TEMPLATES: {
-        key: 'TEMPLATES',
-        regex: new RegExp('^/_templates/(available|template-regions)'),
-        handler: require('./request-handlers/templates-handler')
-    },
-    OTHER: {
-        key: 'OTHER',
-        regex: null
-    }
 };

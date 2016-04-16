@@ -19,39 +19,24 @@
 
 'use strict';
 
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-function generateSchema() {
-
-    const includeSchema = Schema({
-        data: {
-            type: Schema.Types.Mixed
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        updatedAt: {
-            type: Date
-        },
-        draft: {
-            type: Boolean,
-            default: true
-        }
-    });
-
-    includeSchema.pre('save', function (next) {
-        this.updatedAt = Date.now();
-        next();
-    });
-
-    includeSchema.pre('findOneAndUpdate', function (next) {
-        this.getUpdate().updatedAt = Date.now();
-        next();
-    });
-
-    return includeSchema;
-}
-
-module.exports = generateSchema;
+/**
+ * Attempts to coerce an intended type of a string value
+ * @param value
+ * @returns {*}
+ */
+module.exports = (value) => {
+    if(typeof value === 'undefined' || value === null) {
+        return null;
+    } else if(!isNaN(parseFloat(+value))) {
+        return parseFloat(value);
+    } else if(value.toLowerCase() === 'false') {
+        return false;
+    } else if(value.toLowerCase() === 'true') {
+        return true;
+    } else if(value.length > 2 && value.indexOf('/') === 0 && value.lastIndexOf('/') === value.length - 1) {
+        return new RegExp(value.substring(1, value.length - 1));
+    } else {
+        return value;
+    }
+};

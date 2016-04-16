@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -19,12 +19,12 @@
 
 'use strict';
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 function generateSchema(modifier) {
 
-    var hitSchema = Schema({
+    const hitSchema = Schema({
         page: {
             type: Schema.Types.ObjectId,
             ref: 'Page' + modifier

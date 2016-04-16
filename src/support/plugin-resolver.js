@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015, Versatile Internet
+ * Copyright © 2016, Versatile Internet
  *
  * This file is part of Pagespace.
  *
@@ -19,132 +19,127 @@
 
 'use strict';
 
-var vm = require('vm'),
+const vm = require('vm'),
     fs = require('fs'),
     path = require('path'),
     resolve = require('resolve'),
-    semver = require('semver'),
-    psUtil = require('./pagespace-util'),
-    appConsts = require('../app-constants');
+    consts = require('../app-constants');
 
-var instance = null;
+let instance = null;
 
-var PluginResolver = function(opts) {
+class PluginResolver {
 
-    this.logger = opts.logger;
-    this.dbSupport = opts.dbSupport;
-    this.userBasePath = opts.userBasePath;
-    this.requireCache = {};
-};
+    constructor(opts) {
+        this.logger = opts.logger;
+        this.dbSupport = opts.dbSupport;
+        this.userBasePath = opts.userBasePath;
+        this.requireCache = {};        
+    }
+    
+    require(pluginModuleId) {
 
-module.exports = function(opts) {
+        const logger = this.logger;
+
+        if(!pluginModuleId) {
+            return null;
+        }
+        let pluginModule = this.requireCache[pluginModuleId];
+        if(!pluginModule) {
+            try {
+                const pluginPath = resolve.sync(pluginModuleId, {
+                    basedir: this.userBasePath
+                });
+
+                const pluginDirPath = path.dirname(pluginPath);
+
+                const pluginConfig = this._getPluginConfig(pluginDirPath);
+
+                const code = fs.readFileSync(pluginPath, 'utf8');
+                const sandbox = {
+                    console : console,
+                    module  : {},
+                    __filename: pluginPath,
+                    __dirname: pluginDirPath,
+                    Buffer: Buffer,
+                    setTimeout: setTimeout,
+                    setInterval: setInterval,
+                    Promise: Promise || require('bluebird'),
+                    require : (modulePath) => {
+                        const resolvedPath = resolve.sync(modulePath, {
+                            basedir: pluginDirPath
+                        });
+
+                        try {
+                            return require(resolvedPath);
+                        } catch(err){
+                            logger.error(err, 'Module unable to use require');
+                        }
+                    },
+                    pagespace: {
+                        getModel: (name, previewMode) => {
+                            return this.dbSupport.getModel(name, previewMode ? '' : 'live');
+                        },
+                        getPageModel: (previewMode) => {
+                            return this.dbSupport.getModel('Page', previewMode ? '' : 'live');
+                        },
+                        pluginResolver: this,
+                        logger: logger.child({plugin: pluginModuleId}),
+                        userBasePath: this.userBasePath
+                    }
+                };
+
+                vm.runInNewContext(code, sandbox, {
+                    filename: pluginPath
+                });
+
+                pluginModule = sandbox.module.exports;
+                Object.assign(pluginModule, pluginConfig);
+                this.requireCache[pluginModuleId] = pluginModule;
+            } catch(err) {
+                console.log(err);
+                logger.warn(err, 'The plugin module %s could not be resolved', pluginModuleId);
+            }
+        }
+        return pluginModule;
+    }
+
+    _getPluginConfig(pluginDirPath) {
+
+        const pluginConf = {};
+
+        const logger = this.logger;
+
+        pluginConf.__dir = pluginDirPath;
+
+        const pluginConfigPath = path.join(pluginDirPath, 'package.json');
+        try {
+            const packageConf = require(pluginConfigPath);
+            pluginConf.name = packageConf.name;
+            pluginConf.description = packageConf.description;
+            pluginConf.config =  packageConf.pagespace || {};
+            pluginConf.config.ttl = pluginConf.config.ttl || consts.DEFAULT_PLUGIN_CACHE_TTL;
+        } catch(err) {
+            logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
+        }
+
+        //load the plugin view
+        const pluginViewPath = path.join(pluginDirPath, 'index.hbs');
+        logger.debug('Loading plugin view partial from %s...', pluginViewPath);
+        try {
+            pluginConf.viewPartial = fs.readFileSync(pluginViewPath, 'utf8');
+        } catch(err) {
+            logger.warn('Cannot find an index template (index.hbs) for the plugin module for [%s]', pluginDirPath);
+        }
+
+        return pluginConf;
+    }
+}
+
+module.exports = (opts) => {
 
     if(!instance) {
         instance = new PluginResolver(opts);
     }
 
     return instance;
-};
-
-PluginResolver.prototype.require = function(pluginModuleId) {
-
-    var self = this;
-    var logger = this.logger;
-
-    if(!pluginModuleId) {
-        return null;
-    }
-    var pluginModule = this.requireCache[pluginModuleId];
-    if(!pluginModule) {
-        try {
-            var pluginPath = resolve.sync(pluginModuleId, {
-                basedir: this.userBasePath
-            });
-
-            var pluginDirPath = path.dirname(pluginPath);
-
-            var pluginConfig = this._getPluginConfig(pluginDirPath);
-
-            var code = fs.readFileSync(pluginPath, 'utf8');
-            var sandbox = {
-                console : console,
-                module  : {},
-                __filename: pluginPath,
-                __dirname: pluginDirPath,
-                Buffer: Buffer,
-                setTimeout: setTimeout,
-                setInterval: setInterval,
-                Promise: require('bluebird'),
-                require : function(modulePath) {
-                    var resolvedPath = resolve.sync(modulePath, {
-                        basedir: pluginDirPath
-                    });
-
-                    try {
-                        return require(resolvedPath);
-                    } catch(err){
-                        logger.error(err, 'Module unable to use require');
-                    }
-                },
-                pagespace: {
-                    getModel: function(name, previewMode) {
-                        return self.dbSupport.getModel(name, previewMode ? '' : 'live');
-                    },
-                    getPageModel: function(previewMode) {
-                        return self.dbSupport.getModel('Page', previewMode ? '' : 'live');
-                    },
-                    pluginResolver: self,
-                    logger: logger.child({plugin: pluginModuleId}),
-                    userBasePath: this.userBasePath
-                }
-            };
-            var ctxOpts = semver.lt('0.12.0', process.versions.node) ?
-                // < 0.12 API
-                pluginPath :
-                // > 0.11 API
-                {
-                    filename: pluginPath
-                };
-                vm.runInNewContext(code, sandbox, ctxOpts);
-
-            pluginModule = sandbox.module.exports;
-            psUtil.assign(pluginModule, pluginConfig);
-            this.requireCache[pluginModuleId] = pluginModule;
-        } catch(err) {
-            console.log(err);
-            logger.warn(err, 'The plugin module %s could not be resolved', pluginModuleId);
-        }
-    }
-    return pluginModule;
-};
-
-PluginResolver.prototype._getPluginConfig = function(pluginDirPath) {
-
-    var pluginConf = {};
-
-    var logger = this.logger;
-
-    pluginConf.__dir = pluginDirPath;
-
-    var pluginConfigPath = path.join(pluginDirPath, 'package.json');
-    try {
-        var packageConf = require(pluginConfigPath);
-        pluginConf.name = packageConf.name;
-        pluginConf.description = packageConf.description;
-        pluginConf.config =  packageConf.pagespace || {};
-        pluginConf.config.ttl = pluginConf.config.ttl || appConsts.DEFAULT_PLUGIN_CACHE_TTL;
-    } catch(err) {
-        logger.warn('Couldn\'t load plugin config at %s', pluginDirPath);
-    }
-
-    //load the plugin view
-    var pluginViewPath = path.join(pluginDirPath, 'index.hbs');
-    logger.debug('Loading plugin view partial from %s...', pluginViewPath);
-    try {
-        pluginConf.viewPartial = fs.readFileSync(pluginViewPath, 'utf8');
-    } catch(err) {
-        logger.warn('Cannot find an index template (index.hbs) for the plugin module for [%s]', pluginDirPath);
-    }
-
-    return pluginConf;
 };
