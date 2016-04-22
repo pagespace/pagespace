@@ -108,9 +108,9 @@ class ApiHandler extends BaseHandler {
             if (req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
                 const modelName = Model.modelName;
                 const resultName = results.name || '';
-                const itemId = itemId || 'all';
+                const titleItemId = itemId || 'all';
                 const htmlBody = htmlStringify(results);
-                const html = `<title>${modelName}: ${resultName}, ${itemId}</title>\n${htmlBody}`;
+                const html = `<title>${modelName}: ${resultName}, ${titleItemId}</title>\n${htmlBody}`;
                 res.send(html, {
                     'Content-Type': 'text/html'
                 }, 200);
