@@ -36,11 +36,6 @@ const
     sizeOfAsync = Promise.promisify(sizeOf);
 
 let sharp;
-try {
-    sharp = require('sharp');
-} catch(err) {
-    sharp = null;
-}
 
 class MediaHandler extends BaseHandler {
     
@@ -138,7 +133,7 @@ class MediaHandler extends BaseHandler {
         const self = this;
 
         const logger = this.getRequestLogger(this.logger, req);
-    
+
         if(!this.mediaDir) {
             logger.error('Cannot upload media. No upload directory was specified.');
             const e = new Error('Unable to upload media');
@@ -182,19 +177,19 @@ class MediaHandler extends BaseHandler {
             //generate image variatiations
             let variationPromises = [];
             const file = files.file;
-            if(file.type.indexOf('image') === 0 && dimensions.width && dimensions.height) {
+            if(file.type.startsWith('image') && dimensions.width && dimensions.height) {
                 variationPromises = this.imageVariations.map((variation) => {
                     return resizeImage(file.path, variation.label, dimensions, variation.size, variation.format, logger);
                 });
             }
             return [ fields, files, dimensions ].concat(variationPromises);
-        }).spread(function(fields, files, dimensions) {
+        }).spread(function(fields, files, dimensions) { //dont use fat arrow so we can get arguments
             //save media to db
             const tags = fields.tags ? JSON.parse(fields.tags) : [];
     
             const Media = self.dbSupport.getModel('Media');
 
-            const variations = [].slice.call(arguments).slice(3); //extra args are the possible image variations
+            const variations = [].slice.call(arguments).slice(3) || []; //extra args are the possible image variations
     
             const media = new Media({
                 name: fields.name,
@@ -208,7 +203,7 @@ class MediaHandler extends BaseHandler {
                 height: dimensions.height || null,
                 variations: variations.map((variation) => {
                     //save paths relative to media dir
-                    const updatedVariation = JSON.parse(JSON.stringify(variation)); //until Object.assign is native
+                    const updatedVariation = Object.assign({}, variation);
                     updatedVariation.path = path.basename(variation.path);
                     return updatedVariation;
                 })
@@ -264,6 +259,13 @@ class MediaHandler extends BaseHandler {
 module.exports = new MediaHandler();
 
 function resizeImage(filePath, label, fromDim, toDim, format, logger) {
+
+    try {
+        sharp = sharp || require('sharp');
+    } catch(err) {
+        logger.error(err);
+        sharp = null;
+    }
 
     if(!sharp) {
         logger.warn('Sharp is not installed, image variations will not be created');
