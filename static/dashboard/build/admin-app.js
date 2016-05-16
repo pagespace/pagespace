@@ -1003,7 +1003,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                     for (var i = 0; i < newFiles.length; i++) {
                         var file = newFiles[i];
 
-                        if(existingFilePaths.indexOf(file.name) > -1) {
+                        var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
+                        var tooBig = file.size > 1024 * 100; //too big. TODO: inform user
+
+                        if(alreadySelected || tooBig) {
                             continue;
                         }
 
