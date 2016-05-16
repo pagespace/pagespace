@@ -44,15 +44,15 @@ describe('Client sending media requests', function() {
             url: '/_media',
             fields: [
                 {
-                    name: 'name',
+                    name: 'name_0',
                     value: 'Pagespace Avatar'
                 },
                 {
-                    name: 'description',
+                    name: 'description_0',
                     value: 'Pagespace logo'
                 },
                 {
-                    name: 'tags',
+                    name: 'tags_0',
                     value: '[{"text":"pagespace"},{"text":"logo"}]'
                 }
             ],
@@ -62,7 +62,7 @@ describe('Client sending media requests', function() {
             },
             status: 201
         }).then(function(res) {
-            var item = res.body;
+            var item = res.body[0];
 
             expect(item.fileName).toBe('avatar.png');
             expect(item.name).toBe('Pagespace Avatar');
@@ -98,11 +98,11 @@ describe('Client sending media requests', function() {
             url: '/_media',
             fields: [
                 {
-                    name: 'name',
+                    name: 'name_0',
                     value: 'Important Doc'
                 },
                 {
-                    name: 'tags',
+                    name: 'tags_0',
                     value: '[{"text":"docs"}]'
                 }
             ],
@@ -112,7 +112,7 @@ describe('Client sending media requests', function() {
             },
             status: 201
         }).then(function(res) {
-            var item = res.body;
+            var item = res.body[0];
 
             expect(item.fileName).toBe('pagespace.pdf');
             expect(item.name).toBe('Important Doc');
@@ -145,7 +145,7 @@ describe('Client sending media requests', function() {
             url: '/_media',
             fields: [
                 {
-                    name: 'name',
+                    name: 'name_0',
                     value: 'Avatar 2'
                 }
             ],
