@@ -2,8 +2,8 @@
 (function() {
     
     var tmpl =
-        `<div class="row media-item media-file-select" ng-click="selectFiles()">
-            <div class="col-sm-12">
+        `<div class="list-group col-sm-11">
+            <div class="media-item list-group-item media-file-select" ng-click="selectFiles()">
                 <div class="media-item-part clearfix">
                     <input type="file" multiple="true" class="ng-hide">
                     <h3><span class="add-icon">+</span> 
@@ -16,42 +16,40 @@
 
         <form ng-if="files.length > 0" ng-submit="upload(uploadForm)" name="uploadForm" 
               class="form-horizontal media-upload-form" novalidate>
-            <h3 style="margin-left: -15px">Prepare media to upload</h3>
-            <div ng-repeat="file in files" ng-click="showItem(item)" class="row media-item">
-                <div class="col-sm-10">
-                    <div class="media-item-part clearfix">
-                        <div class="media-item-preview">
-                            <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" alt="{{file.item.name}}">
-                            <span class="item-type" ng-if="!isImage(file.item)">{{getType(file.item)}}</span>
-                        </div>     
-                        <div class="media-item-edit">
-                            <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
-                            <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
-                                        placeholder="Add tags to help manage your files">
-                                <auto-complete source="getMatchingTags($query)"></auto-complete>
-                            </tags-input>                        
-                        </div>                 
+            <div class="list-group col-sm-11">           
+                <h3>Prepare media to add</h3>
+                <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   
+                        <div class="media-item-part clearfix">
+                            <div class="media-item-preview pull-left">
+                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
+                                     alt="{{file.item.name}}" title="{{file.item.type}}">
+                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
+                            </div>   
+                            <div class="btn-group pull-right">
+                                <button type="button" class="btn btn-default" ng-click="remove(file)" title="Remove">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </button>      
+                            </div>
+                            <div class="media-item-edit">
+                                <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
+                                <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
+                                            placeholder="Add tags to help manage your files">
+                                    <auto-complete source="getMatchingTags($query)"></auto-complete>
+                                </tags-input>     
+                                <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   
+                            </div>                 
+                        </div>
                     </div>
-                </div>
-                <div class="col-sm-2">
-                    <div class="btn-group media-item-controls media-item-part">
-                        <button type="button" class="btn btn-default" ng-click="remove(file)" title="Remove">
-                            <span class="glyphicon glyphicon-trash"></span>
-                        </button>      
-                    </div>
-                </div>
+                </div>                              
             </div>
-            
-            <div class="row">
-                <div class="action-buttons">
-                    <button type="submit" class="btn btn-primary">                    
-                        <ng-pluralize count="files.length"
-                                      when="{'one': 'Add file', 'other': 'Add {} files'}">
-                        </ng-pluralize>
-                    </button>
-                    <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-                </div>                
-            </div>  
+            <div class="action-buttons col-sm-11">
+                <button type="submit" class="btn btn-primary">                    
+                    <ng-pluralize count="files.length"
+                                  when="{'one': 'Add file', 'other': 'Add {} files'}">
+                    </ng-pluralize>
+                </button>
+                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+            </div>     
         </form>`;
     
     var adminApp = angular.module('adminApp');

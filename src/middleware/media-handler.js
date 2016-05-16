@@ -59,12 +59,7 @@ class MediaHandler extends BaseHandler {
         const Media = this.dbSupport.getModel('Media');
         Media.findOne({
             fileName: itemFileName
-        }).exec((err, model) => {
-            if(err) {
-                logger.warn(err, 'Unable to serve media');
-                return next(err);
-            }
-    
+        }).then((model) => {
             if(model) {
                 let mediaPath = null;
     
@@ -72,10 +67,7 @@ class MediaHandler extends BaseHandler {
                 if(req.query.label) {
                     const variation = model.variations.find((variation) => variation.label === req.query.label.trim());
                     if(variation) {
-                        //mediaPath = path.isAbsolute(variation.path) ?  variation.path : path.join(mediaDir, variation.path);
-                        const parsedPath  = path.parse(model.path);
-                        mediaPath = path.join(parsedPath.dir, `${parsedPath.name}.${variation.label}${parsedPath.ext}`);
-                        mediaPath = path.isAbsolute(mediaPath) ? mediaPath : path.join(mediaDir, mediaPath);
+                        mediaPath = MediaHandler.getVariationPath(model.path, variation);
                     }
                 }
     
@@ -86,18 +78,54 @@ class MediaHandler extends BaseHandler {
     
                 // forward non-404 errors
                 stream.on('error', (err) => {
-                    logger.warn('Error streaming media for %s (%s)', req.url, mediaPath);
+                    logger.warn(`Error streaming media for ${req.url} (${mediaPath})`);
                     next(err.status === 404 ? null : err);
                 });
     
                 // pipe
-                logger.debug('Streaming media to client for  %s', mediaPath);
+                logger.debug(`Streaming media to client for ${mediaPath}`);
                 stream.pipe(res);
             } else {
-                err = new Error(itemFileName + ' not found');
+                const err = new Error(`${itemFileName} not found`);
                 err.status = 404;
-                return next(err);
+                throw err;
             }
+        }).then(undefined, (err) => {
+            logger.warn(err, 'Unable to serve media');
+            return next(err);
+        });
+    }
+
+    doDelete(req, res, next) {
+        
+        const logger = this.getRequestLogger(this.logger, req);
+
+        const urlPath = url.parse(req.url).pathname;
+        const apiInfo = this.pattern.exec(urlPath);
+        const itemFileName = decodeURIComponent(apiInfo[1]);
+        const mediaDir = this.mediaDir;
+        const Media = this.dbSupport.getModel('Media');
+
+        Media.findOneAndRemove({
+            fileName: itemFileName
+        }).then((model) => {
+            //get base
+            const basePath = path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path);
+            //get variations
+            const paths = [basePath].concat(model.variations.map((variation) => {
+                return MediaHandler.getVariationPath(basePath, variation);
+            }));
+            //unlink
+            const rollbackPromises = paths.map((filePath) => {
+                return unlinkAsync(filePath);
+            });
+            return Promise.all(rollbackPromises);
+        }).then(() => {
+            res.statusCode = 204;
+            res.send();
+        }).then(undefined, (err) => {
+            logger.error(err, `Couldn't delete media files`);
+            next(err);
         });
     }
 
@@ -243,9 +271,10 @@ class MediaHandler extends BaseHandler {
             } else {
                 //failure
                 //collect new files to rollback (remove)
-                const newUploadPaths = result.slice(1).map((pathResult) => {
-                    return pathResult.value().path;
-                });
+                const baseFile = result[1].value().path;
+                const newUploadPaths = [ baseFile ].concat(result.slice(2).map((pathResult) => {
+                    return MediaHandler.getVariationPath(baseFile, pathResult.value());
+                }));
                 const err = savePromise.reason();
                 err.paths = newUploadPaths;
                 //next catch will handle the mongoose failure
@@ -341,6 +370,13 @@ class MediaHandler extends BaseHandler {
             'jpeg' : 'jpg'
         };
         return extensions[format] || format;
+    }
+
+    static getVariationPath(basePath, variation) {
+        const parsedPath  = path.parse(basePath);
+        let mediaPath = path.join(parsedPath.dir, `${parsedPath.name}.${variation.label}${parsedPath.ext}`);
+        mediaPath = path.isAbsolute(mediaPath) ? mediaPath : path.join(mediaDir, mediaPath);
+        return mediaPath;
     }
 }
 

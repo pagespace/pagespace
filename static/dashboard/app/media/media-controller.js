@@ -14,7 +14,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     $scope.availableTags = [];
     $scope.selectedTags = [];
 
-    $scope.getType = mediaService.getType;
+    $scope.getTypeShortName = mediaService.getTypeShortName;
     $scope.getSrcPath = mediaService.getSrcPath;
 
     $scope.toggleEditing = function (item) {

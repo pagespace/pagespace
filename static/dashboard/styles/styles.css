@@ -262,18 +262,9 @@ h4 {
 /**
  * Media
  */
-.media-items-container {
-    margin-right: auto;
-    margin-left: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-.media-item {
-    outline: 1px solid #D7DADE;
-    margin-bottom: 1em;
-}
 .media-file-select {
-    outline-style: dashed;
+    outline: 1px dashed #D7DADE;
+    margin-bottom: 1em;
     cursor: pointer;
 }
 .media-item-dragging .media-file-select,
@@ -310,7 +301,7 @@ h4 {
     position: relative;
     float: left;
     width: 164px;
-    background: #D7DADE;
+    outline: 1px solid #D7DADE;
     padding: 7px;
     text-align: center;
     margin-right: 15px;
@@ -323,25 +314,32 @@ h4 {
     font-size: 26px;
     left: 38px;
 }
+.media-item-view .label {
+    margin-right: 8px;
+    padding: 5px;
+    border-radius: 4px;
+    display: inline-block;
+}
 .media-item-edit {
     float: left;
     width: 630px;
 }
 .media-item-edit input {
     margin-bottom: 8px;
+    background: #E5E7EA;
 }
 .media-item-edit .tags {
     border-width: 0;
-}
-.media-item-controls {
-    float: right;
+    background: #E5E7EA;
 }
 .media-item-preview img {
     max-width: 150px;
-    max-height: 150px;
+    max-height: 130px;
 }
 .media-upload-form .action-buttons {
     margin-top: 0;
+    border-bottom: 1px solid #D7DADE;
+    margin-right: 15px;
 }
 .media-item-full img {
     margin-bottom: 20px;

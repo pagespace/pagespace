@@ -2,20 +2,40 @@
 (function() {
     
     var tmpl =
-        `<h3 style="margin-left: -15px">Media library</h3>
-         <div ng-repeat="item in filteredItems" class="row media-item">          
-            <div class="col-sm-10">
+        `
+         <div class="list-group col-sm-11">
+            <h3>Media library</h3>
+             <div ng-repeat="item in filteredItems" class="media-item list-group-item">    
                 <div class="media-item-part clearfix">
-                    <div class="media-item-preview" style="cursor: pointer;">
+                    <div class="media-item-preview pull-left" style="cursor: pointer;">
                         <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
                              ng-click="!item._editing ? showItem(item) : ''" 
-                             alt="{{item.name}}">
-                        <span class="item-type" ng-if="!isImage(item)">{{getType(item)}}</span>
+                             alt="{{item.name}}" title="{{item.type}}">
+                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
+                    </div>  
+                    <div class="btn-group pull-right">
+                        <button type="button" class="btn btn-default" title="Cancel"
+                                ng-show="item._editing" ng-click="revertItem(item)">
+                            <span class="glyphicon glyphicon glyphicon-remove"></span>
+                        </button>
+                        <button type="button" class="btn btn-primary" title="Update"
+                                ng-show="item._editing" ng-click="updateItem(item)">                                
+                            <span class="glyphicon glyphicon glyphicon-ok"></span>
+                        </button>
+                        
+                        <button type="button" class="btn btn-default" title="Edit" 
+                                ng-show="!item._editing" ng-click="item._editing = !item._editing">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </button>      
+                        <button type="button" class="btn btn-default" title="Delete" 
+                                ng-show="!item._editing" ng-click="deleteItem(item)">
+                            <span class="glyphicon glyphicon-trash"></span>
+                        </button> 
                     </div>     
-                    <div ng-if="!item._editing"> 
+                    <div ng-if="!item._editing" class="media-item-view"> 
                         <h3>{{item.name}}</h3>
-                        <p><span class="label label-primary" ng-repeat="tag in item.tags" 
-                              style="margin-right: 8px; display: inline-block">{{tag.text}}</span></p>                        
+                        <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       
+                        <p><small><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></small></p>                                         
                     </div>
                     <div ng-if="item._editing" class="media-item-edit">
                         <input placeholder="Name" ng-model="item.name" required class="form-control">
@@ -23,28 +43,11 @@
                             <auto-complete source="getMatchingTags($query)"></auto-complete>
                         </tags-input>         
                     </div>   
-                </div>                               
+                </div>                                                          
             </div>
-            <div class="col-sm-2">
-                <div class="btn-group media-item-controls media-item-part">
-                    <button type="button" class="btn btn-default" 
-                            ng-show="item._editing" ng-click="revertItem(item)">Cancel</button>
-                    <button type="button" class="btn btn-primary" 
-                            ng-show="item._editing" ng-click="updateItem(item)">Update</button>
-                    
-                    <button type="button" class="btn btn-default" title="Edit" 
-                            ng-show="!item._editing" ng-click="item._editing = !item._editing">
-                        <span class="glyphicon glyphicon-wrench"></span>
-                    </button>      
-                    <button type="button" class="btn btn-default" title="Delete" 
-                            ng-show="!item._editing" ng-click="deleteItem(item)">
-                        <span class="glyphicon glyphicon-trash"></span>
-                    </button> 
-                </div>                
-            </div>
-        </div>
-        <p style="margin-left: -15px" ng-if="!mediaItems.length">The media library is empty</p>
-        <p style="margin-left: -15px" ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>`;
+            <p ng-if="!mediaItems.length">The media library is empty</p>
+            <p ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>
+        </div>`;
     
     var adminApp = angular.module('adminApp');
     adminApp.directive('mediaItems', function() {
@@ -69,7 +72,7 @@
                 $scope.deleteItem = function(item) {
                     var really = window.confirm('Really delete the item, ' + item.name + '?');
                     if(really) {
-                        mediaService.deleteItem(item._id).success(function() {
+                        mediaService.deleteItem(item.fileName).success(function() {
                             $scope.getItems();
                             $scope.showInfo('Media: ' + item.name + ' removed.');
                         }).error(function(err) {

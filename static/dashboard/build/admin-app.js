@@ -523,7 +523,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     $scope.availableTags = [];
     $scope.selectedTags = [];
 
-    $scope.getType = mediaService.getType;
+    $scope.getTypeShortName = mediaService.getTypeShortName;
     $scope.getSrcPath = mediaService.getSrcPath;
 
     $scope.toggleEditing = function (item) {
@@ -623,20 +623,40 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 (function() {
     
     var tmpl =
-        `<h3 style="margin-left: -15px">Media library</h3>
-         <div ng-repeat="item in filteredItems" class="row media-item">          
-            <div class="col-sm-10">
+        `
+         <div class="list-group col-sm-11">
+            <h3>Media library</h3>
+             <div ng-repeat="item in filteredItems" class="media-item list-group-item">    
                 <div class="media-item-part clearfix">
-                    <div class="media-item-preview" style="cursor: pointer;">
+                    <div class="media-item-preview pull-left" style="cursor: pointer;">
                         <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
                              ng-click="!item._editing ? showItem(item) : ''" 
-                             alt="{{item.name}}">
-                        <span class="item-type" ng-if="!isImage(item)">{{getType(item)}}</span>
+                             alt="{{item.name}}" title="{{item.type}}">
+                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
+                    </div>  
+                    <div class="btn-group pull-right">
+                        <button type="button" class="btn btn-default" title="Cancel"
+                                ng-show="item._editing" ng-click="revertItem(item)">
+                            <span class="glyphicon glyphicon glyphicon-remove"></span>
+                        </button>
+                        <button type="button" class="btn btn-primary" title="Update"
+                                ng-show="item._editing" ng-click="updateItem(item)">                                
+                            <span class="glyphicon glyphicon glyphicon-ok"></span>
+                        </button>
+                        
+                        <button type="button" class="btn btn-default" title="Edit" 
+                                ng-show="!item._editing" ng-click="item._editing = !item._editing">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </button>      
+                        <button type="button" class="btn btn-default" title="Delete" 
+                                ng-show="!item._editing" ng-click="deleteItem(item)">
+                            <span class="glyphicon glyphicon-trash"></span>
+                        </button> 
                     </div>     
-                    <div ng-if="!item._editing"> 
+                    <div ng-if="!item._editing" class="media-item-view"> 
                         <h3>{{item.name}}</h3>
-                        <p><span class="label label-primary" ng-repeat="tag in item.tags" 
-                              style="margin-right: 8px; display: inline-block">{{tag.text}}</span></p>                        
+                        <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       
+                        <p><small><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></small></p>                                         
                     </div>
                     <div ng-if="item._editing" class="media-item-edit">
                         <input placeholder="Name" ng-model="item.name" required class="form-control">
@@ -644,28 +664,11 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                             <auto-complete source="getMatchingTags($query)"></auto-complete>
                         </tags-input>         
                     </div>   
-                </div>                               
+                </div>                                                          
             </div>
-            <div class="col-sm-2">
-                <div class="btn-group media-item-controls media-item-part">
-                    <button type="button" class="btn btn-default" 
-                            ng-show="item._editing" ng-click="revertItem(item)">Cancel</button>
-                    <button type="button" class="btn btn-primary" 
-                            ng-show="item._editing" ng-click="updateItem(item)">Update</button>
-                    
-                    <button type="button" class="btn btn-default" title="Edit" 
-                            ng-show="!item._editing" ng-click="item._editing = !item._editing">
-                        <span class="glyphicon glyphicon-wrench"></span>
-                    </button>      
-                    <button type="button" class="btn btn-default" title="Delete" 
-                            ng-show="!item._editing" ng-click="deleteItem(item)">
-                        <span class="glyphicon glyphicon-trash"></span>
-                    </button> 
-                </div>                
-            </div>
-        </div>
-        <p style="margin-left: -15px" ng-if="!mediaItems.length">The media library is empty</p>
-        <p style="margin-left: -15px" ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>`;
+            <p ng-if="!mediaItems.length">The media library is empty</p>
+            <p ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>
+        </div>`;
     
     var adminApp = angular.module('adminApp');
     adminApp.directive('mediaItems', function() {
@@ -690,7 +693,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 $scope.deleteItem = function(item) {
                     var really = window.confirm('Really delete the item, ' + item.name + '?');
                     if(really) {
-                        mediaService.deleteItem(item._id).success(function() {
+                        mediaService.deleteItem(item.fileName).success(function() {
                             $scope.getItems();
                             $scope.showInfo('Media: ' + item.name + ' removed.');
                         }).error(function(err) {
@@ -726,6 +729,37 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 (function() {
     var adminApp = angular.module('adminApp');
     adminApp.factory('mediaService', function($http, $log) {
+        
+        var mimeTypeShortNames = {
+            "audio/basic" : "audio",
+            "video/msvideo" : "video",
+            "video/avi" : "video",
+            "image/bmp" : "bitmap",
+            "text/css" : "css",
+            "application/msword" : "word",
+            "image/gif" : "gif",
+            "application/x-gzip" : "gzip",
+            "text/html" : "html",
+            "image/jpeg" : "jpeg",
+            "application/x-javascript":  "js",
+            "audio/x-midi" : "midi",
+            "video/mpeg" : "video",
+            "audio/vorbis" : "ogg",
+            "application/ogg" : "ogg",
+            "application/pdf" : "pdf",
+            "image/png" : "png",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" : "ppt",
+            "video/quicktime" : "qt",
+            "image/svg+xml" : "svg",
+            "application/x-shockwave-flash" : "flash",
+            "application/x-tar" : "tar",
+            "image/tiff" : "tar",
+            "text/plain" : "text",
+            "audio/wav, audio/x-wav" : "wav",
+            "application/vnd.ms-excel" : "excel",
+            "application/xml" : "xml",
+            "application/zip" : "zip"
+        }
 
         function MediaService() {
         }
@@ -748,8 +782,8 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             });
         };
 
-        MediaService.prototype.deleteItem = function(mediaId) {
-            return $http.delete('/_api/media/' + mediaId);
+        MediaService.prototype.deleteItem = function(fileName) {
+            return $http.delete('/_media/' + fileName);
         };
 
         MediaService.prototype.uploadItem = function(formData) {
@@ -806,12 +840,17 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             return src;
         };
 
-        MediaService.prototype.getType = function(item) {
+        MediaService.prototype.getTypeShortName = function(item) {
+            
+            if(mimeTypeShortNames[item.type]) {
+                return mimeTypeShortNames[item.type];
+            }
+            
             try {
-                return item.type.split('/')[1].toUpperCase();    
+                return item.fileName.split('\.')[1].toLowerCase();
             } catch(err) {
                 $log.warn(err);
-                return '???';
+                return '???'
             }
         };
 
@@ -836,8 +875,8 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 (function() {
     
     var tmpl =
-        `<div class="row media-item media-file-select" ng-click="selectFiles()">
-            <div class="col-sm-12">
+        `<div class="list-group col-sm-11">
+            <div class="media-item list-group-item media-file-select" ng-click="selectFiles()">
                 <div class="media-item-part clearfix">
                     <input type="file" multiple="true" class="ng-hide">
                     <h3><span class="add-icon">+</span> 
@@ -850,42 +889,40 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 
         <form ng-if="files.length > 0" ng-submit="upload(uploadForm)" name="uploadForm" 
               class="form-horizontal media-upload-form" novalidate>
-            <h3 style="margin-left: -15px">Prepare media to upload</h3>
-            <div ng-repeat="file in files" ng-click="showItem(item)" class="row media-item">
-                <div class="col-sm-10">
-                    <div class="media-item-part clearfix">
-                        <div class="media-item-preview">
-                            <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" alt="{{file.item.name}}">
-                            <span class="item-type" ng-if="!isImage(file.item)">{{getType(file.item)}}</span>
-                        </div>     
-                        <div class="media-item-edit">
-                            <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
-                            <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
-                                        placeholder="Add tags to help manage your files">
-                                <auto-complete source="getMatchingTags($query)"></auto-complete>
-                            </tags-input>                        
-                        </div>                 
+            <div class="list-group col-sm-11">           
+                <h3>Prepare media to add</h3>
+                <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   
+                        <div class="media-item-part clearfix">
+                            <div class="media-item-preview pull-left">
+                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
+                                     alt="{{file.item.name}}" title="{{file.item.type}}">
+                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
+                            </div>   
+                            <div class="btn-group pull-right">
+                                <button type="button" class="btn btn-default" ng-click="remove(file)" title="Remove">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </button>      
+                            </div>
+                            <div class="media-item-edit">
+                                <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
+                                <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
+                                            placeholder="Add tags to help manage your files">
+                                    <auto-complete source="getMatchingTags($query)"></auto-complete>
+                                </tags-input>     
+                                <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   
+                            </div>                 
+                        </div>
                     </div>
-                </div>
-                <div class="col-sm-2">
-                    <div class="btn-group media-item-controls media-item-part">
-                        <button type="button" class="btn btn-default" ng-click="remove(file)" title="Remove">
-                            <span class="glyphicon glyphicon-trash"></span>
-                        </button>      
-                    </div>
-                </div>
+                </div>                              
             </div>
-            
-            <div class="row">
-                <div class="action-buttons">
-                    <button type="submit" class="btn btn-primary">                    
-                        <ng-pluralize count="files.length"
-                                      when="{'one': 'Add file', 'other': 'Add {} files'}">
-                        </ng-pluralize>
-                    </button>
-                    <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
-                </div>                
-            </div>  
+            <div class="action-buttons col-sm-11">
+                <button type="submit" class="btn btn-primary">                    
+                    <ng-pluralize count="files.length"
+                                  when="{'one': 'Add file', 'other': 'Add {} files'}">
+                    </ng-pluralize>
+                </button>
+                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+            </div>     
         </form>`;
     
     var adminApp = angular.module('adminApp');
