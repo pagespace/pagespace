@@ -67,7 +67,7 @@ class MediaHandler extends BaseHandler {
                 if(req.query.label) {
                     const variation = model.variations.find((variation) => variation.label === req.query.label.trim());
                     if(variation) {
-                        mediaPath = MediaHandler.getVariationPath(model.path, variation);
+                        mediaPath = this._getVariationPath(model.path, variation);
                     }
                 }
     
@@ -113,7 +113,7 @@ class MediaHandler extends BaseHandler {
             const basePath = path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path);
             //get variations
             const paths = [basePath].concat(model.variations.map((variation) => {
-                return MediaHandler.getVariationPath(basePath, variation);
+                return this._getVariationPath(basePath, variation);
             }));
             //unlink
             const rollbackPromises = paths.map((filePath) => {
@@ -250,8 +250,8 @@ class MediaHandler extends BaseHandler {
             description: item.description || '',
             tags: item.tags,
             type: item.file.type,
-            path: item.file.path,
-            fileName: path.basename(item.file.name), //save path relative to media dir
+            path: path.relative(this.mediaDir, item.file.path),  //save path relative to media dir
+            fileName: path.basename(item.file.name),
             size: item.file.size,
             width: dimensions.width || null,
             height: dimensions.height || null,
@@ -273,7 +273,7 @@ class MediaHandler extends BaseHandler {
                 //collect new files to rollback (remove)
                 const baseFile = result[1].value().path;
                 const newUploadPaths = [ baseFile ].concat(result.slice(2).map((pathResult) => {
-                    return MediaHandler.getVariationPath(baseFile, pathResult.value());
+                    return this._getVariationPath(baseFile, pathResult.value());
                 }));
                 const err = savePromise.reason();
                 err.paths = newUploadPaths;
@@ -292,12 +292,12 @@ class MediaHandler extends BaseHandler {
                 logger.debug(`Rolling back file upload after mongoose save failure (${filePath})`);
                 return unlinkAsync(filePath);
             });
-            return Promise.all(rollbackPromises).then((results) => {
+            return Promise.all(rollbackPromises).then(() => {
                 //successful rollback
                 logger.debug('Roll back file upload after mongoose save failure was successful');
                 return {
                     duplicate: true
-                }
+                };
             }).catch((err) => {
                 logger.warn(err, 'Unable to rollback file modifications after mongoose save failure');
                 throw err;
@@ -355,6 +355,13 @@ class MediaHandler extends BaseHandler {
         });
     }
 
+    _getVariationPath(basePath, variation) {
+        const parsedPath  = path.parse(basePath);
+        let mediaPath = path.join(parsedPath.dir, `${parsedPath.name}.${variation.label}${parsedPath.ext}`);
+        mediaPath = path.isAbsolute(mediaPath) ? mediaPath : path.join(this.mediaDir, mediaPath);
+        return mediaPath;
+    }
+
     static _isSupportedImage(item) {
 
         const imageTypes = [
@@ -370,13 +377,6 @@ class MediaHandler extends BaseHandler {
             'jpeg' : 'jpg'
         };
         return extensions[format] || format;
-    }
-
-    static getVariationPath(basePath, variation) {
-        const parsedPath  = path.parse(basePath);
-        let mediaPath = path.join(parsedPath.dir, `${parsedPath.name}.${variation.label}${parsedPath.ext}`);
-        mediaPath = path.isAbsolute(mediaPath) ? mediaPath : path.join(mediaDir, mediaPath);
-        return mediaPath;
     }
 }
 
