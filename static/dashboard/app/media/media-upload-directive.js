@@ -26,7 +26,8 @@
                                 <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
                             </div>   
                             <div class="btn-group pull-right">
-                                <button type="button" class="btn btn-default" ng-click="remove(file)" title="Remove">
+                                <button type="button" class="btn btn-default" title="Remove"
+                                        ng-click="remove(file)" ng-disabled="uploading">
                                     <span class="glyphicon glyphicon-trash"></span>
                                 </button>      
                             </div>
@@ -43,12 +44,12 @@
                 </div>                              
             </div>
             <div class="action-buttons col-sm-11">
-                <button type="submit" class="btn btn-primary">                    
+                <button type="submit" class="btn btn-primary" ng-disabled="uploading">                    
                     <ng-pluralize count="files.length"
                                   when="{'one': 'Add file', 'other': 'Add {} files'}">
                     </ng-pluralize>
                 </button>
-                <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+                <button ng-click="cancel()" type="button" class="btn btn-default" ng-disabled="uploading">Cancel</button>
             </div>     
         </form>`;
     
@@ -104,6 +105,7 @@
             },
             controller: function ($scope, $q, $location, mediaService) {
 
+                $scope.uploading = false;
                 $scope.isImage = mediaService.isImage;
                 $scope.getMimeClass = mediaService.getMimeClass;
 
@@ -159,6 +161,7 @@
                 };
 
                 $scope.upload = function() {
+
                     var formData = new FormData();
                     var i, file;
                     for (i = 0; i < $scope.files.length; i++) {
@@ -170,7 +173,7 @@
                     }
 
                     mediaService.uploadItem(formData).success(function() {
-                        $location.path('/media');
+                        $scope.uploading = true;
                         $scope.showSuccess('Upload successful');
                         $scope.cancel();
                         $scope.getItems();
@@ -178,6 +181,8 @@
                         $scope.cancel();
                         $scope.getItems();
                         $scope.showError('Error uploading file', err);
+                    }).finally(function() {
+                        $scope.uploading = false;
                     });
                     $scope.showInfo('Upload in progress...');
                 };
