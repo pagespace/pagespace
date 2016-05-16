@@ -27,15 +27,12 @@ const
     send = require('send'),
     Promise = require('bluebird'),
     formidable = require('formidable'),
-    sizeOf = require('image-size'),
+    sharp = require('sharp'),
     BaseHandler = require('./base-handler');
 
 const 
     writeFileAsync = Promise.promisify(fs.writeFile),
-    unlinkAsync = Promise.promisify(fs.unlink),
-    sizeOfAsync = Promise.promisify(sizeOf);
-
-let sharp;
+    unlinkAsync = Promise.promisify(fs.unlink);
 
 class MediaHandler extends BaseHandler {
     
@@ -75,7 +72,10 @@ class MediaHandler extends BaseHandler {
                 if(req.query.label) {
                     const variation = model.variations.find((variation) => variation.label === req.query.label.trim());
                     if(variation) {
-                        mediaPath = path.isAbsolute(variation.path) ?  variation.path : path.join(mediaDir, variation.path);
+                        //mediaPath = path.isAbsolute(variation.path) ?  variation.path : path.join(mediaDir, variation.path);
+                        const parsedPath  = path.parse(model.path);
+                        mediaPath = path.join(parsedPath.dir, `${parsedPath.name}.${variation.label}${parsedPath.ext}`);
+                        mediaPath = path.isAbsolute(mediaPath) ? mediaPath : path.join(mediaDir, mediaPath);
                     }
                 }
     
@@ -130,8 +130,6 @@ class MediaHandler extends BaseHandler {
 
     doPost(req, res, next) {
 
-        const self = this;
-
         const logger = this.getRequestLogger(this.logger, req);
 
         if(!this.mediaDir) {
@@ -145,6 +143,7 @@ class MediaHandler extends BaseHandler {
         form.uploadDir = this.mediaDir;
         form.keepExtensions = true;
         form.type = 'multipart';
+        form.multiples = true;
     
         const formParseAsync = Promise.promisify(form.parse, { context: form, multiArgs: true });
         formParseAsync(req).catch((err) => {
@@ -152,75 +151,95 @@ class MediaHandler extends BaseHandler {
             logger.error(err, 'Error uploading media item');
             throw err;
         }).spread((fields, files) => {
-            //get image dimensions
-            const dimensions =  files.file.type.startsWith('image') ? sizeOfAsync(files.file.path) : {};
-            logger.debug('Dimensions of %s are w:%s, h:%s', files.file.path, dimensions.width, dimensions.height);
-    
-            return Promise.all([ fields,  files, dimensions ].map((promise) => {
-                return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
-            }));
-        }).then((promises) => {
-            //step to handle unknown image dimensions
-            const fields = promises[0].value();
-            const files = promises[1].value();
-            const dimensionsPromise = promises[2];
-    
-            let dimensions;
-            if(dimensionsPromise.isRejected()) {
-                logger.warn('Unable to determine image dimensions for %s', files.file.path);
-                dimensions = Promise.resolve({});
-            } else {
-                dimensions = dimensionsPromise.value();
-            }
-            return [ fields, files, dimensions ];
-        }).spread((fields, files, dimensions) => {
-            //generate image variatiations
-            let variationPromises = [];
-            const file = files.file;
-            if(file.type.startsWith('image') && dimensions.width && dimensions.height) {
-                variationPromises = this.imageVariations.map((variation) => {
-                    return resizeImage(file.path, variation.label, dimensions, variation.size, variation.format, logger);
-                });
-            }
-            return [ fields, files, dimensions ].concat(variationPromises);
-        }).spread(function(fields, files, dimensions) { //dont use fat arrow so we can get arguments
-            //save media to db
-            const tags = fields.tags ? JSON.parse(fields.tags) : [];
-    
-            const Media = self.dbSupport.getModel('Media');
+            var uploadItems = Object.keys(files).map((fileKey, i) => {
+                const file = files[fileKey];
 
-            const variations = [].slice.call(arguments).slice(3) || []; //extra args are the possible image variations
-    
-            const media = new Media({
-                name: fields.name,
-                description: fields.description || '',
-                tags: tags,
-                type: files.file.type,
-                path: files.file.path,
-                fileName: path.basename(files.file.name), //save path relative to media dir
-                size: files.file.size,
-                width: dimensions.width || null,
-                height: dimensions.height || null,
-                variations: variations.map((variation) => {
-                    //save paths relative to media dir
-                    const updatedVariation = Object.assign({}, variation);
-                    updatedVariation.path = path.basename(variation.path);
-                    return updatedVariation;
-                })
+                let tags = [];
+                try {
+                    tags = JSON.parse(fields[`tags_${i}`]);
+                } catch(err) {}
+
+                return {
+                    file: file,
+                    name: fields[`name_${i}`],
+                    description: fields[`description_${i}`],
+                    tags: tags
+                };
             });
-    
-            const saveAsync = Promise.promisify(media.save, { context: media });
-            return Promise.all([ saveAsync(), files.file ].concat(variations).map((promise) => {
-                return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
-            }));
-        }).then((result) => {
+
+            return Promise.map(uploadItems, (item) => {
+               return MediaHandler._isSupportedImage(item) ? this._processImageUpload(item) : this._processUpload(item);
+            });
+        }).then((models) => {
+            if(models.every(model => model.duplicate)) {
+                next(new Error('All new files have already been uploaded.'));
+            } else {
+                res.status(201);
+                res.json(models);
+            }
+        });
+    }
+
+    _processImageUpload(uploadItem) {
+        const logger = this.logger;
+
+        let dimensions = {
+            width: 0,
+            height: 0
+        };
+
+        const image = sharp(uploadItem.file.path);
+
+        //get image size
+        return image.metadata().then((meta) => {
+            dimensions = {
+                width: meta.width,
+                height: meta.height
+            };
+            logger.debug(`Dimensions of ${uploadItem.file.path} are w:${dimensions.width}, h:${dimensions.height}`);
+
+            //create image variations
+            let variationPromises = this.imageVariations.map((variation) => {
+                return this._resizeImage(image, variation.label, meta, variation.size, variation.format || meta.format);
+            });
+            return Promise.all(variationPromises);
+        }).then((variations) => {
+            return this._processUpload(uploadItem, dimensions, variations);
+        });
+    }
+
+    _processUpload(item, dimensions, variations) {
+
+        const logger = this.logger;
+
+        dimensions = dimensions || {};
+        variations = variations || [];
+
+        const Media = this.dbSupport.getModel('Media');
+
+        const media = new Media({
+            name: item.name,
+            description: item.description || '',
+            tags: item.tags,
+            type: item.file.type,
+            path: item.file.path,
+            fileName: path.basename(item.file.name), //save path relative to media dir
+            size: item.file.size,
+            width: dimensions.width || null,
+            height: dimensions.height || null,
+            variations: variations
+        });
+
+        const saveAsync = Promise.promisify(media.save, { context: media });
+        return Promise.all([ saveAsync(), item.file ].concat(variations).map((promise) => {
+            return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
+        })).then((result) => {
             //send response
             const savePromise = result[0];
             if(savePromise.isFulfilled()) {
                 //success
                 const model = savePromise.value();
-                res.status(201);
-                res.json(model);
+                return Promise.resolve(model);
             } else {
                 //failure
                 //collect new files to rollback (remove)
@@ -235,89 +254,94 @@ class MediaHandler extends BaseHandler {
         }).catch((err) => {
             //rollback upload
             logger.error(err);
-    
+
             if(err.code && err.code === 11000) {
                 err.message = 'This file has already been uploaded';
                 err.status = 400;
             }
-            const rollbackPromises = err.paths.map((path) => {
-                logger.debug(`Rolling back file upload after mongoose save failure (${path})`);
-                return unlinkAsync(path);
+            const rollbackPromises = err.paths.map((filePath) => {
+                logger.debug(`Rolling back file upload after mongoose save failure (${filePath})`);
+                return unlinkAsync(filePath);
             });
-            Promise.all(rollbackPromises).then(() => {
+            return Promise.all(rollbackPromises).then((results) => {
                 //successful rollback
                 logger.debug('Roll back file upload after mongoose save failure was successful');
-                next(err);
+                return {
+                    duplicate: true
+                }
             }).catch((err) => {
                 logger.warn(err, 'Unable to rollback file modifications after mongoose save failure');
-                next(err);
+                throw err;
             });
         });
+    }
+
+    _resizeImage(image, label, fromDim, toDim, format) {
+
+        const logger = this.logger;
+
+        const filePath = image.options.fileIn;
+        const dir = path.dirname(filePath);
+        const ext = path.extname(filePath);
+        const base = path.basename(filePath);
+        const newBase = base.substring(0, base.length - ext.length) + '.' + label;
+
+        const fileName =  newBase + '.' + MediaHandler.getExtensionForFormat(format);
+        const toPath = path.join(dir, fileName);
+
+        let newSize = 0;
+        let toWidth, toHeight;
+
+        const ratio = fromDim.width / fromDim.height;
+        if(typeof toDim === 'number') {
+            if(fromDim.width > fromDim.height) {
+                toWidth = toDim;
+                toHeight = toDim / ratio;
+            } else {
+                toHeight = toDim;
+                toWidth = toDim * ratio;
+            }
+        } else if(typeof toDim.width === 'number' && typeof toDim.height === 'number') {
+            toWidth = toDim.width;
+            toHeight = toDim.height;
+        } else {
+            throw new Error('Cannot resize image for %s without a width or height', label);
+        }
+
+        return image.resize(parseInt(toWidth, 10), parseInt(toHeight, 10))
+            .toFormat(format)
+            .toBuffer().then((buffer) => {
+            logger.debug('Resize OK. Saving image as %s', format);
+            newSize = buffer.length;
+            return writeFileAsync(toPath, buffer);
+        }).then(() => {
+            logger.debug('New image save to %s', toPath);
+            return {
+                label: label,
+                format: format,
+                size: newSize,
+                width: Math.round(toWidth),
+                height: Math.round(toHeight)
+            };
+        });
+    }
+
+    static _isSupportedImage(item) {
+
+        const imageTypes = [
+            'image/jpeg',
+            'image/png'
+        ];
+
+        return imageTypes.indexOf(item.file.type) > -1;
+    }
+
+    static getExtensionForFormat(format) {
+        const extensions = {
+            'jpeg' : 'jpg'
+        };
+        return extensions[format] || format;
     }
 }
 
 module.exports = new MediaHandler();
-
-function resizeImage(filePath, label, fromDim, toDim, format, logger) {
-
-    try {
-        sharp = sharp || require('sharp');
-    } catch(err) {
-        logger.error(err);
-        sharp = null;
-    }
-
-    if(!sharp) {
-        logger.warn('Sharp is not installed, image variations will not be created');
-        return Promise.resolve();
-    }
-
-    const dir = path.dirname(filePath);
-    const ext = path.extname(filePath);
-    const base = path.basename(filePath);
-    const newBase = base.substring(0, base.length - ext.length) + '.' + label;
-    format = format || ext.substr(1);
-    if(format === 'jpg') {
-        format = 'jpeg';
-    }
-
-    const fileName =  newBase + '.' + format;
-    const toPath = path.join(dir, fileName);
-
-    let newSize = 0;
-    const ratio = fromDim.width / fromDim.height;
-
-    let toWidth, toHeight;
-    if(typeof toDim === 'number') {
-        if(fromDim.width > fromDim.height) {
-            toWidth = toDim;
-            toHeight = toDim / ratio;
-        } else {
-            toHeight = toDim;
-            toWidth = toDim * ratio;
-        }
-    } else if(typeof toDim.width === 'number' && typeof toDim.height === 'number') {
-        toWidth = toDim.width;
-        toHeight = toDim.height;
-    } else {
-        throw new Error('Cannot resize image for %s without a width or height', label);
-    }
-
-    const image = sharp(filePath);
-    return image.metadata().then(() => {
-        return image.resize(parseInt(toWidth, 10), parseInt(toHeight, 10)).toFormat(format).toBuffer();
-    }).then((buffer) => {
-        logger.debug('Resize OK. Saving image as %s', format);
-        newSize = buffer.length;
-        return writeFileAsync(toPath, buffer);
-    }).then(() => {
-        logger.debug('New image save to %s', toPath);
-        return {
-            label: label,
-            path: toPath,
-            size: newSize,
-            width: Math.round(toWidth),
-            height: Math.round(toHeight)
-        };
-    });
-}

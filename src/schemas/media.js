@@ -80,7 +80,7 @@ function generateSchema() {
                 type: String,
                 required: true
             },
-            path: {
+            format: {
                 type: String,
                 required: true
             },

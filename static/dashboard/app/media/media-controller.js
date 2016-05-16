@@ -6,18 +6,55 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('MediaController', function($scope, $rootScope, $location, mediaService) {
+adminApp.controller('MediaController', function($scope, $rootScope, $location, $window, $q, mediaService) {
     $rootScope.pageTitle = 'Media';
 
-    $scope.isImage = mediaService.isImage;
-    $scope.getMimeClass = mediaService.getMimeClass;
-    $scope.getSrcPath = mediaService.getSrcPath;
     $scope.mediaItems = [];
+    $scope.filteredItems = [];
     $scope.availableTags = [];
     $scope.selectedTags = [];
 
-    $scope.showItem = function(item) {
-        $location.path('/media/' + item._id);
+    $scope.getType = mediaService.getType;
+    $scope.getSrcPath = mediaService.getSrcPath;
+
+    $scope.toggleEditing = function (item) {
+        item._editing = !item._editing
+    };
+
+    $scope.setItems = function (items) {
+        $scope.mediaItems = items;
+    };
+    
+    $scope.getItems = function() {
+        mediaService.getItems().success(function(items) {
+            $scope.setItems(items);
+            $scope.updateFilter();
+
+            //combine all tags into one
+            var availableTags = items.reduce(function(allTags, item) {
+                return allTags.concat(item.tags.filter(function(tag) {
+                    return tag.text; //only return tags with text property
+                }));
+            }, []);
+
+            //remove dups
+            var seen = {};
+            availableTags = availableTags.filter(function(tag) {
+                return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
+            });
+            $scope.availableTags = availableTags;
+        }).error(function(err) {
+            $scope.showError('Error getting media items', err);
+        });
+    };
+
+    $scope.getMatchingTags = function(text) {
+        text = text.toLowerCase();
+        return $q(function(resolve) {
+            resolve($scope.availableTags.filter(function(tag) {
+                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+            }));
+        });
     };
 
     $scope.toggleTag = function(tag) {
@@ -26,6 +63,12 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         } else {
             selectTag(tag);
         }
+    };
+    
+    $scope.addTag = function(tag) {
+        if($scope.availableTags.indexOf(tag) < 0) {
+            $scope.availableTags.push(tag);
+        }    
     };
 
     function selectTag(newTag) {
@@ -36,7 +79,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         if(!alreadyExists) {
             $scope.selectedTags.push(newTag);
         }
-        updateFilter();
+        $scope.updateFilter();
     }
 
     function deselectTag(oldTag) {
@@ -44,10 +87,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
         $scope.selectedTags = $scope.selectedTags.filter(function(tag) {
             return oldTag.text !== tag.text;
         });
-        updateFilter();
+        $scope.updateFilter();
     }
 
-    function updateFilter() {
+    $scope.updateFilter = function() {
 
         if($scope.selectedTags.length === 0) {
             $scope.filteredItems = $scope.mediaItems;
@@ -62,27 +105,8 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, m
             });
         });
     }
-
-    mediaService.getItems().success(function(items) {
-        $scope.mediaItems = items;
-        updateFilter();
-
-        //combine all tags into one
-        var availableTags = items.reduce(function(allTags, item) {
-            return allTags.concat(item.tags.filter(function(tag) {
-                return tag.text; //only return tags with text property
-            }));
-        }, []);
-
-        //remove dups
-        var seen = {};
-        availableTags = availableTags.filter(function(tag) {
-            return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
-        });
-        $scope.availableTags = availableTags;
-    }).error(function(err) {
-        $scope.showError('Error getting media items', err);
-    });
+    
+   
 });
 
 })();

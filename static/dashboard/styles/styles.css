@@ -262,35 +262,86 @@ h4 {
 /**
  * Media
  */
+.media-items-container {
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
 .media-item {
-    float: left;
-    border: 1px solid #cccccc;
-    padding: 15px;
-    margin-right: 40px;
-    margin-bottom: 40px;
-    cursor: pointer;
-    width: 240px;
-    overflow: hidden;
-
-}
-.media-item h3 {
-    margin-top: 0;
-    height: 1.2em;
-    overflow: hidden;
-    white-space: nowrap;
-}
-.media-item p {
-    white-space: nowrap;
-}
-.media-item-wrap {
-    width: 200px;
-    height: 200px;
-    overflow: hidden;
+    outline: 1px solid #D7DADE;
     margin-bottom: 1em;
 }
-.media-item-wrap img {
-    max-width: 100%;
-    max-height: 100%;
+.media-file-select {
+    outline-style: dashed;
+    cursor: pointer;
+}
+.media-item-dragging .media-file-select,
+.media-file-select:hover {
+    background: #D7DADE;
+}
+.media-file-select h3 {
+    margin-bottom: 0;
+}
+.media-file-select .add-icon {
+    display: inline-block;
+    width: 30px;
+    border: 1px solid #8C8C8E;
+    text-align: center;
+    border-radius: 4px;
+}
+.media-file-select .drop-text {
+    display: none;
+}
+.media-item-dragging .add-text {
+    display: none;
+}
+.media-item-dragging .drop-text {
+    display: inline;
+}
+.media-item-part {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+.media-item-part h3 {
+    margin-top: 0;
+}
+.media-item-preview {
+    position: relative;
+    float: left;
+    width: 164px;
+    background: #D7DADE;
+    padding: 7px;
+    text-align: center;
+    margin-right: 15px;
+}
+.media-item-preview .item-type {
+    position: absolute;
+    top: 66px;
+    color: #F3F3F3;
+    font-weight: bold;
+    font-size: 26px;
+    left: 38px;
+}
+.media-item-edit {
+    float: left;
+    width: 630px;
+}
+.media-item-edit input {
+    margin-bottom: 8px;
+}
+.media-item-edit .tags {
+    border-width: 0;
+}
+.media-item-controls {
+    float: right;
+}
+.media-item-preview img {
+    max-width: 150px;
+    max-height: 150px;
+}
+.media-upload-form .action-buttons {
+    margin-top: 0;
 }
 .media-item-full img {
     margin-bottom: 20px;
