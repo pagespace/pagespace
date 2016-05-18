@@ -133,7 +133,7 @@
                         var file = newFiles[i];
 
                         var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
-                        var tooBig = file.size > 1024 * 100; //too big. TODO: inform user
+                        var tooBig = file.size > 1024 * 1024 * 100; //too big. TODO: inform user
 
                         if(alreadySelected || tooBig) {
                             continue;
