@@ -65,9 +65,12 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         }
     };
     
-    $scope.addTag = function(tag) {
-        if($scope.availableTags.indexOf(tag) < 0) {
-            $scope.availableTags.push(tag);
+    $scope.addTag = function(newTag) {
+        var exists = $scope.availableTags.some(function(availableTag) {
+            return availableTag.text === newTag.text;
+        });
+        if(!exists) {
+            $scope.availableTags.push(newTag);
         }    
     };
 

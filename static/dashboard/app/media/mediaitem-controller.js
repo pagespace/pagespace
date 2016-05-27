@@ -16,8 +16,7 @@
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
-
-
+        
         $scope.cancel = function() {
             $location.path('/media');
         };

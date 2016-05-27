@@ -280,70 +280,6 @@
 })();
 
 (function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('bsHasError', function() {
-        return {
-            restrict: 'A',
-            link: function(scope, element, attrs) {
-                //find parent form
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.bsHasError;
-
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    if(field) {
-                        scope.$watch(function() {
-                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
-                            element.toggleClass('has-success', field.$valid && field.$dirty);
-                        });
-                    }
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('psFieldMatch', function() {
-        return {
-            require: 'ngModel',
-            link: function (scope, element, attrs, model) {
-
-                function getClosestFormName(element) {
-                    var parent = element.parent();
-                    if(parent[0].tagName.toLowerCase() === 'form') {
-                        return parent.attr('name') || null;
-                    } else {
-                        return getClosestFormName(parent);
-                    }
-                }
-                var formName = getClosestFormName(element);
-                var fieldName = attrs.psFieldMatch;
-                if(formName && fieldName) {
-                    var field = scope[formName][fieldName];
-                    model.$parsers.push(function (value) {
-                        var valid = value === field.$viewValue;
-                        model.$setValidity('psFieldMatch', valid);
-                        return valid ? value : undefined;
-                    });
-                }
-            }
-        };
-    });
-})();
-
-
-(function() {
 
     var adminApp = angular.module('adminApp');
     adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
@@ -495,18 +431,6 @@
         };
     });
 })();
-(function() {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MacrosController', function($scope, $rootScope) {
-        $rootScope.pageTitle = 'Macros';
-    });
-
-})();
 
 (function() {
 
@@ -574,9 +498,12 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         }
     };
     
-    $scope.addTag = function(tag) {
-        if($scope.availableTags.indexOf(tag) < 0) {
-            $scope.availableTags.push(tag);
+    $scope.addTag = function(newTag) {
+        var exists = $scope.availableTags.some(function(availableTag) {
+            return availableTag.text === newTag.text;
+        });
+        if(!exists) {
+            $scope.availableTags.push(newTag);
         }    
     };
 
@@ -899,7 +826,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                                 <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
                             </div>   
                             <div class="btn-group pull-right">
-                                <button type="button" class="btn btn-default" title="Remove"
+                                <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
                                         ng-click="remove(file)" ng-disabled="uploading">
                                     <span class="glyphicon glyphicon-trash"></span>
                                 </button>      
@@ -976,7 +903,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                     this.classList.remove('media-item-dragging');
                 }, false);
             },
-            controller: function ($scope, $q, $location, mediaService) {
+            controller: function ($scope, $window, $q, $location, mediaService) {
 
                 $scope.uploading = false;
                 $scope.isImage = mediaService.isImage;
@@ -1035,6 +962,13 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 
                 $scope.upload = function() {
 
+                    if($scope.files.length > 4) {
+                        var msg = 'Are ready to upload the chosen files?';
+                        if (!$window.confirm(msg)) {
+                            return;
+                        }
+                    }
+
                     var formData = new FormData();
                     var i, file;
                     for (i = 0; i < $scope.files.length; i++) {
@@ -1042,27 +976,41 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                         formData.append('file_' + i, file);
                         formData.append('name_' + i, file.item.name);
                         formData.append('description_' + i , file.item.description);
-                        formData.append('tags_' + i, file.item.tags);
+                        formData.append('tags_' + i, JSON.stringify(file.item.tags));
                     }
 
                     mediaService.uploadItem(formData).success(function() {
                         $scope.uploading = true;
                         $scope.showSuccess('Upload successful');
-                        $scope.cancel();
-                        $scope.getItems();
                     }).error(function(err) {
-                        $scope.cancel();
-                        $scope.getItems();
                         $scope.showError('Error uploading file', err);
                     }).finally(function() {
+                        $scope.files = [];
+                        $scope.getItems();
                         $scope.uploading = false;
                     });
                     $scope.showInfo('Upload in progress...');
                 };
 
                 $scope.cancel = function() {
-                    $scope.files = [];
+                    if($scope.files.length > 4) {
+                        var msg = 'Really cancel this upload?';
+                        if ($window.confirm(msg)) {
+                            $scope.files = [];
+                        }
+                    }
                 };
+
+                var confirmExitMsg = 'There are files ready to upload. Are you sure you want to navigate away?';
+                $scope.$on('$locationChangeStart', function (ev) {
+                    if ($scope.files.length > 0 && !$window.confirm(confirmExitMsg)) {
+                        ev.preventDefault();
+                    }
+                });
+
+                $window.onbeforeunload = function() {
+                    return $scope.files.length > 0 ? confirmExitMsg : undefined;
+                }
             }
         }
     });
@@ -1086,8 +1034,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
-
-
+        
         $scope.cancel = function() {
             $location.path('/media');
         };
@@ -1833,6 +1780,82 @@ adminApp.directive('pageHolder', function() {
 });
 
 })();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MacrosController', function($scope, $rootScope) {
+        $rootScope.pageTitle = 'Macros';
+    });
+
+})();
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('bsHasError', function() {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                //find parent form
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.bsHasError;
+
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    if(field) {
+                        scope.$watch(function() {
+                            element.toggleClass('has-error', field.$invalid && (field.$dirty || !!scope.submitted));
+                            element.toggleClass('has-success', field.$valid && field.$dirty);
+                        });
+                    }
+                }
+            }
+        };
+    });
+})();
+
+
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('psFieldMatch', function() {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, model) {
+
+                function getClosestFormName(element) {
+                    var parent = element.parent();
+                    if(parent[0].tagName.toLowerCase() === 'form') {
+                        return parent.attr('name') || null;
+                    } else {
+                        return getClosestFormName(parent);
+                    }
+                }
+                var formName = getClosestFormName(element);
+                var fieldName = attrs.psFieldMatch;
+                if(formName && fieldName) {
+                    var field = scope[formName][fieldName];
+                    model.$parsers.push(function (value) {
+                        var valid = value === field.$viewValue;
+                        model.$setValidity('psFieldMatch', valid);
+                        return valid ? value : undefined;
+                    });
+                }
+            }
+        };
+    });
+})();
+
+
 (function() {
 
 /**

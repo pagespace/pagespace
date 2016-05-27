@@ -26,7 +26,7 @@
                                 <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
                             </div>   
                             <div class="btn-group pull-right">
-                                <button type="button" class="btn btn-default" title="Remove"
+                                <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
                                         ng-click="remove(file)" ng-disabled="uploading">
                                     <span class="glyphicon glyphicon-trash"></span>
                                 </button>      
@@ -103,7 +103,7 @@
                     this.classList.remove('media-item-dragging');
                 }, false);
             },
-            controller: function ($scope, $q, $location, mediaService) {
+            controller: function ($scope, $window, $q, $location, mediaService) {
 
                 $scope.uploading = false;
                 $scope.isImage = mediaService.isImage;
@@ -162,6 +162,13 @@
 
                 $scope.upload = function() {
 
+                    if($scope.files.length > 4) {
+                        var msg = 'Are ready to upload the chosen files?';
+                        if (!$window.confirm(msg)) {
+                            return;
+                        }
+                    }
+
                     var formData = new FormData();
                     var i, file;
                     for (i = 0; i < $scope.files.length; i++) {
@@ -169,27 +176,41 @@
                         formData.append('file_' + i, file);
                         formData.append('name_' + i, file.item.name);
                         formData.append('description_' + i , file.item.description);
-                        formData.append('tags_' + i, file.item.tags);
+                        formData.append('tags_' + i, JSON.stringify(file.item.tags));
                     }
 
                     mediaService.uploadItem(formData).success(function() {
                         $scope.uploading = true;
                         $scope.showSuccess('Upload successful');
-                        $scope.cancel();
-                        $scope.getItems();
                     }).error(function(err) {
-                        $scope.cancel();
-                        $scope.getItems();
                         $scope.showError('Error uploading file', err);
                     }).finally(function() {
+                        $scope.files = [];
+                        $scope.getItems();
                         $scope.uploading = false;
                     });
                     $scope.showInfo('Upload in progress...');
                 };
 
                 $scope.cancel = function() {
-                    $scope.files = [];
+                    if($scope.files.length > 4) {
+                        var msg = 'Really cancel this upload?';
+                        if ($window.confirm(msg)) {
+                            $scope.files = [];
+                        }
+                    }
                 };
+
+                var confirmExitMsg = 'There are files ready to upload. Are you sure you want to navigate away?';
+                $scope.$on('$locationChangeStart', function (ev) {
+                    if ($scope.files.length > 0 && !$window.confirm(confirmExitMsg)) {
+                        ev.preventDefault();
+                    }
+                });
+
+                $window.onbeforeunload = function() {
+                    return $scope.files.length > 0 ? confirmExitMsg : undefined;
+                }
             }
         }
     });
