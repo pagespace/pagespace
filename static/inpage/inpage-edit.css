@@ -72,7 +72,7 @@
 .ps-include-editor {
     position: absolute;
     z-index: 100;
-    transition: 300ms linear;
+    transition: 150ms linear;
     background: #fff;
 }
 .ps-include-editor-titlebar {

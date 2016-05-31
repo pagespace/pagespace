@@ -5,8 +5,7 @@
 
         var pageId = $routeParams.pageId;
         var regionName = $routeParams.region;
-
-        $scope.added = false;
+        
         $scope.selectedPlugin = null;
 
         var pluginsPromise = pluginService.getPlugins();
@@ -57,7 +56,7 @@
                     $scope.page = pageService.depopulatePage($scope.page);
                     return pageService.updatePage(pageId, $scope.page);
                 }).then(function() {
-                    $scope.added = true;
+                    $scope.close();
                 }).catch(function(err) {
                     $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, regionIndex);
                 });
