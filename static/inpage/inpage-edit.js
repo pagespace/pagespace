@@ -376,7 +376,7 @@
         //animate to size
         window.setTimeout(function() {
             setIframeSize(editor, size);
-        }, 300);
+        }, 100);
 
 
         function setIframeSize(editor, size) {

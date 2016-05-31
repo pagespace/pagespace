@@ -14,7 +14,7 @@ gulp.task('lint-server', function() {
         .pipe(jshint.reporter('default'));
 });
 
-gulp.task('build-client', [ 'lint-client' ], function() {
+gulp.task('build-client', [], function() {
     return gulp.src('./static/dashboard/app/**/*.js')
         .pipe(concat('admin-app.js'))
         .pipe(gulp.dest('./static/dashboard/build'));

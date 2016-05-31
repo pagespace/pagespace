@@ -6,7 +6,7 @@
 
 
     <h4>Details</h4>
-    <p><a href="{{getSrcPath(item)}}" target="_blank">{{getSrcPath(item)}}</a></p>
+    <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
     <dl>
         <dt>Type:</dt>
         <dd>{{item.type}}</dd>
@@ -29,9 +29,6 @@
             </dl>
         </div>
     </div>
-
-    <h4>Delete media</h4>
-    <button type="button" class="btn btn-danger" ng-click="deleteItem(item)">Delete</button>
 </nav>
 <main class="main col-sm-8">
     <div class="notification-bar"><h4>{{item.name}}</h4></div>

@@ -16,19 +16,7 @@
         $scope.humanFileSize = mediaService.humanFileSize;
 
         var mediaId = $routeParams.mediaId;
-
-        $scope.deleteItem = function(item) {
-            var really = window.confirm('Really delete the item, ' + item.name + '?');
-            if(really) {
-                mediaService.deleteItem(item._id).success(function() {
-                    $location.path('/media');
-                    $scope.showInfo('Media: ' + item.name + ' removed.');
-                }).error(function(err) {
-                    $scope.showError('Error deleting page', err);
-                });
-            }
-        };
-
+        
         $scope.cancel = function() {
             $location.path('/media');
         };
