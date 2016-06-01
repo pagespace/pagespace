@@ -12,7 +12,7 @@
         };
 
         PublishingService.prototype.publish = function(draftIds) {
-            return $http.post('/_publish/pages', draftIds);
+            return $http.post('/_publish/pages', draftIds).then(res => res.data).catch(res => res.data);
         };
 
         return new PublishingService();

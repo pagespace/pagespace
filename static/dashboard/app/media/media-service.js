@@ -31,31 +31,31 @@
             "application/vnd.ms-excel" : "excel",
             "application/xml" : "xml",
             "application/zip" : "zip"
-        }
+        };
 
         function MediaService() {
         }
 
         MediaService.prototype.getItems = function() {
-            return $http.get('/_api/media');
+            return $http.get('/_api/media').then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getItem = function(mediaId) {
-            return $http.get('/_api/media/' + mediaId);
+            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.updateItem = function(mediaId, mediaData) {
-            return $http.put('/_api/media' + mediaId, mediaData);
+            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.updateItemText = function(mediaData, content) {
             return $http.put('/_media/' + mediaData.fileName, {
                 content: content
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.deleteItem = function(fileName) {
-            return $http.delete('/_media/' + fileName);
+            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.uploadItem = function(formData) {
@@ -64,18 +64,18 @@
                 withCredentials: true,
                 headers: { 'Content-Type': undefined },
                 transformRequest: angular.identity
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getItemText = function(item) {
-            return $http.get('/_media/' + item.fileName);
+            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getImageVariations = function() {
             return $http.get('/_dashboard/settings').then(function(res) {
                 var settings = res.data;
                 return settings.imageVariations || [];
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         //some utils

@@ -36,10 +36,10 @@
         });
 
         $scope.updateItemText = function() {
-            mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
+            mediaService.updateItemText($scope.item, $scope.itemText).then(function() {
                 $scope.showSuccess('Media item updated');
                 $location.path('/media');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Could not update text media', err);
             });
         };

@@ -97,8 +97,16 @@
 
             //macros
             when('/macros', {
-                templateUrl: '/_static/dashboard/app/macros/macros.html',
-                controller: 'MacrosController'
+                templateUrl: '/_static/dashboard/app/macros/macro-list.html',
+                controller: 'MacroListController'
+            }).
+            when('/macros/new', {
+                templateUrl: '/_static/dashboard/app/macros/macro.html',
+                controller: 'MacroController'
+            }).
+            when('/macros/:macroId', {
+                templateUrl: '/_static/dashboard/app/macros/macro.html',
+                controller: 'MacroController'
             }).
 
             //templates
@@ -180,7 +188,7 @@
                 $scope.viewPageUrlPublished = false;
                 pageService.getPages({
                     url:  url
-                }).success(function(pages) {
+                }).then(function(pages) {
                     if(pages.length  === 1) {
                         $scope.viewPageName = pages[0].name;
                         $scope.viewPageUrlPublished = pages[0].published;
@@ -247,19 +255,19 @@
         });
 
         function swapIncludes(pageId, regionName, includeOne, includeTwo) {
-            pageService.getPage(pageId).success(function(page) {
+            pageService.getPage(pageId).then(function(page) {
                 page = pageService.swapIncludes(page, regionName, parseInt(includeOne), parseInt(includeTwo));
                 page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).success(function() {
+                pageService.updatePage(pageId, page).then(function() {
                     $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
                         includeOne, includeTwo, pageId, regionName);
                     window.location.reload();
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.err = err;
                     $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
                         includeOne, includeTwo, pageId, regionName);
                 });
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.err = err;
                 $log.error(err, 'Unable to get page: %s', pageId);
             });
@@ -473,19 +481,19 @@
             },
             controller: function($log, $scope, pageService) {
                 $scope.remove = function(pageId, regionName, includeIndex) {
-                    pageService.getPage(pageId).success(function(page) {
+                    pageService.getPage(pageId).then(function(page) {
                         page = pageService.removeInclude(page, regionName, includeIndex);
                         page = pageService.depopulatePage(page);
-                        pageService.updatePage(pageId, page).success(function() {
+                        pageService.updatePage(pageId, page).then(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
                             window.location.reload();
-                        }).error(function(err) {
+                        }).catch(function(err) {
                             $scope.err = err;
                             $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
                         });
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.err = err;
                         $log.error(err, 'Unable to get page: %s', pageId);
                     });
@@ -501,11 +509,149 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('MacrosController', function($scope, $rootScope) {
-        $rootScope.pageTitle = 'Macros';
+    adminApp.controller('MacroController', function($log, $scope, $rootScope, $routeParams, $location, $window,
+                                                    macroService, templateService, pageService) {
+        $log.info('Showing Macro View');
+
+        var macroId = $routeParams.macroId;
+
+        $scope.macro = {
+        };
+
+        $scope.allPages = [];
+        var pagesPromise = pageService.getPages().then(function(pages) {
+            $scope.allPages = pages;
+        }).catch(function(err) {
+            $scope.showError('Couldn\'t get all pages', err);
+        });
+
+        $scope.templates = [];
+        var templatesPromise = templateService.doGetAvailableTemplates().then(function(templates) {
+            $log.info('Got available templates.');
+            $scope.templates = templates;
+            callback();
+        });
+
+
+        if(macroId) {
+            $scope.macroId = macroId;
+            $log.debug('Fetching macro data for id: %s...', macroId);
+            macroService.getMacro(macroId).then(function(macro) {
+                $log.debug('Got macro data:\n', JSON.stringify(macro, null, '\t'));
+                $scope.macro = macro;
+            }).catch(function(err) {
+                $log.error(err, 'Error getting macro');
+                $scope.showError('Error getting macro', err);
+            });
+        }
+        
+        $scope.cancel = function() {
+            $location.path('/macros');
+        };
+
+        $scope.save = function(form) {
+            if(form.$invalid) {
+                $window.scrollTo(0,0);
+                $scope.submitted = true;
+                return;
+            }
+
+            var macro = $scope.macro;
+
+            if(macroId) {
+                $log.info('Updating macro: %s...', macroId);
+                $log.debug('with data:\n%s', JSON.stringify($scope.macro, null, '\t'));
+                macroService.updateMacro(macroId, $scope.macro).then(function() {
+                    $log.info('Template updated successfully');
+                    $scope.showSuccess('Template updated.');
+                    $location.path('/macros');
+                }).catch(function(err) {
+                    $log.error(err, 'Error updating macro');
+                    $scope.showError('Error updating macro', err);
+                });
+            } else {
+                $log.info('Creating new macro...');
+                $log.debug('with data:\n%s', JSON.stringify($scope.macro, null, '\t'));
+                macroService.createMacro($scope.macro).then(function() {
+                    $log.info('Template created successfully');
+                    $scope.showSuccess('Macro created.');
+                    $location.path('/macros');
+                }).catch(function(err) {
+                    $log.error(err, 'Error creating macro');
+                    $scope.showError('Error creating macro', err);
+                });
+            }
+        };
+
+        $scope.remove = function() {
+            var really = window.confirm('Really delete this macro?');
+            if(really) {
+                $log.info('Deleting macro: %s...', $scope.macro._id);
+                macroService.deleteMacro($scope.macro._id).then(function() {
+                    $log.info('Macro deleted');
+                    $location.path('/macros');
+                }).error(function (err) {
+                    $log.error(err, 'Could not delete macro');
+                    $scope.showError('Error deleting macro', err);
+                });
+            }
+        };
     });
 
 })();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('MacroListController', function($scope, $rootScope, $routeParams, $location, macroService) {
+
+    $rootScope.pageTitle = 'Macros';
+
+    $scope.macros = [];
+
+    macroService.doGetMacros().then(function(macros) {
+        $scope.macros = macros;
+    }).catch(function(err) {
+        $scope.showError('Error getting macros', err);
+    });
+
+});
+
+})();
+(function() {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('macroService', function($http) {
+
+        function MacroService() {
+        }
+        MacroService.prototype.doGetMacros = function() {
+            return $http.get('/_api/macros').then(res => res.data).catch(res => res.data);
+        };
+        MacroService.prototype.getMacro = function(macroId) {
+            return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);;
+        };
+        MacroService.prototype.createMacro = function(macroData) {
+            return $http.post('/_api/macros', macroData).then(res => res.data).catch(res => res.data);
+        };
+
+        MacroService.prototype.updateMacro = function(macroId, macroData) {
+            return $http.put('/_api/macros/' + macroId, macroData).then(res => res.data).catch(res => res.data);
+        };
+
+        MacroService.prototype.deleteMacro = function(macroId) {
+            return $http.delete('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);
+        };
+
+        return new MacroService();
+    });
+
+})();
+
+
+
 
 (function() {
 
@@ -534,7 +680,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     };
     
     $scope.getItems = function() {
-        mediaService.getItems().success(function(items) {
+        mediaService.getItems().then(function(items) {
             $scope.setItems(items);
             $scope.updateFilter();
 
@@ -551,7 +697,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
             });
             $scope.availableTags = availableTags;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting media items', err);
         });
     };
@@ -695,29 +841,29 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 $scope.deleteItem = function(item) {
                     var really = window.confirm('Really delete the item, ' + item.name + '?');
                     if(really) {
-                        mediaService.deleteItem(item.fileName).success(function() {
+                        mediaService.deleteItem(item.fileName).then(function() {
                             $scope.getItems();
                             $scope.showInfo('Media: ' + item.name + ' removed.');
-                        }).error(function(err) {
+                        }).catch(function(err) {
                             $scope.showError('Error deleting page', err);
                         });
                     }
                 };
 
                 $scope.revertItem = function (item) {
-                    mediaService.getItem(item._id).success(function(itemFromServer) {
+                    mediaService.getItem(item._id).then(function(itemFromServer) {
                         item.name = itemFromServer.name;
                         item.tags = itemFromServer.tags;
                         item._editing = false;
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error reverting item', err);
                     });
                 };
 
                 $scope.updateItem = function (item) {
-                    mediaService.updateItem(item._id, item).success(function() {
+                    mediaService.updateItem(item._id, item).then(function() {
                         item._editing = false;
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error udpdating item', err);
                     });
                 }
@@ -761,31 +907,31 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             "application/vnd.ms-excel" : "excel",
             "application/xml" : "xml",
             "application/zip" : "zip"
-        }
+        };
 
         function MediaService() {
         }
 
         MediaService.prototype.getItems = function() {
-            return $http.get('/_api/media');
+            return $http.get('/_api/media').then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getItem = function(mediaId) {
-            return $http.get('/_api/media/' + mediaId);
+            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.updateItem = function(mediaId, mediaData) {
-            return $http.put('/_api/media' + mediaId, mediaData);
+            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.updateItemText = function(mediaData, content) {
             return $http.put('/_media/' + mediaData.fileName, {
                 content: content
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.deleteItem = function(fileName) {
-            return $http.delete('/_media/' + fileName);
+            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.uploadItem = function(formData) {
@@ -794,18 +940,18 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 withCredentials: true,
                 headers: { 'Content-Type': undefined },
                 transformRequest: angular.identity
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getItemText = function(item) {
-            return $http.get('/_media/' + item.fileName);
+            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => res.data);
         };
 
         MediaService.prototype.getImageVariations = function() {
             return $http.get('/_dashboard/settings').then(function(res) {
                 var settings = res.data;
                 return settings.imageVariations || [];
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         //some utils
@@ -1054,10 +1200,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                         formData.append('tags_' + i, JSON.stringify(file.item.tags));
                     }
 
-                    mediaService.uploadItem(formData).success(function() {
+                    mediaService.uploadItem(formData).then(function() {
                         $scope.uploading = true;
                         $scope.showSuccess('Upload successful');
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error uploading file', err);
                     }).finally(function() {
                         $scope.files = [];
@@ -1129,10 +1275,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         });
 
         $scope.updateItemText = function() {
-            mediaService.updateItemText($scope.item, $scope.itemText).success(function() {
+            mediaService.updateItemText($scope.item, $scope.itemText).then(function() {
                 $scope.showSuccess('Media item updated');
                 $location.path('/media');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Could not update text media', err);
             });
         };
@@ -1153,17 +1299,17 @@ adminApp.controller('DeletePageController',
     var pageId = $routeParams.pageId;
     $scope.status = 410;
 
-    pageService.getPage(pageId).success(function(page) {
+    pageService.getPage(pageId).then(function(page) {
         $scope.page = page;
 
         //default delete status
         page.status = 410;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Couldn\'t find a page to delete', err);
     });
-    pageService.getPages().success(function(pages) {
+    pageService.getPages().then(function(pages) {
         $scope.pages = pages;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Couldn\'t get pages', err);
     });
 
@@ -1181,10 +1327,10 @@ adminApp.controller('DeletePageController',
 
         var page = $scope.page;
 
-        pageService.deletePage(page).success(function() {
+        pageService.deletePage(page).then(function() {
             $location.path('');
             $scope.showInfo('Page: ' + page.name + ' removed.');
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error deleting page', err);
         });
     };
@@ -1219,79 +1365,63 @@ adminApp.controller('PageController',
     };
 
     $scope.allPages = [];
-    pageService.getPages().success(function(pages) {
+    pageService.getPages().then(function(pages) {
         $scope.allPages = pages;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Couldn\'t get all pages', err);
     });
 
-    var pageSetupFunctions = [];
-    pageSetupFunctions.push(function getTemplates(callback) {
-        $log.info('Fetching available templates...');
-        templateService.doGetAvailableTemplates().success(function(templates) {
-            $log.info('Got available templates.');
-            $scope.templates = templates;
-            callback();
-        });
-    });
-    pageSetupFunctions.push(function getPlugins(callback) {
-        $log.debug('Fetching available plugins...');
-        pluginService.getPlugins().success(function(availablePlugins) {
-            $log.debug('Got available plugins.');
-            $scope.availablePlugins = availablePlugins;
-            callback();
-        });
-    });
+    var pageSetupPromises = [];
+    pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
+        $log.info('Got available templates.');
+        $scope.templates = templates;
+    }));
+    pageSetupPromises.push(pluginService.getPlugins().then(function(availablePlugins) {
+        $log.debug('Got available plugins.');
+        $scope.availablePlugins = availablePlugins;
+    }));
 
     if(pageId) {
         $log.debug('Fetching page data for: %s', pageId);
         $scope.pageId = pageId;
-        pageSetupFunctions.push(function getPage(callback) {
-            pageService.getPage(pageId).success(function(page) {
-                $log.debug('Got page data OK.');
-                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-                $scope.page = page;
+        pageSetupPromises.push(pageService.getPage(pageId).then(function(page) {
+            $log.debug('Got page data OK.');
+            $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+            $scope.page = page;
 
-                if(page.expiresAt) {
-                    page.expiresAt = new Date(page.expiresAt);
-                }
-                if(page.publishedAt) {
-                    page.publishedAt = new Date(page.publishedAt);
-                }
+            if(page.expiresAt) {
+                page.expiresAt = new Date(page.expiresAt);
+            }
+            if(page.publishedAt) {
+                page.publishedAt = new Date(page.publishedAt);
+            }
 
-                //depopulate redirect page
-                if(page.redirect) {
-                    page.redirect = page.redirect._id;
-                }
-                callback();
-            });
-        });
+            //depopulate redirect page
+            if(page.redirect) {
+                page.redirect = page.redirect._id;
+            }
+        }));
     } else {
         $scope.page = {
             regions: [],
             useInNav: true
         };
         if(parentPageId) {
-            pageSetupFunctions.push(function getParentPage(callback) {
-                pageService.getPage(parentPageId).success(function(page) {
-                    $scope.page.parent = page;
-                    callback();
-                });
-            });
+            pageSetupPromises.push(pageService.getPage(parentPageId).then(function(page) {
+                $scope.page.parent = page;
+            }));
         } else {
             $scope.page.root = 'top';
         }
     }
 
-    async.series(pageSetupFunctions, function(err) {
-        if(err) {
-            $scope.showError(err);
-        } else {
-            //if there's only one template choose it automatically
-            if(!$scope.page.template && $scope.templates.length === 1) {
-                $scope.page.template = $scope.templates[0];
-            }
+    Promise.all(pageSetupPromises).then(function () {
+        //if there's only one template choose it automatically
+        if(!$scope.page.template && $scope.templates.length === 1) {
+            $scope.page.template = $scope.templates[0];
         }
+    }).catch(function (err) {
+        $scope.showError(err);
     });
 
     $scope.updateUrl = function() {
@@ -1372,11 +1502,11 @@ adminApp.controller('PageController',
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             page = pageService.depopulatePage(page);
-            pageService.updatePage(pageId, page).success(function() {
+            pageService.updatePage(pageId, page).then(function() {
                 $log.info('Page successfully updated');
                 $scope.showSuccess('Page: ' + page.name + ' saved.');
                 $location.path('');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error updating page');
                 $scope.showError('Error updating page', err);
             });
@@ -1434,14 +1564,10 @@ adminApp.controller('PageController',
 
             var path = '/_api/pages';
             var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            var promise = $http.get(url);
-            promise.success(function(pages) {
-                self.pageCache = pages;
-            });
-            return promise;
+            return $http.get(url).then(res => res.data).catch(res => res.data);
         };
         PageService.prototype.getPage = function(pageId) {
-            return $http.get('/_api/pages/' + pageId);
+            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.createPage = function(pageData) {
@@ -1450,10 +1576,11 @@ adminApp.controller('PageController',
                 pageData.url = this.generateUrl(pageData);
             }
 
-            return $http.post('/_api/pages', pageData);
+            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.deletePage = function(page) {
+            var promise;
             if(page.published) {
                 var pageData = {
                     status: page.status
@@ -1464,15 +1591,16 @@ adminApp.controller('PageController',
                 }
 
                 //live pages are updated to be gone
-                return $http.put('/_api/pages/' + page._id, pageData);
+                promise = $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                return $http.delete('/_api/pages/' + page._id);
+                promise = $http.delete('/_api/pages/' + page._id);
             }
+            return promise.then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
-            return $http.put('/_api/pages/' + pageId, pageData);
+            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.createIncludeData = function(config) {
@@ -1489,7 +1617,7 @@ adminApp.controller('PageController',
 
             return $http.post('/_api/includes', {
                 data: includeData
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
@@ -1606,9 +1734,6 @@ adminApp.controller('PageController',
     }
 
 })();
-
-
-
 (function() {
 
 /**
@@ -1636,8 +1761,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
     };
 
     var getPages = function() {
-        pageService.getPages().success(function(allPages){
-
+        pageService.getPages().then(function(allPages) {
             var pageMap = {};
             allPages = allPages.filter(function(page) {
                 return page.status < 400;
@@ -1655,9 +1779,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             });
 
             var populateChildren = function(pages) {
-
                 pages.forEach(function(currentPage) {
-
                     currentPage.children = allPages.filter(function(childCandidate) {
                         var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
                         return currentPage._id === candidateParentId;
@@ -1674,7 +1796,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             populateChildren(primaryRoots);
 
             $scope.pages = primaryRoots;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting pages', err);
         });
     };
@@ -1698,7 +1820,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         }
         $scope.showInfo('Preparing new page...');
         //get future siblings
-        pageService.getPages(siblingsQuery).success(function(pages) {
+        pageService.getPages(siblingsQuery).then(function(pages) {
 
             var highestOrder = pages.map(function(page) {
                 return page.order || 0;
@@ -1707,8 +1829,8 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             }, -1);
             highestOrder++;
             $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
-        }).error(function(err) {
-            $scope.showError('Unable to determine order of new page', err);
+        }).catch(function(msg) {
+            $scope.showError('Unable to determine order of new page', msg);
         });
     };
 
@@ -1719,11 +1841,11 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         } else {
             var really = window.confirm('Really delete this page?');
             if(really) {
-                pageService.deletePage(page).success(function() {
+                pageService.deletePage(page).then(function() {
                     window.location.reload();
                     $scope.showInfo('Page: ' + page.name + ' removed.');
-                }).error(function(err) {
-                    $scope.showError('Error deleting page', err);
+                }).catch(function(msg) {
+                    $scope.showError('Error deleting page', msg);
                 });
             }
         }
@@ -1741,40 +1863,27 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             silbingQuery.root = page.root;
         }
 
-        pageService.getPages(silbingQuery).success(function(siblings) {
+        pageService.getPages(silbingQuery).then(function(siblings) {
 
             var siblingPage = siblings[0];
             if(!siblingPage) {
                 //$scope.showInfo('Couldn\'t re-order pages');
                 return;
             }
-            async.parallel([
-                function(callback) {
-                    pageService.updatePage(page._id, {
-                        order: page.order + direction,
-                        draft: true
-                    }).success(function() {
-                        callback(null);
-                    }).error(function(err) {
-                        callback(err);
-                    });
-                },
-                function(callback) {
-                    pageService.updatePage(siblingPage._id, {
-                        order: siblingPage.order - direction,
-                        draft: true
-                    }).success(function() {
-                        callback(null);
-                    }).error(function(err) {
-                        callback(err);
-                    });
-                }
-            ], function(err) {
-                if(err) {
-                    $scope.showError('Problem re-ordering pages', err);
-                } else {
-                    getPages();
-                }
+            var promises = [];
+            promises.push(pageService.updatePage(page._id, {
+                order: page.order + direction,
+                draft: true
+            }));
+            promises.push(pageService.updatePage(siblingPage._id, {
+                order: siblingPage.order - direction,
+                draft: true
+            }));
+
+            Promise.all(promises).then(function() {
+               getPages();
+            }).catch(function(err) {
+                $scope.showError('Problem re-ordering pages', err);
             });
         });
     };
@@ -1876,17 +1985,17 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
 
     if(pluginId) {
         $scope.pluginId = pluginId;
-        pluginService.getPlugin(pluginId).success(function(plugin) {
+        pluginService.getPlugin(pluginId).then(function(plugin) {
             $scope.plugin = plugin;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting plugin', err);
         });
     }
 
     $scope.reset = function() {
-        pluginService.resetPlugin($scope.plugin).success(function() {
+        pluginService.resetPlugin($scope.plugin).then(function() {
             $scope.showSuccess('Cache cleared');
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting plugin', err);
         });
     };
@@ -1903,19 +2012,19 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
         }
 
         if(pluginId) {
-            pluginService.updatePlugin(pluginId, $scope.plugin).success(function() {
+            pluginService.updatePlugin(pluginId, $scope.plugin).then(function() {
                 $log.info('Plugin saved');
                 $scope.showSuccess('Plugin updated.');
                 $location.path('/plugins');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error updating plugin', err);
             });
         } else {
-            pluginService.createPlugin($scope.plugin).success(function() {
+            pluginService.createPlugin($scope.plugin).then(function() {
                 $log.info('Plugin created');
                 $scope.showSuccess('Plugin created.');
                 $location.path('/plugins');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error saving plugin', err);
             });
         }
@@ -1924,7 +2033,7 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
     $scope.remove = function() {
         var really = window.confirm('Really delete this plugin?');
         if(really) {
-            pluginService.deletePlugin($scope.plugin._id).success(function () {
+            pluginService.deletePlugin($scope.plugin._id).then(function () {
                 $scope.showInfo('Plugin deleted');
                 $location.path('/plugins');
             }).error(function (err) {
@@ -1948,9 +2057,9 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
 
     $scope.plugins = [];
 
-    pluginService.getPlugins().success(function(plugins) {
+    pluginService.getPlugins().then(function(plugins) {
         $scope.plugins = plugins;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Error getting plugins', err);
     });
 
@@ -1964,28 +2073,28 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
         function PluginService() {
         }
         PluginService.prototype.getPlugins = function() {
-            return $http.get('/_api/plugins');
+            return $http.get('/_api/plugins').then(res => res.data).catch(res => res.data);
         };
         PluginService.prototype.getPlugin = function(pluginId) {
-            return $http.get('/_api/plugins/' + pluginId);
+            return $http.get('/_api/plugins/' + pluginId).then(res => res.data).catch(res => res.data);
         };
 
         PluginService.prototype.createPlugin = function(pluginData) {
-            return $http.post('/_api/plugins', pluginData);
+            return $http.post('/_api/plugins', pluginData).then(res => res.data).catch(res => res.data);
         };
 
         PluginService.prototype.deletePlugin = function(pluginId) {
-            return $http.delete('/_api/plugins/' + pluginId);
+            return $http.delete('/_api/plugins/' + pluginId).then(res => res.data).catch(res => res.data);
         };
 
         PluginService.prototype.updatePlugin = function(pluginId, pluginData) {
-            return $http.put('/_api/plugins/' + pluginId, pluginData);
+            return $http.put('/_api/plugins/' + pluginId, pluginData).then(res => res.data).catch(res => res.data);
         };
 
         PluginService.prototype.resetPlugin = function(pluginData) {
             return $http.put('/_cache/plugins', {
                 module: pluginData.module
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
 
@@ -2009,7 +2118,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
     var preQueued = $routeParams.pageId || null;
 
     //get all pages with drafts
-    publishingService.getDrafts().success(function(drafts) {
+    publishingService.getDrafts().then(function(drafts) {
         $scope.drafts = drafts;
 
         drafts.forEach(function(page) {
@@ -2017,7 +2126,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
                page.queued = true;
            }
         });
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Error getting drafts to publish', err);
     });
 
@@ -2038,10 +2147,10 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
             return;
         }
 
-        publishingService.publish(toPublishIds).success(function() {
+        publishingService.publish(toPublishIds).then(function() {
             $scope.showSuccess('Publishing successful');
             $location.path('/');
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error performing publish', err);
         });
     };
@@ -2062,7 +2171,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
         };
 
         PublishingService.prototype.publish = function(draftIds) {
-            return $http.post('/_publish/pages', draftIds);
+            return $http.post('/_publish/pages', draftIds).then(res => res.data).catch(res => res.data);
         };
 
         return new PublishingService();
@@ -2080,14 +2189,12 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
         }
         SiteService.prototype.getSite = function() {
-            return $http.get('/_api/sites').then(function(res) {
-                return res.data[0];
-            });
+            return $http.get('/_api/sites').then(res => res.data[0]).catch(res => res.data);
         };
 
         SiteService.prototype.updateSite = function(siteId, siteData) {
             delete siteData._id;
-            return $http.put('/_api/sites/' + siteId, siteData);
+            return $http.put('/_api/sites/' + siteId, siteData).then(res => res.data).catch(res => res.data);
         };
 
         return new SiteService();
@@ -2114,7 +2221,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
             $scope.site = site;
         });
 
-        pageService.getPages().success(function(pages) {
+        pageService.getPages().then(function(pages) {
             $scope.availablePages = pages.filter(function(page) {
                 return page.status === 200 && page.parent !== null;
             });
@@ -2205,7 +2312,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    templateService.getTemplateSources().success(function(templateSources) {
+    templateService.getTemplateSources().then(function(templateSources) {
         $scope.templateSources = templateSources;
     });
 
@@ -2219,10 +2326,10 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     if(templateId) {
         $scope.templateId = templateId;
         $log.debug('Fetching template data for id: %s...', templateId);
-        templateService.getTemplate(templateId).success(function(template) {
+        templateService.getTemplate(templateId).then(function(template) {
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
-        }).error(function(err) {
+        }).catch(function(err) {
             $log.error(err, 'Error getting template');
             $scope.showError('Error getting template', err);
         });
@@ -2247,7 +2354,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
         templateSrc = templateSrc || $scope.template.src;
 
-        templateService.getTemplateRegions(templateSrc).success(function(newRegions) {
+        templateService.getTemplateRegions(templateSrc).then(function(newRegions) {
             $log.debug('Got regions: %s', newRegions);
 
             function isRegionNew(regionName) {
@@ -2264,7 +2371,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                     });
                 }
             });
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting template regions', err);
         });
     };
@@ -2293,22 +2400,22 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         if(templateId) {
             $log.info('Updating template: %s...', templateId);
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-            templateService.updateTemplate(templateId, $scope.template).success(function() {
+            templateService.updateTemplate(templateId, $scope.template).then(function() {
                 $log.info('Template updated successfully');
                 $scope.showSuccess('Template updated.');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error updating template');
                 $scope.showError('Error updating template', err);
             });
         } else {
             $log.info('Creating new template...');
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-            templateService.createTemplate($scope.template).success(function() {
+            templateService.createTemplate($scope.template).then(function() {
                 $log.info('Template created successfully');
                 $scope.showSuccess('Template created.');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error creating template');
                 $scope.showError('Error creating template', err);
             });
@@ -2319,7 +2426,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         var really = window.confirm('Really delete this template?');
         if(really) {
             $log.info('Deleting template: %s...', $scope.template._id);
-            templateService.deleteTemplate($scope.template._id).success(function() {
+            templateService.deleteTemplate($scope.template._id).then(function() {
                 $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {
@@ -2344,9 +2451,9 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 
     $scope.templates = [];
 
-    templateService.doGetAvailableTemplates().success(function(templates) {
+    templateService.doGetAvailableTemplates().then(function(templates) {
         $scope.templates = templates;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Error getting templates', err);
     });
 
@@ -2360,31 +2467,31 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
         function TemplateService() {
         }
         TemplateService.prototype.getTemplateSources = function() {
-            return $http.get('/_templates/available');
+            return $http.get('/_templates/available').then(res => res.data).catch(res => res.data);
         };
         TemplateService.prototype.getTemplateRegions = function(templateSrc) {
             return $http.get('/_templates/template-regions', {
                 params: {
                     templateSrc: templateSrc
                 }
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
         TemplateService.prototype.doGetAvailableTemplates = function() {
-            return $http.get('/_api/templates');
+            return $http.get('/_api/templates').then(res => res.data).catch(res => res.data);
         };
         TemplateService.prototype.getTemplate = function(templateId) {
-            return $http.get('/_api/templates/' + templateId);
+            return $http.get('/_api/templates/' + templateId).then(res => res.data).catch(res => res.data);
         };
         TemplateService.prototype.createTemplate = function(templateData) {
-            return $http.post('/_api/templates', templateData);
+            return $http.post('/_api/templates', templateData).then(res => res.data).catch(res => res.data);
         };
 
         TemplateService.prototype.updateTemplate = function(templateId, templateData) {
-            return $http.put('/_api/templates/' + templateId, templateData);
+            return $http.put('/_api/templates/' + templateId, templateData).then(res => res.data).catch(res => res.data);
         };
 
         TemplateService.prototype.deleteTemplate = function(templateId) {
-            return $http.delete('/_api/templates/' + templateId);
+            return $http.delete('/_api/templates/' + templateId).then(res => res.data).catch(res => res.data);
         };
 
         return new TemplateService();
@@ -2420,7 +2527,7 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
         }];
 
         if(userId) {
-            userService.getUser(userId).success(function(user) {
+            userService.getUser(userId).then(function(user) {
                 $scope.user = user;
             });
         }
@@ -2437,27 +2544,27 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
             }
             var user = $scope.user;
             if(userId) {
-                userService.updateUser(userId, user).success(function() {
+                userService.updateUser(userId, user).then(function() {
                     $scope.showSuccess('User updated.');
                     $location.path('/users');
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.showError('Error updating user', err);
                 });
             } else {
-                userService.createUser(user).success(function() {
+                userService.createUser(user).then(function() {
                     $scope.showSuccess('User created.');
                     $location.path('/users');
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.showError('Error creating user', err);
                 });
             }
         };
 
         $scope.remove = function() {
-            userService.deleteTemplate($scope.user._id).success(function () {
+            userService.deleteTemplate($scope.user._id).then(function () {
                 $log.info('User removed');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error deleting template', err);
             });
         };
@@ -2474,7 +2581,7 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
     adminApp.controller('UserListController', function($scope, $rootScope, $location, userService) {
         $rootScope.pageTitle = 'Users';
 
-        userService.getUsers().success(function(users) {
+        userService.getUsers().then(function(users) {
             $scope.users = users;
         });
     });
@@ -2488,22 +2595,22 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 
         }
         UserService.prototype.getUsers = function() {
-            return $http.get('/_api/users');
+            return $http.get('/_api/users').then(res => res.data).catch(res => res.data);
         };
         UserService.prototype.getUser = function(userId) {
-            return $http.get('/_api/users/' + userId);
+            return $http.get('/_api/users/' + userId).then(res => res.data).catch(res => res.data);
         };
 
         UserService.prototype.createUser = function(userData) {
-            return $http.post('/_api/users', userData);
+            return $http.post('/_api/users', userData).then(res => res.data).catch(res => res.data);
         };
 
         UserService.prototype.deleteUser = function(userId) {
-            return $http.delete('/_api/users/' + userId);
+            return $http.delete('/_api/users/' + userId).then(res => res.data).catch(res => res.data);
         };
 
         UserService.prototype.updateUser = function(userId, userData) {
-            return $http.put('/_api/users/' + userId, userData);
+            return $http.put('/_api/users/' + userId, userData).then(res => res.data).catch(res => res.data);
         };
 
         return new UserService();

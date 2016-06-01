@@ -97,8 +97,16 @@
 
             //macros
             when('/macros', {
-                templateUrl: '/_static/dashboard/app/macros/macros.html',
-                controller: 'MacrosController'
+                templateUrl: '/_static/dashboard/app/macros/macro-list.html',
+                controller: 'MacroListController'
+            }).
+            when('/macros/new', {
+                templateUrl: '/_static/dashboard/app/macros/macro.html',
+                controller: 'MacroController'
+            }).
+            when('/macros/:macroId', {
+                templateUrl: '/_static/dashboard/app/macros/macro.html',
+                controller: 'MacroController'
             }).
 
             //templates
@@ -180,7 +188,7 @@
                 $scope.viewPageUrlPublished = false;
                 pageService.getPages({
                     url:  url
-                }).success(function(pages) {
+                }).then(function(pages) {
                     if(pages.length  === 1) {
                         $scope.viewPageName = pages[0].name;
                         $scope.viewPageUrlPublished = pages[0].published;
@@ -247,19 +255,19 @@
         });
 
         function swapIncludes(pageId, regionName, includeOne, includeTwo) {
-            pageService.getPage(pageId).success(function(page) {
+            pageService.getPage(pageId).then(function(page) {
                 page = pageService.swapIncludes(page, regionName, parseInt(includeOne), parseInt(includeTwo));
                 page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).success(function() {
+                pageService.updatePage(pageId, page).then(function() {
                     $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
                         includeOne, includeTwo, pageId, regionName);
                     window.location.reload();
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.err = err;
                     $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
                         includeOne, includeTwo, pageId, regionName);
                 });
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.err = err;
                 $log.error(err, 'Unable to get page: %s', pageId);
             });

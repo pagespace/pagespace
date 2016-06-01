@@ -25,8 +25,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
     };
 
     var getPages = function() {
-        pageService.getPages().success(function(allPages){
-
+        pageService.getPages().then(function(allPages) {
             var pageMap = {};
             allPages = allPages.filter(function(page) {
                 return page.status < 400;
@@ -44,9 +43,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             });
 
             var populateChildren = function(pages) {
-
                 pages.forEach(function(currentPage) {
-
                     currentPage.children = allPages.filter(function(childCandidate) {
                         var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
                         return currentPage._id === candidateParentId;
@@ -63,7 +60,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             populateChildren(primaryRoots);
 
             $scope.pages = primaryRoots;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting pages', err);
         });
     };
@@ -87,7 +84,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         }
         $scope.showInfo('Preparing new page...');
         //get future siblings
-        pageService.getPages(siblingsQuery).success(function(pages) {
+        pageService.getPages(siblingsQuery).then(function(pages) {
 
             var highestOrder = pages.map(function(page) {
                 return page.order || 0;
@@ -96,8 +93,8 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             }, -1);
             highestOrder++;
             $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
-        }).error(function(err) {
-            $scope.showError('Unable to determine order of new page', err);
+        }).catch(function(msg) {
+            $scope.showError('Unable to determine order of new page', msg);
         });
     };
 
@@ -108,11 +105,11 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         } else {
             var really = window.confirm('Really delete this page?');
             if(really) {
-                pageService.deletePage(page).success(function() {
+                pageService.deletePage(page).then(function() {
                     window.location.reload();
                     $scope.showInfo('Page: ' + page.name + ' removed.');
-                }).error(function(err) {
-                    $scope.showError('Error deleting page', err);
+                }).catch(function(msg) {
+                    $scope.showError('Error deleting page', msg);
                 });
             }
         }
@@ -130,40 +127,27 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
             silbingQuery.root = page.root;
         }
 
-        pageService.getPages(silbingQuery).success(function(siblings) {
+        pageService.getPages(silbingQuery).then(function(siblings) {
 
             var siblingPage = siblings[0];
             if(!siblingPage) {
                 //$scope.showInfo('Couldn\'t re-order pages');
                 return;
             }
-            async.parallel([
-                function(callback) {
-                    pageService.updatePage(page._id, {
-                        order: page.order + direction,
-                        draft: true
-                    }).success(function() {
-                        callback(null);
-                    }).error(function(err) {
-                        callback(err);
-                    });
-                },
-                function(callback) {
-                    pageService.updatePage(siblingPage._id, {
-                        order: siblingPage.order - direction,
-                        draft: true
-                    }).success(function() {
-                        callback(null);
-                    }).error(function(err) {
-                        callback(err);
-                    });
-                }
-            ], function(err) {
-                if(err) {
-                    $scope.showError('Problem re-ordering pages', err);
-                } else {
-                    getPages();
-                }
+            var promises = [];
+            promises.push(pageService.updatePage(page._id, {
+                order: page.order + direction,
+                draft: true
+            }));
+            promises.push(pageService.updatePage(siblingPage._id, {
+                order: siblingPage.order - direction,
+                draft: true
+            }));
+
+            Promise.all(promises).then(function() {
+               getPages();
+            }).catch(function(err) {
+                $scope.showError('Problem re-ordering pages', err);
             });
         });
     };

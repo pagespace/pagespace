@@ -72,29 +72,29 @@
                 $scope.deleteItem = function(item) {
                     var really = window.confirm('Really delete the item, ' + item.name + '?');
                     if(really) {
-                        mediaService.deleteItem(item.fileName).success(function() {
+                        mediaService.deleteItem(item.fileName).then(function() {
                             $scope.getItems();
                             $scope.showInfo('Media: ' + item.name + ' removed.');
-                        }).error(function(err) {
+                        }).catch(function(err) {
                             $scope.showError('Error deleting page', err);
                         });
                     }
                 };
 
                 $scope.revertItem = function (item) {
-                    mediaService.getItem(item._id).success(function(itemFromServer) {
+                    mediaService.getItem(item._id).then(function(itemFromServer) {
                         item.name = itemFromServer.name;
                         item.tags = itemFromServer.tags;
                         item._editing = false;
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error reverting item', err);
                     });
                 };
 
                 $scope.updateItem = function (item) {
-                    mediaService.updateItem(item._id, item).success(function() {
+                    mediaService.updateItem(item._id, item).then(function() {
                         item._editing = false;
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error udpdating item', err);
                     });
                 }

@@ -24,7 +24,7 @@
         }];
 
         if(userId) {
-            userService.getUser(userId).success(function(user) {
+            userService.getUser(userId).then(function(user) {
                 $scope.user = user;
             });
         }
@@ -41,27 +41,27 @@
             }
             var user = $scope.user;
             if(userId) {
-                userService.updateUser(userId, user).success(function() {
+                userService.updateUser(userId, user).then(function() {
                     $scope.showSuccess('User updated.');
                     $location.path('/users');
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.showError('Error updating user', err);
                 });
             } else {
-                userService.createUser(user).success(function() {
+                userService.createUser(user).then(function() {
                     $scope.showSuccess('User created.');
                     $location.path('/users');
-                }).error(function(err) {
+                }).catch(function(err) {
                     $scope.showError('Error creating user', err);
                 });
             }
         };
 
         $scope.remove = function() {
-            userService.deleteTemplate($scope.user._id).success(function () {
+            userService.deleteTemplate($scope.user._id).then(function () {
                 $log.info('User removed');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error deleting template', err);
             });
         };

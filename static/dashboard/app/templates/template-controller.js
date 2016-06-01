@@ -17,7 +17,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         regionData: []
     };
 
-    templateService.getTemplateSources().success(function(templateSources) {
+    templateService.getTemplateSources().then(function(templateSources) {
         $scope.templateSources = templateSources;
     });
 
@@ -31,10 +31,10 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
     if(templateId) {
         $scope.templateId = templateId;
         $log.debug('Fetching template data for id: %s...', templateId);
-        templateService.getTemplate(templateId).success(function(template) {
+        templateService.getTemplate(templateId).then(function(template) {
             $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
             $scope.template = template;
-        }).error(function(err) {
+        }).catch(function(err) {
             $log.error(err, 'Error getting template');
             $scope.showError('Error getting template', err);
         });
@@ -59,7 +59,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
 
         templateSrc = templateSrc || $scope.template.src;
 
-        templateService.getTemplateRegions(templateSrc).success(function(newRegions) {
+        templateService.getTemplateRegions(templateSrc).then(function(newRegions) {
             $log.debug('Got regions: %s', newRegions);
 
             function isRegionNew(regionName) {
@@ -76,7 +76,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
                     });
                 }
             });
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting template regions', err);
         });
     };
@@ -105,22 +105,22 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         if(templateId) {
             $log.info('Updating template: %s...', templateId);
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-            templateService.updateTemplate(templateId, $scope.template).success(function() {
+            templateService.updateTemplate(templateId, $scope.template).then(function() {
                 $log.info('Template updated successfully');
                 $scope.showSuccess('Template updated.');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error updating template');
                 $scope.showError('Error updating template', err);
             });
         } else {
             $log.info('Creating new template...');
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-            templateService.createTemplate($scope.template).success(function() {
+            templateService.createTemplate($scope.template).then(function() {
                 $log.info('Template created successfully');
                 $scope.showSuccess('Template created.');
                 $location.path('/templates');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error creating template');
                 $scope.showError('Error creating template', err);
             });
@@ -131,7 +131,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         var really = window.confirm('Really delete this template?');
         if(really) {
             $log.info('Deleting template: %s...', $scope.template._id);
-            templateService.deleteTemplate($scope.template._id).success(function() {
+            templateService.deleteTemplate($scope.template._id).then(function() {
                 $log.info('Template deleted');
                 $location.path('/templates');
             }).error(function (err) {

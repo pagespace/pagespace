@@ -179,10 +179,10 @@
                         formData.append('tags_' + i, JSON.stringify(file.item.tags));
                     }
 
-                    mediaService.uploadItem(formData).success(function() {
+                    mediaService.uploadItem(formData).then(function() {
                         $scope.uploading = true;
                         $scope.showSuccess('Upload successful');
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.showError('Error uploading file', err);
                     }).finally(function() {
                         $scope.files = [];

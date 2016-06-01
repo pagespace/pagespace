@@ -26,79 +26,63 @@ adminApp.controller('PageController',
     };
 
     $scope.allPages = [];
-    pageService.getPages().success(function(pages) {
+    pageService.getPages().then(function(pages) {
         $scope.allPages = pages;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Couldn\'t get all pages', err);
     });
 
-    var pageSetupFunctions = [];
-    pageSetupFunctions.push(function getTemplates(callback) {
-        $log.info('Fetching available templates...');
-        templateService.doGetAvailableTemplates().success(function(templates) {
-            $log.info('Got available templates.');
-            $scope.templates = templates;
-            callback();
-        });
-    });
-    pageSetupFunctions.push(function getPlugins(callback) {
-        $log.debug('Fetching available plugins...');
-        pluginService.getPlugins().success(function(availablePlugins) {
-            $log.debug('Got available plugins.');
-            $scope.availablePlugins = availablePlugins;
-            callback();
-        });
-    });
+    var pageSetupPromises = [];
+    pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
+        $log.info('Got available templates.');
+        $scope.templates = templates;
+    }));
+    pageSetupPromises.push(pluginService.getPlugins().then(function(availablePlugins) {
+        $log.debug('Got available plugins.');
+        $scope.availablePlugins = availablePlugins;
+    }));
 
     if(pageId) {
         $log.debug('Fetching page data for: %s', pageId);
         $scope.pageId = pageId;
-        pageSetupFunctions.push(function getPage(callback) {
-            pageService.getPage(pageId).success(function(page) {
-                $log.debug('Got page data OK.');
-                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-                $scope.page = page;
+        pageSetupPromises.push(pageService.getPage(pageId).then(function(page) {
+            $log.debug('Got page data OK.');
+            $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+            $scope.page = page;
 
-                if(page.expiresAt) {
-                    page.expiresAt = new Date(page.expiresAt);
-                }
-                if(page.publishedAt) {
-                    page.publishedAt = new Date(page.publishedAt);
-                }
+            if(page.expiresAt) {
+                page.expiresAt = new Date(page.expiresAt);
+            }
+            if(page.publishedAt) {
+                page.publishedAt = new Date(page.publishedAt);
+            }
 
-                //depopulate redirect page
-                if(page.redirect) {
-                    page.redirect = page.redirect._id;
-                }
-                callback();
-            });
-        });
+            //depopulate redirect page
+            if(page.redirect) {
+                page.redirect = page.redirect._id;
+            }
+        }));
     } else {
         $scope.page = {
             regions: [],
             useInNav: true
         };
         if(parentPageId) {
-            pageSetupFunctions.push(function getParentPage(callback) {
-                pageService.getPage(parentPageId).success(function(page) {
-                    $scope.page.parent = page;
-                    callback();
-                });
-            });
+            pageSetupPromises.push(pageService.getPage(parentPageId).then(function(page) {
+                $scope.page.parent = page;
+            }));
         } else {
             $scope.page.root = 'top';
         }
     }
 
-    async.series(pageSetupFunctions, function(err) {
-        if(err) {
-            $scope.showError(err);
-        } else {
-            //if there's only one template choose it automatically
-            if(!$scope.page.template && $scope.templates.length === 1) {
-                $scope.page.template = $scope.templates[0];
-            }
+    Promise.all(pageSetupPromises).then(function () {
+        //if there's only one template choose it automatically
+        if(!$scope.page.template && $scope.templates.length === 1) {
+            $scope.page.template = $scope.templates[0];
         }
+    }).catch(function (err) {
+        $scope.showError(err);
     });
 
     $scope.updateUrl = function() {
@@ -179,11 +163,11 @@ adminApp.controller('PageController',
             $log.info('Update page: %s...', pageId);
             $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
             page = pageService.depopulatePage(page);
-            pageService.updatePage(pageId, page).success(function() {
+            pageService.updatePage(pageId, page).then(function() {
                 $log.info('Page successfully updated');
                 $scope.showSuccess('Page: ' + page.name + ' saved.');
                 $location.path('');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $log.error(err, 'Error updating page');
                 $scope.showError('Error updating page', err);
             });

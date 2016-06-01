@@ -9,9 +9,9 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
 
     $scope.plugins = [];
 
-    pluginService.getPlugins().success(function(plugins) {
+    pluginService.getPlugins().then(function(plugins) {
         $scope.plugins = plugins;
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Error getting plugins', err);
     });
 

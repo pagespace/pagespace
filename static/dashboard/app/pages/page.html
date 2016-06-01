@@ -13,8 +13,8 @@
 <main class="main col-sm-6">
     <div class="notification-bar">
         <h4 ng-show="!pageId && page.root == 'primary'">Create a new top level page</h4>
-        <h4 ng-show="!pageId && page.parent">Create a sub page of <b>{{page.parent.name}}</b></h4>
-        <h4 ng-show="pageId">Update the page:  <b>{{page.name}}</b></h4>
+        <h4 ng-show="!pageId && page.parent">Create a sub page of {{page.parent.name}}</h4>
+        <h4 ng-show="pageId">Update {{page.name}}</h4>
         <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
     </div>
 

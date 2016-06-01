@@ -19,14 +19,10 @@
 
             var path = '/_api/pages';
             var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            var promise = $http.get(url);
-            promise.success(function(pages) {
-                self.pageCache = pages;
-            });
-            return promise;
+            return $http.get(url).then(res => res.data).catch(res => res.data);
         };
         PageService.prototype.getPage = function(pageId) {
-            return $http.get('/_api/pages/' + pageId);
+            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.createPage = function(pageData) {
@@ -35,10 +31,11 @@
                 pageData.url = this.generateUrl(pageData);
             }
 
-            return $http.post('/_api/pages', pageData);
+            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.deletePage = function(page) {
+            var promise;
             if(page.published) {
                 var pageData = {
                     status: page.status
@@ -49,15 +46,16 @@
                 }
 
                 //live pages are updated to be gone
-                return $http.put('/_api/pages/' + page._id, pageData);
+                promise = $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                return $http.delete('/_api/pages/' + page._id);
+                promise = $http.delete('/_api/pages/' + page._id);
             }
+            return promise.then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
-            return $http.put('/_api/pages/' + pageId, pageData);
+            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.createIncludeData = function(config) {
@@ -74,7 +72,7 @@
 
             return $http.post('/_api/includes', {
                 data: includeData
-            });
+            }).then(res => res.data).catch(res => res.data);
         };
 
         PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
@@ -191,5 +189,3 @@
     }
 
 })();
-
-

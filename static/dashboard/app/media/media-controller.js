@@ -26,7 +26,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     };
     
     $scope.getItems = function() {
-        mediaService.getItems().success(function(items) {
+        mediaService.getItems().then(function(items) {
             $scope.setItems(items);
             $scope.updateFilter();
 
@@ -43,7 +43,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
             });
             $scope.availableTags = availableTags;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting media items', err);
         });
     };
