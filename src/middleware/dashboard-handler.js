@@ -29,8 +29,8 @@ class DashboardHandler extends BaseHandler {
         const pageData = {
             username: req.user.username,
             displayName: req.user.name,
-            allowUsers: req.user.role === 'admin',
-            allowTemplatesAndPlugins: req.user.role === 'developer' || req.user.role === 'admin',
+            allowAdminFeatures: req.user.role === 'admin',
+            allowDeveloperFeatures: req.user.role === 'developer' || req.user.role === 'admin',
             year: new Date().toISOString().substr(0, 4)
         };
 

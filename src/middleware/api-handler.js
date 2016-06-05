@@ -16,6 +16,7 @@ const urlToModelMap = {
     templates:'Template',
     users: 'User',
     media: 'Media',
+    macros: 'Macro',
     hits: 'Hit'
 };
 
@@ -28,13 +29,14 @@ const populationsMap = {
     Template: 'regions.includes.plugin',
     User: '',
     Media: '',
+    Macro: 'parentPage basePage template includes.plugin',
     Hit: ''
 };
 
 class ApiHandler extends BaseHandler {
     
     get pattern() {
-        return new RegExp('^/_api/(sites|pages|plugins|includes|templates|users|media|hits)/?(.*)');
+        return new RegExp('^/_api/(sites|pages|plugins|macros|includes|templates|users|media|hits)/?(.*)');
     }
 
     init(support) {

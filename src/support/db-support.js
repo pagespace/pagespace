@@ -4,6 +4,7 @@ const toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
 const siteSchema = require('../schemas/site'),
     pageSchema = require('../schemas/page'),
+    macroSchema = require('../schemas/macro'),
     pluginSchema = require('../schemas/plugin'),
     includeSchema = require('../schemas/include'),
     templateSchema = require('../schemas/template'),
@@ -19,6 +20,10 @@ const modelData = [{
     name: 'Page',
     schema: pageSchema,
     publishable: true
+}, {
+    name: 'Macro',
+    schema: macroSchema,
+    publishable: false
 }, {
     name: 'Template',
     schema: templateSchema,

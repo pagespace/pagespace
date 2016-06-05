@@ -7,7 +7,7 @@ const
 //url patterns
 const 
     ALL_PAGES = new RegExp('^/(?!_)(.*)'),
-    DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)'),
+    DEV_API_REGEX = new RegExp('^/_api/(templates|macros)/?(.*)'),
     EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)'),
     LOGIN = new RegExp('^/_auth/login'),
     LOGOUT = new RegExp('^/_auth/logout');

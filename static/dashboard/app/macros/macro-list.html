@@ -1,0 +1,19 @@
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>Macros</h3>
+    </div>
+    <ul class="nav nav-pills nav-stacked">
+        <li ng-class="menuClass('/macros/new')"><a href="#/macros/new">Create macro</a></li>
+    </ul>
+</nav>
+<main class="main col-sm-6">
+    <div class="notification-bar">
+        <h4 ng-show="macros.length == 0">There are no macros</h4>
+    </div>
+    <div class="list-group" ng-show="macros.length > 0">
+        <a href="#/macros/{{macro._id}}" ng-repeat="macro in macros" class="list-group-item">
+            <h4 class="list-group-item-heading">{{macro.name}}</h4>
+            <p class="list-group-item-text"><small>{{macro.description}}</small></p>
+        </a>
+    </div>
+</main>
