@@ -4,7 +4,9 @@
     var tmpl =
         `
          <div class="list-group col-sm-11">
-            <h3>Media library</h3>
+            <div class="notification-bar">
+                <h4>Media library</h4>
+            </div>
              <div ng-repeat="item in filteredItems" class="media-item list-group-item">    
                 <div class="media-item-part clearfix">
                     <div class="media-item-preview pull-left" style="cursor: pointer;">

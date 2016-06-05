@@ -148,7 +148,7 @@ h4 {
     text-align: right;
 }
 .header-utils p {
-    line-height: 58px;
+    line-height: 60px;
     font-size: 18px;
     margin: 0;
 }
@@ -263,9 +263,15 @@ h4 {
  * Media
  */
 .media-file-select {
-    outline: 1px dashed #D7DADE;
+    height: 82px;
+    outline: 1px dashed #3285E2;
+    line-height: 82px;
+    text-align: center;
     margin-bottom: 1em;
     cursor: pointer;
+}
+.media-item-dragging .media-file-select {
+    outline-style: solid;
 }
 .media-item-dragging .media-file-select,
 .media-file-select:hover {
@@ -274,12 +280,8 @@ h4 {
 .media-file-select h3 {
     margin-bottom: 0;
 }
-.media-file-select .add-icon {
-    display: inline-block;
-    width: 30px;
-    border: 1px solid #8C8C8E;
-    text-align: center;
-    border-radius: 4px;
+.media-file-select button {
+    font-size: 16px;
 }
 .media-file-select .drop-text {
     display: none;
@@ -337,9 +339,10 @@ h4 {
     max-height: 130px;
 }
 .media-upload-form .action-buttons {
-    margin-top: 0;
     border-bottom: 1px solid #D7DADE;
+    margin-top: 0;
     margin-right: 15px;
+    margin-bottom: 2em;
 }
 .media-item-full img {
     margin-bottom: 20px;

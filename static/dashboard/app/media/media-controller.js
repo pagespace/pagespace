@@ -9,6 +9,8 @@ var adminApp = angular.module('adminApp');
 adminApp.controller('MediaController', function($scope, $rootScope, $location, $window, $q, mediaService) {
     $rootScope.pageTitle = 'Media';
 
+    $scope.files = [];
+
     $scope.mediaItems = [];
     $scope.filteredItems = [];
     $scope.availableTags = [];
@@ -16,6 +18,10 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 
     $scope.getTypeShortName = mediaService.getTypeShortName;
     $scope.getSrcPath = mediaService.getSrcPath;
+    
+    $scope.clearFiles = function() {
+        $scope.files = [];
+    };
 
     $scope.toggleEditing = function (item) {
         item._editing = !item._editing
