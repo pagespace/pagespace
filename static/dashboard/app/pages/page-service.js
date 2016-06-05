@@ -19,7 +19,10 @@
 
             var path = '/_api/pages';
             var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            return $http.get(url).then(res => res.data).catch(res => res.data);
+            return $http.get(url).then(function(res) {
+                self.pageCache = res.data;
+                return self.pageCache;
+            }).catch(res => res.data);
         };
         PageService.prototype.getPage = function(pageId) {
             return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => res.data);
@@ -165,8 +168,23 @@
             return page;
         };
 
+        PageService.prototype.getPageHierarchyName = function(page) {
+            var selectName = [];
+            if(page.parent && page.parent.name) {
+                if(page.parent.parent) {
+                    selectName.push('...');
+                }
+
+                selectName.push(page.parent.name);
+            }
+            selectName.push(page.name);
+            return selectName.join(' / ');
+        };
+
         return new PageService();
     });
+
+
 
     function slugify(str) {
 

@@ -33,7 +33,7 @@
                 <select ng-model="defaultPage.redirect" class="form-control">
                     <option value="" disabled selected>Select a page</option>
                     <option value="" ng-selected="!defaultPage.redirect">None</option>
-                    <option ng-repeat="page in availablePages" value="{{page._id}}" ng-selected="defaultPage.redirect._id == page._id">{{page.name}}</option>
+                    <option ng-repeat="page in availablePages" value="{{page._id}}" ng-selected="defaultPage.redirect._id == page._id">{{getPageHierarchyName(page)}}</option>
                 </select>
             </div>
         </div>

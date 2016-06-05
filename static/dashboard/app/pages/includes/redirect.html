@@ -27,7 +27,7 @@
             <label class="col-sm-2 control-label">...to</label>
             <div class="col-sm-7">
                 <select ng-model="page.redirect" ng-disabled="page.status != 301 && page.status != 302"
-                        ng-options="page._id as page.name for page in allPages" class="form-control">
+                        ng-options="page._id as getPageHierarchyName(page) for page in allPages" class="form-control">
                     <option value="" disabled selected>Select a page</option>
                 </select>
             </div>

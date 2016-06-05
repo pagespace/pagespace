@@ -7,6 +7,9 @@
     var adminApp = angular.module('adminApp');
     adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, $q, pageService,
                                                            siteService) {
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
         $scope.defaultPage = {
             redirect: null
         };

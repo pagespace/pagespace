@@ -11,6 +11,8 @@ adminApp.controller('PageController',
 
     $log.info('Showing page view.');
 
+    $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
     $scope.section = $routeParams.section || 'basic';
 
     $scope.clearNotification();
