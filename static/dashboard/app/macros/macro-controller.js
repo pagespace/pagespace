@@ -14,6 +14,7 @@
         var macroId = $routeParams.macroId;
 
         $scope.macro = {
+            includes: []
         };
 
         $scope.allPages = [];
