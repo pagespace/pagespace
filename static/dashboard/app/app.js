@@ -27,33 +27,47 @@
                 controller: 'RemoveIncludeController'
             }).
 
+            //sitemap
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController',
+                reloadOnSearch: false
+            }).
+            //page macros
+            when('/pages/macros/:macroId/:macroAction', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+            
             //pages
             when('/pages/new/root/:order', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/new/:parentPageId/:order', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/delete/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/delete-page.html',
                 controller: 'DeletePageController'
             }).
-            when('/pages/:section/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+            when('/pages/configure/:section/:pageId', {
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
+
+            //view page
             when('/view-page/:viewPageEnv', {
-                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                templateUrl: '/_static/dashboard/app/pages/view/view-page.html',
                 controller: 'ViewPageController'
             }).
             when('/view-page/:viewPageEnv/:url*', {
-                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                templateUrl: '/_static/dashboard/app/pages/view/view-page.html',
                 controller: 'ViewPageController'
             }).
 
@@ -135,11 +149,6 @@
             when('/users/:userId', {
                 templateUrl: '/_static/dashboard/app/users/user.html',
                 controller: 'UserController'
-            }).
-
-            when('/pages', {
-                templateUrl: '/_static/dashboard/app/pages/site-map.html',
-                controller: 'SitemapController'
             }).
 
             //default to sitemap

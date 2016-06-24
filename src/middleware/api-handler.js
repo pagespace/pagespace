@@ -29,7 +29,7 @@ const populationsMap = {
     Template: 'regions.includes.plugin',
     User: '',
     Media: '',
-    Macro: 'parentPage basePage template includes.plugin',
+    Macro: 'parent basePage template includes.plugin',
     Hit: ''
 };
 

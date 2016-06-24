@@ -24,7 +24,6 @@
                                 ng-show="item._editing" ng-click="updateItem(item)">                                
                             <span class="glyphicon glyphicon glyphicon-ok"></span>
                         </button>
-                        
                         <button type="button" class="btn btn-default" title="Edit" 
                                 ng-show="!item._editing" ng-click="item._editing = !item._editing">
                             <span class="glyphicon glyphicon-pencil"></span>

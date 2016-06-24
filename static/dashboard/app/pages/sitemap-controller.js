@@ -5,26 +5,31 @@
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('SitemapController', function($scope, $rootScope, $location, siteService, pageService) {
+adminApp.controller('SitemapController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
+                                                  $routeParams, macroService) {
 
     $rootScope.pageTitle = 'Sitemap';
 
-    var VIEW_MODE_STORAGE_KEY = 'sitemapViewMode';
-    $scope.viewMode = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'view';
-    $scope.setViewMode = function(mode) {
-        $scope.viewMode = mode;
-        sessionStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    $scope.updateSearch = function(action) {
+        $scope.viewMode = action;
+        $location.path('/pages').search('action', action).replace();
     };
 
-    var getSite = function() {
+    $scope.macroAction = $routeParams.macroAction;
+    $scope.viewMode = $location.search().action;
+    if(!$scope.viewMode && !$scope.macroAction) {
+        $scope.updateSearch('configure')
+    }
+
+    function getSite() {
         siteService.getSite().then(function(site) {
             $scope.site = site;
         }).catch(function(err) {
             $scope.showError('Error getting site', err);
         });
-    };
+    }
 
-    var getPages = function() {
+    function getPages() {
         pageService.getPages().then(function(allPages) {
             var pageMap = {};
             allPages = allPages.filter(function(page) {
@@ -63,10 +68,17 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         }).catch(function(err) {
             $scope.showError('Error getting pages', err);
         });
-    };
+    }
+    
+    function getMacros() {
+        macroService.getMacros().then(function(macros) {
+            $scope.macros = macros;
+        });
+    }
 
     getSite();
     getPages();
+    getMacros();
 
     $scope.addPage = function(parentPage) {
 

@@ -15,21 +15,25 @@
         $scope.getSrcPath = mediaService.getSrcPath;
         $scope.humanFileSize = mediaService.humanFileSize;
 
+        $scope.getDocSrcPath = function(item) {
+            return item ? `/_media/${item.fileName}` : null;
+        };
+
         var mediaId = $routeParams.mediaId;
         
         $scope.cancel = function() {
             $location.path('/media');
         };
 
-        mediaService.getItem(mediaId).then(function(res) {
-            $scope.item = res.data;
-            return mediaService.isText(res.data) ? mediaService.getItemText(res.data) : null;
-        }).then(function(res) {
-            if(res) {
+        mediaService.getItem(mediaId).then(function(item) {
+            $scope.item = item;
+            return mediaService.isText(item) ? mediaService.getItemText(item) : null;
+        }).then(function(text) {
+            if(text) {
                 $scope.editorOpts = {
                     mode: 'xml'
                 };
-                $scope.itemText = res.data;
+                $scope.itemText = text;
             }
         }).catch(function(err) {
             $scope.showError('Error getting media item', err);

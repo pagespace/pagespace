@@ -12,8 +12,8 @@
         var pagePromise = pageService.getPage(pageId);
 
         $q.all([pluginsPromise, pagePromise ]).then(function(results) {
-            $scope.availablePlugins = results[0].data;
-            $scope.page = results[1].data;
+            $scope.availablePlugins = results[0];
+            $scope.page = results[1];
 
             $log.debug('Got available plugins and page ok');
         }).catch(function(err) {
@@ -46,9 +46,7 @@
 
             //add the new include to the region
             if($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
-                    return res.data;
-                }).then(function(includeData) {
+                pageService.createIncludeData($scope.selectedPlugin.config).then(function(includeData) {
                     $scope.page.regions[regionIndex].includes.push({
                         plugin: $scope.selectedPlugin,
                         include: includeData._id

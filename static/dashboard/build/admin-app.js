@@ -27,33 +27,47 @@
                 controller: 'RemoveIncludeController'
             }).
 
+            //sitemap
+            when('/pages', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController',
+                reloadOnSearch: false
+            }).
+            //page macros
+            when('/pages/macros/:macroId/:macroAction', {
+                templateUrl: '/_static/dashboard/app/pages/site-map.html',
+                controller: 'SitemapController'
+            }).
+            
             //pages
             when('/pages/new/root/:order', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/new/:parentPageId/:order', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
             when('/pages/delete/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/delete-page.html',
+                templateUrl: '/_static/dashboard/app/pages/page/delete-page.html',
                 controller: 'DeletePageController'
             }).
-            when('/pages/:section/:pageId', {
-                templateUrl: '/_static/dashboard/app/pages/page.html',
+            when('/pages/configure/:section/:pageId', {
+                templateUrl: '/_static/dashboard/app/pages/page/page.html',
                 controller: 'PageController'
             }).
+
+            //view page
             when('/view-page/:viewPageEnv', {
-                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                templateUrl: '/_static/dashboard/app/pages/view/view-page.html',
                 controller: 'ViewPageController'
             }).
             when('/view-page/:viewPageEnv/:url*', {
-                templateUrl: '/_static/dashboard/app/pages/view-page.html',
+                templateUrl: '/_static/dashboard/app/pages/view/view-page.html',
                 controller: 'ViewPageController'
             }).
 
@@ -135,11 +149,6 @@
             when('/users/:userId', {
                 templateUrl: '/_static/dashboard/app/users/user.html',
                 controller: 'UserController'
-            }).
-
-            when('/pages', {
-                templateUrl: '/_static/dashboard/app/pages/site-map.html',
-                controller: 'SitemapController'
             }).
 
             //default to sitemap
@@ -365,8 +374,8 @@
         var pagePromise = pageService.getPage(pageId);
 
         $q.all([pluginsPromise, pagePromise ]).then(function(results) {
-            $scope.availablePlugins = results[0].data;
-            $scope.page = results[1].data;
+            $scope.availablePlugins = results[0];
+            $scope.page = results[1];
 
             $log.debug('Got available plugins and page ok');
         }).catch(function(err) {
@@ -399,9 +408,7 @@
 
             //add the new include to the region
             if($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
-                    return res.data;
-                }).then(function(includeData) {
+                pageService.createIncludeData($scope.selectedPlugin.config).then(function(includeData) {
                     $scope.page.regions[regionIndex].includes.push({
                         plugin: $scope.selectedPlugin,
                         include: includeData._id
@@ -518,6 +525,7 @@
         var macroId = $routeParams.macroId;
 
         $scope.macro = {
+            includes: []
         };
 
         $scope.allPages = [];
@@ -650,22 +658,37 @@ adminApp.controller('MacroListController', function($scope, $rootScope, $routePa
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('macroService', function($http) {
+    adminApp.factory('macroService', function($http, $q) {
 
         function MacroService() {
+            this.clearCache();
         }
         MacroService.prototype.getMacros = function() {
-            return $http.get('/_api/macros').then(res => res.data).catch(res => res.data);
+
+            if(Array.isArray(this.macroCache)) {
+                return $q.when(this.macroCache);
+            }
+
+            return $http.get('/_api/macros').then(res => {
+                this.macroCache = res.data;
+                return res.data;
+            }).catch(res => res.data);
         };
         MacroService.prototype.getMacro = function(macroId) {
             return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);;
         };
         MacroService.prototype.createMacro = function(macroData) {
-            return $http.post('/_api/macros', macroData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/macros', macroData).then(res => {
+                this.clearCache();
+                return res.data
+            }).catch(res => res.data);
         };
 
         MacroService.prototype.updateMacro = function(macroId, macroData) {
-            return $http.put('/_api/macros/' + macroId, macroData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/macros/' + macroId, macroData).then(res => {
+                this.clearCache();
+                return res.data;
+            }).catch(res => res.data);
         };
 
         MacroService.prototype.deleteMacro = function(macroId) {
@@ -682,8 +705,8 @@ adminApp.controller('MacroListController', function($scope, $rootScope, $routePa
             if(macro.template && macro.template._id) {
                 macro.template = macro.template._id;
             }
-            if(macro.parentPage && macro.parentPage._id) {
-                macro.parentPage = macro.parentPage._id;
+            if(macro.parent && macro.parent._id) {
+                macro.parent = macro.parent._id;
             }
             if(macro.basePage && macro.basePage._id) {
                 macro.basePage = macro.basePage._id;
@@ -697,6 +720,10 @@ adminApp.controller('MacroListController', function($scope, $rootScope, $routePa
             });
             
             return macro;
+        };
+
+        MacroService.prototype.clearCache = function() {
+            this.macroCache = null;
         };
 
         return new MacroService();
@@ -853,7 +880,6 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                                 ng-show="item._editing" ng-click="updateItem(item)">                                
                             <span class="glyphicon glyphicon glyphicon-ok"></span>
                         </button>
-                        
                         <button type="button" class="btn btn-default" title="Edit" 
                                 ng-show="!item._editing" ng-click="item._editing = !item._editing">
                             <span class="glyphicon glyphicon-pencil"></span>
@@ -1374,21 +1400,25 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         $scope.getSrcPath = mediaService.getSrcPath;
         $scope.humanFileSize = mediaService.humanFileSize;
 
+        $scope.getDocSrcPath = function(item) {
+            return item ? `/_media/${item.fileName}` : null;
+        };
+
         var mediaId = $routeParams.mediaId;
         
         $scope.cancel = function() {
             $location.path('/media');
         };
 
-        mediaService.getItem(mediaId).then(function(res) {
-            $scope.item = res.data;
-            return mediaService.isText(res.data) ? mediaService.getItemText(res.data) : null;
-        }).then(function(res) {
-            if(res) {
+        mediaService.getItem(mediaId).then(function(item) {
+            $scope.item = item;
+            return mediaService.isText(item) ? mediaService.getItemText(item) : null;
+        }).then(function(text) {
+            if(text) {
                 $scope.editorOpts = {
                     mode: 'xml'
                 };
-                $scope.itemText = res.data;
+                $scope.itemText = text;
             }
         }).catch(function(err) {
             $scope.showError('Error getting media item', err);
@@ -1403,266 +1433,6 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             });
         };
     });
-
-})();
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller('DeletePageController',
-    function($scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, $window) {
-
-    var pageId = $routeParams.pageId;
-    $scope.status = 410;
-
-    pageService.getPage(pageId).then(function(page) {
-        $scope.page = page;
-
-        //default delete status
-        page.status = 410;
-    }).catch(function(err) {
-        $scope.showError('Couldn\'t find a page to delete', err);
-    });
-    pageService.getPages().then(function(pages) {
-        $scope.pages = pages;
-    }).catch(function(err) {
-        $scope.showError('Couldn\'t get pages', err);
-    });
-
-    $scope.cancel = function() {
-        $location.path('');
-    };
-
-    $scope.submit = function(form) {
-
-        if(form.$invalid) {
-            $scope.submitted = true;
-            $window.scrollTo(0,0);
-            return;
-        }
-
-        var page = $scope.page;
-
-        pageService.deletePage(page).then(function() {
-            $location.path('');
-            $scope.showInfo('Page: ' + page.name + ' removed.');
-        }).catch(function(err) {
-            $scope.showError('Error deleting page', err);
-        });
-    };
-});
-
-})();
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller('PageController',
-    function($log, $scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, pluginService, $window) {
-
-    $log.info('Showing page view.');
-
-    $scope.getPageHierarchyName = pageService.getPageHierarchyName;
-
-    $scope.section = $routeParams.section || 'basic';
-
-    $scope.clearNotification();
-
-    var pageId = $routeParams.pageId;
-
-    var parentPageId = $routeParams.parentPageId;
-    var order = $routeParams.order;
-
-    //sets the code mirror mode for editing raw include data
-    $scope.editorOpts = {
-        mode: 'application/json'
-    };
-
-    $scope.allPages = [];
-    pageService.getPages().then(function(pages) {
-        $scope.allPages = pages;
-    }).catch(function(err) {
-        $scope.showError('Couldn\'t get all pages', err);
-    });
-
-    var pageSetupPromises = [];
-    pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
-        $log.info('Got available templates.');
-        $scope.templates = templates;
-    }));
-    pageSetupPromises.push(pluginService.getPlugins().then(function(availablePlugins) {
-        $log.debug('Got available plugins.');
-        $scope.availablePlugins = availablePlugins;
-    }));
-
-    if(pageId) {
-        $log.debug('Fetching page data for: %s', pageId);
-        $scope.pageId = pageId;
-        pageSetupPromises.push(pageService.getPage(pageId).then(function(page) {
-            $log.debug('Got page data OK.');
-            $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-            $scope.page = page;
-
-            if(page.expiresAt) {
-                page.expiresAt = new Date(page.expiresAt);
-            }
-            if(page.publishedAt) {
-                page.publishedAt = new Date(page.publishedAt);
-            }
-
-            //depopulate redirect page
-            if(page.redirect) {
-                page.redirect = page.redirect._id;
-            }
-        }));
-    } else {
-        $scope.page = {
-            regions: [],
-            useInNav: true
-        };
-        if(parentPageId) {
-            pageSetupPromises.push(pageService.getPage(parentPageId).then(function(page) {
-                $scope.page.parent = page;
-            }));
-        } else {
-            $scope.page.root = 'top';
-        }
-    }
-
-    Promise.all(pageSetupPromises).then(function () {
-        //if there's only one template choose it automatically
-        if(!$scope.page.template && $scope.templates.length === 1) {
-            $scope.page.template = $scope.templates[0];
-        }
-    }).catch(function (err) {
-        $scope.showError(err);
-    });
-
-    $scope.updateUrl = function() {
-        $scope.page.url = pageService.generateUrl($scope.page);
-    };
-
-    $scope.cancel = function() {
-        $location.path('/pages');
-    };
-
-    $scope.$watch('page.name', function() {
-        if(!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
-            $scope.updateUrl();
-        }
-    });
-
-    $scope.syncResults = null;
-
-    $scope.synchronizeWithBasePage = function(page) {
-        function getRegionFromPage(page, regionName) {
-            return page.regions.filter(function(region) {
-                return region.name === regionName;
-            })[0] || null;
-        }
-        function containsInclude(region, includeToFind) {
-            return region.includes.some(function(include) {
-                return include._id === includeToFind._id;
-            });
-        }
-        //get basepage from id value
-        $scope.syncResults = [];
-        page.template.regions.forEach(function(templateRegion) {
-            var syncResult = {
-                region: templateRegion.name,
-                removedCount: 0,
-                sharedCount: 0
-            };
-            var sharing = (templateRegion.sharing || '').split(/\s+/);
-            var pageRegion = getRegionFromPage(page, templateRegion.name);
-            if(!pageRegion) {
-                pageRegion = {
-                    name: templateRegion.name,
-                    includes: []
-                };
-                page.regions.push(pageRegion);
-            }
-            var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
-            if(baseRegion) {
-                var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
-                //add additional non-shared includes at the end
-                baseRegion.includes.forEach(function(baseInclude) {
-                    if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
-                        !containsInclude(pageRegion, baseInclude)) {
-                        pageRegion.includes.push(baseInclude);
-                    }
-                });
-                syncResult.sharedCount = pageRegion.includes.length - startCount;
-            }
-            $scope.syncResults.push(syncResult);
-        });
-
-        return page;
-    };
-
-    $scope.save = function(form) {
-        if(form.$invalid) {
-            $scope.submitted = true;
-            $window.scrollTo(0,0);
-            return;
-        }
-
-        var page = $scope.page;
-        if(order) {
-            page.order = order;
-        }
-
-        if(pageId) {
-            $log.info('Update page: %s...', pageId);
-            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            page = pageService.depopulatePage(page);
-            pageService.updatePage(pageId, page).then(function() {
-                $log.info('Page successfully updated');
-                $scope.showSuccess('Page: ' + page.name + ' saved.');
-                $location.path('');
-            }).catch(function(err) {
-                $log.error(err, 'Error updating page');
-                $scope.showError('Error updating page', err);
-            });
-        } else {
-            $log.info('Creating page...');
-            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-
-            //create regions based on template
-            var pageRegions = [];
-            page.template.regions.forEach(function(regionMeta) {
-                var newRegion = {};
-                newRegion.name = regionMeta.name;
-                newRegion.includes = [];
-                pageRegions.push(newRegion);
-            });
-            page.regions = pageRegions;
-
-            if(page.basePage) {
-                page = $scope.synchronizeWithBasePage(page);
-            }
-
-            page = pageService.depopulatePage(page);
-            pageService.createPage(page).then(function(res) {
-                var page = res.data;
-                $log.info('Page successfully created');
-                $scope.showSuccess('Page: ' + page.name + ' created.');
-                $location.path('');
-            }).catch(function(err) {
-                $log.error(err, 'Error creating page');
-                $scope.showError('Error adding new page', err);
-            });
-        }
-    };
-});
 
 })();
 (function() {
@@ -1835,6 +1605,52 @@ adminApp.controller('PageController',
             return page;
         };
 
+        PageService.prototype.synchronizeWithBasePage = function(page) {
+            function getRegionFromPage(page, regionName) {
+                return page.regions.filter(function(region) {
+                        return region.name === regionName;
+                    })[0] || null;
+            }
+            function containsInclude(region, includeToFind) {
+                return region.includes.some(function(include) {
+                    return include._id === includeToFind._id;
+                });
+            }
+            //get basepage from id value
+            var syncResults = [];
+            page.template.regions.forEach(function(templateRegion) {
+                var syncResult = {
+                    region: templateRegion.name,
+                    removedCount: 0,
+                    sharedCount: 0
+                };
+                var sharing = (templateRegion.sharing || '').split(/\s+/);
+                var pageRegion = getRegionFromPage(page, templateRegion.name);
+                if(!pageRegion) {
+                    pageRegion = {
+                        name: templateRegion.name,
+                        includes: []
+                    };
+                    page.regions.push(pageRegion);
+                }
+                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
+                if(baseRegion) {
+                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                    //add additional non-shared includes at the end
+                    baseRegion.includes.forEach(function(baseInclude) {
+                        if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
+                            !containsInclude(pageRegion, baseInclude)) {
+                            pageRegion.includes.push(baseInclude);
+                        }
+                    });
+                    syncResult.sharedCount = pageRegion.includes.length - startCount;
+                }
+                syncResults.push(syncResult);
+            });
+
+            return syncResults;
+        };
+
         PageService.prototype.getPageHierarchyName = function(page) {
             var selectName = [];
             if(page.parent && page.parent.name) {
@@ -1881,26 +1697,31 @@ adminApp.controller('PageController',
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
-adminApp.controller('SitemapController', function($scope, $rootScope, $location, siteService, pageService) {
+adminApp.controller('SitemapController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
+                                                  $routeParams, macroService) {
 
     $rootScope.pageTitle = 'Sitemap';
 
-    var VIEW_MODE_STORAGE_KEY = 'sitemapViewMode';
-    $scope.viewMode = sessionStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'view';
-    $scope.setViewMode = function(mode) {
-        $scope.viewMode = mode;
-        sessionStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    $scope.updateSearch = function(action) {
+        $scope.viewMode = action;
+        $location.path('/pages').search('action', action).replace();
     };
 
-    var getSite = function() {
+    $scope.macroAction = $routeParams.macroAction;
+    $scope.viewMode = $location.search().action;
+    if(!$scope.viewMode && !$scope.macroAction) {
+        $scope.updateSearch('configure')
+    }
+
+    function getSite() {
         siteService.getSite().then(function(site) {
             $scope.site = site;
         }).catch(function(err) {
             $scope.showError('Error getting site', err);
         });
-    };
+    }
 
-    var getPages = function() {
+    function getPages() {
         pageService.getPages().then(function(allPages) {
             var pageMap = {};
             allPages = allPages.filter(function(page) {
@@ -1939,10 +1760,17 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
         }).catch(function(err) {
             $scope.showError('Error getting pages', err);
         });
-    };
+    }
+    
+    function getMacros() {
+        macroService.getMacros().then(function(macros) {
+            $scope.macros = macros;
+        });
+    }
 
     getSite();
     getPages();
+    getMacros();
 
     $scope.addPage = function(parentPage) {
 
@@ -2033,73 +1861,6 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $location,
     };
     $scope.moveForward = function(page) {
         $scope.movePage(page, 1);
-    };
-});
-
-})();
-(function() {
-
-/**
- *
- * @type {*}
- */
-var adminApp = angular.module('adminApp');
-adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
-
-    var env = $routeParams.viewPageEnv;
-    var url = $routeParams.url;
-
-    $scope.getPageUrl = function() {
-        var showPreview = env === 'preview';
-        return '/' + (url || '') + '?_preview=' + showPreview;
-    };
-});
-
-adminApp.directive('pageHolder', function() {
-    return {
-        restrict: 'E',
-        transclude: true,
-        replace: true,
-        template: '<div ng-transclude></div>',
-        link: function link(scope, element) {
-
-            //sizing
-            function getWindowHeight() {
-                return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
-            }
-
-            element.css('clear', 'both');
-            element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
-
-            window.addEventListener('resize', function() {
-                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
-            });
-
-            //injection
-            var adminStyles = document.createElement('link');
-            adminStyles.id =
-            adminStyles.setAttribute('type', 'text/css');
-            adminStyles.setAttribute('rel', 'stylesheet');
-            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
-
-            var adminScript = document.createElement('script');
-            adminScript.src = '/_static/inpage/inpage-edit.js';
-
-            var pageFrame = element.find('iframe')[0];
-
-            pageFrame.addEventListener('load', function() {
-                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
-                frameHead.appendChild(adminStyles);
-                frameHead.appendChild(adminScript);
-
-                adminScript.onload = function() {
-                    window.setTimeout(function() {
-                        //not sure how to guarantee the css is ready
-                        pageFrame.contentWindow.pagespace.setupAdminMode();
-                    }, 50);
-                };
-            });
-        }
     };
 });
 
@@ -2762,3 +2523,449 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 })();
 
 
+
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageMacroEditController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
+                                                      $routeParams, macroService, $log, $window) {
+
+        $rootScope.pageTitle = 'Page Macros';
+        
+        var macroId = $routeParams.macroId;
+        var pageId = $location.search().pageId;
+
+        $scope.page = {};
+
+        if(pageId) {
+            $log.debug('Fetching page data for: %s', pageId);
+            $scope.pageId = pageId;
+            pageService.getPage(pageId).then(function(page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+                $scope.page = page;
+
+                if(page.expiresAt) {
+                    page.expiresAt = new Date(page.expiresAt);
+                }
+                if(page.publishedAt) {
+                    page.publishedAt = new Date(page.publishedAt);
+                }
+
+                //depopulate redirect page
+                if(page.redirect) {
+                    page.redirect = page.redirect._id;
+                }
+            });
+        } else {
+            macroService.getMacro(macroId).then(function(macro) {
+                $scope.macro = macro;
+                //$scope.page.root = 'top';
+                $scope.page.parent = macro.parent;
+                $scope.page.basePage = macro.basePage;
+                $scope.page.template = macro.template;
+                $scope.page.useInNav = !!macro.useInNav;
+                $scope.page.macro = macro._id;
+            });
+        }
+
+        $scope.updateUrl = function() {
+            $scope.page.url = pageService.generateUrl($scope.page);
+        };
+
+        $scope.cancel = function() {
+            $location.path('/pages');
+        };
+
+        $scope.$watch('page.name', function() {
+            if(!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+                $scope.updateUrl();
+            }
+        });
+
+        $scope.save = function(form) {
+            if(form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0,0);
+                return;
+            }
+
+            var page = $scope.page;
+
+            if(pageId) {
+                $log.info('Update page: %s...', pageId);
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).then(function() {
+                    $log.info('Page successfully updated');
+                    $scope.showSuccess('Page: ' + page.name + ' saved.');
+                    $location.path(`/pages/macros/${macroId}/list`);
+                }).catch(function(err) {
+                    $log.error(err, 'Error updating page');
+                    $scope.showError('Error updating page', err);
+                });
+            } else {
+                $log.info('Creating page...');
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+
+                //create regions based on template
+                var pageRegions = [];
+                page.template.regions.forEach(function(regionMeta) {
+                    var newRegion = {};
+                    newRegion.name = regionMeta.name;
+                    newRegion.includes = [];
+                    pageRegions.push(newRegion);
+                });
+                page.regions = pageRegions;
+
+                if(page.basePage) {
+                    pageService.synchronizeWithBasePage(page);
+                }
+
+                page = pageService.depopulatePage(page);
+                pageService.createPage(page).then(function(page) {
+                    $log.info('Page successfully created');
+                    $scope.showSuccess('Page: ' + page.name + ' created.');
+                    $location.path(`/pages/macros/${macroId}/list`);
+                }).catch(function(err) {
+                    $log.error(err, 'Error creating page');
+                    $scope.showError('Error adding new page', err);
+                });
+            }
+        };
+    });
+
+})();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageListMacroController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
+                                                        $routeParams, macroService, $log, $window) {
+
+        $rootScope.pageTitle = 'Pages';
+
+        var macroId = $routeParams.macroId;
+        
+        $scope.pages = [];
+
+        pageService.getPages({
+            macro: macroId
+        }).then(function(pages) {
+            $scope.pages = pages;
+        }).catch(function(err) {
+            $scope.showError('Error getting pages', err);
+        });
+
+        $scope.edit = function(page) {
+            $location.url(`/pages/macros/${macroId}/edit?pageId=${page._id}`);
+        };
+
+        $scope.publish = function(page) {
+            $location.path(`/publishing/${page._id}`);
+        };
+
+        $scope.removePage = function(page) {
+
+            if(page.published) {
+                $location.path('/pages/delete/' + page._id);
+            } else {
+                var really = window.confirm('Really delete this page?');
+                if(really) {
+                    pageService.deletePage(page).then(function() {
+                        window.location.reload();
+                        $scope.showInfo('Page: ' + page.name + ' removed.');
+                    }).catch(function(msg) {
+                        $scope.showError('Error deleting page', msg);
+                    });
+                }
+            }
+
+        };
+    });
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('DeletePageController',
+    function($scope, $rootScope, $routeParams, $location, $timeout,
+             pageService, $window) {
+
+    var pageId = $routeParams.pageId;
+    $scope.status = 410;
+
+    pageService.getPage(pageId).then(function(page) {
+        $scope.page = page;
+
+        //default delete status
+        page.status = 410;
+    }).catch(function(err) {
+        $scope.showError('Couldn\'t find a page to delete', err);
+    });
+    pageService.getPages().then(function(pages) {
+        $scope.pages = pages;
+    }).catch(function(err) {
+        $scope.showError('Couldn\'t get pages', err);
+    });
+
+    $scope.cancel = function() {
+        $location.path('');
+    };
+
+    $scope.submit = function(form) {
+
+        if(form.$invalid) {
+            $scope.submitted = true;
+            $window.scrollTo(0,0);
+            return;
+        }
+
+        var page = $scope.page;
+
+        pageService.deletePage(page).then(function() {
+            $location.path('');
+            $scope.showInfo('Page: ' + page.name + ' removed.');
+        }).catch(function(err) {
+            $scope.showError('Error deleting page', err);
+        });
+    };
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('PageController',
+    function($log, $scope, $rootScope, $routeParams, $location, $timeout,
+             pageService, templateService, pluginService, $window) {
+
+    $log.info('Showing page view.');
+
+    $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
+    $scope.section = $routeParams.section || 'basic';
+
+    $scope.clearNotification();
+
+    var pageId = $routeParams.pageId;
+
+    var parentPageId = $routeParams.parentPageId;
+    var order = $routeParams.order;
+
+    $scope.allPages = [];
+    pageService.getPages().then(function(pages) {
+        $scope.allPages = pages;
+    }).catch(function(err) {
+        $scope.showError('Couldn\'t get all pages', err);
+    });
+
+    var pageSetupPromises = [];
+    pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
+        $log.info('Got available templates.');
+        $scope.templates = templates;
+    }));
+    pageSetupPromises.push(pluginService.getPlugins().then(function(availablePlugins) {
+        $log.debug('Got available plugins.');
+        $scope.availablePlugins = availablePlugins;
+    }));
+
+    if(pageId) {
+        $log.debug('Fetching page data for: %s', pageId);
+        $scope.pageId = pageId;
+        pageSetupPromises.push(pageService.getPage(pageId).then(function(page) {
+            $log.debug('Got page data OK.');
+            $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+            $scope.page = page;
+
+            if(page.expiresAt) {
+                page.expiresAt = new Date(page.expiresAt);
+            }
+            if(page.publishedAt) {
+                page.publishedAt = new Date(page.publishedAt);
+            }
+
+            //depopulate redirect page
+            if(page.redirect) {
+                page.redirect = page.redirect._id;
+            }
+        }));
+    } else {
+        $scope.page = {
+            regions: [],
+            useInNav: true
+        };
+        if(parentPageId) {
+            pageSetupPromises.push(pageService.getPage(parentPageId).then(function(page) {
+                $scope.page.parent = page;
+            }));
+        } else {
+            $scope.page.root = 'top';
+        }
+    }
+
+    Promise.all(pageSetupPromises).then(function () {
+        //if there's only one template choose it automatically
+        if(!$scope.page.template && $scope.templates.length === 1) {
+            $scope.page.template = $scope.templates[0];
+        }
+    }).catch(function (err) {
+        $scope.showError(err);
+    });
+
+    $scope.updateUrl = function() {
+        $scope.page.url = pageService.generateUrl($scope.page);
+    };
+
+    $scope.cancel = function() {
+        $location.path('/pages');
+    };
+
+    $scope.$watch('page.name', function() {
+        if(!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+            $scope.updateUrl();
+        }
+    });
+
+    $scope.syncResults = null;
+
+    $scope.synchronizeWithBasePage = pageService.synchronizeWithBasePage;
+
+    $scope.save = function(form) {
+        if(form.$invalid) {
+            $scope.submitted = true;
+            $window.scrollTo(0,0);
+            return;
+        }
+
+        var page = $scope.page;
+        if(order) {
+            page.order = order;
+        }
+
+        if(pageId) {
+            $log.info('Update page: %s...', pageId);
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            page = pageService.depopulatePage(page);
+            pageService.updatePage(pageId, page).then(function() {
+                $log.info('Page successfully updated');
+                $scope.showSuccess('Page: ' + page.name + ' saved.');
+                $location.path('');
+            }).catch(function(err) {
+                $log.error(err, 'Error updating page');
+                $scope.showError('Error updating page', err);
+            });
+        } else {
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+
+            //create regions based on template
+            var pageRegions = [];
+            page.template.regions.forEach(function(regionMeta) {
+                var newRegion = {};
+                newRegion.name = regionMeta.name;
+                newRegion.includes = [];
+                pageRegions.push(newRegion);
+            });
+            page.regions = pageRegions;
+
+            if(page.basePage) {
+                pageService.synchronizeWithBasePage(page);
+            }
+
+            page = pageService.depopulatePage(page);
+            pageService.createPage(page).then(function(page) {
+                $log.info('Page successfully created');
+                $scope.showSuccess('Page: ' + page.name + ' created.');
+                $location.path('');
+            }).catch(function(err) {
+                $log.error(err, 'Error creating page');
+                $scope.showError('Error adding new page', err);
+            });
+        }
+    };
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
+adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
+
+    var env = $routeParams.viewPageEnv;
+    var url = $routeParams.url;
+
+    $scope.getPageUrl = function() {
+        var showPreview = env === 'preview';
+        return '/' + (url || '') + '?_preview=' + showPreview;
+    };
+});
+
+adminApp.directive('pageHolder', function() {
+    return {
+        restrict: 'E',
+        transclude: true,
+        replace: true,
+        template: '<div ng-transclude></div>',
+        link: function link(scope, element) {
+
+            //sizing
+            function getWindowHeight() {
+                return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+            }
+
+            element.css('clear', 'both');
+            element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+
+            window.addEventListener('resize', function() {
+                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+            });
+
+            //injection
+            var adminStyles = document.createElement('link');
+            adminStyles.id =
+            adminStyles.setAttribute('type', 'text/css');
+            adminStyles.setAttribute('rel', 'stylesheet');
+            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
+
+            var adminScript = document.createElement('script');
+            adminScript.src = '/_static/inpage/inpage-edit.js';
+
+            var pageFrame = element.find('iframe')[0];
+
+            pageFrame.addEventListener('load', function() {
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
+                frameHead.appendChild(adminStyles);
+                frameHead.appendChild(adminScript);
+
+                adminScript.onload = function() {
+                    window.setTimeout(function() {
+                        //not sure how to guarantee the css is ready
+                        pageFrame.contentWindow.pagespace.setupAdminMode();
+                    }, 50);
+                };
+            });
+        }
+    };
+});
+
+})();

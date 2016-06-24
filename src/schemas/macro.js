@@ -12,7 +12,7 @@ function generateSchema(modifier) {
             type: String,
             required: true
         },
-        parentPage: {
+        parent: {
             type: Schema.Types.ObjectId,
             ref: 'Page' + modifier,
             required: true

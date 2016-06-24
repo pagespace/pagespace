@@ -1,0 +1,28 @@
+<div ng-controller="PageListMacroController" class="col-sm-7">
+    <div class="notification-bar">
+        <h4 ng-show="pages.length == 0">There are no pages for this macro</h4>
+    </div>
+    <div class="list-group" ng-show="pages.length > 0">
+        <div ng-repeat="page in pages" class="list-group-item">
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-default" title="Publish"
+                        ng-click="publish(page)" ng-show="page.draft">
+                    <span class="glyphicon glyphicon-play"></span>
+                </button>
+                <button type="button" class="btn btn-default" title="Edit"
+                        ng-click="edit(page)">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                </button>
+                <button type="button" class="btn btn-default" title="Delete"
+                        ng-click="removePage(page)">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </div>
+            <h4 class="list-group-item-heading">{{page.name}}
+                <small ng-show="page.draft"><i><b>draft</b></i></small></h4>
+            <p class="list-group-item-text"><small>
+                <a href="#/view-page/preview{{page.url}}">{{page.url}}</a>
+            </small></p>
+        </div>
+    </div>
+</div>

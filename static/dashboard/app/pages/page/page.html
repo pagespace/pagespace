@@ -4,10 +4,10 @@
         <h3 ng-show="page._id">Edit page</h3>
     </div>
     <ul class="nav nav-pills nav-stacked" ng-show="page._id">
-        <li ng-class="menuClass('/pages/basic')"><a ng-href="{{'#/pages/basic/' + page._id }}">Basic settings</a></li>
-        <li ng-class="menuClass('/pages/redirect')"><a ng-href="{{'#/pages/redirect/' + page._id}}">Redirect</a></li>
-        <li ng-class="menuClass('/pages/details')"><a ng-href="{{'#/pages/details/' + page._id }}">Details</a></li>
-        <li><a ng-href="{{'/_api/pages/' + page._id}}" target="_blank">View JSON <small><span class="glyphicon glyphicon glyphicon-new-window"></span></small></a></li>
+        <li ng-class="menuClass('/pages/configure/basic')"><a ng-href="{{'#/pages/configure/basic/' + page._id }}">Basic settings</a></li>
+        <li ng-class="menuClass('/pages/configure/redirect')"><a ng-href="{{'#/pages/configure/redirect/' + page._id}}">Redirect</a></li>
+        <li ng-class="menuClass('/pages/configure/details')"><a ng-href="{{'#/pages/configure/details/' + page._id }}">Details</a></li>
+        <li><a ng-href="{{'/_api/pages/' + page._id}}" target="_blank">View JSON</a></li>
     </ul>
 </nav>
 <main class="main col-sm-6">
@@ -19,6 +19,6 @@
     </div>
 
     <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
-        <div ng-include="'/_static/dashboard/app/pages/includes/' + section + '.html'"></div>
+        <div ng-include="'/_static/dashboard/app/pages/page/configure/' + section + '.html'"></div>
     </form>
 </main>

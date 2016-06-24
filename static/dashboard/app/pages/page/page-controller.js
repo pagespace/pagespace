@@ -22,11 +22,6 @@ adminApp.controller('PageController',
     var parentPageId = $routeParams.parentPageId;
     var order = $routeParams.order;
 
-    //sets the code mirror mode for editing raw include data
-    $scope.editorOpts = {
-        mode: 'application/json'
-    };
-
     $scope.allPages = [];
     pageService.getPages().then(function(pages) {
         $scope.allPages = pages;
@@ -103,51 +98,7 @@ adminApp.controller('PageController',
 
     $scope.syncResults = null;
 
-    $scope.synchronizeWithBasePage = function(page) {
-        function getRegionFromPage(page, regionName) {
-            return page.regions.filter(function(region) {
-                return region.name === regionName;
-            })[0] || null;
-        }
-        function containsInclude(region, includeToFind) {
-            return region.includes.some(function(include) {
-                return include._id === includeToFind._id;
-            });
-        }
-        //get basepage from id value
-        $scope.syncResults = [];
-        page.template.regions.forEach(function(templateRegion) {
-            var syncResult = {
-                region: templateRegion.name,
-                removedCount: 0,
-                sharedCount: 0
-            };
-            var sharing = (templateRegion.sharing || '').split(/\s+/);
-            var pageRegion = getRegionFromPage(page, templateRegion.name);
-            if(!pageRegion) {
-                pageRegion = {
-                    name: templateRegion.name,
-                    includes: []
-                };
-                page.regions.push(pageRegion);
-            }
-            var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
-            if(baseRegion) {
-                var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
-                //add additional non-shared includes at the end
-                baseRegion.includes.forEach(function(baseInclude) {
-                    if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
-                        !containsInclude(pageRegion, baseInclude)) {
-                        pageRegion.includes.push(baseInclude);
-                    }
-                });
-                syncResult.sharedCount = pageRegion.includes.length - startCount;
-            }
-            $scope.syncResults.push(syncResult);
-        });
-
-        return page;
-    };
+    $scope.synchronizeWithBasePage = pageService.synchronizeWithBasePage;
 
     $scope.save = function(form) {
         if(form.$invalid) {
@@ -188,12 +139,11 @@ adminApp.controller('PageController',
             page.regions = pageRegions;
 
             if(page.basePage) {
-                page = $scope.synchronizeWithBasePage(page);
+                pageService.synchronizeWithBasePage(page);
             }
 
             page = pageService.depopulatePage(page);
-            pageService.createPage(page).then(function(res) {
-                var page = res.data;
+            pageService.createPage(page).then(function(page) {
                 $log.info('Page successfully created');
                 $scope.showSuccess('Page: ' + page.name + ' created.');
                 $location.path('');

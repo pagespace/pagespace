@@ -6,11 +6,12 @@
 
     <div ng-show="macro._id">
         <ul class="nav nav-pills nav-stacked">
-            <li><a href="/_api/macros/{{macro._id}}" target="_blank">View json &raquo;</a></li>
+            <li><a href="/_api/macros/{{macro._id}}" target="_blank">View JSON</a></li>
         </ul>
 
-        <button type="button" class="btn btn-danger" ng-click="remove(item)"
-                style="margin: 15px 0 0 15px">Delete</button>
+        <button type="button" class="btn btn-danger" ng-click="remove(item)" style="margin: 15px 0 0 15px">
+            <span class="glyphicon glyphicon-trash"></span> Delete
+        </button>
     </div>
 </nav>
 <main class="main col-sm-6">
@@ -32,10 +33,10 @@
             </div>
         </div>
 
-        <div ng-if="allPages.length > 0" class="form-group" bs-has-error="parentPage">
+        <div ng-if="allPages.length > 0" class="form-group" bs-has-error="parent">
             <label class="col-sm-2 control-label">Parent page</label>
             <div class="col-sm-7">
-                <select ng-model="macro.parentPage" name="parentPage" class="form-control" required
+                <select ng-model="macro.parent" name="parent" class="form-control" required
                         ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
                     <option value="">Select a page</option>
                 </select>
@@ -48,13 +49,13 @@
         <div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
             <label class="col-sm-2 control-label">Based on page</label>
             <div class="col-sm-7">
-                <select ng-model="macro.basePage" class="form-control" required
+                <select ng-model="macro.basePage" class="form-control"
                         ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
                     <option  value="">Select a page</option>
                 </select>
             </div>
             <div class="col-sm-3">
-                <p class="form-control-static text-muted"><i>required</i></p>
+                <p class="form-control-static text-muted"><i>optional</i></p>
             </div>
         </div>
 

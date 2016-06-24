@@ -96,6 +96,10 @@ function generateSchema(modifier) {
             default: () => {
                 return this.createdAt;
             }
+        },
+        macro : {
+            type: Schema.Types.ObjectId,
+            ref: 'Macro'
         }
     });
 

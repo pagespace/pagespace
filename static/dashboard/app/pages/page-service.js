@@ -168,6 +168,52 @@
             return page;
         };
 
+        PageService.prototype.synchronizeWithBasePage = function(page) {
+            function getRegionFromPage(page, regionName) {
+                return page.regions.filter(function(region) {
+                        return region.name === regionName;
+                    })[0] || null;
+            }
+            function containsInclude(region, includeToFind) {
+                return region.includes.some(function(include) {
+                    return include._id === includeToFind._id;
+                });
+            }
+            //get basepage from id value
+            var syncResults = [];
+            page.template.regions.forEach(function(templateRegion) {
+                var syncResult = {
+                    region: templateRegion.name,
+                    removedCount: 0,
+                    sharedCount: 0
+                };
+                var sharing = (templateRegion.sharing || '').split(/\s+/);
+                var pageRegion = getRegionFromPage(page, templateRegion.name);
+                if(!pageRegion) {
+                    pageRegion = {
+                        name: templateRegion.name,
+                        includes: []
+                    };
+                    page.regions.push(pageRegion);
+                }
+                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
+                if(baseRegion) {
+                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                    //add additional non-shared includes at the end
+                    baseRegion.includes.forEach(function(baseInclude) {
+                        if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
+                            !containsInclude(pageRegion, baseInclude)) {
+                            pageRegion.includes.push(baseInclude);
+                        }
+                    });
+                    syncResult.sharedCount = pageRegion.includes.length - startCount;
+                }
+                syncResults.push(syncResult);
+            });
+
+            return syncResults;
+        };
+
         PageService.prototype.getPageHierarchyName = function(page) {
             var selectName = [];
             if(page.parent && page.parent.name) {
