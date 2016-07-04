@@ -34,29 +34,31 @@
     </ul>
 </script>
 <nav class="side-nav col-sm-2">
-    <div class="section-heading">
-        <h3>Site actions</h3>
+    <div class="not-mobile">
+        <div class="section-heading">
+            <h3>Site actions</h3>
+        </div>
+        <ul class="nav nav-pills nav-stacked">
+            <li ng-class="menuClass('/pages/actions/configure')"><a ng-click="updateSearch('configure')">Configure</a></li>
+            <li ng-class="menuClass('/pages/actions/modify')"><a ng-click="updateSearch('modify')">Add and remove</a></li>
+            <li ng-class="menuClass('/pages/actions/order')"><a ng-click="updateSearch('order')">Re-order</a></li>
+        </ul>
     </div>
-    <ul class="nav nav-pills nav-stacked">
-        <li ng-class="menuClass('/pages/actions/configure')"><a ng-click="updateSearch('configure')">Configure</a></li>
-        <li ng-class="menuClass('/pages/actions/modify')"><a ng-click="updateSearch('modify')">Add and remove</a></li>
-        <li ng-class="menuClass('/pages/actions/order')"><a ng-click="updateSearch('order')">Re-order</a></li>
-    </ul>
 
-    <div class="">
-        <h3>Quick pages</h3>
+    <div>
+        <h3>Page shortcuts</h3>
     </div>
     <ul class="nav nav-pills nav-stacked">
         <li ng-repeat="macro in macros" ng-class="menuClass('/pages/macros/{{macro._id}}')">
-            <a href="#/pages/macros/{{macro._id}}/edit" class="pull-right" style="z-index: 1">+ New</a>
+            <a href="#/pages/macros/{{macro._id}}/new" class="pull-right" style="z-index: 1">+ New</a>
             <a href="#/pages/macros/{{macro._id}}/list">{{macro.name}}</a>
         </li>
     </ul>
 
 </nav>
-<main class="main col-sm-10">
+<main class="main col-sm-{{viewMode ? '10' : '6'}}">
 
-    <div ng-if="viewMode">
+    <div ng-if="viewMode" class="not-mobile">
         <div class="notification-bar">
             <h4>Manage pages.</h4>
         </div>
