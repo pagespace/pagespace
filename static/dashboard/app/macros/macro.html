@@ -90,7 +90,7 @@
         <div ng-if="macro.template">
             <h4 style="margin-bottom: 1em">Default includes</h4>
             <div class="form-group"
-                 ng-repeat="region in macro.template.regions | filter:{ sharing: '' }:true track by $index">
+                 ng-repeat="region in macro.template.regions | filter:{ sharing: false }:true track by $index">
                 <label class="col-sm-2 control-label">{{region.name}}</label>
                 <div class="col-sm-7">
                     <div ng-repeat="include in macro.includes | filter:{ region: region.name }:true" class="well">

@@ -10,17 +10,17 @@
                 </div>
                 <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   
                         <div class="media-item-part clearfix">
-                            <div class="media-item-preview pull-left">
-                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
-                                     alt="{{file.item.name}}" title="{{file.item.type}}">
-                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
-                            </div>   
                             <div class="btn-group pull-right">
                                 <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
                                         ng-click="remove(file)" ng-disabled="uploading">
                                     <span class="glyphicon glyphicon-trash"></span>
                                 </button>      
                             </div>
+                            <div class="media-item-preview">
+                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
+                                     alt="{{file.item.name}}" title="{{file.item.type}}">
+                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
+                            </div>   
                             <div class="media-item-edit">
                                 <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
                                 <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 

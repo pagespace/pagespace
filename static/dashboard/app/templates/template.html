@@ -74,11 +74,12 @@
                         <div class="row">
                             <label class="col-xs-3 control-label">{{region.name}}</label>
                             <div class="col-xs-9">
-                                <select ng-model="region.sharing" class="form-control">
-                                    <option ng-selected="region.sharing == ''" value="">No sharing</option>
-                                    <option ng-selected="region.sharing == 'plugins'" value="plugins">Plugins</option>
-                                    <option ng-selected="region.sharing == 'plugins data'" value="plugins data">Plugins with data</option>
-                                </select>
+                                <label class="radio-inline">
+                                    <input type="radio" ng-model="region.sharing" ng-value="true"> Yes
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" ng-model="region.sharing" ng-value="false"> No
+                                </label>
                             </div>
                         </div>
                     </div>

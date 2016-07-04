@@ -28,29 +28,17 @@
         $scope.addInclude = function() {
 
             //map region name to index
-            var regionIndex = null;
-            for(var i = 0; i < $scope.page.regions.length && regionIndex === null; i++) {
-                if($scope.page.regions[i].name === regionName) {
-                    regionIndex = i;
-                }
-            }
+            var regionIndex = pageService.getRegionIndex($scope.page, regionName);
 
             //add a new region
             if(regionIndex === null) {
-                $scope.page.regions.push({
-                    name: regionName,
-                    includes: []
-                });
-                regionIndex = $scope.page.regions.length - 1;
+                pageService.addRegion(page, regionName);
             }
 
             //add the new include to the region
             if($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.config).then(function(includeData) {
-                    $scope.page.regions[regionIndex].includes.push({
-                        plugin: $scope.selectedPlugin,
-                        include: includeData._id
-                    });
+                pageService.createIncludeData($scope.selectedPlugin).then(function(includeData) {
+                    pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
                     $scope.page = pageService.depopulatePage($scope.page);
                     return pageService.updatePage(pageId, $scope.page);
                 }).then(function() {

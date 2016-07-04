@@ -20,8 +20,8 @@ function generateSchema() {
                 required: true
             },
             sharing: {
-                type: String,
-                default: ''
+                type: Boolean,
+                default: false
             }
         }],
         properties: [{

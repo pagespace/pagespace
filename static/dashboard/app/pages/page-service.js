@@ -61,21 +61,49 @@
             return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
         };
 
-        PageService.prototype.createIncludeData = function(config) {
+        PageService.prototype.createIncludeData = function(plugin) {
 
             var includeData = {};
 
-            var schemaProps = config.schema.properties || {};
+            var schemaProps = plugin.config.schema.properties || {};
             for(var name in schemaProps) {
                 if(schemaProps.hasOwnProperty(name)) {
                     includeData[name] =
-                            typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                        typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
                 }
             }
 
             return $http.post('/_api/includes', {
                 data: includeData
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => {
+                return res.data;
+            }).catch(res => {res.data});
+        };
+        
+        PageService.prototype.getRegionIndex = function(page, regionName) {
+            //map region name to index
+            var regionIndex = null;
+            for(var i = 0; i < page.regions.length && regionIndex === null; i++) {
+                if(page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+            return regionIndex;
+        };
+        
+        PageService.prototype.addRegion = function(page, regionName) {
+            page.regions.push({
+                name: regionName,
+                includes: []
+            });
+            return page.regions.length - 1;    
+        };
+        
+        PageService.prototype.addIncludeToPage = function(page, regionIndex, plugin, include) {
+            page.regions[regionIndex].includes.push({
+                plugin: plugin,
+                include: include._id
+            });
         };
 
         PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
@@ -187,7 +215,7 @@
                     removedCount: 0,
                     sharedCount: 0
                 };
-                var sharing = (templateRegion.sharing || '').split(/\s+/);
+                var sharing = !!templateRegion.sharing;
                 var pageRegion = getRegionFromPage(page, templateRegion.name);
                 if(!pageRegion) {
                     pageRegion = {
@@ -201,8 +229,7 @@
                     var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
                     //add additional non-shared includes at the end
                     baseRegion.includes.forEach(function(baseInclude) {
-                        if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
-                            !containsInclude(pageRegion, baseInclude)) {
+                        if(sharing && !containsInclude(pageRegion, baseInclude)) {
                             pageRegion.includes.push(baseInclude);
                         }
                     });

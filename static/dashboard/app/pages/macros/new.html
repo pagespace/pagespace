@@ -1,0 +1,56 @@
+<div ng-controller="PageMacroNewController">
+    <div class="notification-bar">
+        <h4>New {{macro.name}}</h4>
+    </div>
+    <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
+        <div class="form-group" bs-has-error="name">
+            <label class="col-sm-2 control-label">Title</label>
+            <div class="col-sm-7">
+                <input type="text" class="form-control" name="name" focus-if="!pageId"
+                       ng-model="page.name" placeholder="e.g. What's happening" required>
+            </div>
+            <div class="col-sm-3">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+        <div class="form-group" bs-has-error="url">
+            <label class="col-sm-2 control-label">Url</label>
+            <div class="col-sm-7">
+                <div class="input-group">
+                    <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]*$/" name="url"
+                           ng-model="page.url" placeholder="e.g. /contact-us" required>
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-primary btn" title="Regenerate Url" ng-click="updateUrl()">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </span>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+        <div class="form-group">
+            <div bs-has-error="publishedAt">
+                <label class="col-sm-2 control-label">Published</label>
+                <div class="col-sm-3">
+                    <input type="date" class="form-control" name="publishedAt" ng-model="page.publishedAt">
+                </div>
+            </div>
+            <div bs-has-error="expiresAt">
+                <label class="col-sm-1 control-label">Expires</label>
+                <div class="col-sm-3">
+                    <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <p class="form-control-static text-muted"><i>optional</i></p>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="page.template == null">Next</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</div>

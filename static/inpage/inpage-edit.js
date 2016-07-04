@@ -272,7 +272,6 @@
         var pageId = evSrc.getAttribute('data-target-page-id');
         var includeId = evSrc.getAttribute('data-target-include-id');
 
-        //TODO: fetch to check existence of default editor
         var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
         var defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
         fetch(customIframeSrc).then(function(res) {
@@ -298,7 +297,7 @@
             var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
 
             //inject plugin interface
-            iframe.contentWindow.window.pagespace = getPluginInterface(pluginName, pageId, includeId);
+            iframe.contentWindow.window.pagespace = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
         }
     }
 
@@ -342,7 +341,7 @@
 
         var regionPos = startEl.getBoundingClientRect();
         editor.style.left = regionPos.left + 'px';
-        editor.style.top = regionPos.top + 30 + 'px';
+        editor.style.top = regionPos.top + 48 + 'px';
         editor.style.width = regionPos.width + 'px';
         editor.style.height = regionPos.height + 'px';
 
@@ -362,14 +361,22 @@
         titleBar.classList.add('ps-include-editor-titlebar');
         titleBar.innerHTML = '<p>' + title + '</p>';
 
-        //close button
-        var closeBtn = document.createElement('button');
-        closeBtn.classList.add('ps-include-editor-close');
-        closeBtn.classList.add('ps-btn');
-        closeBtn.setAttribute('title', 'Close without saving');
-        closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close>';
+        //save close button
+        var saveBtn = document.createElement('button');
+        saveBtn.classList.add('ps-include-editor-save');
+        saveBtn.classList.add('ps-btn', 'ps-btn-primary');
+        saveBtn.setAttribute('title', 'Save and close');
+        saveBtn.innerHTML = 'Save and close';
 
-        titleBar.appendChild(closeBtn);
+        //save close button
+        var cancelBtn = document.createElement('button');
+        cancelBtn.classList.add('ps-include-editor-cancel');
+        cancelBtn.classList.add('ps-btn', 'ps-btn-default');
+        cancelBtn.setAttribute('title', 'Close without saving');
+        cancelBtn.innerHTML = 'Cancel';
+
+        titleBar.appendChild(cancelBtn);
+        titleBar.appendChild(saveBtn);
 
         editor.appendChild(titleBar);
 
@@ -381,6 +388,7 @@
 
         function setIframeSize(editor, size) {
             if(editor) {
+                var TITLE_BAR_HEIGHT = 43;
                 var top, height;
                 if(size === 'small') {
                     top = 200;
@@ -389,9 +397,8 @@
                     top = 100;
                     height = window.innerHeight - 200;
                 } else {
-                    top = 30;
-                    height = window.innerHeight - 30;
-
+                    top = TITLE_BAR_HEIGHT;
+                    height = window.innerHeight - TITLE_BAR_HEIGHT;
                 }
 
                 document.body.style.overflow = 'hidden';
@@ -410,7 +417,12 @@
 
         window.addEventListener('resize', resizeListener);
 
-        closeBtn.addEventListener('click', function() {
+        saveBtn.addEventListener('click', function() {
+            iframe.contentWindow.window.pagespace.emit('save');
+            window.location.reload(true);
+        });
+        
+        cancelBtn.addEventListener('click', function closeModal() {
             window.removeEventListener('resize', resizeListener);
             editor.parentNode.parentNode.removeChild(modal);
             document.body.style.overflow = 'auto';
@@ -418,86 +430,4 @@
 
         return iframe;
     }
-
-    /**
-     * Plugin Interface
-     * @param pluginName
-     * @param pageId
-     * @param region
-     * @param include
-     * @return {{getData: getData, setData: setData, close: close}}
-     */
-    function getPluginInterface(pluginName, pageId, includeId) {
-        return {
-            getKey: function() {
-                return includeId;
-            },
-            getConfig: function() {
-                console.info('Pagespace getting config for %s', pluginName);
-                return fetch('/_api/plugins', {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function(res) {
-                    return res.json();
-                }).then(function(data) {
-                    return data.filter(function(plugin) {
-                        return plugin.name === pluginName;
-                    })[0].config;
-                });
-            },
-            getData: function() {
-                console.info('Pagespace getting data for %s', includeId);
-                return fetch('/_api/includes/' + includeId, {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function(res) {
-                    return res.json();
-                }).then(function(include) {
-                    return include.data || {};
-                });
-            },
-            setData: function(data) {
-                console.info('Pagespace setting data for %s', includeId);
-                var updateData = fetch('/_api/includes/' + includeId, {
-                    method: 'put',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        data: data
-                    })
-                });
-                var updatePage = fetch('/_api/pages/' + pageId, {
-                    method: 'put',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        draft: true
-                    })
-                });
-
-                return Promise.all([ updateData, updatePage ]).then(function() { // jshint ignore:line
-                    return {
-                        status: 'ok'
-                    };
-                });
-            },
-            close: function() {
-                console.info('Pagespace closing plugin editor for %s', includeId);
-                window.parent.location.reload();
-            }
-        };
-    }
-
 })();

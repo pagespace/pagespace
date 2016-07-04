@@ -9,12 +9,6 @@
             </div>
              <div ng-repeat="item in filteredItems" class="media-item list-group-item">    
                 <div class="media-item-part clearfix">
-                    <div class="media-item-preview pull-left" style="cursor: pointer;">
-                        <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
-                             ng-click="!item._editing ? showItem(item) : ''" 
-                             alt="{{item.name}}" title="{{item.type}}">
-                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
-                    </div>  
                     <div class="btn-group pull-right">
                         <button type="button" class="btn btn-default" title="Cancel"
                                 ng-show="item._editing" ng-click="revertItem(item)">
@@ -33,6 +27,12 @@
                             <span class="glyphicon glyphicon-trash"></span>
                         </button> 
                     </div>     
+                    <div class="media-item-preview" style="cursor: pointer;">
+                        <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
+                             ng-click="!item._editing ? showItem(item) : ''" 
+                             alt="{{item.name}}" title="{{item.type}}">
+                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
+                    </div>                     
                     <div ng-if="!item._editing" class="media-item-view"> 
                         <h3>{{item.name}}</h3>
                         <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       

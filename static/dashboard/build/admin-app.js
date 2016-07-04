@@ -71,6 +71,12 @@
                 controller: 'ViewPageController'
             }).
 
+            //view json
+            when('/view-json/:url*', {
+                templateUrl: '/_static/dashboard/app/pages/view/view-json.html',
+                controller: 'ViewJsonController'
+            }).
+
             //plugins
             when('/plugins', {
                 templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',
@@ -390,29 +396,17 @@
         $scope.addInclude = function() {
 
             //map region name to index
-            var regionIndex = null;
-            for(var i = 0; i < $scope.page.regions.length && regionIndex === null; i++) {
-                if($scope.page.regions[i].name === regionName) {
-                    regionIndex = i;
-                }
-            }
+            var regionIndex = pageService.getRegionIndex($scope.page, regionName);
 
             //add a new region
             if(regionIndex === null) {
-                $scope.page.regions.push({
-                    name: regionName,
-                    includes: []
-                });
-                regionIndex = $scope.page.regions.length - 1;
+                pageService.addRegion(page, regionName);
             }
 
             //add the new include to the region
             if($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.config).then(function(includeData) {
-                    $scope.page.regions[regionIndex].includes.push({
-                        plugin: $scope.selectedPlugin,
-                        include: includeData._id
-                    });
+                pageService.createIncludeData($scope.selectedPlugin).then(function(includeData) {
+                    pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
                     $scope.page = pageService.depopulatePage($scope.page);
                     return pageService.updatePage(pageId, $scope.page);
                 }).then(function() {
@@ -865,12 +859,6 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             </div>
              <div ng-repeat="item in filteredItems" class="media-item list-group-item">    
                 <div class="media-item-part clearfix">
-                    <div class="media-item-preview pull-left" style="cursor: pointer;">
-                        <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
-                             ng-click="!item._editing ? showItem(item) : ''" 
-                             alt="{{item.name}}" title="{{item.type}}">
-                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
-                    </div>  
                     <div class="btn-group pull-right">
                         <button type="button" class="btn btn-default" title="Cancel"
                                 ng-show="item._editing" ng-click="revertItem(item)">
@@ -889,6 +877,12 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                             <span class="glyphicon glyphicon-trash"></span>
                         </button> 
                     </div>     
+                    <div class="media-item-preview" style="cursor: pointer;">
+                        <img ng-src="{{getSrcPath(item, 'thumb', '/_static/dashboard/styles/types/file.png')}}" 
+                             ng-click="!item._editing ? showItem(item) : ''" 
+                             alt="{{item.name}}" title="{{item.type}}">
+                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>
+                    </div>                     
                     <div ng-if="!item._editing" class="media-item-view"> 
                         <h3>{{item.name}}</h3>
                         <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       
@@ -974,17 +968,17 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 </div>
                 <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   
                         <div class="media-item-part clearfix">
-                            <div class="media-item-preview pull-left">
-                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
-                                     alt="{{file.item.name}}" title="{{file.item.type}}">
-                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
-                            </div>   
                             <div class="btn-group pull-right">
                                 <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
                                         ng-click="remove(file)" ng-disabled="uploading">
                                     <span class="glyphicon glyphicon-trash"></span>
                                 </button>      
                             </div>
+                            <div class="media-item-preview">
+                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
+                                     alt="{{file.item.name}}" title="{{file.item.type}}">
+                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
+                            </div>   
                             <div class="media-item-edit">
                                 <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
                                 <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
@@ -1498,21 +1492,49 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
         };
 
-        PageService.prototype.createIncludeData = function(config) {
+        PageService.prototype.createIncludeData = function(plugin) {
 
             var includeData = {};
 
-            var schemaProps = config.schema.properties || {};
+            var schemaProps = plugin.config.schema.properties || {};
             for(var name in schemaProps) {
                 if(schemaProps.hasOwnProperty(name)) {
                     includeData[name] =
-                            typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                        typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
                 }
             }
 
             return $http.post('/_api/includes', {
                 data: includeData
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => {
+                return res.data;
+            }).catch(res => {res.data});
+        };
+        
+        PageService.prototype.getRegionIndex = function(page, regionName) {
+            //map region name to index
+            var regionIndex = null;
+            for(var i = 0; i < page.regions.length && regionIndex === null; i++) {
+                if(page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+            return regionIndex;
+        };
+        
+        PageService.prototype.addRegion = function(page, regionName) {
+            page.regions.push({
+                name: regionName,
+                includes: []
+            });
+            return page.regions.length - 1;    
+        };
+        
+        PageService.prototype.addIncludeToPage = function(page, regionIndex, plugin, include) {
+            page.regions[regionIndex].includes.push({
+                plugin: plugin,
+                include: include._id
+            });
         };
 
         PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
@@ -1624,7 +1646,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                     removedCount: 0,
                     sharedCount: 0
                 };
-                var sharing = (templateRegion.sharing || '').split(/\s+/);
+                var sharing = !!templateRegion.sharing;
                 var pageRegion = getRegionFromPage(page, templateRegion.name);
                 if(!pageRegion) {
                     pageRegion = {
@@ -1638,8 +1660,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                     var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
                     //add additional non-shared includes at the end
                     baseRegion.includes.forEach(function(baseInclude) {
-                        if(sharing.indexOf('plugins') >= 0 && sharing.indexOf('data') >= 0 &&
-                            !containsInclude(pageRegion, baseInclude)) {
+                        if(sharing && !containsInclude(pageRegion, baseInclude)) {
                             pageRegion.includes.push(baseInclude);
                         }
                     });
@@ -2526,6 +2547,47 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 
 (function() {
 
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('includeEditor', function() {
+        return {
+            scope: {
+                page: '=',
+                region: '=',
+                onSave: '&'
+            },
+            template: '',
+            link: function (scope, element) {
+                var page = scope.page;
+                var regionName = scope.region;
+
+                if(page && regionName) {
+                    var region = page.regions.find((region) => region.name === regionName);
+                    if(region) {
+                        var includeHolder = region.includes[0];
+                        var pluginInterface =
+                            pagespace.getPluginInterface(includeHolder.plugin.name, page._id, includeHolder.include._id);
+                        var iframe = document.createElement('iframe');
+                        iframe.name = 'edit-incliude';
+                        iframe.src = `/_static/plugins/${includeHolder.plugin.name}/edit.html`;
+                        iframe.width = '100%';
+                        iframe.height = '500px';
+                        iframe.style.border = 'none';
+                        iframe.style.marginTop = '1em';
+                        element[0].appendChild(iframe);
+                        iframe.contentWindow.window.pagespace = pluginInterface;
+                        
+                        scope.$on('save', function() {
+                            console.log('save!!!!')
+                            pluginInterface.emit('save');
+                        });
+                    }
+                }
+            }
+        }
+    });
+})();
+(function() {
+
     /**
      *
      * @type {*}
@@ -2534,45 +2596,31 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
     adminApp.controller('PageMacroEditController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
                                                       $routeParams, macroService, $log, $window) {
 
-        $rootScope.pageTitle = 'Page Macros';
+        $rootScope.pageTitle = 'Edit page content';
         
         var macroId = $routeParams.macroId;
         var pageId = $location.search().pageId;
 
-        $scope.page = {};
+        $scope.page = null;
 
         if(pageId) {
             $log.debug('Fetching page data for: %s', pageId);
             $scope.pageId = pageId;
-            pageService.getPage(pageId).then(function(page) {
+            macroService.getMacro(macroId).then(function(macro) {
+                $scope.macro = macro;
+                return pageService.getPage(pageId);
+            }).then(function(page) {
                 $log.debug('Got page data OK.');
                 $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
                 $scope.page = page;
-
-                if(page.expiresAt) {
-                    page.expiresAt = new Date(page.expiresAt);
-                }
-                if(page.publishedAt) {
-                    page.publishedAt = new Date(page.publishedAt);
-                }
 
                 //depopulate redirect page
                 if(page.redirect) {
                     page.redirect = page.redirect._id;
                 }
             });
-        } else {
-            macroService.getMacro(macroId).then(function(macro) {
-                $scope.macro = macro;
-                //$scope.page.root = 'top';
-                $scope.page.parent = macro.parent;
-                $scope.page.basePage = macro.basePage;
-                $scope.page.template = macro.template;
-                $scope.page.useInNav = !!macro.useInNav;
-                $scope.page.macro = macro._id;
-            });
         }
-
+        
         $scope.updateUrl = function() {
             $scope.page.url = pageService.generateUrl($scope.page);
         };
@@ -2580,12 +2628,6 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
         $scope.cancel = function() {
             $location.path('/pages');
         };
-
-        $scope.$watch('page.name', function() {
-            if(!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
-                $scope.updateUrl();
-            }
-        });
 
         $scope.save = function(form) {
             if(form.$invalid) {
@@ -2596,46 +2638,21 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 
             var page = $scope.page;
 
-            if(pageId) {
-                $log.info('Update page: %s...', pageId);
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-                page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).then(function() {
-                    $log.info('Page successfully updated');
-                    $scope.showSuccess('Page: ' + page.name + ' saved.');
+            $log.info('Update page: %s...', pageId);
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+            page = pageService.depopulatePage(page);
+            pageService.updatePage(pageId, page).then(function() {
+                $log.info('Page successfully updated');
+                $scope.showSuccess('Page: ' + page.name + ' saved.');
+                $scope.$broadcast('save');
+                $timeout(function() {
                     $location.path(`/pages/macros/${macroId}/list`);
-                }).catch(function(err) {
-                    $log.error(err, 'Error updating page');
-                    $scope.showError('Error updating page', err);
-                });
-            } else {
-                $log.info('Creating page...');
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+                }, 100);
 
-                //create regions based on template
-                var pageRegions = [];
-                page.template.regions.forEach(function(regionMeta) {
-                    var newRegion = {};
-                    newRegion.name = regionMeta.name;
-                    newRegion.includes = [];
-                    pageRegions.push(newRegion);
-                });
-                page.regions = pageRegions;
-
-                if(page.basePage) {
-                    pageService.synchronizeWithBasePage(page);
-                }
-
-                page = pageService.depopulatePage(page);
-                pageService.createPage(page).then(function(page) {
-                    $log.info('Page successfully created');
-                    $scope.showSuccess('Page: ' + page.name + ' created.');
-                    $location.path(`/pages/macros/${macroId}/list`);
-                }).catch(function(err) {
-                    $log.error(err, 'Error creating page');
-                    $scope.showError('Error adding new page', err);
-                });
-            }
+            }).catch(function(err) {
+                $log.error(err, 'Error updating page');
+                $scope.showError('Error updating page', err);
+            });
         };
     });
 
@@ -2688,6 +2705,103 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
                 }
             }
 
+        };
+    });
+
+})();
+(function() {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageMacroNewController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
+                                                      $routeParams, macroService, $log, $window) {
+
+        $rootScope.pageTitle = 'Page Macros';
+        
+        var macroId = $routeParams.macroId;
+        $scope.page = {};
+
+        macroService.getMacro(macroId).then(function(macro) {
+            $scope.macro = macro;
+            //$scope.page.root = 'top';
+            $scope.page.parent = macro.parent;
+            $scope.page.basePage = macro.basePage;
+            $scope.page.template = macro.template;
+            $scope.page.useInNav = !!macro.useInNav;
+            $scope.page.macro = macro._id;
+        });
+
+        $scope.updateUrl = function() {
+            $scope.page.url = pageService.generateUrl($scope.page);
+        };
+
+        $scope.cancel = function() {
+            $location.path('/pages');
+        };
+
+        $scope.$watch('page.name', function() {
+            if($scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+                $scope.updateUrl();
+            }
+        });
+
+        $scope.save = function(form) {
+            if(form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0,0);
+                return;
+            }
+
+            var page = $scope.page;
+            var macro = $scope.macro;
+
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+
+            //create regions based on template
+            var pageRegions = [];
+            page.template.regions.forEach(function(regionMeta) {
+                var newRegion = {};
+                newRegion.name = regionMeta.name;
+                newRegion.includes = [];
+                pageRegions.push(newRegion);
+            });
+            page.regions = pageRegions;
+
+            if(page.basePage) {
+                pageService.synchronizeWithBasePage(page);
+            }
+
+            page = pageService.depopulatePage(page);
+
+            //add a new page
+            pageService.createPage(page).then(function(createdPage) {
+                $log.info('Page successfully created');
+                page = createdPage;
+            }).then(function() {
+                //for each macro include create
+                var includeCreationPromises = macro.includes.map(function(includeMeta) {
+                    return pageService.createIncludeData(includeMeta.plugin);
+                });
+                return Promise.all(includeCreationPromises);
+            }).then(function(includesData) {
+                //add the newly created includes to the new page
+                includesData.forEach(function (includeData, i) {
+                    var regionIndex = pageService.getRegionIndex(page, macro.includes[i].region);
+                    pageService.addIncludeToPage(page, regionIndex, macro.includes[i].plugin, includeData);
+                });
+                //save
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(page._id, page);
+                $scope.showSuccess('Page: ' + page.name + ' created.');
+                $location.url(`/pages/macros/${macroId}/edit?pageId=${page._id}&created=true`);
+            }).catch(function(err) {
+                $log.error(err, 'Error creating page');
+                $scope.showError('Error adding new page', err);
+            });
         };
     });
 
@@ -2909,6 +3023,46 @@ adminApp.controller('PageController',
  * @type {*}
  */
 var adminApp = angular.module('adminApp');
+adminApp.controller('ViewJsonController', function($scope, $rootScope, $routeParams) {
+
+    var url = $routeParams.url;
+
+    $scope.getPageUrl = function() {
+        return '/_api/' + url;
+    };
+});
+
+adminApp.directive('jsonHolder', function() {
+    return {
+        restrict: 'E',
+        transclude: true,
+        replace: true,
+        template: '<div ng-transclude></div>',
+        link: function link(scope, element) {
+
+            //sizing
+            function getWindowHeight() {
+                return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+            }
+
+            element.css('clear', 'both');
+            element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+
+            window.addEventListener('resize', function() {
+                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
+            });
+        }
+    };
+});
+
+})();
+(function() {
+
+/**
+ *
+ * @type {*}
+ */
+var adminApp = angular.module('adminApp');
 adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams) {
 
     var env = $routeParams.viewPageEnv;
@@ -2940,22 +3094,20 @@ adminApp.directive('pageHolder', function() {
                 element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
             });
 
-            //injection
-            var adminStyles = document.createElement('link');
-            adminStyles.id =
-            adminStyles.setAttribute('type', 'text/css');
-            adminStyles.setAttribute('rel', 'stylesheet');
-            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
-
-            var adminScript = document.createElement('script');
-            adminScript.src = '/_static/inpage/inpage-edit.js';
-
             var pageFrame = element.find('iframe')[0];
-
             pageFrame.addEventListener('load', function() {
-                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
-                frameHead.appendChild(adminStyles);
-                frameHead.appendChild(adminScript);
+
+                //injection
+                var adminStyles = document.createElement('link');
+                adminStyles.setAttribute('type', 'text/css');
+                adminStyles.setAttribute('rel', 'stylesheet');
+                adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
+
+                var pluginInterfaceScript = document.createElement('script');
+                pluginInterfaceScript.src = '/_static/inpage/plugin-interface.js';
+
+                var adminScript = document.createElement('script');
+                adminScript.src = '/_static/inpage/inpage-edit.js';
 
                 adminScript.onload = function() {
                     window.setTimeout(function() {
@@ -2963,6 +3115,11 @@ adminApp.directive('pageHolder', function() {
                         pageFrame.contentWindow.pagespace.setupAdminMode();
                     }, 50);
                 };
+
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
+                frameHead.appendChild(adminStyles);
+                frameHead.appendChild(pluginInterfaceScript);
+                frameHead.appendChild(adminScript);
             });
         }
     };
