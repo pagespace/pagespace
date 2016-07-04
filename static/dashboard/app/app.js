@@ -71,6 +71,12 @@
                 controller: 'ViewPageController'
             }).
 
+            //view json
+            when('/view-json/:url*', {
+                templateUrl: '/_static/dashboard/app/pages/view/view-json.html',
+                controller: 'ViewJsonController'
+            }).
+
             //plugins
             when('/plugins', {
                 templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',

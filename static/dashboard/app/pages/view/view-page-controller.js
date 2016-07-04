@@ -36,22 +36,20 @@ adminApp.directive('pageHolder', function() {
                 element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
             });
 
-            //injection
-            var adminStyles = document.createElement('link');
-            adminStyles.id =
-            adminStyles.setAttribute('type', 'text/css');
-            adminStyles.setAttribute('rel', 'stylesheet');
-            adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
-
-            var adminScript = document.createElement('script');
-            adminScript.src = '/_static/inpage/inpage-edit.js';
-
             var pageFrame = element.find('iframe')[0];
-
             pageFrame.addEventListener('load', function() {
-                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
-                frameHead.appendChild(adminStyles);
-                frameHead.appendChild(adminScript);
+
+                //injection
+                var adminStyles = document.createElement('link');
+                adminStyles.setAttribute('type', 'text/css');
+                adminStyles.setAttribute('rel', 'stylesheet');
+                adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
+
+                var pluginInterfaceScript = document.createElement('script');
+                pluginInterfaceScript.src = '/_static/inpage/plugin-interface.js';
+
+                var adminScript = document.createElement('script');
+                adminScript.src = '/_static/inpage/inpage-edit.js';
 
                 adminScript.onload = function() {
                     window.setTimeout(function() {
@@ -59,6 +57,11 @@ adminApp.directive('pageHolder', function() {
                         pageFrame.contentWindow.pagespace.setupAdminMode();
                     }, 50);
                 };
+
+                var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
+                frameHead.appendChild(adminStyles);
+                frameHead.appendChild(pluginInterfaceScript);
+                frameHead.appendChild(adminScript);
             });
         }
     };

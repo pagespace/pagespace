@@ -218,9 +218,12 @@ class ApiHandler extends BaseHandler {
 
 function htmlStringify(obj) {
     const html =
-        '<pre style="font-family: Consolas, \'Courier New\'">' +
-        handlebars.escapeExpression(JSON.stringify(obj, null, 4)) +
-        '</pre>';
+        `<body style="background: #fff; padding: 0;">
+            <link rel="stylesheet" href="/_static/dashboard/support/highlightjs/github-gist.css">
+            <script src="/_static/dashboard/support/highlightjs/highlight.pack.js"></script>
+            <script>hljs.initHighlightingOnLoad();</script>
+            <pre><code class="json">${handlebars.escapeExpression(JSON.stringify(obj, null, 4))}</code></pre>
+        </body>`;
     return html;
 }
 
