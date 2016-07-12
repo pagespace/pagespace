@@ -34,7 +34,7 @@ class TemplatesHandler extends BaseHandler {
         const logger = this.getRequestLogger(this.logger, req);
     
         const urlPath = url.parse(req.url).pathname;
-        const reqInfo = this.pattern.regex.exec(urlPath);
+        const reqInfo = this.pattern.exec(urlPath);
         const reqType = reqInfo[1];
     
         if(reqType === reqTypes.TEMPLATES) {
