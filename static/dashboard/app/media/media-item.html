@@ -6,8 +6,10 @@
 
 
     <h4>Details</h4>
-    <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
+
     <dl>
+        <dt>Src:</dt>
+        <dd><br><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></dd>
         <dt>Type:</dt>
         <dd>{{item.type}}</dd>
         <dt>Filesize:</dt>
@@ -15,6 +17,10 @@
         <dt ng-show="isImage(item)">Dimensions:</dt>
         <dd ng-show="isImage(item)">{{item.width}} &times; {{item.height}}</dd>
     </dl>
+
+    <ul class="nav nav-pills nav-stacked">
+        <li><a ng-href="{{'#/view-json/media/' + item._id}}">View JSON</a></li>
+    </ul>
 
     <div ng-show="item.variations.length">
         <h4>Variations</h4>

@@ -2,6 +2,11 @@
     <div class="section-heading">
         <h3>User</h3>
     </div>
+    <div ng-show="user._id">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a ng-href="{{'#/view-json/users/' + user._id}}">View JSON</a></li>
+        </ul>
+    </div>
 </nav>
 <main class="main col-sm-6">
     <form role="form" name="userForm" class="form-horizontal" novalidate ng-submit="save(userForm)" >
