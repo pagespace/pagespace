@@ -69,6 +69,10 @@ describe('Client sending page requests', function() {
             status: 200
         }).then(function(results) {
             results.forEach(function(res) {
+                if(typeof res === 'undefined') {
+                    console.log('&&&&&&&&&&&&&&%%%%%%%%%##############!!!!!!!!!!!!!')
+                    console.log(res)
+                }
                 expect(res.text).toEqual(jasmine.stringMatching(new RegExp('<h1>Page 5</h1>')));
             });
             done()

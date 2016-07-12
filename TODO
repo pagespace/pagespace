@@ -19,9 +19,9 @@ NICE
 * archiving
 ✓ externalize ACL
 * plugin generator
-* Blog macro?
+✓ Blog macro?
 
-BUGS`
+BUGS
 ====
 ✓ edit link in web copy
 ✓ template name missing first letter for ./

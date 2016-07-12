@@ -53,10 +53,10 @@ class PageHandler extends BaseHandler {
     
         const modelModifier = !previewMode ? 'live' : null;
         const Page = this.dbSupport.getModel('Page', modelModifier);
-        const pageQueryCachKey = urlPath + '_' + modelModifier;
+        const pageQueryCacheKey = urlPath + '_' + modelModifier;
     
         //create the page query and execute it and cache it
-        let findPagePromise = this.findPagePromises[pageQueryCachKey];
+        let findPagePromise = this.findPagePromises[pageQueryCacheKey];
         if(previewMode || !findPagePromise) {
             const filter = {
                 url: urlPath
@@ -64,7 +64,7 @@ class PageHandler extends BaseHandler {
             const query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
             findPagePromise = Promise.promisify(query.exec, { context: query })();
             if(!previewMode) {
-                this._setFindPagePromise(pageQueryCachKey, findPagePromise);
+                this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
             }
         }
     
@@ -90,7 +90,7 @@ class PageHandler extends BaseHandler {
                 pageProps = this.getProcessedPageRegions(req, page, pageProps);
             } else {
                 //don't cache none 200s
-                delete this.findPagePromises[pageQueryCachKey];
+                delete this.findPagePromises[pageQueryCacheKey];
             }
     
             return Promise.props(pageProps);
