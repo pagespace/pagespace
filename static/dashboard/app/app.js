@@ -183,6 +183,24 @@
         });
     }
 
+    adminApp.factory('errorFactory', function() {
+        return {
+            createResponseError: function(res) {
+                var data = res.data;
+                var message = res.statusText;
+                if(data.message) {
+                    message += ': ' + data.message;
+                }
+                var err = new Error(message);
+                if(data.stack) {
+                    err.stack = data.stack;
+                }
+                err.status = res.status;
+                return err;
+            }
+        }
+    });
+
     adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {
         $scope.menuClass = function(page) {
 

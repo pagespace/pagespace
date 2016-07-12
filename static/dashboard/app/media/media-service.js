@@ -1,6 +1,6 @@
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('mediaService', function($http, $log) {
+    adminApp.factory('mediaService', function($http, $log, errorFactory) {
         
         var mimeTypeShortNames = {
             "audio/basic" : "audio",
@@ -37,25 +37,35 @@
         }
 
         MediaService.prototype.getItems = function() {
-            return $http.get('/_api/media').then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/media').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getItem = function(mediaId) {
-            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.updateItem = function(mediaId, mediaData) {
-            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.updateItemText = function(mediaData, content) {
             return $http.put('/_media/' + mediaData.fileName, {
                 content: content
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.deleteItem = function(fileName) {
-            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.uploadItem = function(formData) {
@@ -64,18 +74,24 @@
                 withCredentials: true,
                 headers: { 'Content-Type': undefined },
                 transformRequest: angular.identity
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getItemText = function(item) {
-            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => res.data);
+            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getImageVariations = function() {
             return $http.get('/_dashboard/settings').then(function(res) {
                 var settings = res.data;
                 return settings.imageVariations || [];
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         //some utils

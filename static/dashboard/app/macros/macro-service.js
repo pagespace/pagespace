@@ -1,6 +1,6 @@
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('macroService', function($http, $q) {
+    adminApp.factory('macroService', function($http, errorFactory) {
 
         function MacroService() {
             this.clearCache();
@@ -8,33 +8,43 @@
         MacroService.prototype.getMacros = function() {
 
             if(Array.isArray(this.macroCache)) {
-                return $q.when(this.macroCache);
+                return Promise.resolve(this.macroCache);
             }
 
             return $http.get('/_api/macros').then(res => {
                 this.macroCache = res.data;
                 return res.data;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         MacroService.prototype.getMacro = function(macroId) {
-            return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);;
+            return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         MacroService.prototype.createMacro = function(macroData) {
             return $http.post('/_api/macros', macroData).then(res => {
                 this.clearCache();
                 return res.data
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.updateMacro = function(macroId, macroData) {
             return $http.put('/_api/macros/' + macroId, macroData).then(res => {
                 this.clearCache();
                 return res.data;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.deleteMacro = function(macroId) {
-            return $http.delete('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_api/macros/' + macroId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.depopulateMacro = function(macro) {

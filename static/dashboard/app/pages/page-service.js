@@ -1,6 +1,6 @@
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('pageService', function($http) {
+    adminApp.factory('pageService', function($http, errorFactory) {
 
         function PageService() {
             this.pageCache = [];
@@ -22,10 +22,14 @@
             return $http.get(url).then(function(res) {
                 self.pageCache = res.data;
                 return self.pageCache;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         PageService.prototype.getPage = function(pageId) {
-            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.createPage = function(pageData) {
@@ -34,9 +38,16 @@
                 pageData.url = this.generateUrl(pageData);
             }
 
-            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
+        /**
+         * Deletes a page. If it is not published, its non-shared includes will also be deleted
+         * @param page
+         * @return {Promise|Promise.<T>|*}
+         */
         PageService.prototype.deletePage = function(page) {
             var promise;
             if(page.published) {
@@ -52,13 +63,33 @@
                 promise = $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                promise = $http.delete('/_api/pages/' + page._id);
+                promise = $http.delete('/_api/pages/' + page._id).then(() => {
+                    let deleteIncludePromises = [];
+                    for(let templateRegion of page.template.regions) {
+                        let pageRegion = page.regions.find(region => region.name === templateRegion.name);
+                        if(!templateRegion.sharing && pageRegion) {
+                            let promises = pageRegion.includes.map((include) => this.deleteInclude(include._id));
+                            deleteIncludePromises = deleteIncludePromises.concat(promises);
+                        }
+                    }
+                    return Promise.all(deleteIncludePromises)
+                });
             }
-            return promise.then(res => res.data).catch(res => res.data);
+            return promise.then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.deleteInclude = function(includeId) {
+            return $http.delete('/_api/includes' + includeId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
-            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.createIncludeData = function(plugin) {
@@ -77,7 +108,7 @@
                 data: includeData
             }).then(res => {
                 return res.data;
-            }).catch(res => {res.data});
+            })
         };
         
         PageService.prototype.getRegionIndex = function(page, regionName) {
@@ -133,6 +164,13 @@
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
 
+        /**
+         * Removes an include from a page model. Does not delete the actual include entity
+         * @param page
+         * @param regionIndex
+         * @param includeIndex
+         * @return {*}
+         */
         PageService.prototype.removeInclude = function(page, regionIndex, includeIndex) {
 
             var i;

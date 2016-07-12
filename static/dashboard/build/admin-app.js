@@ -183,6 +183,24 @@
         });
     }
 
+    adminApp.factory('errorFactory', function() {
+        return {
+            createResponseError: function(res) {
+                var data = res.data;
+                var message = res.statusText;
+                if(data.message) {
+                    message += ': ' + data.message;
+                }
+                var err = new Error(message);
+                if(data.stack) {
+                    err.stack = data.stack;
+                }
+                err.status = res.status;
+                return err;
+            }
+        }
+    });
+
     adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {
         $scope.menuClass = function(page) {
 
@@ -652,7 +670,7 @@ adminApp.controller('MacroListController', function($scope, $rootScope, $routePa
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('macroService', function($http, $q) {
+    adminApp.factory('macroService', function($http, errorFactory) {
 
         function MacroService() {
             this.clearCache();
@@ -660,33 +678,43 @@ adminApp.controller('MacroListController', function($scope, $rootScope, $routePa
         MacroService.prototype.getMacros = function() {
 
             if(Array.isArray(this.macroCache)) {
-                return $q.when(this.macroCache);
+                return Promise.resolve(this.macroCache);
             }
 
             return $http.get('/_api/macros').then(res => {
                 this.macroCache = res.data;
                 return res.data;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         MacroService.prototype.getMacro = function(macroId) {
-            return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);;
+            return $http.get('/_api/macros/' + macroId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         MacroService.prototype.createMacro = function(macroData) {
             return $http.post('/_api/macros', macroData).then(res => {
                 this.clearCache();
                 return res.data
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.updateMacro = function(macroId, macroData) {
             return $http.put('/_api/macros/' + macroId, macroData).then(res => {
                 this.clearCache();
                 return res.data;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.deleteMacro = function(macroId) {
-            return $http.delete('/_api/macros/' + macroId).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_api/macros/' + macroId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MacroService.prototype.depopulateMacro = function(macro) {
@@ -1121,7 +1149,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('mediaService', function($http, $log) {
+    adminApp.factory('mediaService', function($http, $log, errorFactory) {
         
         var mimeTypeShortNames = {
             "audio/basic" : "audio",
@@ -1158,25 +1186,35 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         }
 
         MediaService.prototype.getItems = function() {
-            return $http.get('/_api/media').then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/media').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getItem = function(mediaId) {
-            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/media/' + mediaId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.updateItem = function(mediaId, mediaData) {
-            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/media' + mediaId, mediaData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.updateItemText = function(mediaData, content) {
             return $http.put('/_media/' + mediaData.fileName, {
                 content: content
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.deleteItem = function(fileName) {
-            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_media/' + fileName).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.uploadItem = function(formData) {
@@ -1185,18 +1223,24 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 withCredentials: true,
                 headers: { 'Content-Type': undefined },
                 transformRequest: angular.identity
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getItemText = function(item) {
-            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => res.data);
+            return $http.get('/_media/' + item.fileName).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         MediaService.prototype.getImageVariations = function() {
             return $http.get('/_dashboard/settings').then(function(res) {
                 var settings = res.data;
                 return settings.imageVariations || [];
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         //some utils
@@ -1431,7 +1475,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('pageService', function($http) {
+    adminApp.factory('pageService', function($http, errorFactory) {
 
         function PageService() {
             this.pageCache = [];
@@ -1453,10 +1497,14 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             return $http.get(url).then(function(res) {
                 self.pageCache = res.data;
                 return self.pageCache;
-            }).catch(res => res.data);
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         PageService.prototype.getPage = function(pageId) {
-            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.createPage = function(pageData) {
@@ -1465,9 +1513,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 pageData.url = this.generateUrl(pageData);
             }
 
-            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
+        /**
+         * Deletes a page. If it is not published, its non-shared includes will also be deleted
+         * @param page
+         * @return {Promise|Promise.<T>|*}
+         */
         PageService.prototype.deletePage = function(page) {
             var promise;
             if(page.published) {
@@ -1483,13 +1538,33 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 promise = $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                promise = $http.delete('/_api/pages/' + page._id);
+                promise = $http.delete('/_api/pages/' + page._id).then(() => {
+                    let deleteIncludePromises = [];
+                    for(let templateRegion of page.template.regions) {
+                        let pageRegion = page.regions.find(region => region.name === templateRegion.name);
+                        if(!templateRegion.sharing && pageRegion) {
+                            let promises = pageRegion.includes.map((include) => this.deleteInclude(include._id));
+                            deleteIncludePromises = deleteIncludePromises.concat(promises);
+                        }
+                    }
+                    return Promise.all(deleteIncludePromises)
+                });
             }
-            return promise.then(res => res.data).catch(res => res.data);
+            return promise.then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.deleteInclude = function(includeId) {
+            return $http.delete('/_api/includes' + includeId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
-            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.createIncludeData = function(plugin) {
@@ -1508,7 +1583,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 data: includeData
             }).then(res => {
                 return res.data;
-            }).catch(res => {res.data});
+            })
         };
         
         PageService.prototype.getRegionIndex = function(page, regionName) {
@@ -1564,6 +1639,13 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
 
+        /**
+         * Removes an include from a page model. Does not delete the actual include entity
+         * @param page
+         * @param regionIndex
+         * @param includeIndex
+         * @return {*}
+         */
         PageService.prototype.removeInclude = function(page, regionIndex, includeIndex) {
 
             var i;
@@ -1990,33 +2072,45 @@ adminApp.controller('PluginListController', function($scope, $rootScope, $routeP
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('pluginService', function($http) {
+    adminApp.factory('pluginService', function($http, errorFactory) {
 
         function PluginService() {
         }
         PluginService.prototype.getPlugins = function() {
-            return $http.get('/_api/plugins').then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/plugins').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         PluginService.prototype.getPlugin = function(pluginId) {
-            return $http.get('/_api/plugins/' + pluginId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/plugins/' + pluginId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PluginService.prototype.createPlugin = function(pluginData) {
-            return $http.post('/_api/plugins', pluginData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/plugins', pluginData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PluginService.prototype.deletePlugin = function(pluginId) {
-            return $http.delete('/_api/plugins/' + pluginId).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_api/plugins/' + pluginId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PluginService.prototype.updatePlugin = function(pluginId, pluginData) {
-            return $http.put('/_api/plugins/' + pluginId, pluginData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/plugins/' + pluginId, pluginData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PluginService.prototype.resetPlugin = function(pluginData) {
             return $http.put('/_cache/plugins', {
                 module: pluginData.module
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
 
@@ -2081,7 +2175,7 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('publishingService', function($http, pageService) {
+    adminApp.factory('publishingService', function($http, pageService, errorFactory) {
 
         function PublishingService() {
 
@@ -2093,7 +2187,9 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
         };
 
         PublishingService.prototype.publish = function(draftIds) {
-            return $http.post('/_publish/pages', draftIds).then(res => res.data).catch(res => res.data);
+            return $http.post('/_publish/pages', draftIds).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         return new PublishingService();
@@ -2105,18 +2201,22 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('siteService', function($http) {
+    adminApp.factory('siteService', function($http, errorFactory) {
 
         function SiteService() {
 
         }
         SiteService.prototype.getSite = function() {
-            return $http.get('/_api/sites').then(res => res.data[0]).catch(res => res.data);
+            return $http.get('/_api/sites').then(res => res.data[0]).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         SiteService.prototype.updateSite = function(siteId, siteData) {
             delete siteData._id;
-            return $http.put('/_api/sites/' + siteId, siteData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/sites/' + siteId, siteData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         return new SiteService();
@@ -2387,36 +2487,50 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('templateService', function($http) {
+    adminApp.factory('templateService', function($http, errorFactory) {
 
         function TemplateService() {
         }
         TemplateService.prototype.getTemplateSources = function() {
-            return $http.get('/_templates/available').then(res => res.data).catch(res => res.data);
+            return $http.get('/_templates/available').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         TemplateService.prototype.getTemplateRegions = function(templateSrc) {
             return $http.get('/_templates/template-regions', {
                 params: {
                     templateSrc: templateSrc
                 }
-            }).then(res => res.data).catch(res => res.data);
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         TemplateService.prototype.doGetAvailableTemplates = function() {
-            return $http.get('/_api/templates').then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/templates').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         TemplateService.prototype.getTemplate = function(templateId) {
-            return $http.get('/_api/templates/' + templateId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/templates/' + templateId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         TemplateService.prototype.createTemplate = function(templateData) {
-            return $http.post('/_api/templates', templateData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/templates', templateData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         TemplateService.prototype.updateTemplate = function(templateId, templateData) {
-            return $http.put('/_api/templates/' + templateId, templateData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/templates/' + templateId, templateData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         TemplateService.prototype.deleteTemplate = function(templateId) {
-            return $http.delete('/_api/templates/' + templateId).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_api/templates/' + templateId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         return new TemplateService();
@@ -2514,28 +2628,38 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
 })();
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('userService', function($http) {
+    adminApp.factory('userService', function($http, errorFactory) {
 
         function UserService() {
-
         }
+        
         UserService.prototype.getUsers = function() {
-            return $http.get('/_api/users').then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/users').then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
         UserService.prototype.getUser = function(userId) {
-            return $http.get('/_api/users/' + userId).then(res => res.data).catch(res => res.data);
+            return $http.get('/_api/users/' + userId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         UserService.prototype.createUser = function(userData) {
-            return $http.post('/_api/users', userData).then(res => res.data).catch(res => res.data);
+            return $http.post('/_api/users', userData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         UserService.prototype.deleteUser = function(userId) {
-            return $http.delete('/_api/users/' + userId).then(res => res.data).catch(res => res.data);
+            return $http.delete('/_api/users/' + userId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         UserService.prototype.updateUser = function(userId, userData) {
-            return $http.put('/_api/users/' + userId, userData).then(res => res.data).catch(res => res.data);
+            return $http.put('/_api/users/' + userId, userData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         return new UserService();
@@ -2626,7 +2750,12 @@ adminApp.controller('TemplateListController', function($scope, $rootScope, $rout
         };
 
         $scope.cancel = function() {
-            $location.path('/pages');
+            //roll back the newly created page
+            if($location.search().created === 'true' && $scope.page) {
+                pageService.deletePage($scope.page).then(function() {
+                    $location.path('/pages');
+                });
+            }
         };
 
         $scope.save = function(form) {
