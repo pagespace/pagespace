@@ -5,7 +5,7 @@
     <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
 
         <div ng-repeat="include in macro.includes" ng-if="page">
-            <p>{{include.name}}</p>
+            <p ng-show="macro.includes.length > 1">{{include.name}}</p>
             <include-editor page="page" region="include.region" on-save="onSave()"/>
         </div>
 
