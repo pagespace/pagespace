@@ -38,7 +38,12 @@
         };
 
         $scope.cancel = function() {
-            $location.path('/pages');
+            //roll back the newly created page
+            if($location.search().created === 'true' && $scope.page) {
+                pageService.deletePage($scope.page).then(function() {
+                    $location.path('/pages');
+                });
+            }
         };
 
         $scope.save = function(form) {
