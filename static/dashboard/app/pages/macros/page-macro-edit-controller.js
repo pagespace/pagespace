@@ -42,6 +42,9 @@
             if($location.search().created === 'true' && $scope.page) {
                 pageService.deletePage($scope.page).then(function() {
                     $location.path('/pages');
+                }).catch(function(err) {
+                    $log.error(err, 'Error rolling back page creation');
+                    $scope.showError('Error rolling back page creation', err);
                 });
             }
         };
