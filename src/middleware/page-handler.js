@@ -45,18 +45,25 @@ class PageHandler extends BaseHandler {
      */
     doGet(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
-    
         const urlPath = url.parse(req.url).pathname;
+
+        //if previous middleware already determined the resource is a 404
+        if(req.status === httpStatus.NOT_FOUND) {
+            return this.doNotFound(logger, {
+                urlPath: urlPath,
+                status: httpStatus.NOT_FOUND
+            });
+        }
     
         const previewMode = sessionValueSwitch(req, '_preview', 'preview');
         logger.info('New %s page request', (previewMode ? 'preview' : 'live'));
     
         const modelModifier = !previewMode ? 'live' : null;
         const Page = this.dbSupport.getModel('Page', modelModifier);
-        const pageQueryCacheKey = urlPath + '_' + modelModifier;
+        const pageQueryCachKey = urlPath + '_' + modelModifier;
     
         //create the page query and execute it and cache it
-        let findPagePromise = this.findPagePromises[pageQueryCacheKey];
+        let findPagePromise = this.findPagePromises[pageQueryCachKey];
         if(previewMode || !findPagePromise) {
             const filter = {
                 url: urlPath
@@ -64,7 +71,7 @@ class PageHandler extends BaseHandler {
             const query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
             findPagePromise = Promise.promisify(query.exec, { context: query })();
             if(!previewMode) {
-                this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
+                this._setFindPagePromise(pageQueryCachKey, findPagePromise);
             }
         }
     
@@ -90,7 +97,7 @@ class PageHandler extends BaseHandler {
                 pageProps = this.getProcessedPageRegions(req, page, pageProps);
             } else {
                 //don't cache none 200s
-                delete this.findPagePromises[pageQueryCacheKey];
+                delete this.findPagePromises[pageQueryCachKey];
             }
     
             return Promise.props(pageProps);
@@ -349,5 +356,5 @@ function sessionValueSwitch(req, queryParam, sessionKey) {
             req.session[sessionKey] = false;
         }
     }
-    return req.session[sessionKey] || false;
+    return req.session ? req.session[sessionKey] : false;
 }

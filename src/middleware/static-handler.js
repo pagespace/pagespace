@@ -8,9 +8,8 @@ const
 
 class StaticHandler extends BaseHandler {
     get pattern() {
-        return new RegExp('^/_static/?(dashboard|inpage|plugins|sample|bower_components)/?([A-z0-9-_\\.]*)/?(.*)');
+        return new RegExp('^/_static/?(dashboard|inpage|plugins|sample|bower_components)/?([A-z0-9-_\.]*)/?(.*)');
     }
-
 
     init(support) {
         this.logger = support.logger;
@@ -34,6 +33,7 @@ class StaticHandler extends BaseHandler {
             staticPath = apiInfo[2] + (apiInfo[3] ? `/${apiInfo[3]}` : '');
             req.url = `/${staticType}/${staticPath}`;
             this.adminStaticServer(req, res, (err) => {
+                req.status = 404;
                 req.url = req.originalUrl;
                 next(err);
             });
