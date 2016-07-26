@@ -27,12 +27,15 @@ function generateSchema() {
             default: 'guest',
             required: true
         },
-        rememberToken: {
-            type: String
-        },
-        updatePassword: {
+        blocked: {
             type: Boolean,
             default: false
+        },
+        token: {
+            type: String
+        },
+        tokenExpiry: {
+            type: Date
         },
         createdAt: {
             type: Date,
@@ -53,8 +56,6 @@ function generateSchema() {
 
     userSchema.set('toJSON', {
         transform: (doc, user) => {
-            delete user.rememberToken;
-            delete user.updatePassword;
             delete user.password;
             return user;
         }
@@ -65,7 +66,6 @@ function generateSchema() {
 
         user.updatedAt = Date.now();
 
-        //TODO: is this required for update?
         // only hash the password if it has been modified (or is new)
         if (!user.isModified('password')) {
             return next();

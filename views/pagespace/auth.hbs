@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html ng-app="authApp">
+<head>
+    <title>Pagespace</title>
+    <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+
+    <script src="/_static/bower_components/angular/angular.min.js"></script>
+    <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
+
+    <script src="/_static/dashboard/auth/auth-app.js"></script>
+
+    <style>
+        .login-invalid {
+            position: relative;
+            animation: shake .6s linear;
+        }
+        @keyframes shake {
+            0% {
+                left: -10px;
+            }
+            16% {
+                left: 9px;
+            }
+            33% {
+                left: -6px;
+            }
+            50% {
+                left: 5px;
+            }
+            66% {
+                left: -2px;
+            }
+            83% {
+                left: 1px;
+            }
+            100% {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container-fluid">
+    <header class="row">
+        <div class="col-sm-2">
+            <div class="logo">
+                <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
+            </div>
+        </div>
+        <nav class="header-nav col-sm-10" style="height: 60px">
+        </nav>
+    </header>
+    <div class="row">
+        <div ng-view></div>
+    </div>
+</div>
+</body>
+</html>

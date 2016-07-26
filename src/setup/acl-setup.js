@@ -10,7 +10,9 @@ const
     DEV_API_REGEX = new RegExp('^/_api/(templates|macros)/?(.*)'),
     EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)'),
     LOGIN = new RegExp('^/_auth/login'),
-    LOGOUT = new RegExp('^/_auth/logout');
+    LOGOUT = new RegExp('^/_auth/logout'),
+    FORGOT_PASSWORD = new RegExp('^/_auth/forgot-password'),
+    RESET_PASSWORD = new RegExp('^/_auth/reset-password');
 
 //actions
 const 
@@ -39,6 +41,8 @@ module.exports = function(middlwareMap) {
 
     //auth
     acl.match(LOGIN).for(GET, POST).thenAllow(GUEST);
+    acl.match(FORGOT_PASSWORD).for(POST).thenAllow(GUEST);
+    acl.match(RESET_PASSWORD).for(POST).thenAllow(GUEST);
     acl.match(LOGOUT).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //common actions requiring auth

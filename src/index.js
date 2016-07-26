@@ -138,6 +138,9 @@ class Index extends EventEmitter {
                 userBasePath: this.userBasePath,
                 dbSupport: this.dbSupport
             });
+        
+        //email config (for forgotten passwords)
+        const emailConfig = opts.email || null;
 
         //analytics
         const analytics = opts.analytics || false;
@@ -186,6 +189,7 @@ class Index extends EventEmitter {
                     mediaDir: this.mediaDir,
                     userBasePath: this.userBasePath,
                     localeResolver: this.localeResolver,
+                    emailConfig: emailConfig,
                     analytics: analytics,
                     imageVariations: imageVariations
                 };
