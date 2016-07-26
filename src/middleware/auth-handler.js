@@ -12,6 +12,8 @@ const url = require('url'),
 
 const randomBytesAsync = Promise.promisify(crypto.randomBytes);
 
+const ONE_HOUR = 1000 * 60 * 60;
+
 const RESET_PASSWORD_EMAIL_TEMPLATE =
     `<h2>Pagespace password reset</h2>
     <p>You are receiving this mail because a forgotten password request was made at {{host}}</p>
@@ -48,10 +50,8 @@ class AuthHandler extends BaseHandler {
         const reqType = reqInfo[1];
 
         if(reqType === reqTypes.LOGIN ) {
-            logger.info('New login request');
             return this._loginRemember(req, res, next, logger);
         } else if (reqType === reqTypes.LOGOUT) {
-            logger.info('New logout request');
             return this._logout(req, res, next, logger);
         } else {
             this.doUnrecognized(req, res, next);
@@ -79,12 +79,13 @@ class AuthHandler extends BaseHandler {
     }
 
     _loginRemember(req, res, next, logger) {
-        function doNext(err) {
+        const doNext = (err) => {
             if(err) {
                 return next(err);
             }
 
             const data = {
+                emailEnabled: !!this.emailConfig,
                 badCredentials: typeify(req.query.badCredentials) || false
             };
             if(req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
@@ -105,7 +106,7 @@ class AuthHandler extends BaseHandler {
                 });
 
             }
-        }
+        };
 
         return passport.authenticate('remember-me', (err, user) => {
             if (err) {
@@ -188,7 +189,7 @@ class AuthHandler extends BaseHandler {
             //save user with token
             if(user) {
                 user.token = tokenBuf.toString('hex');
-                user.tokenExpiry = Date.now() + (1000 * 60 * 60);
+                user.tokenExpiry = Date.now() + (this.emailConfig ? ONE_HOUR : ONE_HOUR * 6);
                 return user.save();
             }
             return Promise.resolve();

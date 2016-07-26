@@ -1,6 +1,8 @@
 (function() {
 
     var authApp = angular.module('authApp', [ 'ngRoute']);
+    
+    authApp.constant('emailEnabled', window.emailEnabled);
 
     authApp.config(['$routeProvider', function($routeProvider) {
         $routeProvider.
@@ -49,7 +51,7 @@
         };
     });
 
-    authApp.controller("ForgotPasswordController", function($scope, $http, $log, $location) {
+    authApp.controller("ForgotPasswordController", function($scope, $http, $log, $location, emailEnabled) {
 
         $scope.done = false;
 
@@ -60,6 +62,7 @@
             $http.post('/_auth/forgot-password', {
                 username: this.username
             }).then(function() {
+                $scope.emailEnabled = emailEnabled;
                 $scope.done = true;
             }).catch(function(res) {
                 $log.error(res.data.message);
