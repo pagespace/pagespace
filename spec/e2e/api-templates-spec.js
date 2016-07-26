@@ -2,7 +2,7 @@ var httpSupport = require('./support/http-support');
 
 var TOTAL_TEMPLATES = 2;
 
-var doGet = httpSupport.doGet
+var doGet = httpSupport.doGet;
 var doGets = httpSupport.doGets;
 var doPost = httpSupport.doPost;
 var doPut = httpSupport.doPut;
