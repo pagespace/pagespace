@@ -52,7 +52,7 @@ module.exports = function(support) {
     router.use(acl.middleware());
     router.use(function(err, req, res, next) {
         if(err.status === 403) {
-            const user = req.user || acl.GUEST_USER;
+            const user = req.user || acl.ANON_USER;
             let msg = `User with role [${user.role}] is not allowed to access ${req.url} (${req.method}). `;
             msg += `Redirecting to login.`;
             support.logger.info(msg);
