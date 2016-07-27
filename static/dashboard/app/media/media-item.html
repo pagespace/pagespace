@@ -18,10 +18,6 @@
         <dd ng-show="isImage(item)">{{item.width}} &times; {{item.height}}</dd>
     </dl>
 
-    <ul class="nav nav-pills nav-stacked">
-        <li><a ng-href="{{'#/view-json/media/' + item._id}}">View JSON</a></li>
-    </ul>
-
     <div ng-show="item.variations.length">
         <h4>Variations</h4>
         <div ng-repeat="variation in item.variations">
@@ -35,6 +31,10 @@
             </dl>
         </div>
     </div>
+
+    <ul class="nav nav-pills nav-stacked">
+        <li><a ng-href="{{'#/view-json/media/' + item._id}}">View JSON</a></li>
+    </ul>
 </nav>
 <main class="main col-sm-8">
     <div class="notification-bar"><h4>{{item.name}}</h4></div>
