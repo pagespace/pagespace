@@ -73,6 +73,9 @@
     "pagespace-html": "pagespace/pagespace-html",
     "pagespace-nav": "pagespace/pagespace-nav",
     "pagespace-webcopy": "pagespace/pagespace-webcopy",
+    "pagespace-gallery" : "pagespace/pagespace-gallery",
+    "pagespace-markdown" : "pagespace/pagespace-markdown",
+    "pagespace-posts" : "pagespace/pagespace-posts",
     "serve-favicon": "^2.3.0",
     "supertest": "^1.1.0"
   },

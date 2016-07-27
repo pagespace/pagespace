@@ -4,6 +4,7 @@ window.pagespace.getPluginInterface = function getPluginInterface(pluginName, pa
         getKey: function() {
             return includeId;
         },
+        
         getConfig: function() {
             console.info('Pagespace getting config for %s', pluginName);
             return fetch('/_api/plugins', {
@@ -20,6 +21,7 @@ window.pagespace.getPluginInterface = function getPluginInterface(pluginName, pa
                 })[0].config;
             });
         },
+        
         getData: function() {
             console.info('Pagespace getting data for %s', includeId);
             return fetch('/_api/includes/' + includeId, {
@@ -34,6 +36,7 @@ window.pagespace.getPluginInterface = function getPluginInterface(pluginName, pa
                 return include.data || {};
             });
         },
+        
         setData: function(data) {
             console.info('Pagespace setting data for %s', includeId);
             var updateData = fetch('/_api/includes/' + includeId, {
@@ -65,6 +68,12 @@ window.pagespace.getPluginInterface = function getPluginInterface(pluginName, pa
                 };
             });
         },
+
+        close: function() {
+            console.info('Pagespace closing plugin editor');
+            window.parent.location.reload();
+        },
+        
         _events: {},
         on: function (event, listener) {
             if (typeof this._events[event] !== 'object') {

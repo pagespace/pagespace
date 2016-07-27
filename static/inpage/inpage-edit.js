@@ -293,8 +293,34 @@
         });
 
         function setupIframe(iframeSrc) {
-            var startEl = document.querySelector('[data-region=' + region + ']');
-            var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
+            var startEl = document.querySelector('[data-region=' + region + ']'),
+                modal = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
+            var iframe = modal.querySelector('iframe'),
+                titlebar = modal.querySelector('.ps-include-editor-titlebar');
+
+            //save close button
+            var saveBtn = document.createElement('button');
+            saveBtn.classList.add('ps-include-editor-save', 'ps-btn', 'ps-btn-primary');
+            saveBtn.setAttribute('title', 'Save and close');
+            saveBtn.innerHTML = 'Save and close';
+
+            //save close button
+            var cancelBtn = document.createElement('button');
+            cancelBtn.classList.add('ps-include-editor-cancel', 'ps-btn', 'ps-btn-default');
+            cancelBtn.setAttribute('title', 'Close without saving');
+            cancelBtn.innerHTML = 'Cancel';
+
+            titlebar.appendChild(cancelBtn);
+            titlebar.appendChild(saveBtn);
+
+            saveBtn.addEventListener('click', function() {
+                iframe.contentWindow.window.pagespace.emit('save');
+            });
+
+            cancelBtn.addEventListener('click', function closeModal() {
+                modal.parentNode.removeChild(modal);
+                document.body.style.overflow = 'auto';
+            });
 
             //inject plugin interface
             iframe.contentWindow.window.pagespace = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
@@ -357,34 +383,15 @@
         editor.appendChild(iframe);
 
         //titlebar
-        var titleBar = document.createElement('div');
-        titleBar.classList.add('ps-include-editor-titlebar');
-        titleBar.innerHTML = '<p>' + title + '</p>';
-
-        //save close button
-        var saveBtn = document.createElement('button');
-        saveBtn.classList.add('ps-include-editor-save');
-        saveBtn.classList.add('ps-btn', 'ps-btn-primary');
-        saveBtn.setAttribute('title', 'Save and close');
-        saveBtn.innerHTML = 'Save and close';
-
-        //save close button
-        var cancelBtn = document.createElement('button');
-        cancelBtn.classList.add('ps-include-editor-cancel');
-        cancelBtn.classList.add('ps-btn', 'ps-btn-default');
-        cancelBtn.setAttribute('title', 'Close without saving');
-        cancelBtn.innerHTML = 'Cancel';
-
-        titleBar.appendChild(cancelBtn);
-        titleBar.appendChild(saveBtn);
-
-        editor.appendChild(titleBar);
+        var titlebar = document.createElement('div');
+        titlebar.classList.add('ps-include-editor-titlebar');
+        titlebar.innerHTML = '<p>' + title + '</p>';
+        editor.appendChild(titlebar);
 
         //animate to size
         window.setTimeout(function() {
             setIframeSize(editor, size);
         }, 100);
-
 
         function setIframeSize(editor, size) {
             if(editor) {
@@ -417,17 +424,6 @@
 
         window.addEventListener('resize', resizeListener);
 
-        saveBtn.addEventListener('click', function() {
-            iframe.contentWindow.window.pagespace.emit('save');
-            window.location.reload(true);
-        });
-        
-        cancelBtn.addEventListener('click', function closeModal() {
-            window.removeEventListener('resize', resizeListener);
-            editor.parentNode.parentNode.removeChild(modal);
-            document.body.style.overflow = 'auto';
-        });
-
-        return iframe;
+        return modal;
     }
 })();

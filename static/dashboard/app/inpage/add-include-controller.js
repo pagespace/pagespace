@@ -27,8 +27,10 @@
 
         $scope.addInclude = function() {
 
+            var page = $scope.page;
+
             //map region name to index
-            var regionIndex = pageService.getRegionIndex($scope.page, regionName);
+            var regionIndex = pageService.getRegionIndex(page, regionName);
 
             //add a new region
             if(regionIndex === null) {
@@ -39,8 +41,8 @@
             if($scope.selectedPlugin) {
                 pageService.createIncludeData($scope.selectedPlugin).then(function(includeData) {
                     pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
-                    $scope.page = pageService.depopulatePage($scope.page);
-                    return pageService.updatePage(pageId, $scope.page);
+                    page = pageService.depopulatePage(page);
+                    return pageService.updatePage(pageId, page);
                 }).then(function() {
                     $scope.close();
                 }).catch(function(err) {
