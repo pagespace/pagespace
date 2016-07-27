@@ -1,14 +1,12 @@
 {
-    "extends": "../.jshintrc",
+    "maxparams"     : false,
+    "maxlen"        : 120,
+    "esnext"        : true,
+    "loopfunc"      : true,
 
-    "maxparams"     : false,    // {int} Max number of formal params allowed per function
-    "maxlen"        : 120,    // {int} Max number of characters per line
-
-
-    // Environments
-    "browser"       : true,     // Web Browser (window, document, etc)
+    "browser"       : true,
     "node"          : false,
-    // Custom Globals
+
     "globals"       : {
         "angular" : true,
         "bunyan" : true,

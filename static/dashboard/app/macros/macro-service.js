@@ -26,7 +26,7 @@
         MacroService.prototype.createMacro = function(macroData) {
             return $http.post('/_api/macros', macroData).then(res => {
                 this.clearCache();
-                return res.data
+                return res.data;
             }).catch(res => {
                 throw errorFactory.createResponseError(res);
             });
@@ -66,7 +66,7 @@
 
             macro.includes = macro.includes.map((include) => {
                 if(include.plugin && include.plugin._id) {
-                    include.plugin = include.plugin._id
+                    include.plugin = include.plugin._id;
                 }
                 return include;
             });

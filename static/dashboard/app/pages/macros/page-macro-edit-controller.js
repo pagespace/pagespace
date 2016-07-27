@@ -5,8 +5,8 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('PageMacroEditController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
-                                                      $routeParams, macroService, $log, $window) {
+    adminApp.controller('PageMacroEditController', function($scope, $rootScope, $timeout, $location, siteService, 
+                                                            pageService, $routeParams, macroService, $log, $window) {
 
         $rootScope.pageTitle = 'Edit page content';
         

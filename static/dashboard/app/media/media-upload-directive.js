@@ -74,7 +74,7 @@
                 }
 
                 $scope.setFiles = function(newFiles) {
-                    var existingFilePaths = $scope.files.map(function(file) { return file.name });
+                    var existingFilePaths = $scope.files.map(file => file.name);
 
                     for (var i = 0; i < newFiles.length; i++) {
                         var file = newFiles[i];
@@ -107,7 +107,7 @@
                     }
                 };
             }
-        }
+        };
     });
 
 })();

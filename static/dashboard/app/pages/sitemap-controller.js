@@ -18,7 +18,7 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $timeout, 
     $scope.macroAction = $routeParams.macroAction;
     $scope.viewMode = $location.search().action;
     if(!$scope.viewMode && !$scope.macroAction) {
-        $scope.updateSearch('configure')
+        $scope.updateSearch('configure');
     }
 
     function getSite() {

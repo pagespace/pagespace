@@ -5,8 +5,8 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('PageListMacroController', function($scope, $rootScope, $timeout, $location, siteService, pageService,
-                                                        $routeParams, macroService, $log, $window) {
+    adminApp.controller('PageListMacroController', function($scope, $rootScope, $timeout, $location, siteService, 
+                                                            pageService, $routeParams) {
 
         $rootScope.pageTitle = 'Pages';
 

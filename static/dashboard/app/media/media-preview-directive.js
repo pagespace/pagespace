@@ -9,27 +9,26 @@
                     <h4>Prepare media to add</h4>
                 </div>
                 <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   
-                        <div class="media-item-part clearfix">
-                            <div class="btn-group pull-right">
-                                <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
-                                        ng-click="remove(file)" ng-disabled="uploading">
-                                    <span class="glyphicon glyphicon-trash"></span>
-                                </button>      
-                            </div>
-                            <div class="media-item-preview">
-                                <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
-                                     alt="{{file.item.name}}" title="{{file.item.type}}">
-                                <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
-                            </div>   
-                            <div class="media-item-edit">
-                                <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
-                                <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
-                                            placeholder="Add tags to help manage your files">
-                                    <auto-complete source="getMatchingTags($query)"></auto-complete>
-                                </tags-input>     
-                                <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   
-                            </div>                 
+                    <div class="media-item-part clearfix">
+                        <div class="btn-group pull-right">
+                            <button type="button" class="btn btn-default" title="Remove" tabindex="-1"
+                                    ng-click="remove(file)" ng-disabled="uploading">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </button>      
                         </div>
+                        <div class="media-item-preview">
+                            <img ng-src="{{getSrcPath(file.item, null, '/_static/dashboard/styles/types/file.png')}}" 
+                                 alt="{{file.item.name}}" title="{{file.item.type}}">
+                            <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>
+                        </div>   
+                        <div class="media-item-edit">
+                            <input placeholder="Name" ng-model="file.item.name" required class="form-control">   
+                            <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" 
+                                        placeholder="Add tags to help manage your files">
+                                <auto-complete source="getMatchingTags($query)"></auto-complete>
+                            </tags-input>     
+                            <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   
+                        </div>                 
                     </div>
                 </div>                              
             </div>
@@ -39,7 +38,8 @@
                                   when="{'one': 'Add file', 'other': 'Add {} files'}">
                     </ng-pluralize>
                 </button>
-                <button ng-click="cancel()" type="button" class="btn btn-default" ng-disabled="uploading">Cancel</button>
+                <button ng-click="cancel()" ng-disabled="uploading" 
+                    type="button" class="btn btn-default" >Cancel</button>
             </div>     
         </form>`;
     
@@ -70,7 +70,7 @@
                 }
 
                 $scope.setFiles = function(newFiles) {
-                    var existingFilePaths = $scope.files.map(function(file) { return file.name });
+                    var existingFilePaths = $scope.files.map(file => file.name);
 
                     for (var i = 0; i < newFiles.length; i++) {
                         var file = newFiles[i];
@@ -155,9 +155,9 @@
 
                 $window.onbeforeunload = function() {
                     return $scope.files.length > 0 ? confirmExitMsg : undefined;
-                }
+                };
             }
-        }
+        };
     });
 
 })();

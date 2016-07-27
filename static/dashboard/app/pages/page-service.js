@@ -72,7 +72,7 @@
                             deleteIncludePromises = deleteIncludePromises.concat(promises);
                         }
                     }
-                    return Promise.all(deleteIncludePromises)
+                    return Promise.all(deleteIncludePromises);
                 });
             }
             return promise.then(res => res.data).catch(res => {
@@ -108,7 +108,7 @@
                 data: includeData
             }).then(res => {
                 return res.data;
-            })
+            });
         };
         
         PageService.prototype.getRegionIndex = function(page, regionName) {

@@ -36,11 +36,14 @@
                     <div ng-if="!item._editing" class="media-item-view"> 
                         <h3>{{item.name}}</h3>
                         <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       
-                        <p><small><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></small></p>                                         
+                        <p><small>
+                            <a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a>
+                        </small></p>                                         
                     </div>
                     <div ng-if="item._editing" class="media-item-edit">
                         <input placeholder="Name" ng-model="item.name" required class="form-control">
-                        <tags-input ng-model="item.tags" on-tag-added="addTag($tag)" placeholder="Add tags to help manage your files">
+                        <tags-input ng-model="item.tags" on-tag-added="addTag($tag)" 
+                            placeholder="Add tags to help manage your files">
                             <auto-complete source="getMatchingTags($query)"></auto-complete>
                         </tags-input>         
                     </div>   
@@ -96,9 +99,9 @@
                     mediaService.updateItem(item._id, item).then(function() {
                         item._editing = false;
                     }).catch(function(err) {
-                        $scope.showError('Error udpdating item', err);
+                        $scope.showError('Error updating item', err);
                     });
-                }
+                };
 
 
             }

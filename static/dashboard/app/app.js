@@ -198,7 +198,7 @@
                 err.status = res.status;
                 return err;
             }
-        }
+        };
     });
 
     adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {

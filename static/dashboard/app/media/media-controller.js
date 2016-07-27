@@ -24,7 +24,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     };
 
     $scope.toggleEditing = function (item) {
-        item._editing = !item._editing
+        item._editing = !item._editing;
     };
 
     $scope.setItems = function (items) {
@@ -107,13 +107,13 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         }
 
         $scope.filteredItems = $scope.mediaItems.filter(function(item) {
-            return item.tags.some(function(tag) {
-                return $scope.selectedTags.some(function(selectedTag) {
+            return item.tags.some(tag => {
+                return $scope.selectedTags.some(selectedTag => {
                     return selectedTag.text === tag.text;
                 });
             });
         });
-    }
+    };
     
    
 });
