@@ -48,8 +48,6 @@ static/bower_components
 !static/bower_components/browser-bunyan/dist/browser-bunyan.min.js
 !static/bower_components/tv4/tv4.js
 !static/bower_components/objectpath/lib/ObjectPath.js
-!static/bower_components/ng-tags-input/ng-tags-input.min.js
 !static/bower_components/ng-focus-if/focusIf.min.js
 !static/bower_components/angular-ui-codemirror/ui-codemirror.min.js
 !static/bower_components/fetch/fetch.js
-!static/bower_components/browser-bunyan/dist/browser-bunyan.min.js
