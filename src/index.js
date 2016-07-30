@@ -18,6 +18,8 @@ const
     createPluginResolver = require('./support/plugin-resolver'),
     includeCache = require('./support/include-cache');
 
+mongoose.Promise = Promise;
+
 /**
  * The App. This is the root of Pagespace.
  * @constructor

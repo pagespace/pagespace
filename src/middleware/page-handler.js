@@ -320,7 +320,7 @@ class PageHandler extends BaseHandler {
             agent: req.headers['user-agent'],
             session: req.sessionID
         });
-        hit.save().then(null, (err) => {
+        hit.save().catch(err => {
             logger.warn(err, 'Couldn\'t save page hit');
         });
     }

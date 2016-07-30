@@ -217,10 +217,10 @@ class AuthHandler extends BaseHandler {
                 });
             }
             return Promise.resolve();
-        }).then(() =>{
+        }).then(() => {
             res.statusCode = 204;
             return res.send();
-        }).then(null, (err) =>{
+        }).catch(err => {
             logger.error(err);
             next(err);
         });
@@ -253,8 +253,8 @@ class AuthHandler extends BaseHandler {
         }).then(() => {
             res.statusCode = 204;
             return res.send();
-        }).then(null, (err) => {
-            logger.error(err);
+        }).catch(err => {
+            logger.debug(err);
             return next(err);
         });
     }
