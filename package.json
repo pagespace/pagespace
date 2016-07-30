@@ -35,7 +35,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "a-seal": "^0.1.0",
+    "a-seal": "^0.2.0",
     "bcrypt": "^0.8.7",
     "bluebird": "^3.4.1",
     "bunyan": "^1.8.1",
