@@ -18,6 +18,20 @@
         display: none;
     }
 
+    .menu-control {
+        display: block;
+    }
+
+    .header-nav {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s;
+    }
+    .header-nav-open .header-nav {
+        max-height: 300px;
+        transition: max-height 0.5s;
+    }
+
     .side-nav {
         padding: 8px;
         padding-bottom: 0;
@@ -28,6 +42,9 @@
 
     .section-heading {
         margin-bottom: 1em;
+    }
+    div.not-mobile + .section-heading {
+        margin-top: 0;
     }
 
     h3, .h3 {
@@ -49,6 +66,11 @@
 
     .form-group {
         margin-bottom: 0;
+    }
+
+    .form-horizontal .form-group {
+        margin-left: -8px;
+        margin-right: -8px;
     }
 
     .form-control-static {

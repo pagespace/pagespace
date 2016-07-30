@@ -2,7 +2,7 @@
 
 /* globals console */
 (function () {
-    var adminApp = angular.module('adminApp', ['ngRoute', 'ngResource', 'ngTagsInput', 'focus-if', 'ui.codemirror']);
+    var adminApp = angular.module('adminApp', ['ngRoute', 'ngTagsInput', 'focus-if', 'ui.codemirror']);
 
     adminApp.config(['$routeProvider', function ($routeProvider) {
         $routeProvider.
@@ -179,6 +179,9 @@
     });
 
     adminApp.controller('MainController', function ($scope, $location, $log, $timeout, pageService) {
+
+        $scope.navClass = '';
+
         $scope.menuClass = function (page) {
 
             //default page
@@ -207,31 +210,34 @@
             } else {
                 $scope.viewPageUrl = null;
             }
+
+            $scope.navClass = '';
         });
 
         //notifications
         $scope.message = null;
 
-        function showMessage(text, type) {
+        function showMessage(text, type, icon) {
             $scope.message = {
                 type: type,
-                text: text
+                text: text,
+                icon: icon
             };
         }
 
         $scope.showSuccess = function (text) {
             console.log(text);
-            showMessage(text, 'success');
+            showMessage(text, 'success', 'ok');
         };
 
         $scope.showInfo = function (text) {
             console.log(text);
-            showMessage(text, 'info');
+            showMessage(text, 'info', 'info-sign');
         };
 
         $scope.showWarning = function (text) {
             console.warn(text);
-            showMessage(text, 'warning');
+            showMessage(text, 'warning', 'exclamation-sign');
         };
 
         $scope.showError = function (text, err) {
@@ -246,7 +252,7 @@
             if (err.status) {
                 message += ' (' + err.status + ')';
             }
-            showMessage(message, 'danger');
+            showMessage(message, 'danger', 'exclamation-sign');
         };
 
         $scope.clearNotification = function () {
@@ -292,6 +298,10 @@
                 }
             }
         });
+
+        $scope.toggleNav = function () {
+            $scope.navClass = $scope.navClass ? '' : 'header-nav-open';
+        };
     });
 })();
 'use strict';
@@ -737,6 +747,429 @@
         };
 
         return new MacroService();
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PublishingController', function ($scope, $rootScope, $routeParams, $window, $location, publishingService) {
+
+        var preQueued = $routeParams.pageId || null;
+
+        //get all pages with drafts
+        publishingService.getDrafts().then(function (drafts) {
+            $scope.drafts = drafts;
+
+            drafts.forEach(function (page) {
+                if (page._id === preQueued) {
+                    page.queued = true;
+                }
+            });
+        }).catch(function (err) {
+            $scope.showError('Error getting drafts to publish', err);
+        });
+
+        $scope.cancel = function () {
+            $location.path('/pages');
+        };
+
+        $scope.publish = function () {
+            var toPublishIds = $scope.drafts.filter(function (page) {
+                return page.queued;
+            }).map(function (page) {
+                return page._id;
+            });
+
+            if (toPublishIds.length === 0) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+
+            publishingService.publish(toPublishIds).then(function () {
+                $scope.showSuccess('Publishing successful');
+                $location.path('/');
+            }).catch(function (err) {
+                $scope.showError('Error performing publish', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('publishingService', function ($http, pageService, errorFactory) {
+
+        function PublishingService() {}
+        PublishingService.prototype.getDrafts = function () {
+            return pageService.getPages({
+                draft: true
+            });
+        };
+
+        PublishingService.prototype.publish = function (draftIds) {
+            return $http.post('/_publish/pages', draftIds).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        return new PublishingService();
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('siteService', function ($http, errorFactory) {
+
+        function SiteService() {}
+        SiteService.prototype.getSite = function () {
+            return $http.get('/_api/sites').then(function (res) {
+                return res.data[0];
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        SiteService.prototype.updateSite = function (siteId, siteData) {
+            delete siteData._id;
+            return $http.put('/_api/sites/' + siteId, siteData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        return new SiteService();
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('SiteSettingsController', function ($scope, $rootScope, $location, $window, $q, pageService, siteService) {
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
+        $scope.defaultPage = {
+            redirect: null
+        };
+
+        siteService.getSite().then(function (site) {
+            $scope.site = site;
+        });
+
+        pageService.getPages().then(function (pages) {
+            $scope.availablePages = pages.filter(function (page) {
+                return page.status === 200 && page.parent !== null;
+            });
+            $scope.defaultPage = pages.filter(function (page) {
+                return page.url === '/';
+            })[0];
+        });
+
+        $scope.cancel = function () {
+            $location.path('/');
+        };
+
+        $scope.save = function (form) {
+
+            if (form.$invalid) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+            var site = $scope.site;
+
+            var promise = $q.when();
+            if ($scope.defaultPage) {
+                //get existing default pages (where url == /)
+                promise = promise.then(function () {
+                    return pageService.getPages({
+                        url: '/'
+                    });
+                }).then(function (response) {
+                    var pages = response.data;
+                    var page = pages.length ? pages[0] : null;
+
+                    var defaultPageData = {
+                        name: 'Default page',
+                        url: '/',
+                        redirect: $scope.defaultPage.redirect,
+                        status: 301
+                    };
+
+                    if (!page) {
+                        //create new
+                        return pageService.createPage(defaultPageData);
+                    } else if (page && page.status === 301) {
+                        //update an existing default page redirect
+                        return pageService.updatePage(page._id, defaultPageData);
+                    } else {
+                        var msg = 'Cannot set the default page. ' + page.name + ' has been explicitly set as the default page';
+                        throw new Error(msg);
+                    }
+                    //else the page has the url / explicitly set. leave it alone
+                }).catch(function (err) {
+                    $scope.showError('Unable to set default page', err);
+                });
+            }
+
+            promise.then(function () {
+                return siteService.updateSite(site._id, site);
+            }).then(function () {
+                $scope.showSuccess('Site updated.');
+                $location.path('/');
+            }).catch(function (err) {
+                $scope.showError('Error updating site', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('TemplateController', function ($log, $scope, $rootScope, $routeParams, $location, $window, templateService) {
+        $log.info('Showing Template View');
+
+        var templateId = $routeParams.templateId;
+
+        $scope.template = {
+            properties: [],
+            regions: [],
+            regionData: []
+        };
+
+        templateService.getTemplateSources().then(function (templateSources) {
+            $scope.templateSources = templateSources;
+        });
+
+        $scope.$watch('template.src', function (val) {
+            if (val && !templateId) {
+                $log.debug('Fetching regions for template src: %s...', val);
+                $scope.scanRegions(val);
+            }
+        });
+
+        if (templateId) {
+            $scope.templateId = templateId;
+            $log.debug('Fetching template data for id: %s...', templateId);
+            templateService.getTemplate(templateId).then(function (template) {
+                $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
+                $scope.template = template;
+            }).catch(function (err) {
+                $log.error(err, 'Error getting template');
+                $scope.showError('Error getting template', err);
+            });
+        }
+
+        $scope.addProperty = function () {
+            $scope.template.properties.push({
+                name: '',
+                value: ''
+            });
+        };
+
+        $scope.removeProperty = function (prop) {
+            var index = $scope.template.properties.indexOf(prop);
+            if (index > -1) {
+                $scope.template.properties.splice(index, 1);
+            }
+        };
+
+        $scope.scanRegions = function (templateSrc) {
+
+            templateSrc = templateSrc || $scope.template.src;
+
+            templateService.getTemplateRegions(templateSrc).then(function (newRegions) {
+                $log.debug('Got regions: %s', newRegions);
+
+                function isRegionNew(regionName) {
+                    return !$scope.template.regions.some(function (region) {
+                        return region.name === regionName;
+                    });
+                }
+
+                newRegions.forEach(function (regionName) {
+                    if (isRegionNew(regionName)) {
+                        $scope.template.regions.push({
+                            name: regionName,
+                            includes: []
+                        });
+                    }
+                });
+            }).catch(function (err) {
+                $scope.showError('Error getting template regions', err);
+            });
+        };
+
+        $scope.cancel = function () {
+            $location.path('/templates');
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+
+            var template = $scope.template;
+
+            //remove any empty properties
+            for (var i = template.properties.length - 1; i >= 0; i--) {
+                var prop = template.properties[i];
+                if (!prop.name) {
+                    template.properties.splice(i, 1);
+                }
+            }
+
+            if (templateId) {
+                $log.info('Updating template: %s...', templateId);
+                $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
+                templateService.updateTemplate(templateId, $scope.template).then(function () {
+                    $log.info('Template updated successfully');
+                    $scope.showSuccess('Template updated.');
+                    $location.path('/templates');
+                }).catch(function (err) {
+                    $log.error(err, 'Error updating template');
+                    $scope.showError('Error updating template', err);
+                });
+            } else {
+                $log.info('Creating new template...');
+                $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
+                templateService.createTemplate($scope.template).then(function () {
+                    $log.info('Template created successfully');
+                    $scope.showSuccess('Template created.');
+                    $location.path('/templates');
+                }).catch(function (err) {
+                    $log.error(err, 'Error creating template');
+                    $scope.showError('Error creating template', err);
+                });
+            }
+        };
+
+        $scope.remove = function () {
+            var really = window.confirm('Really delete this template?');
+            if (really) {
+                $log.info('Deleting template: %s...', $scope.template._id);
+                templateService.deleteTemplate($scope.template._id).then(function () {
+                    $log.info('Template deleted');
+                    $location.path('/templates');
+                }).error(function (err) {
+                    $log.error(err, 'Could not delete template');
+                    $scope.showError('Error deleting template', err);
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('TemplateListController', function ($scope, $rootScope, $routeParams, $location, templateService) {
+
+        $rootScope.pageTitle = 'Templates';
+
+        $scope.templates = [];
+
+        templateService.doGetAvailableTemplates().then(function (templates) {
+            $scope.templates = templates;
+        }).catch(function (err) {
+            $scope.showError('Error getting templates', err);
+        });
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('templateService', function ($http, errorFactory) {
+
+        function TemplateService() {}
+        TemplateService.prototype.getTemplateSources = function () {
+            return $http.get('/_templates/available').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        TemplateService.prototype.getTemplateRegions = function (templateSrc) {
+            return $http.get('/_templates/template-regions', {
+                params: {
+                    templateSrc: templateSrc
+                }
+            }).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        TemplateService.prototype.doGetAvailableTemplates = function () {
+            return $http.get('/_api/templates').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        TemplateService.prototype.getTemplate = function (templateId) {
+            return $http.get('/_api/templates/' + templateId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        TemplateService.prototype.createTemplate = function (templateData) {
+            return $http.post('/_api/templates', templateData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        TemplateService.prototype.updateTemplate = function (templateId, templateData) {
+            return $http.put('/_api/templates/' + templateId, templateData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        TemplateService.prototype.deleteTemplate = function (templateId) {
+            return $http.delete('/_api/templates/' + templateId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        return new TemplateService();
     });
 })();
 'use strict';
@@ -1372,6 +1805,143 @@
                 $scope.showError('Could not update text media', err);
             });
         };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('UserController', function ($scope, $rootScope, $log, $location, $routeParams, $window, userService) {
+        $rootScope.pageTitle = 'User';
+
+        var userId = $routeParams.userId;
+        $scope.userId = userId;
+
+        $scope.roles = [{
+            name: 'editor',
+            label: 'Editor'
+        }, {
+            name: 'developer',
+            label: 'Developer'
+        }, {
+            name: 'admin',
+            label: 'Admin'
+        }];
+
+        if (userId) {
+            userService.getUser(userId).then(function (user) {
+                $scope.user = user;
+            });
+        }
+
+        $scope.cancel = function () {
+            $location.path('/users');
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+            var user = $scope.user;
+            if (userId) {
+                userService.updateUser(userId, user).then(function () {
+                    $scope.showSuccess('User updated.');
+                    $location.path('/users');
+                }).catch(function (err) {
+                    $scope.showError('Error updating user', err);
+                });
+            } else {
+                userService.createUser(user).then(function () {
+                    $scope.showSuccess('User created.');
+                    $location.path('/users');
+                }).catch(function (err) {
+                    $scope.showError('Error creating user', err);
+                });
+            }
+        };
+
+        $scope.remove = function () {
+            userService.deleteTemplate($scope.user._id).then(function () {
+                $log.info('User removed');
+                $location.path('/templates');
+            }).catch(function (err) {
+                $scope.showError('Error deleting template', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('UserListController', function ($scope, $rootScope, $location, userService) {
+        $rootScope.pageTitle = 'Users';
+
+        userService.getUsers().then(function (users) {
+            $scope.users = users;
+        });
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('userService', function ($http, errorFactory) {
+
+        function UserService() {}
+
+        UserService.prototype.getUsers = function () {
+            return $http.get('/_api/users').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        UserService.prototype.getUser = function (userId) {
+            return $http.get('/_api/users/' + userId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.createUser = function (userData) {
+            return $http.post('/_api/users', userData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.deleteUser = function (userId) {
+            return $http.delete('/_api/users/' + userId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.updateUser = function (userId, userData) {
+            return $http.put('/_api/users/' + userId, userData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        return new UserService();
     });
 })();
 'use strict';
@@ -2073,560 +2643,270 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function () {
 
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('includeEditor', function () {
+        return {
+            scope: {
+                page: '=',
+                region: '=',
+                onSave: '&'
+            },
+            template: '',
+            link: function link(scope, element) {
+                var page = scope.page;
+                var regionName = scope.region;
+
+                if (!page || !regionName) {
+                    return;
+                }
+                var region = page.regions.find(function (region) {
+                    return region.name === regionName;
+                });
+                if (region) {
+                    var includeHolder = region.includes[0];
+                    var pluginInterface = pagespace.getPluginInterface(includeHolder.plugin.name, page._id, includeHolder.include._id);
+                    pluginInterface.close = function () {};
+                    var iframe = document.createElement('iframe');
+                    iframe.name = 'edit-incliude';
+                    iframe.src = '/_static/plugins/' + includeHolder.plugin.name + '/edit.html';
+                    iframe.width = '100%';
+                    iframe.height = 'auto';
+                    iframe.scrolling = 'no';
+                    iframe.style.border = 'none';
+                    iframe.style.marginTop = '1em';
+                    element[0].appendChild(iframe);
+                    iframe.contentWindow.window.pagespace = pluginInterface;
+
+                    var iframeHeightUpdateInterval = setInterval(function () {
+                        iframe.height = parseInt(iframe.contentWindow.document.body.clientHeight, 10) + 100;
+                    }, 100);
+
+                    scope.$on('$destroy', function () {
+                        if (iframeHeightUpdateInterval) {
+                            clearInterval(iframeHeightUpdateInterval);
+                        }
+                    });
+
+                    scope.$on('save', function () {
+                        pluginInterface.emit('save');
+                    });
+                }
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
     /**
      *
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('PublishingController', function ($scope, $rootScope, $routeParams, $window, $location, publishingService) {
+    adminApp.controller('PageMacroEditController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService, $log, $window) {
 
-        var preQueued = $routeParams.pageId || null;
+        $rootScope.pageTitle = 'Edit page content';
 
-        //get all pages with drafts
-        publishingService.getDrafts().then(function (drafts) {
-            $scope.drafts = drafts;
+        var macroId = $routeParams.macroId;
+        var pageId = $location.search().pageId;
 
-            drafts.forEach(function (page) {
-                if (page._id === preQueued) {
-                    page.queued = true;
+        $scope.page = null;
+
+        if (pageId) {
+            $log.debug('Fetching page data for: %s', pageId);
+            $scope.pageId = pageId;
+            macroService.getMacro(macroId).then(function (macro) {
+                $scope.macro = macro;
+                return pageService.getPage(pageId);
+            }).then(function (page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+                $scope.page = page;
+
+                //depopulate redirect page
+                if (page.redirect) {
+                    page.redirect = page.redirect._id;
                 }
             });
+        }
+
+        $scope.cancel = function () {
+            //roll back the newly created page
+            if ($location.search().created === 'true' && $scope.page) {
+                pageService.deletePage($scope.page).then(function () {
+                    $location.path('/pages');
+                }).catch(function (err) {
+                    $log.error(err, 'Error rolling back page creation');
+                    $scope.showError('Error rolling back page creation', err);
+                });
+            }
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0, 0);
+                return;
+            }
+
+            var page = $scope.page;
+
+            $log.info('Page successfully updated');
+            $scope.showSuccess('Page: ' + page.name + ' saved.');
+            $scope.$broadcast('save');
+            $timeout(function () {
+                $location.path('/pages/macros/' + macroId + '/list');
+            }, 200);
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageListMacroController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams) {
+
+        $rootScope.pageTitle = 'Pages';
+
+        var macroId = $routeParams.macroId;
+
+        $scope.pages = [];
+
+        pageService.getPages({
+            macro: macroId
+        }).then(function (pages) {
+            $scope.pages = pages;
         }).catch(function (err) {
-            $scope.showError('Error getting drafts to publish', err);
+            $scope.showError('Error getting pages', err);
         });
+
+        $scope.edit = function (page) {
+            $location.url('/pages/macros/' + macroId + '/edit?pageId=' + page._id);
+        };
+
+        $scope.publish = function (page) {
+            $location.path('/publishing/' + page._id);
+        };
+
+        $scope.removePage = function (page) {
+
+            if (page.published) {
+                $location.path('/pages/delete/' + page._id);
+            } else {
+                var really = window.confirm('Really delete this page?');
+                if (really) {
+                    pageService.deletePage(page).then(function () {
+                        window.location.reload();
+                        $scope.showInfo('Page: ' + page.name + ' removed.');
+                    }).catch(function (msg) {
+                        $scope.showError('Error deleting page', msg);
+                    });
+                }
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageMacroNewController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService, $log, $window) {
+
+        $rootScope.pageTitle = 'Page Macros';
+
+        var macroId = $routeParams.macroId;
+        $scope.page = {};
+
+        macroService.getMacro(macroId).then(function (macro) {
+            $scope.macro = macro;
+            //$scope.page.root = 'top';
+            $scope.page.parent = macro.parent;
+            $scope.page.basePage = macro.basePage;
+            $scope.page.template = macro.template;
+            $scope.page.useInNav = !!macro.useInNav;
+            $scope.page.macro = macro._id;
+        });
+
+        $scope.updateUrl = function () {
+            $scope.page.url = pageService.generateUrl($scope.page);
+        };
 
         $scope.cancel = function () {
             $location.path('/pages');
         };
 
-        $scope.publish = function () {
-            var toPublishIds = $scope.drafts.filter(function (page) {
-                return page.queued;
-            }).map(function (page) {
-                return page._id;
-            });
-
-            if (toPublishIds.length === 0) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
+        $scope.$watch('page.name', function () {
+            if ($scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+                $scope.updateUrl();
             }
-
-            publishingService.publish(toPublishIds).then(function () {
-                $scope.showSuccess('Publishing successful');
-                $location.path('/');
-            }).catch(function (err) {
-                $scope.showError('Error performing publish', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('publishingService', function ($http, pageService, errorFactory) {
-
-        function PublishingService() {}
-        PublishingService.prototype.getDrafts = function () {
-            return pageService.getPages({
-                draft: true
-            });
-        };
-
-        PublishingService.prototype.publish = function (draftIds) {
-            return $http.post('/_publish/pages', draftIds).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new PublishingService();
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('siteService', function ($http, errorFactory) {
-
-        function SiteService() {}
-        SiteService.prototype.getSite = function () {
-            return $http.get('/_api/sites').then(function (res) {
-                return res.data[0];
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        SiteService.prototype.updateSite = function (siteId, siteData) {
-            delete siteData._id;
-            return $http.put('/_api/sites/' + siteId, siteData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new SiteService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('SiteSettingsController', function ($scope, $rootScope, $location, $window, $q, pageService, siteService) {
-
-        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
-
-        $scope.defaultPage = {
-            redirect: null
-        };
-
-        siteService.getSite().then(function (site) {
-            $scope.site = site;
         });
-
-        pageService.getPages().then(function (pages) {
-            $scope.availablePages = pages.filter(function (page) {
-                return page.status === 200 && page.parent !== null;
-            });
-            $scope.defaultPage = pages.filter(function (page) {
-                return page.url === '/';
-            })[0];
-        });
-
-        $scope.cancel = function () {
-            $location.path('/');
-        };
 
         $scope.save = function (form) {
-
             if (form.$invalid) {
-                $window.scrollTo(0, 0);
                 $scope.submitted = true;
+                $window.scrollTo(0, 0);
                 return;
             }
-            var site = $scope.site;
 
-            var promise = $q.when();
-            if ($scope.defaultPage) {
-                //get existing default pages (where url == /)
-                promise = promise.then(function () {
-                    return pageService.getPages({
-                        url: '/'
-                    });
-                }).then(function (response) {
-                    var pages = response.data;
-                    var page = pages.length ? pages[0] : null;
+            var page = $scope.page;
+            var macro = $scope.macro;
 
-                    var defaultPageData = {
-                        name: 'Default page',
-                        url: '/',
-                        redirect: $scope.defaultPage.redirect,
-                        status: 301
-                    };
+            $log.info('Creating page...');
+            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
 
-                    if (!page) {
-                        //create new
-                        return pageService.createPage(defaultPageData);
-                    } else if (page && page.status === 301) {
-                        //update an existing default page redirect
-                        return pageService.updatePage(page._id, defaultPageData);
-                    } else {
-                        var msg = 'Cannot set the default page. ' + page.name + ' has been explicitly set as the default page';
-                        throw new Error(msg);
-                    }
-                    //else the page has the url / explicitly set. leave it alone
-                }).catch(function (err) {
-                    $scope.showError('Unable to set default page', err);
-                });
+            //create regions based on template
+            var pageRegions = [];
+            page.template.regions.forEach(function (regionMeta) {
+                var newRegion = {};
+                newRegion.name = regionMeta.name;
+                newRegion.includes = [];
+                pageRegions.push(newRegion);
+            });
+            page.regions = pageRegions;
+
+            if (page.basePage) {
+                pageService.synchronizeWithBasePage(page);
             }
 
-            promise.then(function () {
-                return siteService.updateSite(site._id, site);
+            page = pageService.depopulatePage(page);
+
+            //add a new page
+            pageService.createPage(page).then(function (createdPage) {
+                $log.info('Page successfully created');
+                page = createdPage;
             }).then(function () {
-                $scope.showSuccess('Site updated.');
-                $location.path('/');
+                //for each macro include create
+                var includeCreationPromises = macro.includes.map(function (includeMeta) {
+                    return pageService.createIncludeData(includeMeta.plugin);
+                });
+                return Promise.all(includeCreationPromises);
+            }).then(function (includesData) {
+                //add the newly created includes to the new page
+                includesData.forEach(function (includeData, i) {
+                    var regionIndex = pageService.getRegionIndex(page, macro.includes[i].region);
+                    pageService.addIncludeToPage(page, regionIndex, macro.includes[i].plugin, includeData);
+                });
+                //save
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(page._id, page);
+                $scope.showSuccess('Page: ' + page.name + ' created.');
+                $location.url('/pages/macros/' + macroId + '/edit?pageId=' + page._id + '&created=true');
             }).catch(function (err) {
-                $scope.showError('Error updating site', err);
+                $log.error(err, 'Error creating page');
+                $scope.showError('Error adding new page', err);
             });
         };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('TemplateController', function ($log, $scope, $rootScope, $routeParams, $location, $window, templateService) {
-        $log.info('Showing Template View');
-
-        var templateId = $routeParams.templateId;
-
-        $scope.template = {
-            properties: [],
-            regions: [],
-            regionData: []
-        };
-
-        templateService.getTemplateSources().then(function (templateSources) {
-            $scope.templateSources = templateSources;
-        });
-
-        $scope.$watch('template.src', function (val) {
-            if (val && !templateId) {
-                $log.debug('Fetching regions for template src: %s...', val);
-                $scope.scanRegions(val);
-            }
-        });
-
-        if (templateId) {
-            $scope.templateId = templateId;
-            $log.debug('Fetching template data for id: %s...', templateId);
-            templateService.getTemplate(templateId).then(function (template) {
-                $log.debug('Got template data:\n', JSON.stringify(template, null, '\t'));
-                $scope.template = template;
-            }).catch(function (err) {
-                $log.error(err, 'Error getting template');
-                $scope.showError('Error getting template', err);
-            });
-        }
-
-        $scope.addProperty = function () {
-            $scope.template.properties.push({
-                name: '',
-                value: ''
-            });
-        };
-
-        $scope.removeProperty = function (prop) {
-            var index = $scope.template.properties.indexOf(prop);
-            if (index > -1) {
-                $scope.template.properties.splice(index, 1);
-            }
-        };
-
-        $scope.scanRegions = function (templateSrc) {
-
-            templateSrc = templateSrc || $scope.template.src;
-
-            templateService.getTemplateRegions(templateSrc).then(function (newRegions) {
-                $log.debug('Got regions: %s', newRegions);
-
-                function isRegionNew(regionName) {
-                    return !$scope.template.regions.some(function (region) {
-                        return region.name === regionName;
-                    });
-                }
-
-                newRegions.forEach(function (regionName) {
-                    if (isRegionNew(regionName)) {
-                        $scope.template.regions.push({
-                            name: regionName,
-                            includes: []
-                        });
-                    }
-                });
-            }).catch(function (err) {
-                $scope.showError('Error getting template regions', err);
-            });
-        };
-
-        $scope.cancel = function () {
-            $location.path('/templates');
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
-            }
-
-            var template = $scope.template;
-
-            //remove any empty properties
-            for (var i = template.properties.length - 1; i >= 0; i--) {
-                var prop = template.properties[i];
-                if (!prop.name) {
-                    template.properties.splice(i, 1);
-                }
-            }
-
-            if (templateId) {
-                $log.info('Updating template: %s...', templateId);
-                $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-                templateService.updateTemplate(templateId, $scope.template).then(function () {
-                    $log.info('Template updated successfully');
-                    $scope.showSuccess('Template updated.');
-                    $location.path('/templates');
-                }).catch(function (err) {
-                    $log.error(err, 'Error updating template');
-                    $scope.showError('Error updating template', err);
-                });
-            } else {
-                $log.info('Creating new template...');
-                $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-                templateService.createTemplate($scope.template).then(function () {
-                    $log.info('Template created successfully');
-                    $scope.showSuccess('Template created.');
-                    $location.path('/templates');
-                }).catch(function (err) {
-                    $log.error(err, 'Error creating template');
-                    $scope.showError('Error creating template', err);
-                });
-            }
-        };
-
-        $scope.remove = function () {
-            var really = window.confirm('Really delete this template?');
-            if (really) {
-                $log.info('Deleting template: %s...', $scope.template._id);
-                templateService.deleteTemplate($scope.template._id).then(function () {
-                    $log.info('Template deleted');
-                    $location.path('/templates');
-                }).error(function (err) {
-                    $log.error(err, 'Could not delete template');
-                    $scope.showError('Error deleting template', err);
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('TemplateListController', function ($scope, $rootScope, $routeParams, $location, templateService) {
-
-        $rootScope.pageTitle = 'Templates';
-
-        $scope.templates = [];
-
-        templateService.doGetAvailableTemplates().then(function (templates) {
-            $scope.templates = templates;
-        }).catch(function (err) {
-            $scope.showError('Error getting templates', err);
-        });
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('templateService', function ($http, errorFactory) {
-
-        function TemplateService() {}
-        TemplateService.prototype.getTemplateSources = function () {
-            return $http.get('/_templates/available').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        TemplateService.prototype.getTemplateRegions = function (templateSrc) {
-            return $http.get('/_templates/template-regions', {
-                params: {
-                    templateSrc: templateSrc
-                }
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        TemplateService.prototype.doGetAvailableTemplates = function () {
-            return $http.get('/_api/templates').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        TemplateService.prototype.getTemplate = function (templateId) {
-            return $http.get('/_api/templates/' + templateId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        TemplateService.prototype.createTemplate = function (templateData) {
-            return $http.post('/_api/templates', templateData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        TemplateService.prototype.updateTemplate = function (templateId, templateData) {
-            return $http.put('/_api/templates/' + templateId, templateData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        TemplateService.prototype.deleteTemplate = function (templateId) {
-            return $http.delete('/_api/templates/' + templateId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new TemplateService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('UserController', function ($scope, $rootScope, $log, $location, $routeParams, $window, userService) {
-        $rootScope.pageTitle = 'User';
-
-        var userId = $routeParams.userId;
-        $scope.userId = userId;
-
-        $scope.roles = [{
-            name: 'editor',
-            label: 'Editor'
-        }, {
-            name: 'developer',
-            label: 'Developer'
-        }, {
-            name: 'admin',
-            label: 'Admin'
-        }];
-
-        if (userId) {
-            userService.getUser(userId).then(function (user) {
-                $scope.user = user;
-            });
-        }
-
-        $scope.cancel = function () {
-            $location.path('/users');
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
-            }
-            var user = $scope.user;
-            if (userId) {
-                userService.updateUser(userId, user).then(function () {
-                    $scope.showSuccess('User updated.');
-                    $location.path('/users');
-                }).catch(function (err) {
-                    $scope.showError('Error updating user', err);
-                });
-            } else {
-                userService.createUser(user).then(function () {
-                    $scope.showSuccess('User created.');
-                    $location.path('/users');
-                }).catch(function (err) {
-                    $scope.showError('Error creating user', err);
-                });
-            }
-        };
-
-        $scope.remove = function () {
-            userService.deleteTemplate($scope.user._id).then(function () {
-                $log.info('User removed');
-                $location.path('/templates');
-            }).catch(function (err) {
-                $scope.showError('Error deleting template', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('UserListController', function ($scope, $rootScope, $location, userService) {
-        $rootScope.pageTitle = 'Users';
-
-        userService.getUsers().then(function (users) {
-            $scope.users = users;
-        });
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('userService', function ($http, errorFactory) {
-
-        function UserService() {}
-
-        UserService.prototype.getUsers = function () {
-            return $http.get('/_api/users').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        UserService.prototype.getUser = function (userId) {
-            return $http.get('/_api/users/' + userId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.createUser = function (userData) {
-            return $http.post('/_api/users', userData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.deleteUser = function (userId) {
-            return $http.delete('/_api/users/' + userId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.updateUser = function (userId, userData) {
-            return $http.put('/_api/users/' + userId, userData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new UserService();
     });
 })();
 'use strict';
@@ -2834,276 +3114,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     $scope.showError('Error adding new page', err);
                 });
             }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('includeEditor', function () {
-        return {
-            scope: {
-                page: '=',
-                region: '=',
-                onSave: '&'
-            },
-            template: '',
-            link: function link(scope, element) {
-                var page = scope.page;
-                var regionName = scope.region;
-
-                if (!page || !regionName) {
-                    return;
-                }
-                var region = page.regions.find(function (region) {
-                    return region.name === regionName;
-                });
-                if (region) {
-                    var includeHolder = region.includes[0];
-                    var pluginInterface = pagespace.getPluginInterface(includeHolder.plugin.name, page._id, includeHolder.include._id);
-                    var iframe = document.createElement('iframe');
-                    iframe.name = 'edit-incliude';
-                    iframe.src = '/_static/plugins/' + includeHolder.plugin.name + '/edit.html';
-                    iframe.width = '100%';
-                    iframe.height = '500px';
-                    iframe.style.border = 'none';
-                    iframe.style.marginTop = '1em';
-                    element[0].appendChild(iframe);
-                    iframe.contentWindow.window.pagespace = pluginInterface;
-
-                    scope.$on('save', function () {
-                        pluginInterface.emit('save');
-                    });
-                }
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PageMacroEditController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService, $log, $window) {
-
-        $rootScope.pageTitle = 'Edit page content';
-
-        var macroId = $routeParams.macroId;
-        var pageId = $location.search().pageId;
-
-        $scope.page = null;
-
-        if (pageId) {
-            $log.debug('Fetching page data for: %s', pageId);
-            $scope.pageId = pageId;
-            macroService.getMacro(macroId).then(function (macro) {
-                $scope.macro = macro;
-                return pageService.getPage(pageId);
-            }).then(function (page) {
-                $log.debug('Got page data OK.');
-                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-                $scope.page = page;
-
-                //depopulate redirect page
-                if (page.redirect) {
-                    page.redirect = page.redirect._id;
-                }
-            });
-        }
-
-        $scope.updateUrl = function () {
-            $scope.page.url = pageService.generateUrl($scope.page);
-        };
-
-        $scope.cancel = function () {
-            //roll back the newly created page
-            if ($location.search().created === 'true' && $scope.page) {
-                pageService.deletePage($scope.page).then(function () {
-                    $location.path('/pages');
-                }).catch(function (err) {
-                    $log.error(err, 'Error rolling back page creation');
-                    $scope.showError('Error rolling back page creation', err);
-                });
-            }
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-
-            $log.info('Update page: %s...', pageId);
-            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            page = pageService.depopulatePage(page);
-            pageService.updatePage(pageId, page).then(function () {
-                $log.info('Page successfully updated');
-                $scope.showSuccess('Page: ' + page.name + ' saved.');
-                $scope.$broadcast('save');
-                $timeout(function () {
-                    $location.path('/pages/macros/' + macroId + '/list');
-                }, 100);
-            }).catch(function (err) {
-                $log.error(err, 'Error updating page');
-                $scope.showError('Error updating page', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PageListMacroController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams) {
-
-        $rootScope.pageTitle = 'Pages';
-
-        var macroId = $routeParams.macroId;
-
-        $scope.pages = [];
-
-        pageService.getPages({
-            macro: macroId
-        }).then(function (pages) {
-            $scope.pages = pages;
-        }).catch(function (err) {
-            $scope.showError('Error getting pages', err);
-        });
-
-        $scope.edit = function (page) {
-            $location.url('/pages/macros/' + macroId + '/edit?pageId=' + page._id);
-        };
-
-        $scope.publish = function (page) {
-            $location.path('/publishing/' + page._id);
-        };
-
-        $scope.removePage = function (page) {
-
-            if (page.published) {
-                $location.path('/pages/delete/' + page._id);
-            } else {
-                var really = window.confirm('Really delete this page?');
-                if (really) {
-                    pageService.deletePage(page).then(function () {
-                        window.location.reload();
-                        $scope.showInfo('Page: ' + page.name + ' removed.');
-                    }).catch(function (msg) {
-                        $scope.showError('Error deleting page', msg);
-                    });
-                }
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PageMacroNewController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService, $log, $window) {
-
-        $rootScope.pageTitle = 'Page Macros';
-
-        var macroId = $routeParams.macroId;
-        $scope.page = {};
-
-        macroService.getMacro(macroId).then(function (macro) {
-            $scope.macro = macro;
-            //$scope.page.root = 'top';
-            $scope.page.parent = macro.parent;
-            $scope.page.basePage = macro.basePage;
-            $scope.page.template = macro.template;
-            $scope.page.useInNav = !!macro.useInNav;
-            $scope.page.macro = macro._id;
-        });
-
-        $scope.updateUrl = function () {
-            $scope.page.url = pageService.generateUrl($scope.page);
-        };
-
-        $scope.cancel = function () {
-            $location.path('/pages');
-        };
-
-        $scope.$watch('page.name', function () {
-            if ($scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
-                $scope.updateUrl();
-            }
-        });
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-            var macro = $scope.macro;
-
-            $log.info('Creating page...');
-            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-
-            //create regions based on template
-            var pageRegions = [];
-            page.template.regions.forEach(function (regionMeta) {
-                var newRegion = {};
-                newRegion.name = regionMeta.name;
-                newRegion.includes = [];
-                pageRegions.push(newRegion);
-            });
-            page.regions = pageRegions;
-
-            if (page.basePage) {
-                pageService.synchronizeWithBasePage(page);
-            }
-
-            page = pageService.depopulatePage(page);
-
-            //add a new page
-            pageService.createPage(page).then(function (createdPage) {
-                $log.info('Page successfully created');
-                page = createdPage;
-            }).then(function () {
-                //for each macro include create
-                var includeCreationPromises = macro.includes.map(function (includeMeta) {
-                    return pageService.createIncludeData(includeMeta.plugin);
-                });
-                return Promise.all(includeCreationPromises);
-            }).then(function (includesData) {
-                //add the newly created includes to the new page
-                includesData.forEach(function (includeData, i) {
-                    var regionIndex = pageService.getRegionIndex(page, macro.includes[i].region);
-                    pageService.addIncludeToPage(page, regionIndex, macro.includes[i].plugin, includeData);
-                });
-                //save
-                page = pageService.depopulatePage(page);
-                pageService.updatePage(page._id, page);
-                $scope.showSuccess('Page: ' + page.name + ' created.');
-                $location.url('/pages/macros/' + macroId + '/edit?pageId=' + page._id + '&created=true');
-            }).catch(function (err) {
-                $log.error(err, 'Error creating page');
-                $scope.showError('Error adding new page', err);
-            });
         };
     });
 })();
