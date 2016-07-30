@@ -2,7 +2,6 @@
 (function() {
     var adminApp = angular.module('adminApp', [
         'ngRoute',
-        'ngResource',
         'ngTagsInput',
         'focus-if',
         'ui.codemirror'
@@ -202,6 +201,9 @@
     });
 
     adminApp.controller('MainController', function($scope, $location, $log, $timeout, pageService) {
+        
+        $scope.navClass = '';
+        
         $scope.menuClass = function(page) {
 
             //default page
@@ -230,31 +232,34 @@
             } else {
                 $scope.viewPageUrl = null;
             }
+
+            $scope.navClass = '';
         });
 
         //notifications
         $scope.message = null;
 
-        function showMessage(text, type) {
+        function showMessage(text, type, icon) {
             $scope.message = {
                 type: type,
-                text: text
+                text: text,
+                icon: icon
             };
         }
 
         $scope.showSuccess = function(text) {
             console.log(text);
-            showMessage(text, 'success');
+            showMessage(text, 'success', 'ok');
         };
 
         $scope.showInfo = function(text) {
             console.log(text);
-            showMessage(text, 'info');
+            showMessage(text, 'info', 'info-sign');
         };
 
         $scope.showWarning = function(text) {
             console.warn(text);
-            showMessage(text, 'warning');
+            showMessage(text, 'warning', 'exclamation-sign');
         };
 
         $scope.showError = function(text, err) {
@@ -269,7 +274,7 @@
             if(err.status) {
                 message += ' (' + err.status + ')';
             }
-            showMessage(message, 'danger');
+            showMessage(message, 'danger', 'exclamation-sign');
         };
 
         $scope.clearNotification = function() {
@@ -284,7 +289,7 @@
             $timeout.cancel(hideTimeout);
             hideTimeout = $timeout(function() {
                 $scope.message = null;
-            }, 1000 * 10);
+            }, 1000 * 5);
         });
 
         function swapIncludes(pageId, regionName, includeOne, includeTwo) {
@@ -317,5 +322,9 @@
                 }
             }
         });
+        
+        $scope.toggleNav = function () {
+            $scope.navClass = $scope.navClass ? '' : 'header-nav-open';
+        };
     });
 })();
