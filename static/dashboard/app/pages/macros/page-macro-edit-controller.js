@@ -32,10 +32,6 @@
                 }
             });
         }
-        
-        $scope.updateUrl = function() {
-            $scope.page.url = pageService.generateUrl($scope.page);
-        };
 
         $scope.cancel = function() {
             //roll back the newly created page
@@ -58,21 +54,12 @@
 
             var page = $scope.page;
 
-            $log.info('Update page: %s...', pageId);
-            $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-            page = pageService.depopulatePage(page);
-            pageService.updatePage(pageId, page).then(function() {
-                $log.info('Page successfully updated');
-                $scope.showSuccess('Page: ' + page.name + ' saved.');
-                $scope.$broadcast('save');
-                $timeout(function() {
-                    $location.path(`/pages/macros/${macroId}/list`);
-                }, 100);
-
-            }).catch(function(err) {
-                $log.error(err, 'Error updating page');
-                $scope.showError('Error updating page', err);
-            });
+            $log.info('Page successfully updated');
+            $scope.showSuccess('Page: ' + page.name + ' saved.');
+            $scope.$broadcast('save');
+            $timeout(() => {
+                $location.path(`/pages/macros/${macroId}/list`);
+            }, 200);
         };
     });
 
