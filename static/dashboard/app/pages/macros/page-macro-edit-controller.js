@@ -42,6 +42,8 @@
                     $log.error(err, 'Error rolling back page creation');
                     $scope.showError('Error rolling back page creation', err);
                 });
+            } else {
+                $location.path('/pages');
             }
         };
 

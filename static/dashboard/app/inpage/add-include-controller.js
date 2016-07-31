@@ -1,7 +1,7 @@
 (function() {
 
     var adminApp = angular.module('adminApp');
-    adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, pageService, pluginService) {
+    adminApp.controller('AddIncludeController', function($log, $scope, $routeParams, $q, pageService, pluginService) {
 
         var pageId = $routeParams.pageId;
         var regionName = $routeParams.region;
@@ -11,7 +11,7 @@
         var pluginsPromise = pluginService.getPlugins();
         var pagePromise = pageService.getPage(pageId);
 
-        Promise.all([pluginsPromise, pagePromise ]).then(function(results) {
+        $q.all([pluginsPromise, pagePromise ]).then(function(results) {
             $scope.availablePlugins = results[0];
             $scope.page = results[1];
 

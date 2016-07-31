@@ -400,7 +400,7 @@
 (function () {
 
     var adminApp = angular.module('adminApp');
-    adminApp.controller('AddIncludeController', function ($log, $scope, $routeParams, pageService, pluginService) {
+    adminApp.controller('AddIncludeController', function ($log, $scope, $routeParams, $q, pageService, pluginService) {
 
         var pageId = $routeParams.pageId;
         var regionName = $routeParams.region;
@@ -410,7 +410,7 @@
         var pluginsPromise = pluginService.getPlugins();
         var pagePromise = pageService.getPage(pageId);
 
-        Promise.all([pluginsPromise, pagePromise]).then(function (results) {
+        $q.all([pluginsPromise, pagePromise]).then(function (results) {
             $scope.availablePlugins = results[0];
             $scope.page = results[1];
 
@@ -1595,21 +1595,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             });
         };
 
-        PageService.prototype.swapIncludes = function (page, regionName, includeOne, includeTwo) {
-            //find the region
-            var region = page.regions.filter(function (region) {
-                return region.name === regionName;
-            })[0];
-
-            if (region) {
-                var temp = region.includes[includeOne];
-                region.includes[includeOne] = region.includes[includeTwo];
-                region.includes[includeTwo] = temp;
-            }
-
-            return page;
-        };
-
         PageService.prototype.moveInclude = function (page, regionName, fromIndex, toIndex) {
             //find the region
             var region = page.regions.filter(function (region) {
@@ -2780,6 +2765,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     $log.error(err, 'Error rolling back page creation');
                     $scope.showError('Error rolling back page creation', err);
                 });
+            } else {
+                $location.path('/pages');
             }
         };
 
