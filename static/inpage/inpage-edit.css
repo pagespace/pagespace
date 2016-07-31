@@ -124,13 +124,14 @@
     overflow: hidden;
     outline: none;
     font-size: 14px;
-    line-height: 20px;
+    line-height: 0;
     color: #cbcbcb;
     text-transform: capitalize;
     text-align: center;
 }
 .ps-dragging-include .ps-drop-target {
     height: 20px;
+    line-height: 20px;
     margin-top: 3px;
     margin-bottom: 3px;
     transition: height 0.3s;

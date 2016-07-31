@@ -175,16 +175,19 @@
                 ev.dataTransfer.effectAllowed = 'move';
                 ev.dataTransfer.setData('include-info', JSON.stringify(includeInfo));
                 ev.dataTransfer.setDragImage(include, include.offsetWidth - (include.offsetWidth / 9), 8);
-                include.classList.add('ps-no-drop');
-                include.parentNode.classList.add('ps-dragging-include');
 
-                var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
-                if(nextSibling && nextSibling.classList.contains('ps-drop-target')) {
-                    nextSibling.classList.add('ps-no-drop');
-                }
-                if(prevSibling && prevSibling.classList.contains('ps-drop-target')) {
-                    prevSibling.classList.add('ps-no-drop');
-                }
+                setTimeout(function () {
+                    include.classList.add('ps-no-drop');
+                    include.parentNode.classList.add('ps-dragging-include');
+
+                    var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
+                    if(nextSibling && nextSibling.classList.contains('ps-drop-target')) {
+                        nextSibling.classList.add('ps-no-drop');
+                    }
+                    if(prevSibling && prevSibling.classList.contains('ps-drop-target')) {
+                        prevSibling.classList.add('ps-no-drop');
+                    }
+                }, 0);
             }, false);
 
             grabHandle.addEventListener('dragend', function() {
