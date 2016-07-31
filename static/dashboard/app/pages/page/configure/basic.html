@@ -1,15 +1,15 @@
 <div class="form-group" bs-has-error="name">
-    <label class="col-sm-2 control-label">Title</label>
+    <label class="col-sm-3 control-label">Title</label>
     <div class="col-sm-7">
         <input type="text" class="form-control" name="name" focus-if="!pageId"
                ng-model="page.name" placeholder="e.g. Contact us" required>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>required</i></p>
     </div>
 </div>
 <div class="form-group" bs-has-error="url">
-    <label class="col-sm-2 control-label">Url</label>
+    <label class="col-sm-3 control-label">Url</label>
     <div class="col-sm-7">
         <div class="input-group">
             <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]*$/" name="url"
@@ -21,12 +21,12 @@
                 </span>
         </div>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>required</i></p>
     </div>
 </div>
 <div class="form-group" bs-has-error="useInNav">
-    <label class="col-sm-2 control-label">Use in navigation</label>
+    <label class="col-sm-3 control-label">Use in navigation</label>
     <div class="col-sm-7">
         <label style="display:block; margin-top: 12px">
             <input type="checkbox"  name="useInNav" ng-model="page.useInNav">
@@ -35,7 +35,7 @@
 </div>
 <div class="form-group">
     <div bs-has-error="publishedAt">
-        <label class="col-sm-2 control-label">Published</label>
+        <label class="col-sm-3 control-label">Published</label>
         <div class="col-sm-3">
             <input type="date" class="form-control" name="publishedAt" ng-model="page.publishedAt">
         </div>
@@ -46,7 +46,7 @@
             <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
         </div>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>optional</i></p>
     </div>
 </div>
@@ -54,7 +54,7 @@
 <!-- Select template -->
 <div ng-if="templates.length > 1" bs-has-error="template">
     <div class="form-group">
-        <label class="col-sm-2 control-label">Template</label>
+        <label class="col-sm-3 control-label">Template</label>
         <div class="col-sm-7">
             <select ng-model="page.template" name="template" required
                     ng-options="template as template.name for template in templates track by template._id"
@@ -67,7 +67,7 @@
 
 <div ng-if="page.template == null && templates.length === 0" >
     <div class="form-group">
-        <label class="col-sm-2 control-label">Template</label>bas
+        <label class="col-sm-3 control-label">Template</label>bas
         <div class="col-sm-7">
             <p class="form-control-static text-warning">
                 There are no templates to select. Ask your developer to add some.</p>
@@ -76,7 +76,7 @@
 </div>
 
 <div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
-    <label class="col-sm-2 control-label">Based on page</label>
+    <label class="col-sm-3 control-label">Based on page</label>
     <div class="col-sm-7">
         <select ng-model="page.basePage" class="form-control"
                 ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">

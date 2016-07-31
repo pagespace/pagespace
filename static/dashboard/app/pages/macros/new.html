@@ -4,17 +4,17 @@
     </div>
     <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
         <div class="form-group" bs-has-error="name">
-            <label class="col-sm-2 control-label">Title</label>
+            <label class="col-sm-3 control-label">Title</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control" name="name" focus-if="!pageId"
                        ng-model="page.name" placeholder="e.g. What's happening" required>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
         <div class="form-group" bs-has-error="url">
-            <label class="col-sm-2 control-label">Url</label>
+            <label class="col-sm-3 control-label">Url</label>
             <div class="col-sm-7">
                 <div class="input-group">
                     <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]*$/" name="url"
@@ -26,13 +26,13 @@
                 </span>
                 </div>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
         <div class="form-group">
             <div bs-has-error="publishedAt">
-                <label class="col-sm-2 control-label">Published</label>
+                <label class="col-sm-3 control-label">Published</label>
                 <div class="col-sm-3">
                     <input type="date" class="form-control" name="publishedAt" ng-model="page.publishedAt">
                 </div>
@@ -43,7 +43,7 @@
                     <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
                 </div>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>optional</i></p>
             </div>
         </div>

@@ -23,38 +23,38 @@
 
     <form role="form" ng-submit="save(macroForm)" name="macroForm" class="form-horizontal" novalidate >
         <div class="form-group" bs-has-error="name">
-            <label class="col-sm-2 control-label">Name</label>
+            <label class="col-sm-3 control-label">Name</label>
             <div class="col-sm-7">
                 <input type="text" class="form-control" name="name" focus-if="!macroId"
                        ng-model="macro.name" placeholder="e.g. Posts" required>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
 
         <div ng-if="allPages.length > 0" class="form-group" bs-has-error="parent">
-            <label class="col-sm-2 control-label">Parent page</label>
+            <label class="col-sm-3 control-label">Parent page</label>
             <div class="col-sm-7">
                 <select ng-model="macro.parent" name="parent" class="form-control" required
                         ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
                     <option value="">Select a page</option>
                 </select>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
 
         <div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
-            <label class="col-sm-2 control-label">Based on page</label>
+            <label class="col-sm-3 control-label">Based on page</label>
             <div class="col-sm-7">
                 <select ng-model="macro.basePage" class="form-control"
                         ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
                     <option  value="">Select a page</option>
                 </select>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>optional</i></p>
             </div>
         </div>
@@ -62,7 +62,7 @@
         <!-- Select template -->
         <div ng-if="templates.length > 1" bs-has-error="template">
             <div class="form-group">
-                <label class="col-sm-2 control-label">Template</label>
+                <label class="col-sm-3 control-label">Template</label>
                 <div class="col-sm-7">
                     <select ng-model="macro.template" name="template" required
                             ng-options="template as template.name for template in templates track by template._id"
@@ -70,19 +70,19 @@
                         <option value="" disabled selected>Choose a template</option>
                     </select>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-sm-2">
                     <p class="form-control-static text-muted"><i>required</i></p>
                 </div>
             </div>
         </div>
 
         <div class="form-group" ng-if="macro.template == null && templates.length === 0" >
-            <label class="col-sm-2 control-label">Template</label>
+            <label class="col-sm-3 control-label">Template</label>
             <div class="col-sm-7">
                 <p class="form-control-static text-warning">
                     There are no templates to select.</p>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
@@ -91,7 +91,7 @@
             <h4 style="margin-bottom: 1em">Default includes</h4>
             <div class="form-group"
                  ng-repeat="region in macro.template.regions | filter:{ sharing: false }:true track by $index">
-                <label class="col-sm-2 control-label">{{region.name}}</label>
+                <label class="col-sm-3 control-label">{{region.name}}</label>
                 <div class="col-sm-7">
                     <div ng-repeat="include in macro.includes | filter:{ region: region.name }:true" class="well">
                         <div class="form-group" bs-has-error="include-name-{{$index}}">
