@@ -116,29 +116,40 @@
     overflow: hidden;
     background: rgba(0, 0, 0, 0.3);
 }
-
-.ps-box.ps-no-drop.ps-drag-over {
-    background: transparent;
+.ps-drop-target {
+    height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    transition: height 0.3s;
+    overflow: hidden;
+    outline: none;
+    font-size: 14px;
+    line-height: 20px;
+    color: #cbcbcb;
+    text-transform: capitalize;
+    text-align: center;
 }
-.ps-drop-overlay {
-    display: none;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    opacity: 0.5;
+.ps-dragging-include .ps-drop-target {
+    height: 20px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    transition: height 0.3s;
     outline: 2px solid #cbcbcb;
-    background: url(/_static/dashboard/support/icons/1445551402_ic_swap_vert_circle_48px.png) no-repeat center center;
-    background-color: #e8e8e8;
+    /*special outline color added by js*/
 }
-.ps-drag-over .ps-drop-overlay {
-    /*special bg color added by js */
+.ps-dragging-include .ps-drop-target.ps-no-drop {
+    height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    outline: none !important;
 }
-.ps-dragging-include .ps-drop-overlay {
-    display: block;
+.ps-drop-target.ps-drag-over {
+    outline: 2px solid red;
+    color: #000;
 }
-.ps-dragging-include .ps-no-drop .ps-drop-overlay {
-    display: none;
+.ps-dragging-include .ps-box:hover {
+    outline-color: #cbcbcb;;
+}
+.ps-dragging-include.ps-region:hover .ps-box-add {
+    display: none !important;
 }

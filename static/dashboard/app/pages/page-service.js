@@ -137,19 +137,17 @@
             });
         };
 
-        PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
-
+        PageService.prototype.moveInclude = function(page, regionName, fromIndex, toIndex) {
             //find the region
             var region = page.regions.filter(function(region) {
                 return region.name === regionName;
             })[0];
 
             if(region) {
-                var temp = region.includes[includeOne];
-                region.includes[includeOne] = region.includes[includeTwo];
-                region.includes[includeTwo] = temp;
+                var includeToMove = region.includes[fromIndex];
+                region.includes.splice(fromIndex, 1);
+                region.includes.splice(toIndex, 0, includeToMove);
             }
-
             return page;
         };
 

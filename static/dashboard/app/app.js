@@ -310,6 +310,35 @@
                 $log.error(err, 'Unable to get page: %s', pageId);
             });
         }
+        
+        function moveInclude(pageId, regionName, fromIndex, toIndex) {
+            pageService.getPage(pageId).then(function(page) {
+                page = pageService.moveInclude(page, regionName, fromIndex, toIndex);
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).then(function() {
+                    $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
+                        fromIndex, toIndex, pageId, regionName);
+
+                    //reload iframe, preserving scroll position
+                    var viewPageFrame = document.getElementById('view-page-frame');
+                    var viewPageScroll = {
+                        x: viewPageFrame.contentWindow.scrollX,
+                        y: viewPageFrame.contentWindow.scrollY
+                    };
+                    viewPageFrame.onload = function() {
+                        viewPageFrame.contentWindow.scrollTo(viewPageScroll.x, viewPageScroll.y);
+                    };
+                    viewPageFrame.contentWindow.location.reload();
+                }).catch(function(err) {
+                    $scope.err = err;
+                    $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
+                        fromIndex, toIndex, pageId, regionName);
+                });
+            }).catch(function(err) {
+                $scope.err = err;
+                $log.error(err, 'Unable to get page: %s', pageId);
+            });
+        }
 
         window.addEventListener('message', function(ev) {
             if(ev.origin === window.location.origin) {
@@ -317,8 +346,8 @@
                     document.body.classList.add('dragging-include');
                 } else if(ev.data.name === 'drag-include-end') {
                     document.body.classList.remove('dragging-include');
-                } else if(ev.data.name === 'swap-includes') {
-                    swapIncludes(ev.data.pageId, ev.data.regionName, ev.data.includeOne, ev.data.includeTwo);
+                } else if(ev.data.name === 'move-include') {
+                    moveInclude(ev.data.pageId, ev.data.regionName, ev.data.fromIndex, ev.data.toIndex);
                 }
             }
         });

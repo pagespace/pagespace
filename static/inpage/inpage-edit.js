@@ -81,9 +81,10 @@
 
                 //add button
                 var dropOverlayRule = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-drag-over .ps-drop-overlay';
+                    return rule.selectorText === '.ps-drop-target.ps-drag-over';
                 })[0];
-                dropOverlayRule.style.backgroundColor = specialColor;
+                dropOverlayRule.style.outlineColor = specialColor;
+                dropOverlayRule.style.color = specialColor;
             }
         } catch(e) {
             console.warn(e);
@@ -121,8 +122,28 @@
             return grabHandle;
         }
 
-        Array.prototype.slice.call(document.querySelectorAll('[data-include]')).forEach(function(include) {
+        function createDropTarget(include, first) {
+            var dropTarget = document.createElement('div');
+            dropTarget.setAttribute('data-page-id', include.getAttribute('data-page-id'));
+            if(!first) {
+                //empty include implies first
+                dropTarget.setAttribute('data-target-include', first ? '' : include.getAttribute('data-include'));
+            }
+            dropTarget.classList.add('ps-drop-target');
+            dropTarget.textContent = 'Move here';
+            return dropTarget;
+        }
+
+        Array.prototype.slice.call(document.querySelectorAll('[data-include]')).forEach(function(include, i) {
             include.classList.add('ps-box');
+
+            var dropTargets = [];
+            dropTargets[0] = createDropTarget(include);
+            include.parentNode.insertBefore(dropTargets[0], include.nextElementSibling);
+            if(!include.previousElementSibling) {
+                dropTargets[1] = createDropTarget(include);
+                include.parentNode.insertBefore(dropTargets[1], include);
+            }
 
             //edit button
             var editButton = createEditButton(
@@ -141,10 +162,6 @@
                 include.getAttribute('data-include-id'));
             include.insertBefore(grabHandle, include.firstChild);
 
-            var dragOverlay = document.createElement('div');
-            dragOverlay.classList.add('ps-drop-overlay');
-            include.insertBefore(dragOverlay, include.firstChild);
-
             //drag include
             grabHandle.draggable = true;
             grabHandle.addEventListener('dragstart', function(ev) {
@@ -160,59 +177,77 @@
                 ev.dataTransfer.setDragImage(include, include.offsetWidth - (include.offsetWidth / 9), 8);
                 include.classList.add('ps-no-drop');
                 include.parentNode.classList.add('ps-dragging-include');
+
+                var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
+                if(nextSibling && nextSibling.classList.contains('ps-drop-target')) {
+                    nextSibling.classList.add('ps-no-drop');
+                }
+                if(prevSibling && prevSibling.classList.contains('ps-drop-target')) {
+                    prevSibling.classList.add('ps-no-drop');
+                }
             }, false);
 
             grabHandle.addEventListener('dragend', function() {
                 window.parent.postMessage({ name: 'drag-include-end' }, window.location.origin);
-                document.body.classList.remove('ps-dragging-include');
                 include.classList.remove('ps-no-drop');
                 include.parentNode.classList.remove('ps-dragging-include');
+
+                var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
+                if(nextSibling) {
+                    nextSibling.classList.remove('ps-no-drop');
+                }
+                if(prevSibling) {
+                    prevSibling.classList.remove('ps-no-drop');
+                }
             }, false);
 
             //drop on include
-            var dragCounter = 0;
-            include.addEventListener('dragenter', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    dragCounter++;
-                    this.classList.add('ps-drag-over');
-                    ev.preventDefault();
-                }
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragenter', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        this.classList.add('ps-drag-over');
+                        ev.preventDefault();
+                    }
+                });
             });
-            include.addEventListener('dragover', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    ev.dataTransfer.dropEffect = 'move';
-                    ev.preventDefault();
-                }
+
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragover', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        ev.dataTransfer.dropEffect = 'move';
+                        ev.preventDefault();
+                    }
+                });
             });
-            include.addEventListener('dragleave', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    dragCounter--;
-                    if(dragCounter === 0) {
+
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragleave', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
                         this.classList.remove('ps-drag-over');
                         ev.preventDefault();
                     }
-                }
+                });
             });
-            include.addEventListener('drop', function(ev) {
-                var data = getIncludeDragData(ev);
-                if(data) {
-                    var thisRegion = this.getAttribute('data-region-name');
-                    var thisInclude = this.getAttribute('data-include');
-                    var thatInclude = data.includeIndex;
-                    var thatRegion = data.region;
-                    if((thatRegion === thisRegion) && (thatInclude !== thisInclude)) {
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('drop', function (ev) {
+                    var data = getIncludeDragData(ev);
+                    if (data) {
                         ev.preventDefault();
+
+                        var toIndex = this.getAttribute('data-target-include') || 0;
+                        var fromIndex = data.includeIndex;
+                        var region = data.region;
                         var message = {
-                            name: 'swap-includes',
+                            name: 'move-include',
                             pageId: this.getAttribute('data-page-id'),
-                            regionName: thisRegion,
-                            includeOne: thisInclude,
-                            includeTwo: thatInclude
+                            regionName: region,
+                            fromIndex: parseInt(fromIndex, 10),
+                            toIndex: parseInt(toIndex, 10)
                         };
                         window.parent.postMessage(message, window.location.origin);
                     }
-                }
-                this.classList.remove('ps-drag-over');
+                    this.classList.remove('ps-drag-over');
+                });
             });
 
             //utils for drag+drop
