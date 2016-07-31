@@ -91,9 +91,12 @@
         //change the header color stuff
         var specialColor = window.localStorage.getItem('specialColor');
         if(specialColor) {
-            document.getElementsByTagName('header')[0].style.borderColor = specialColor;
-            document.querySelector('header > .alert').style.backgroundColor = specialColor;
+            specialColor = '#29f38f';
+            window.localStorage.setItem('specialColor', specialColor);
         }
+        document.getElementsByTagName('header')[0].style.borderColor = specialColor;
+        document.querySelector('header > .alert').style.backgroundColor = specialColor;
+
         document.body.addEventListener('click', function (e) {
             if (e.target.getAttribute('data-color')) {
                 specialColor = e.target.getAttribute('data-color');
