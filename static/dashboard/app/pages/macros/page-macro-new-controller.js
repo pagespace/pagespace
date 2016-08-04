@@ -63,14 +63,15 @@
             if(page.basePage) {
                 pageService.synchronizeWithBasePage(page);
             }
-
-            page = pageService.depopulatePage(page);
-
+            
             //add a new page
-            pageService.createPage(page).then(function(createdPage) {
+            pageService.getOrderOfLastPage(page.parent).then(function(highestOrder) {
+                page.order = ++highestOrder;
+                page = pageService.depopulatePage(page);
+                return pageService.createPage(page);
+            }).then(function(createdPage) {
                 $log.info('Page successfully created');
                 page = createdPage;
-            }).then(function() {
                 //for each macro include create
                 var includeCreationPromises = macro.includes.map(function(includeMeta) {
                     return pageService.createIncludeData(includeMeta.plugin);

@@ -149,10 +149,11 @@
                 $delegate = bunyan.createLogger({
                     name: 'pagespace',
                     streams: [{
-                        level: localStorage.getItem('pagespace:logLevel') || 'info',
+                        level: localStorage.getItem('loglevel') || 'info',
                         stream: new bunyan.ConsoleFormattedStream(),
                         type: 'raw'
-                    }]
+                    }],
+                    src: localStorage.getItem('logsrc') == 'true'
                 });
 
                 return $delegate;
@@ -211,6 +212,7 @@
                 $scope.viewPageUrl = null;
             }
 
+            $scope.clearNotification();
             $scope.navClass = '';
         });
 
@@ -1748,6 +1750,22 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             return selectName.join(' / ');
         };
 
+        PageService.prototype.getOrderOfLastPage = function (parentPage) {
+            var siblingsQuery = parentPage ? {
+                parent: parentPage._id
+            } : {
+                root: 'top'
+            };
+
+            //get future siblings
+            return this.getPages(siblingsQuery).then(function (pages) {
+                var pageOrders = pages.map(function (page) {
+                    return page.order;
+                });
+                return Math.max.apply(null, pageOrders);
+            });
+        };
+
         return new PageService();
     });
 
@@ -1855,30 +1873,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         getMacros();
 
         $scope.addPage = function (parentPage) {
-
-            var parentRoute, siblingsQuery;
-            if (parentPage) {
-                parentRoute = parentPage._id;
-                siblingsQuery = {
-                    parent: parentPage._id
-                };
-            } else {
-                parentRoute = 'root';
-                siblingsQuery = {
-                    root: 'top'
-                };
-            }
             $scope.showInfo('Preparing new page...');
-            //get future siblings
-            pageService.getPages(siblingsQuery).then(function (pages) {
 
-                var highestOrder = pages.map(function (page) {
-                    return page.order || 0;
-                }).reduce(function (prev, curr) {
-                    return Math.max(prev, curr);
-                }, -1);
+            pageService.getOrderOfLastPage(parentPage).then(function (highestOrder) {
+                var parentRoot = parentPage ? parentPage._id : 'root';
                 highestOrder++;
-                $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
+                $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
             }).catch(function (msg) {
                 $scope.showError('Unable to determine order of new page', msg);
             });
@@ -2906,13 +2906,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 pageService.synchronizeWithBasePage(page);
             }
 
-            page = pageService.depopulatePage(page);
-
             //add a new page
-            pageService.createPage(page).then(function (createdPage) {
+            pageService.getOrderOfLastPage(page.parent).then(function (highestOrder) {
+                page.order = ++highestOrder;
+                page = pageService.depopulatePage(page);
+                return pageService.createPage(page);
+            }).then(function (createdPage) {
                 $log.info('Page successfully created');
                 page = createdPage;
-            }).then(function () {
                 //for each macro include create
                 var includeCreationPromises = macro.includes.map(function (includeMeta) {
                     return pageService.createIncludeData(includeMeta.plugin);

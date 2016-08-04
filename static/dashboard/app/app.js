@@ -170,11 +170,12 @@
                     name: 'pagespace',
                     streams: [
                         {
-                            level: localStorage.getItem('pagespace:logLevel') || 'info',
+                            level: localStorage.getItem('loglevel') || 'info',
                             stream: new bunyan.ConsoleFormattedStream(),
                             type: 'raw'
                         }
-                    ]
+                    ],
+                    src: localStorage.getItem('logsrc') == 'true'
                 });
 
                 return $delegate;
@@ -233,6 +234,7 @@
                 $scope.viewPageUrl = null;
             }
 
+            $scope.clearNotification();
             $scope.navClass = '';
         });
 

@@ -81,30 +81,12 @@ adminApp.controller('SitemapController', function($scope, $rootScope, $timeout, 
     getMacros();
 
     $scope.addPage = function(parentPage) {
-
-        var parentRoute, siblingsQuery;
-        if(parentPage) {
-            parentRoute = parentPage._id;
-            siblingsQuery = {
-                parent: parentPage._id
-            };
-        } else {
-            parentRoute = 'root';
-            siblingsQuery = {
-                root: 'top'
-            };
-        }
         $scope.showInfo('Preparing new page...');
-        //get future siblings
-        pageService.getPages(siblingsQuery).then(function(pages) {
-
-            var highestOrder = pages.map(function(page) {
-                return page.order || 0;
-            }).reduce(function(prev, curr){
-                    return Math.max(prev, curr);
-            }, -1);
+        
+        pageService.getOrderOfLastPage(parentPage).then(function(highestOrder) {
+            var parentRoot = parentPage ? parentPage._id : 'root';
             highestOrder++;
-            $location.path('/pages/new/' + encodeURIComponent(parentRoute) + '/' + encodeURIComponent(highestOrder));
+            $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
         }).catch(function(msg) {
             $scope.showError('Unable to determine order of new page', msg);
         });

@@ -290,10 +290,22 @@
             return selectName.join(' / ');
         };
 
+        PageService.prototype.getOrderOfLastPage = function(parentPage) {
+            var siblingsQuery = parentPage ? {
+                parent: parentPage._id
+            } : {
+                root: 'top'
+            };
+
+            //get future siblings
+            return this.getPages(siblingsQuery).then(function(pages) {
+                let pageOrders = pages.map(page => page.order);
+                return Math.max.apply(null, pageOrders);
+            });
+        };
+
         return new PageService();
     });
-
-
 
     function slugify(str) {
 
