@@ -3,13 +3,15 @@
 This page summarizes the key technical concepts of Pagespace.
 
 1. [Data Model](#data-model)
-2. [Templates](#templates)
-3. [Plugins](#plugins)
-4. [Include sharing](#include-sharing)
-5. [Handling requests](#handling-requests)
-6. [REST API](#rest-api)
-7. [User roles](#user-roles)
-8. [Publishing](#publishing)
+2. [Pages](#pages)
+3. [Regions and Includes](#regions)
+4. [Templates](#templates)
+5. [Plugins](#plugins)
+6. [Include sharing](#include-sharing)
+7. [Handling requests](#handling-requests)
+8. [REST API](#rest-api)
+9. [User roles](#user-roles)
+10. [Publishing](#publishing)
 
 <a id=data-model></a>
 ## Data model 
@@ -18,9 +20,21 @@ Pagespace's data model looks like this:
 
 <img src=https://raw.githubusercontent.com/pagespace/pagespace/master/docs/dev-guide/images/data-model.png width=100% alt="Data model">
 
-A Pagespace website is composed of a number of **pages**. Pages contain **regions** which, in turn, contain 
-zero or more **includes**. Includes are responsible for displaying the functional components and the content of a 
-website.
+<a id=pages></a>
+## Pages
+
+A Pagespace website is composed of a number of **pages**. Pages form the hierarchical structure of a web site and 
+contain its content.  Each page has a *name* and *URL* and may be configured to have a specific HTTP status, such as a 
+redirect its specific state if deleted; "gone" or "not found".
+
+Users may add pages via the site map or as **Page shortcut** (a page macro). Administrators may configure the 
+ available page shortcuts via the **Macros** tab.
+ 
+<a id=regions></a>
+## Regions and includes
+
+Pages contain **regions** which, in turn, contain zero or more **includes**. Includes are responsible for 
+displaying the functional components and the content of a website.
 
 The data that an include owns is managed by a **plugin**. Plugins define how an include's content is displayed and 
 managed. Plugins manage content or components of a web site such as navigation, HTML copy, markdown, image galleries or
