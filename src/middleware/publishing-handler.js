@@ -9,7 +9,7 @@ const
 class PublishingHandler extends BaseHandler{
     
     get pattern() {
-        return new RegExp('^/_publish/(pages)');
+        return new RegExp('^/_publish/(pages|revert)');
     }
 
     init(support) {
@@ -70,6 +70,11 @@ class PublishingHandler extends BaseHandler{
                 //initial and subsequent publishing events
                 livePage.updatedAt = Date.now();
                 livePage.updatedBy = req.user._id;
+                
+                //redirects
+                if(!page.redirect) {
+                    delete livePage.redirect;
+                }
     
                 //no longer a draft
                 livePage.draft = false;
@@ -86,7 +91,7 @@ class PublishingHandler extends BaseHandler{
                     delete liveTemplate.__v;
                     liveTemplate.draft = false;
                     const saveLiveTemplate = Promise.promisify(LiveTemplate.update, { context: LiveTemplate});
-                    updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true }));
+                    updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true, overwrite: true }));
                     queuedDraftTemplates[templateId] = true;
     
                     logger.info(`Template queued to publish: ${liveTemplate.name} (id=${templateId})`);
@@ -131,12 +136,34 @@ class PublishingHandler extends BaseHandler{
                 message: `Published ${pageUpdateCount} pages and ${includeUpdateCount} includes`,
                 publishCount: updates.length
             });
-        }).catch((err) => {
-            logger.warn('Error during publishing, try again', err);
-            next(new Error(err));
+        }).catch(err => {
+            logger.warn(err, 'Error during publishing, try again');
+            next(err);
+        });
+    }
+    
+    doPut(req, res, next) {
+        const logger = this.getRequestLogger(this.logger, req);
+        var pageId = req.body.pageId;
+
+        const LivePage = this.dbSupport.getModel('Page', 'live');
+        LivePage.findById(pageId).exec().then((livePage) => {
+            logger.info('Reverting draft page %s (id=%s)...', livePage.name, livePage._id);
+            const newDraftPage = livePage.toObject();
+            delete newDraftPage._id;
+            delete newDraftPage.__v;
+            newDraftPage.draft = false;
+            const DraftPage = this.dbSupport.getModel('Page');
+            return DraftPage.findByIdAndUpdate(pageId, newDraftPage, { overwrite: true }).exec();
+        }).then(() => {
+            logger.info('Draft page successfully reverted');
+            res.statusCode = 204;
+            res.send();
+        }).catch(err => {
+            logger.warn(err, 'Error reverting page');
+            next(err);
         });
     }
 }
 
 module.exports = new PublishingHandler();
-

@@ -99,6 +99,10 @@
                 templateUrl: '/_static/dashboard/app/publishing/publishing.html',
                 controller: 'PublishingController'
             }).
+            when('/publishing/compare/:pageId*', {
+                templateUrl: '/_static/dashboard/app/publishing/compare.html',
+                controller: 'CompareController'
+            }).
 
             //media
             when('/media', {
@@ -233,8 +237,7 @@
             } else {
                 $scope.viewPageUrl = null;
             }
-
-            $scope.clearNotification();
+            
             $scope.navClass = '';
         });
 
@@ -291,7 +294,7 @@
             $timeout.cancel(hideTimeout);
             hideTimeout = $timeout(function() {
                 $scope.message = null;
-            }, 1000 * 5);
+            }, 1000 * 6);
         });
 
         function swapIncludes(pageId, regionName, includeOne, includeTwo) {

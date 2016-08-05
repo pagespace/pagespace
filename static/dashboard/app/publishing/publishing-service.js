@@ -17,6 +17,14 @@
             });
         };
 
+        PublishingService.prototype.revertDraft = function(pageId) {
+            return $http.put('/_publish/revert', {
+                pageId: pageId
+            }).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
         return new PublishingService();
     });
 

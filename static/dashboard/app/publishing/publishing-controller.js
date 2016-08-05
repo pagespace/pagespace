@@ -22,6 +22,14 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
     }).catch(function(err) {
         $scope.showError('Error getting drafts to publish', err);
     });
+    
+    $scope.queueToPublish = function(page) {
+        page.queued = !page.queued;  
+    };
+
+    $scope.showCompare = function(page) {
+        $location.path('/publishing/compare/' + page._id);
+    };
 
     $scope.cancel = function() {
         $location.path('/pages');

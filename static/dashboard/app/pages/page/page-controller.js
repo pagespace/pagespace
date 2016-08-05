@@ -96,6 +96,13 @@ adminApp.controller('PageController',
         }
     });
 
+    $scope.$watch('page.status', function(status) {
+        status = parseInt(status, 10);
+        if(status !== 301 && status !== 302) {
+            $scope.page.redirect = null;
+        }
+    });
+        
     $scope.syncResults = null;
 
     $scope.synchronizeWithBasePage = pageService.synchronizeWithBasePage;

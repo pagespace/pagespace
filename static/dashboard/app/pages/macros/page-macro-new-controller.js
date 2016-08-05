@@ -63,7 +63,7 @@
             if(page.basePage) {
                 pageService.synchronizeWithBasePage(page);
             }
-            
+
             //add a new page
             pageService.getOrderOfLastPage(page.parent).then(function(highestOrder) {
                 page.order = ++highestOrder;
@@ -86,7 +86,6 @@
                 //save
                 page = pageService.depopulatePage(page);
                 pageService.updatePage(page._id, page);
-                $scope.showSuccess('Page: ' + page.name + ' created.');
                 $location.url(`/pages/macros/${macroId}/edit?pageId=${page._id}&created=true`);
             }).catch(function(err) {
                 $log.error(err, 'Error creating page');

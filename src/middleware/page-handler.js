@@ -109,7 +109,7 @@ class PageHandler extends BaseHandler {
             } else if(httpStatus.REDIRECTS.indexOf(status) >= 0) {
                 //handle redirects
                 logger.info('Request is %s, handling redirect', status);
-                this.doRedirect(req, res, next, logger, pageResult);
+                this.doRedirect(req, res, next, logger, pageResult, previewMode);
             } else if(status === httpStatus.NOT_FOUND || status === httpStatus.GONE) {
                 //not found or gone
                 this.doNotFound(logger, pageResult);
@@ -122,7 +122,7 @@ class PageHandler extends BaseHandler {
                 next(err);
             }
         }).catch((err) => {
-            this.logger.error(err);
+            this.logger.debug(err);
             next(err);
         });
     }
@@ -280,10 +280,14 @@ class PageHandler extends BaseHandler {
     /**
      * Sends redirects
      */
-    doRedirect(req, res, next, logger, pageResult) {
+    doRedirect(req, res, next, logger, pageResult, previewMode) {
         //redirects
         const redirectPage = pageResult.page.redirect;
         if(redirectPage && redirectPage.url) {
+            //allows published 301s to be undone
+            const cacheControl = previewMode ?  
+                'no-store, no-cache, must-revalidate' : `max-age=${60 * 60}`; //1 hour
+            res.header('Cache-Control', cacheControl);
             res.redirect(pageResult.status, redirectPage.url);
         } else {
             logger.warn('Page to redirect to is not set. Sending 404');

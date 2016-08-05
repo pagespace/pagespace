@@ -47,9 +47,9 @@ module.exports = function(middlwareMap) {
 
     //common actions requiring auth
     acl.match(middlwareMap.get('media').pattern).for(POST, PUT).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('templates').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('publishing').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('dashboard').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('templates').pattern).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('publishing').pattern).for(POST, PUT).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('dashboard').pattern).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //api
     acl.match(middlwareMap.get('api').pattern).for(PUT, POST, DELETE).thenAllow(ADMIN);

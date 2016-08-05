@@ -86,6 +86,9 @@
         }).when('/publishing/:pageId', {
             templateUrl: '/_static/dashboard/app/publishing/publishing.html',
             controller: 'PublishingController'
+        }).when('/publishing/compare/:pageId*', {
+            templateUrl: '/_static/dashboard/app/publishing/compare.html',
+            controller: 'CompareController'
         }).
 
         //media
@@ -212,7 +215,6 @@
                 $scope.viewPageUrl = null;
             }
 
-            $scope.clearNotification();
             $scope.navClass = '';
         });
 
@@ -269,7 +271,7 @@
             $timeout.cancel(hideTimeout);
             hideTimeout = $timeout(function () {
                 $scope.message = null;
-            }, 1000 * 5);
+            }, 1000 * 6);
         });
 
         function swapIncludes(pageId, regionName, includeOne, includeTwo) {
@@ -2113,6 +2115,41 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
+    adminApp.controller('CompareController', function ($scope, $routeParams, $location, pageService, publishingService) {
+
+        var pageId = $routeParams.pageId;
+        $scope.page = null;
+
+        pageService.getPage(pageId).then(function (page) {
+            $scope.page = page;
+        });
+
+        $scope.getPageUrl = function (preview) {
+            return $scope.page.url + '?_preview=' + !!preview;
+        };
+
+        $scope.revertDraft = function () {
+            var really = window.confirm('Really discard the draft changes of this page?');
+            if (really) {
+                publishingService.revertDraft($scope.page._id).then(function () {
+                    $scope.showSuccess('The draft changes to ' + $scope.page.name + ' were discarded');
+                    $location.path('/publishing');
+                }).catch(function (err) {
+                    $scope.showError('Error performing publish', err);
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
     adminApp.controller('PublishingController', function ($scope, $rootScope, $routeParams, $window, $location, publishingService) {
 
         var preQueued = $routeParams.pageId || null;
@@ -2129,6 +2166,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         }).catch(function (err) {
             $scope.showError('Error getting drafts to publish', err);
         });
+
+        $scope.queueToPublish = function (page) {
+            page.queued = !page.queued;
+        };
+
+        $scope.showCompare = function (page) {
+            $location.path('/publishing/compare/' + page._id);
+        };
 
         $scope.cancel = function () {
             $location.path('/pages');
@@ -2171,6 +2216,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
         PublishingService.prototype.publish = function (draftIds) {
             return $http.post('/_publish/pages', draftIds).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PublishingService.prototype.revertDraft = function (pageId) {
+            return $http.put('/_publish/revert', {
+                pageId: pageId
+            }).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
@@ -2928,7 +2983,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 //save
                 page = pageService.depopulatePage(page);
                 pageService.updatePage(page._id, page);
-                $scope.showSuccess('Page: ' + page.name + ' created.');
                 $location.url('/pages/macros/' + macroId + '/edit?pageId=' + page._id + '&created=true');
             }).catch(function (err) {
                 $log.error(err, 'Error creating page');
@@ -3086,6 +3140,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             }
         });
 
+        $scope.$watch('page.status', function (status) {
+            status = parseInt(status, 10);
+            if (status !== 301 && status !== 302) {
+                $scope.page.redirect = null;
+            }
+        });
+
         $scope.syncResults = null;
 
         $scope.synchronizeWithBasePage = pageService.synchronizeWithBasePage;
@@ -3149,63 +3210,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function () {
 
-    /**
-     *
-     * @type {*}
-     */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('ViewJsonController', function ($scope, $rootScope, $routeParams) {
-
-        var url = $routeParams.url;
-
-        $scope.getPageUrl = function () {
-            return '/_api/' + url;
-        };
-    });
-
-    adminApp.directive('jsonHolder', function () {
-        return {
-            restrict: 'E',
-            transclude: true,
-            replace: true,
-            template: '<div ng-transclude></div>',
-            link: function link(scope, element) {
-
-                //sizing
-                function getWindowHeight() {
-                    return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
-                }
-
-                element.css('clear', 'both');
-                element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
-
-                window.addEventListener('resize', function () {
-                    element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams) {
-
-        var env = $routeParams.viewPageEnv;
-        var url = $routeParams.url;
-
-        $scope.getPageUrl = function () {
-            var showPreview = env === 'preview';
-            return '/' + (url || '') + '?_preview=' + showPreview;
-        };
-    });
-
     adminApp.directive('pageHolder', function () {
         return {
             restrict: 'E',
@@ -3254,6 +3259,63 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     frameHead.appendChild(adminScript);
                 });
             }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('ViewJsonController', function ($scope, $rootScope, $routeParams) {
+
+        var url = $routeParams.url;
+
+        $scope.getPageUrl = function () {
+            return '/_api/' + url;
+        };
+    });
+
+    adminApp.directive('jsonHolder', function () {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            template: '<div ng-transclude></div>',
+            link: function link(scope, element) {
+
+                //sizing
+                function getWindowHeight() {
+                    return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+                }
+
+                element.css('clear', 'both');
+                element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
+
+                window.addEventListener('resize', function () {
+                    element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams) {
+
+        var env = $routeParams.viewPageEnv;
+        var url = $routeParams.url;
+
+        $scope.getPageUrl = function () {
+            var showPreview = env === 'preview';
+            return '/' + (url || '') + '?_preview=' + showPreview;
         };
     });
 })();
