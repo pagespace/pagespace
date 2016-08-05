@@ -2109,135 +2109,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 'use strict';
 
 (function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('CompareController', function ($scope, $routeParams, $location, pageService, publishingService) {
-
-        var pageId = $routeParams.pageId;
-        $scope.page = null;
-
-        pageService.getPage(pageId).then(function (page) {
-            $scope.page = page;
-        });
-
-        $scope.getPageUrl = function (preview) {
-            return $scope.page.url + '?_preview=' + !!preview;
-        };
-
-        $scope.revertDraft = function () {
-            var really = window.confirm('Really discard the draft changes of this page?');
-            if (really) {
-                publishingService.revertDraft($scope.page._id).then(function () {
-                    $scope.showSuccess('The draft changes to ' + $scope.page.name + ' were discarded');
-                    $location.path('/publishing');
-                }).catch(function (err) {
-                    $scope.showError('Error performing publish', err);
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PublishingController', function ($scope, $rootScope, $routeParams, $window, $location, publishingService) {
-
-        var preQueued = $routeParams.pageId || null;
-
-        //get all pages with drafts
-        publishingService.getDrafts().then(function (drafts) {
-            $scope.drafts = drafts;
-
-            drafts.forEach(function (page) {
-                if (page._id === preQueued) {
-                    page.queued = true;
-                }
-            });
-        }).catch(function (err) {
-            $scope.showError('Error getting drafts to publish', err);
-        });
-
-        $scope.queueToPublish = function (page) {
-            page.queued = !page.queued;
-        };
-
-        $scope.showCompare = function (page) {
-            $location.path('/publishing/compare/' + page._id);
-        };
-
-        $scope.cancel = function () {
-            $location.path('/pages');
-        };
-
-        $scope.publish = function () {
-            var toPublishIds = $scope.drafts.filter(function (page) {
-                return page.queued;
-            }).map(function (page) {
-                return page._id;
-            });
-
-            if (toPublishIds.length === 0) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
-            }
-
-            publishingService.publish(toPublishIds).then(function () {
-                $scope.showSuccess('Publishing successful');
-                $location.path('/');
-            }).catch(function (err) {
-                $scope.showError('Error performing publish', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('publishingService', function ($http, pageService, errorFactory) {
-
-        function PublishingService() {}
-        PublishingService.prototype.getDrafts = function () {
-            return pageService.getPages({
-                draft: true
-            });
-        };
-
-        PublishingService.prototype.publish = function (draftIds) {
-            return $http.post('/_publish/pages', draftIds).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PublishingService.prototype.revertDraft = function (pageId) {
-            return $http.put('/_publish/revert', {
-                pageId: pageId
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new PublishingService();
-    });
-})();
-'use strict';
-
-(function () {
     var adminApp = angular.module('adminApp');
     adminApp.factory('siteService', function ($http, errorFactory) {
 
@@ -2348,6 +2219,162 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 $scope.showError('Error updating site', err);
             });
         };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('CompareController', function ($scope, $routeParams, $location, pageService, publishingService) {
+
+        $scope.getStatusLabel = publishingService.getStatusLabel;
+
+        var pageId = $routeParams.pageId;
+        $scope.page = null;
+
+        pageService.getPage(pageId).then(function (page) {
+            $scope.page = page;
+        });
+
+        $scope.getPageUrl = function (preview) {
+            return $scope.page.url + '?_preview=' + !!preview;
+        };
+
+        $scope.revertDraft = function () {
+            var really = window.confirm('Really discard the draft changes of this page?');
+            if (really) {
+                publishingService.revertDraft($scope.page._id).then(function () {
+                    $scope.showSuccess('The draft changes to ' + $scope.page.name + ' were discarded');
+                    $location.path('/publishing');
+                }).catch(function (err) {
+                    $scope.showError('Error performing publish', err);
+                });
+            }
+        };
+
+        $scope.publish = function () {
+            publishingService.publish([$scope.page._id]).then(function () {
+                $scope.showSuccess('Publishing successful');
+                $location.path('/publishing');
+            }).catch(function (err) {
+                $scope.showError('Error performing publish', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PublishingController', function ($scope, $rootScope, $routeParams, $window, $location, publishingService) {
+
+        $scope.getStatusLabel = publishingService.getStatusLabel;
+
+        var preQueued = $routeParams.pageId || null;
+
+        //get all pages with drafts
+        publishingService.getDrafts().then(function (drafts) {
+            $scope.drafts = drafts;
+
+            drafts.forEach(function (page) {
+                if (page._id === preQueued) {
+                    page.queued = true;
+                }
+            });
+        }).catch(function (err) {
+            $scope.showError('Error getting drafts to publish', err);
+        });
+
+        $scope.queueToPublish = function (page) {
+            page.queued = !page.queued;
+        };
+
+        $scope.showCompare = function (page) {
+            $location.path('/publishing/compare/' + page._id);
+        };
+
+        $scope.cancel = function () {
+            $location.path('/pages');
+        };
+
+        $scope.publish = function () {
+            var toPublishIds = $scope.drafts.filter(function (page) {
+                return page.queued;
+            }).map(function (page) {
+                return page._id;
+            });
+
+            if (toPublishIds.length === 0) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+
+            publishingService.publish(toPublishIds).then(function () {
+                $scope.showSuccess('Publishing successful');
+                $location.path('/');
+            }).catch(function (err) {
+                $scope.showError('Error performing publish', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('publishingService', function ($http, pageService, errorFactory) {
+
+        function PublishingService() {}
+        PublishingService.prototype.getDrafts = function () {
+            return pageService.getPages({
+                draft: true
+            });
+        };
+
+        PublishingService.prototype.publish = function (draftIds) {
+            return $http.post('/_publish/pages', draftIds).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PublishingService.prototype.revertDraft = function (pageId) {
+            return $http.put('/_publish/revert', {
+                pageId: pageId
+            }).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PublishingService.prototype.getStatusLabel = function (page) {
+            if (page.published && page.status == 200) {
+                return 'update';
+            } else if (page.status == 404 || page.status == 410 && page.url != '/') {
+                return 'delete';
+            } else if (page.status == 301 || page.status == 302 || page.status == 307) {
+                return 'redirect';
+            } else if (!page.published && page.status == 200) {
+                return 'new';
+            } else {
+                return page.status;
+            }
+        };
+
+        return new PublishingService();
     });
 })();
 'use strict';

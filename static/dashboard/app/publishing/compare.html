@@ -1,9 +1,14 @@
 <main class="main">
     <div class="compare-panel" style="left: 0; border-right: 1px solid #E5E7EA;">
         <div class="section-heading">
+            <button type="button" class="btn btn-xs btn-primary pull-right" style="margin-left: 6px"
+                    ng-if="page && page.draft" ng-click="publish()">Publish</button>
+
             <button type="button" class="btn btn-xs btn-default pull-right"
                     ng-if="page && page.draft" ng-click="revertDraft()">Discard changes</button>
-            <h3>Preview<span ng-if="page">: {{page.name}}</h3>
+
+
+            <h4>Preview<span ng-if="page">: {{page.name}} <small><i><b>{{getStatusLabel(page)}}</b></i></small></span></h4>
         </div>
         <div class="frame-holder" ng-class="{'scale-to-fit' : scalePreviewToFit}">
             <iframe ng-if="page" ng-src="{{getPageUrl(true)}}"></iframe>
@@ -14,7 +19,7 @@
     </div>
     <div class="compare-panel" style="right: 0; border-left: 1px solid #e5e7ea">
         <div class="section-heading">
-            <h3>Live</h3>
+            <h4>Live</h4>
 
         </div>
         <div class="frame-holder" ng-class="{'scale-to-fit': scaleLiveToFit}">

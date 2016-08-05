@@ -25,6 +25,20 @@
             });
         };
 
+        PublishingService.prototype.getStatusLabel = function (page) {
+            if(page.published && page.status == 200) {
+                return 'update';
+            } else if(page.status == 404 || page.status == 410 && page.url != '/') {
+                return 'delete';
+            } else if(page.status == 301 || page.status == 302 || page.status == 307) {
+                return 'redirect';
+            } else if(!page.published && page.status == 200) {
+                return 'new';
+            } else {
+                return page.status;
+            }
+        };
+
         return new PublishingService();
     });
 

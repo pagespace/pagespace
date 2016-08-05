@@ -7,6 +7,8 @@
     var adminApp = angular.module('adminApp');
     adminApp.controller('CompareController', function($scope, $routeParams, $location, pageService, publishingService) {
 
+        $scope.getStatusLabel = publishingService.getStatusLabel;
+        
         var pageId = $routeParams.pageId;
         $scope.page = null;
 
@@ -28,6 +30,15 @@
                     $scope.showError('Error performing publish', err);
                 });
             }
+        };
+
+        $scope.publish = function() {
+            publishingService.publish([ $scope.page._id ]).then(function() {
+                $scope.showSuccess('Publishing successful');
+                $location.path('/publishing');
+            }).catch(function(err) {
+                $scope.showError('Error performing publish', err);
+            });
         };
     });
 

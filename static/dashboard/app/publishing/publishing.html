@@ -13,7 +13,9 @@
         <div class="list-group" ng-show="drafts.length > 0">
             <div ng-repeat="page in drafts"
                  class="list-group-item"
-                 ng-class="{'list-group-item-success': page.queued && (page.status == 200 || page.url == '/'), 'list-group-item-danger': page.queued && (page.status != 200 && page.url != '/')}">
+                 ng-class="{'list-group-item-success': page.queued && (getStatusLabel(page) == 'update' || getStatusLabel(page) == 'new'),
+                            'list-group-item-danger': page.queued && getStatusLabel(page) == 'delete',
+                            'list-group-item-warning': page.queued && getStatusLabel(page) == 'redirect'}">
 
                 <div class="pull-right">
                     <div class="checkbox">
@@ -35,10 +37,7 @@
                 </div>
 
                 <h4 class="list-group-item-heading">{{page.name}}
-                    <small ng-show="!page.published && page.status == 200"><i><b>new</b></i></small>
-                    <small ng-show="page.published && page.status == 200"><i><b>update</b></i></small>
-                    <small ng-show="page.status == 404 || page.status == 410 && page.url != '/'"><i><b>delete</b></i></small>
-                    <small ng-show="page.status == 301 || page.status == 302"><i><b>redirect</b></i></small>
+                    <small><i><b>{{getStatusLabel(page)}}</b></i></small>
                 </h4>
                 <p class="list-group-item-text">
                     <small><a href="#/view-page/preview{{page.url}}">{{page.url}}</a></small>

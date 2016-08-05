@@ -8,6 +8,8 @@ var adminApp = angular.module('adminApp');
 adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location,
                                                      publishingService) {
 
+    $scope.getStatusLabel = publishingService.getStatusLabel;
+
     var preQueued = $routeParams.pageId || null;
 
     //get all pages with drafts

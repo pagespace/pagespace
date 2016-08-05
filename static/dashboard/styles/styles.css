@@ -406,8 +406,7 @@ div + .section-heading {
     padding: 18px 22px 0 22px;
     height: 50px;
 }
-.compare-panel h3 {
-    display: inline-block;
+.compare-panel h4 {
     max-width: 400px;
     max-height: 1em;
 }
