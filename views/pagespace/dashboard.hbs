@@ -3,17 +3,18 @@
 <head>
     <title>Pagespace :: Dashboard</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
     <link href="/_static/dashboard/support/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/_static/dashboard/styles/slickmap/slickmap.css" rel="stylesheet">
     <link href="/_static/bower_components/ng-tags-input/ng-tags-input.min.css" rel="stylesheet">
     <link href="/_static/bower_components/ng-tags-input/ng-tags-input.bootstrap.min.css" rel="stylesheet">
     <link href="/_static/bower_components/codemirror/lib/codemirror.css" rel="stylesheet" >
     <link href="/_static/dashboard/styles/styles.css" rel="stylesheet">
+    <link href="/_static/dashboard/styles/mobile.css" rel="stylesheet">
 
+    <script src="/_static/bower_components/fetch/fetch.js"></script>
     <script src="/_static/bower_components/browser-bunyan/dist/browser-bunyan.min.js"></script>
-    <script src="/_static/bower_components/async/lib/async.js"></script>
     <script src="/_static/bower_components/angular/angular.min.js"></script>
-    <script src="/_static/bower_components/angular-resource/angular-resource.min.js"></script>
     <script src="/_static/bower_components/angular-route/angular-route.min.js"></script>
     <script src="/_static/bower_components/angular-touch/angular-touch.min.js"></script>
     <script src="/_static/bower_components/ng-tags-input/ng-tags-input.min.js"></script>
@@ -23,45 +24,63 @@
     <script src="/_static/bower_components/codemirror/mode/javascript/javascript.js"></script>
     <script src="/_static/bower_components/angular-ui-codemirror/ui-codemirror.min.js"></script>
 
+    <script src="/_static/inpage/plugin-interface.js"></script>
     <script src="/_static/dashboard/build/admin-app.js"></script>
 </head>
-<body ng-controller="MainController">
+<body ng-controller="MainController" ng-class="navClass">
 
 <div class="container-fluid">
     <header class="dashboard-header row">
         <div class="col-sm-2">
+            <div class="menu-control ">
+                <button type="button" ng-click="toggleNav()">
+                    <img src="/_static/dashboard/support/icons/menu.png" width="32" height="32">
+                </button>
+            </div>
             <div class="logo">
                 <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
             </div>
         </div>
-        <div class="inpage-actions col-sm-6">
+        <div class="inpage-actions col-sm-7">
             <div ng-include="'/_static/dashboard/app/inpage/remove-include.html'"></div>
         </div>
-        <nav class="header-nav col-sm-6">
+        <nav class="header-nav col-sm-8">
             <ul class="nav nav-pills">
                 <li ng-class="menuClass('/pages', '/')"><a href="#/pages">Pages</a></li>
                 <!--<li><a href="#/macros">Macros</a></li>-->
-                <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publishing</a></li>
+                <li ng-class="menuClass('/publishing')"><a href="#/publishing">Publish</a></li>
                 <li ng-class="menuClass('/media')"><a href="#/media">Media</a></li>
-                {{#allowTemplatesAndPlugins}}
+                {{#allowDeveloperFeatures}}
+                    <li ng-class="menuClass('/macros')"><a href="#/macros">Macros</a></li>
                     <li ng-class="menuClass('/templates')"><a href="#/templates">Templates</a></li>
                     <li ng-class="menuClass('/plugins')"><a href="#/plugins">Plugins</a></li>
-                {{/allowTemplatesAndPlugins}}
-                {{#allowUsers}}
+                {{/allowDeveloperFeatures}}
+                {{#allowAdminFeatures}}
                     <li ng-class="menuClass('/users')"><a href="#/users">Users</a></li>
-                {{/allowUsers}}
+                {{/allowAdminFeatures}}
             </ul>
         </nav>
         <div class="col-sm-2">
-            <div ng-include="'/_static/dashboard/app/pages/view-page-options.html'"></div>
-        </div>
-        <div class="header-utils col-sm-2">
-            <p>Hello {{displayName}}&nbsp;
-                <a href="/_auth/logout">
-                    <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout" alt="Logout" style="vertical-align: baseline">
+            <div class="well pull-left header-page-options" ng-show="viewPageUrl">
+                <span class="glyphicon glyphicon glyphicon-new-window"></span>&nbsp;
+                <a target="_blank" ng-href="\{{viewPageUrl + '?_preview=true'}}" title="Open '\{{viewPageName}}' preview in a new tab">Preview</a>
+                <span ng-show="viewPageUrlPublished">&nbsp;|&nbsp;
+                <a target="_blank" ng-href="\{{viewPageUrl + '?_preview=false'}}" title="Open '\{{viewPageName}}' live page a in new tab">Live</a></span>
+            </div>
+            <div class="header-utils pull-right col-sm-2">
+                <p><a href="/_auth/logout">
+                    <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout as {{displayName}}" alt="Logout" style="vertical-align: baseline">
                 </a></p>
+            </div>
         </div>
-        <div ng-include="'/_static/dashboard/app/notifications/notifications.html'"></div>
+
+        <div ng-show="message" class="alert alert-\{{message.type}}" role="alert">
+            <button type="button" ng-click="clear()" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+            </button>
+            <span class="glyphicon glyphicon-\{{message.icon}}"></span>
+            \{{message.text}}
+        </div>
     </header>
     <div class="row">
         <div ng-view></div>
@@ -69,18 +88,25 @@
 </div>
 <script>
     (function() {
-        //change the sidebar color stuff
-        var headerColor = window.localStorage.getItem('specialColor');
-        if(headerColor) {
-            document.getElementsByTagName('header')[0].style.borderColor = headerColor;
+        //change the header color stuff
+        var specialColor = window.localStorage.getItem('specialColor');
+        if(specialColor) {
+            specialColor = '#29f38f';
+            window.localStorage.setItem('specialColor', specialColor);
         }
+        document.getElementsByTagName('header')[0].style.borderColor = specialColor;
+        document.querySelector('header > .alert').style.backgroundColor = specialColor;
+
         document.body.addEventListener('click', function (e) {
             if (e.target.getAttribute('data-color')) {
-                headerColor = e.target.getAttribute('data-color');
-                window.localStorage.setItem('specialColor', headerColor);
-                document.getElementsByTagName('header')[0].style.borderColor = headerColor;
+                specialColor = e.target.getAttribute('data-color');
+                window.localStorage.setItem('specialColor', specialColor);
+                document.getElementsByTagName('header')[0].style.borderColor = specialColor;
             }
         });
+        window.addEventListener("scroll", function() {
+            document.body.classList.toggle('scroll-past-header', window.scrollY > 60);
+        })
     })();
 
 </script>

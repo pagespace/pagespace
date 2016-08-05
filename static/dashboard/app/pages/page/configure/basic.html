@@ -1,15 +1,15 @@
 <div class="form-group" bs-has-error="name">
-    <label class="col-sm-2 control-label">Title</label>
+    <label class="col-sm-3 control-label">Title</label>
     <div class="col-sm-7">
         <input type="text" class="form-control" name="name" focus-if="!pageId"
                ng-model="page.name" placeholder="e.g. Contact us" required>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>required</i></p>
     </div>
 </div>
 <div class="form-group" bs-has-error="url">
-    <label class="col-sm-2 control-label">Url</label>
+    <label class="col-sm-3 control-label">Url</label>
     <div class="col-sm-7">
         <div class="input-group">
             <input type="text" class="form-control input" ng-pattern="/^\/[/.a-zA-Z0-9-]*$/" name="url"
@@ -21,12 +21,12 @@
                 </span>
         </div>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>required</i></p>
     </div>
 </div>
 <div class="form-group" bs-has-error="useInNav">
-    <label class="col-sm-2 control-label">Use in navigation</label>
+    <label class="col-sm-3 control-label">Use in navigation</label>
     <div class="col-sm-7">
         <label style="display:block; margin-top: 12px">
             <input type="checkbox"  name="useInNav" ng-model="page.useInNav">
@@ -35,7 +35,7 @@
 </div>
 <div class="form-group">
     <div bs-has-error="publishedAt">
-        <label class="col-sm-2 control-label">Published</label>
+        <label class="col-sm-3 control-label">Published</label>
         <div class="col-sm-3">
             <input type="date" class="form-control" name="publishedAt" ng-model="page.publishedAt">
         </div>
@@ -46,7 +46,7 @@
             <input type="date" class="form-control" name="expiresAt" ng-model="page.expiresAt">
         </div>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         <p class="form-control-static text-muted"><i>optional</i></p>
     </div>
 </div>
@@ -54,7 +54,7 @@
 <!-- Select template -->
 <div ng-if="templates.length > 1" bs-has-error="template">
     <div class="form-group">
-        <label class="col-sm-2 control-label">Template</label>
+        <label class="col-sm-3 control-label">Template</label>
         <div class="col-sm-7">
             <select ng-model="page.template" name="template" required
                     ng-options="template as template.name for template in templates track by template._id"
@@ -67,7 +67,7 @@
 
 <div ng-if="page.template == null && templates.length === 0" >
     <div class="form-group">
-        <label class="col-sm-2 control-label">Template</label>
+        <label class="col-sm-3 control-label">Template</label>bas
         <div class="col-sm-7">
             <p class="form-control-static text-warning">
                 There are no templates to select. Ask your developer to add some.</p>
@@ -76,45 +76,38 @@
 </div>
 
 <div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
-    <label class="col-sm-2 control-label">Based on page</label>
+    <label class="col-sm-3 control-label">Based on page</label>
     <div class="col-sm-7">
         <select ng-model="page.basePage" class="form-control"
-                ng-options="page as page.name for page in allPages track by page._id">
+                ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
             <option  value="">None</option>
         </select>
     </div>
 </div>
 
 <div class="form-group" ng-if="page._id && page.basePage">
-    <label class="col-sm-2 control-label">Synchronize with base page</label>
-    <div class="col-sm-7">
-        <button type="button" class="btn btn-primary"
+    <label class="col-sm-12 control-label" style="text-align: left">
+        <button type="button" class="btn btn-link"
                 ng-click="synchronizeWithBasePage(page)"
                 ng-disabled="syncResults.length"
                 style="float: left; margin-right: 21px; margin-top: 14px;">
-            <span class="glyphicon glyphicon-refresh"></span> Sync shared includes
+            <span class="glyphicon glyphicon-refresh"></span> Synchronize shared includes with base page
         </button>
-<!--        <div class="checkbox">
-            <label>
-                <input type="checkbox"
-                       ng-disabled="syncResults.length" ng-model="syncOpts.cleanRegionsOnSync"> Clean regions
-            </label>
-        </div>-->
-        <div ng-if="syncResults" style="margin-left: -15px">
-            <h3 class="col-sm-12"  style="clear: both; margin-top: 1em">Sync summary</h3>
-            <div ng-repeat="result in syncResults">
-                <p class="col-sm-3"><b>{{result.region}}</b></p>
-                <p class="col-sm-9">
-                    <ng-pluralize count="result.sharedCount"
-                                  when="{'0': 'No includes will be shared with this region',
-                                         'one': '1 include will be shared with this region',
-                                         'other': '{} includes will be shared with this region.'}">
-                    </ng-pluralize>
-                </p>
-            </div>
+    </label>
+
+    <div ng-if="syncResults" style="margin-left: 15px">
+        <h4 class="col-sm-12"  style="clear: both; margin-top: 1em">Sync summary</h4>
+
+        <div ng-repeat="result in syncResults">
+            <p class="col-sm-3"><b>{{result.region}}</b></p>
+            <p class="col-sm-9">
+                <ng-pluralize count="result.sharedCount"
+                              when="{'0': 'No includes will be shared with this region',
+                                     'one': '1 include will be shared with this region',
+                                     'other': '{} includes will be shared with this region.'}">
+                </ng-pluralize>
+            </p>
         </div>
-
-
     </div>
 </div>
 

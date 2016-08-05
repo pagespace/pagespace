@@ -14,14 +14,15 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "^1.5.0",
+    "angular": "^1.5.5",
     "angular-route": "^1.5.0",
-    "angular-resource": "^1.5.0",
     "angular-ui-codemirror": "^0.3.0",
     "bootstrap": "^3.3.6",
-    "async": "^1.5.2",
     "ng-tags-input": "^3.0.0",
     "ng-focus-if": "^1.0.4",
-    "angular-schema-form": "^0.8.12"
+    "angular-schema-form": "^0.8.12",
+    "angular-touch": "^1.5.8",
+    "browser-bunyan": "^0.3.0",
+    "fetch": "^1.0.0"
   }
 }

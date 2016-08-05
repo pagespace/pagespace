@@ -12,8 +12,8 @@
         var pagePromise = pageService.getPage(pageId);
 
         $q.all([pluginsPromise, pagePromise ]).then(function(results) {
-            $scope.availablePlugins = results[0].data;
-            $scope.page = results[1].data;
+            $scope.availablePlugins = results[0];
+            $scope.page = results[1];
 
             $log.debug('Got available plugins and page ok');
         }).catch(function(err) {
@@ -27,34 +27,22 @@
 
         $scope.addInclude = function() {
 
+            var page = $scope.page;
+
             //map region name to index
-            var regionIndex = null;
-            for(var i = 0; i < $scope.page.regions.length && regionIndex === null; i++) {
-                if($scope.page.regions[i].name === regionName) {
-                    regionIndex = i;
-                }
-            }
+            var regionIndex = pageService.getRegionIndex(page, regionName);
 
             //add a new region
             if(regionIndex === null) {
-                $scope.page.regions.push({
-                    name: regionName,
-                    includes: []
-                });
-                regionIndex = $scope.page.regions.length - 1;
+                pageService.addRegion(page, regionName);
             }
 
             //add the new include to the region
             if($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin.config).then(function(res) {
-                    return res.data;
-                }).then(function(includeData) {
-                    $scope.page.regions[regionIndex].includes.push({
-                        plugin: $scope.selectedPlugin,
-                        include: includeData._id
-                    });
-                    $scope.page = pageService.depopulatePage($scope.page);
-                    return pageService.updatePage(pageId, $scope.page);
+                pageService.createIncludeData($scope.selectedPlugin).then(function(includeData) {
+                    pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
+                    page = pageService.depopulatePage(page);
+                    return pageService.updatePage(pageId, page);
                 }).then(function() {
                     $scope.close();
                 }).catch(function(err) {

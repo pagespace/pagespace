@@ -13,22 +13,31 @@
         <div class="list-group" ng-show="drafts.length > 0">
             <div ng-repeat="page in drafts"
                  class="list-group-item"
-                 ng-class="{'list-group-item-success': page.queued && (page.status == 200 || page.url == '/'), 'list-group-item-danger': page.queued && (page.status != 200 && page.url != '/')}"
-                 ng-click="page.queued = !page.queued" style="cursor: pointer">
+                 ng-class="{'list-group-item-success': page.queued && (getStatusLabel(page) == 'update' || getStatusLabel(page) == 'new'),
+                            'list-group-item-danger': page.queued && getStatusLabel(page) == 'delete',
+                            'list-group-item-warning': page.queued && getStatusLabel(page) == 'redirect'}">
+
                 <div class="pull-right">
                     <div class="checkbox">
-                        <label>
+                        <label style="font-size: 16px">
                         <input type="checkbox"
-                               ng-click="page.queued = !page.queued"
                                ng-model="page.queued">
-                            Queue to publish </label>
+                            Queue<span class="not-mobile"> to publish</span></label>
+                    </div>
+                </div>
+
+                <div class="pull-right" ng-show="page.published"
+                     class="not-mobile" style="margin-right: 20px; margin-top: 10px">
+                    <div class="btn-group pull-right">
+                        <button type="button" class="btn btn-default btn-sm" ng-click="showCompare(page)"
+                                title="Compare preview with live">
+                            <span class="glyphicon glyphicon glyphicon-transfer"></span>
+                        </button>
                     </div>
                 </div>
 
                 <h4 class="list-group-item-heading">{{page.name}}
-                    <small ng-show="!page.published && page.status == 200"><i><b>new</b></i></small>
-                    <small ng-show="page.published && page.status == 200"><i><b>update</b></i></small>
-                    <small ng-show="page.status != 200 && page.url != '/'"><i><b>delete</b></i></small>
+                    <small><i><b>{{getStatusLabel(page)}}</b></i></small>
                 </h4>
                 <p class="list-group-item-text">
                     <small><a href="#/view-page/preview{{page.url}}">{{page.url}}</a></small>

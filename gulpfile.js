@@ -1,4 +1,5 @@
 var gulp = require('gulp'),
+    babel = require('gulp-babel'),
     jshint = require('gulp-jshint'),
     concat = require('gulp-concat');
 
@@ -15,7 +16,11 @@ gulp.task('lint-server', function() {
 });
 
 gulp.task('build-client', [], function() {
+    
     return gulp.src('./static/dashboard/app/**/*.js')
+        .pipe(babel({
+            presets: ['es2015']
+        }))
         .pipe(concat('admin-app.js'))
         .pipe(gulp.dest('./static/dashboard/build'));
 });
@@ -24,5 +29,5 @@ gulp.task('watch', [ 'build-client' ], function() {
     gulp.watch('./static/dashboard/app/**/*.js', ['build-client']);
 });
 
-gulp.task('default', [ 'build-client', 'lint-server'], function() {
+gulp.task('default', [ 'build-client', 'lint-server', 'lint-client'], function() {
 });

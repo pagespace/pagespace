@@ -19,17 +19,17 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
 
     if(pluginId) {
         $scope.pluginId = pluginId;
-        pluginService.getPlugin(pluginId).success(function(plugin) {
+        pluginService.getPlugin(pluginId).then(function(plugin) {
             $scope.plugin = plugin;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting plugin', err);
         });
     }
 
     $scope.reset = function() {
-        pluginService.resetPlugin($scope.plugin).success(function() {
+        pluginService.resetPlugin($scope.plugin).then(function() {
             $scope.showSuccess('Cache cleared');
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting plugin', err);
         });
     };
@@ -46,19 +46,19 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
         }
 
         if(pluginId) {
-            pluginService.updatePlugin(pluginId, $scope.plugin).success(function() {
+            pluginService.updatePlugin(pluginId, $scope.plugin).then(function() {
                 $log.info('Plugin saved');
                 $scope.showSuccess('Plugin updated.');
                 $location.path('/plugins');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error updating plugin', err);
             });
         } else {
-            pluginService.createPlugin($scope.plugin).success(function() {
+            pluginService.createPlugin($scope.plugin).then(function() {
                 $log.info('Plugin created');
                 $scope.showSuccess('Plugin created.');
                 $location.path('/plugins');
-            }).error(function(err) {
+            }).catch(function(err) {
                 $scope.showError('Error saving plugin', err);
             });
         }
@@ -67,7 +67,7 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
     $scope.remove = function() {
         var really = window.confirm('Really delete this plugin?');
         if(really) {
-            pluginService.deletePlugin($scope.plugin._id).success(function () {
+            pluginService.deletePlugin($scope.plugin._id).then(function () {
                 $scope.showInfo('Plugin deleted');
                 $location.path('/plugins');
             }).error(function (err) {

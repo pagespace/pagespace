@@ -7,12 +7,12 @@ const express = require('express'),
 
 //middleware
 const middlewareMap = new Map([
+    [ 'static', require('./middleware/static-handler') ],
     [ 'api', require('./middleware/api-handler') ],
     [ 'auth', require('./middleware/auth-handler') ],
     [ 'dashboard', require('./middleware/dashboard-handler') ],
     [ 'media', require('./middleware/media-handler') ],
     [ 'publishing', require('./middleware/publishing-handler') ],
-    [ 'static', require('./middleware/static-handler') ],
     [ 'templates', require('./middleware/templates-handler') ],
     [ 'pages', require('./middleware/page-handler') ]
 ]);
@@ -52,10 +52,9 @@ module.exports = function(support) {
     router.use(acl.middleware());
     router.use(function(err, req, res, next) {
         if(err.status === 403) {
-            const user = req.user || acl.GUEST_USER;
-            const msg =
-                `User with role [${user.role}] is not allowed to access ${req.url} (${req.method}). 
-                 Redirecting to login.`;
+            const user = req.user || acl.ANON_USER;
+            let msg = `User with role [${user.role}] is not allowed to access ${req.url} (${req.method}). `;
+            msg += `Redirecting to login.`;
             support.logger.info(msg);
             res.status(err.status);
 

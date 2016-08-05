@@ -1,22 +1,3 @@
-/**
- * Copyright © 2016, Versatile Internet
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
 //deps
@@ -48,8 +29,8 @@ class DashboardHandler extends BaseHandler {
         const pageData = {
             username: req.user.username,
             displayName: req.user.name,
-            allowUsers: req.user.role === 'admin',
-            allowTemplatesAndPlugins: req.user.role === 'developer' || req.user.role === 'admin',
+            allowAdminFeatures: req.user.role === 'admin',
+            allowDeveloperFeatures: req.user.role === 'developer' || req.user.role === 'admin',
             year: new Date().toISOString().substr(0, 4)
         };
 

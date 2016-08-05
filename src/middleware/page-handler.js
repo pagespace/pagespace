@@ -1,22 +1,3 @@
-/**
- * Copyright © 2016, Versatile Internet
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
 //deps
@@ -64,8 +45,15 @@ class PageHandler extends BaseHandler {
      */
     doGet(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
-    
         const urlPath = url.parse(req.url).pathname;
+
+        //if previous middleware already determined the resource is a 404
+        if(req.status === httpStatus.NOT_FOUND) {
+            return this.doNotFound(logger, {
+                urlPath: urlPath,
+                status: httpStatus.NOT_FOUND
+            });
+        }
     
         const previewMode = sessionValueSwitch(req, '_preview', 'preview');
         logger.info('New %s page request', (previewMode ? 'preview' : 'live'));
@@ -121,7 +109,7 @@ class PageHandler extends BaseHandler {
             } else if(httpStatus.REDIRECTS.indexOf(status) >= 0) {
                 //handle redirects
                 logger.info('Request is %s, handling redirect', status);
-                this.doRedirect(req, res, next, logger, pageResult);
+                this.doRedirect(req, res, next, logger, pageResult, previewMode);
             } else if(status === httpStatus.NOT_FOUND || status === httpStatus.GONE) {
                 //not found or gone
                 this.doNotFound(logger, pageResult);
@@ -134,7 +122,7 @@ class PageHandler extends BaseHandler {
                 next(err);
             }
         }).catch((err) => {
-            this.logger.error(err);
+            this.logger.debug(err);
             next(err);
         });
     }
@@ -292,10 +280,14 @@ class PageHandler extends BaseHandler {
     /**
      * Sends redirects
      */
-    doRedirect(req, res, next, logger, pageResult) {
+    doRedirect(req, res, next, logger, pageResult, previewMode) {
         //redirects
         const redirectPage = pageResult.page.redirect;
         if(redirectPage && redirectPage.url) {
+            //allows published 301s to be undone
+            const cacheControl = previewMode ?  
+                'no-store, no-cache, must-revalidate' : `max-age=${60 * 60}`; //1 hour
+            res.header('Cache-Control', cacheControl);
             res.redirect(pageResult.status, redirectPage.url);
         } else {
             logger.warn('Page to redirect to is not set. Sending 404');
@@ -332,7 +324,7 @@ class PageHandler extends BaseHandler {
             agent: req.headers['user-agent'],
             session: req.sessionID
         });
-        hit.save().then(null, (err) => {
+        hit.save().catch(err => {
             logger.warn(err, 'Couldn\'t save page hit');
         });
     }
@@ -368,5 +360,5 @@ function sessionValueSwitch(req, queryParam, sessionKey) {
             req.session[sessionKey] = false;
         }
     }
-    return req.session[sessionKey] || false;
+    return req.session ? req.session[sessionKey] : false;
 }

@@ -9,6 +9,8 @@ var adminApp = angular.module('adminApp');
 adminApp.controller('MediaController', function($scope, $rootScope, $location, $window, $q, mediaService) {
     $rootScope.pageTitle = 'Media';
 
+    $scope.files = [];
+
     $scope.mediaItems = [];
     $scope.filteredItems = [];
     $scope.availableTags = [];
@@ -16,9 +18,13 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
 
     $scope.getTypeShortName = mediaService.getTypeShortName;
     $scope.getSrcPath = mediaService.getSrcPath;
+    
+    $scope.clearFiles = function() {
+        $scope.files = [];
+    };
 
     $scope.toggleEditing = function (item) {
-        item._editing = !item._editing
+        item._editing = !item._editing;
     };
 
     $scope.setItems = function (items) {
@@ -26,7 +32,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     };
     
     $scope.getItems = function() {
-        mediaService.getItems().success(function(items) {
+        mediaService.getItems().then(function(items) {
             $scope.setItems(items);
             $scope.updateFilter();
 
@@ -43,7 +49,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
                 return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
             });
             $scope.availableTags = availableTags;
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error getting media items', err);
         });
     };
@@ -101,13 +107,13 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         }
 
         $scope.filteredItems = $scope.mediaItems.filter(function(item) {
-            return item.tags.some(function(tag) {
-                return $scope.selectedTags.some(function(selectedTag) {
+            return item.tags.some(tag => {
+                return $scope.selectedTags.some(selectedTag => {
                     return selectedTag.text === tag.text;
                 });
             });
         });
-    }
+    };
     
    
 });

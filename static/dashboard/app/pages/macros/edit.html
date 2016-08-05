@@ -1,0 +1,17 @@
+<div ng-controller="PageMacroEditController">
+    <div class="notification-bar">
+        <h4>{{macro.name}}: {{page.name}}</h4>
+    </div>
+    <form role="form" ng-submit="save(pageForm)" name="pageForm" class="form-horizontal" novalidate >
+
+        <div ng-repeat="include in macro.includes" ng-if="page">
+            <p ng-show="macro.includes.length > 1">{{include.name}}</p>
+            <include-editor page="page" region="include.region" on-save="onSave()"/>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="page.template == null">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</div>

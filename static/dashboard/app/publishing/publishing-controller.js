@@ -8,10 +8,12 @@ var adminApp = angular.module('adminApp');
 adminApp.controller('PublishingController', function($scope, $rootScope, $routeParams, $window, $location,
                                                      publishingService) {
 
+    $scope.getStatusLabel = publishingService.getStatusLabel;
+
     var preQueued = $routeParams.pageId || null;
 
     //get all pages with drafts
-    publishingService.getDrafts().success(function(drafts) {
+    publishingService.getDrafts().then(function(drafts) {
         $scope.drafts = drafts;
 
         drafts.forEach(function(page) {
@@ -19,9 +21,17 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
                page.queued = true;
            }
         });
-    }).error(function(err) {
+    }).catch(function(err) {
         $scope.showError('Error getting drafts to publish', err);
     });
+    
+    $scope.queueToPublish = function(page) {
+        page.queued = !page.queued;  
+    };
+
+    $scope.showCompare = function(page) {
+        $location.path('/publishing/compare/' + page._id);
+    };
 
     $scope.cancel = function() {
         $location.path('/pages');
@@ -40,10 +50,10 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
             return;
         }
 
-        publishingService.publish(toPublishIds).success(function() {
+        publishingService.publish(toPublishIds).then(function() {
             $scope.showSuccess('Publishing successful');
             $location.path('/');
-        }).error(function(err) {
+        }).catch(function(err) {
             $scope.showError('Error performing publish', err);
         });
     };

@@ -1,0 +1,132 @@
+<nav class="side-nav col-sm-2">
+    <div class="section-heading" ng-cloak>
+        <h3 ng-show="!macro._id">Create a macro</i></h3>
+        <h3 ng-show="macro._id">Edit macro</h3>
+    </div>
+
+    <div ng-show="macro._id">
+        <ul class="nav nav-pills nav-stacked">
+            <li><a ng-href="{{'#/view-json/macros/' + macro._id}}">View JSON</a></li>
+        </ul>
+
+        <button type="button" class="btn btn-danger" ng-click="remove(item)" style="margin: 15px 0 0 15px">
+            <span class="glyphicon glyphicon-trash"></span> Delete
+        </button>
+    </div>
+</nav>
+<main class="main col-sm-6">
+    <div class="notification-bar">
+        <h4 ng-show="!macroId">Create a new macro</h4>
+        <h4 ng-show="macroId">Update {{macro.name}}</h4>
+        <p ng-show="submitted" class="text-danger">Some fields have not been filled in correctly.</p>
+    </div>
+
+    <form role="form" ng-submit="save(macroForm)" name="macroForm" class="form-horizontal" novalidate >
+        <div class="form-group" bs-has-error="name">
+            <label class="col-sm-3 control-label">Name</label>
+            <div class="col-sm-7">
+                <input type="text" class="form-control" name="name" focus-if="!macroId"
+                       ng-model="macro.name" placeholder="e.g. Posts" required>
+            </div>
+            <div class="col-sm-2">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+
+        <div ng-if="allPages.length > 0" class="form-group" bs-has-error="parent">
+            <label class="col-sm-3 control-label">Parent page</label>
+            <div class="col-sm-7">
+                <select ng-model="macro.parent" name="parent" class="form-control" required
+                        ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
+                    <option value="">Select a page</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+
+        <div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
+            <label class="col-sm-3 control-label">Based on page</label>
+            <div class="col-sm-7">
+                <select ng-model="macro.basePage" class="form-control"
+                        ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
+                    <option  value="">Select a page</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <p class="form-control-static text-muted"><i>optional</i></p>
+            </div>
+        </div>
+
+        <!-- Select template -->
+        <div ng-if="templates.length > 1" bs-has-error="template">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Template</label>
+                <div class="col-sm-7">
+                    <select ng-model="macro.template" name="template" required
+                            ng-options="template as template.name for template in templates track by template._id"
+                            class="form-control">
+                        <option value="" disabled selected>Choose a template</option>
+                    </select>
+                </div>
+                <div class="col-sm-2">
+                    <p class="form-control-static text-muted"><i>required</i></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" ng-if="macro.template == null && templates.length === 0" >
+            <label class="col-sm-3 control-label">Template</label>
+            <div class="col-sm-7">
+                <p class="form-control-static text-warning">
+                    There are no templates to select.</p>
+            </div>
+            <div class="col-sm-2">
+                <p class="form-control-static text-muted"><i>required</i></p>
+            </div>
+        </div>
+
+        <div ng-if="macro.template">
+            <h4 style="margin-bottom: 1em">Default includes</h4>
+            <div class="form-group"
+                 ng-repeat="region in macro.template.regions | filter:{ sharing: false }:true track by $index">
+                <label class="col-sm-3 control-label">{{region.name}}</label>
+                <div class="col-sm-7">
+                    <div ng-repeat="include in macro.includes | filter:{ region: region.name }:true" class="well">
+                        <div class="form-group" bs-has-error="include-name-{{$index}}">
+                            <label class="col-xs-3 control-label">Label</label>
+                            <div class="col-xs-9">
+                                <input type="text" class="form-control" name="include-name-{{$index}}" required
+                                       ng-model="include.name" placeholder="e.g. Post content"
+                                       focus-if="include._justAdded" ng-focus="clearJustAdded(include)">
+                            </div>
+                        </div>
+                        <div class="form-group" bs-has-error="include-plugin-{{$index}}">
+                            <label class="col-xs-3 control-label">Plugin</label>
+                            <div class="col-xs-9">
+                                <select ng-model="include.plugin" name="include-plugin-{{$index}}" required
+                                        ng-options="plugin as plugin.name for plugin in plugins track by plugin._id"
+                                        class="form-control">
+                                    <option value="" disabled selected>Choose a plugin</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                             <button  type="button" class="btn btn-link" ng-click="addInclude(region.name)">
+                                 <span class="glyphicon glyphicon-plus"></span> Add include
+                             </button>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" ng-disabled="macro.template == null">Save</button>
+            <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+        </div>
+    </form>
+</main>

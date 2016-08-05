@@ -81,8 +81,8 @@
 }
 .sitemap-primary li .sitemap-node {
     margin: 0 20px 0 0;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 18px;
+    font-weight: normal;
     text-align: center;
     color: black;
     background: rgb(30, 100, 255);
@@ -239,10 +239,10 @@ a:visited:before {
     display: none;
     float: left;
 }
-.addremove .sitemap-add {
+.modify .sitemap-add {
     display: block;
 }
-.addremove .sitemap-remove {
+.modify .sitemap-remove {
     display: block;
 }
 .sitemap-back {
@@ -267,9 +267,9 @@ a:visited:before {
     float: right;
 }
 .order .sitemap-edit,
-.addremove .sitemap-edit,
+.modify .sitemap-edit,
 .order .sitemap-publish,
-.addremove .sitemap-publish {
+.modify .sitemap-publish {
     display: none;
 }
 

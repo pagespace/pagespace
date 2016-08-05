@@ -6,8 +6,10 @@
 
 
     <h4>Details</h4>
-    <p><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></p>
+
     <dl>
+        <dt>Src:</dt>
+        <dd><br><a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a></dd>
         <dt>Type:</dt>
         <dd>{{item.type}}</dd>
         <dt>Filesize:</dt>
@@ -29,6 +31,10 @@
             </dl>
         </div>
     </div>
+
+    <ul class="nav nav-pills nav-stacked">
+        <li><a ng-href="{{'#/view-json/media/' + item._id}}">View JSON</a></li>
+    </ul>
 </nav>
 <main class="main col-sm-8">
     <div class="notification-bar"><h4>{{item.name}}</h4></div>
@@ -50,7 +56,7 @@
         </form>
     </div>
     <div ng-show="isDocument(item)" class="media-item-full">
-        <iframe ng-src="{{getSrcPath(item)}}" width="100%" height="500"></iframe>
+        <iframe ng-src="{{getDocSrcPath(item)}}" width="100%" height="500"></iframe>
     </div>
 </main>
 <aside class="aside col-sm-2" ng-show="isImage(item)">

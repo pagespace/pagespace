@@ -1,7 +1,7 @@
 <script type="text/ng-template"  id="page-item">
     <div class="sitemap-node clearfix" ng-class="{ghost: page.status > 300}">
         <button class="btn btn-sm sitemap-remove" ng-show="page.children.length == 0" ng-click="removePage(page)" title="Remove page">
-            <span class="glyphicon glyphicon-remove"></span>
+            <span class="glyphicon glyphicon-trash"></span>
         </button>
         <button class="btn btn-sm sitemap-add" ng-click="addPage(page)" title="Add sub page">
             <span class="glyphicon glyphicon-plus"></span>
@@ -15,7 +15,7 @@
             <span class="glyphicon glyphicon-chevron-down order-vertical"></span>
         </button>
 
-        <a class="btn btn-sm sitemap-edit" href="#/pages/basic/{{page._id}}" title="Edit page">
+        <a class="btn btn-sm sitemap-edit" href="#/pages/configure/basic/{{page._id}}" title="Edit page">
             <span class="glyphicon glyphicon-cog"></span>
         </a>
 
@@ -34,32 +34,52 @@
     </ul>
 </script>
 <nav class="side-nav col-sm-2">
-    <div class="section-heading">
-        <h3>Sitemap</h3>
-    </div>
-    <ul class="nav nav-pills nav-stacked">
-        <li ng-class="{ active: viewMode == 'view'}"><a ng-click="setViewMode('view')">View and edit</a></li>
-        <li ng-class="{ active: viewMode == 'addremove'}"><a ng-click="setViewMode('addremove')">Add and remove</a></li>
-        <li ng-class="{ active: viewMode == 'order'}"><a ng-click="setViewMode('order')">Re-order</a></li>
-    </ul>
-</nav>
-<main class="main col-sm-10">
-
-    <div class="notification-bar">
-        <h4>Manage pages.</h4>
-    </div>
-
-    <div class="sitemap" ng-class="viewMode">
-        <ul class="sitemap-primary col{{pages.length}}">
-            <li class="sitemap-home">
-                <div class="sitemap-node clearfix">
-                    <button class="btn btn-sm sitemap-add" ng-click="addPage()" title="Add page">
-                        <span class="glyphicon glyphicon-plus"></span>
-                    </button>
-                    <a href="#/pages/site">{{site.name}}</a>
-                </div>
-            </li>
-            <li ng-repeat="page in pages" ng-include="'page-item'"></li>
+    <div class="not-mobile">
+        <div class="section-heading">
+            <h3>Page actions</h3>
+        </div>
+        <ul class="nav nav-pills nav-stacked">
+            <li ng-class="menuClass('/pages/actions/configure')"><a ng-click="updateSearch('configure')">Configure</a></li>
+            <li ng-class="menuClass('/pages/actions/modify')"><a ng-click="updateSearch('modify')">Add and remove</a></li>
+            <li ng-class="menuClass('/pages/actions/order')"><a ng-click="updateSearch('order')">Re-order</a></li>
         </ul>
+    </div>
+
+    <div class="section-heading">
+        <h3>Page shortcuts</h3>
+    </div>
+    <ul ng-if="macros.length" class="nav nav-pills nav-stacked">
+        <li ng-repeat="macro in macros" ng-class="menuClass('/pages/macros/{{macro._id}}')">
+            <a href="#/pages/macros/{{macro._id}}/new" class="pull-right" style="z-index: 1">+ New</a>
+            <a href="#/pages/macros/{{macro._id}}/list">{{macro.name}}</a>
+        </li>
+    </ul>
+    <p ng-if="!macros.length">There are no page shortcuts available.</p>
+
+</nav>
+<main class="main col-sm-{{viewMode ? '10' : '6'}}">
+
+    <div ng-if="viewMode" class="not-mobile">
+        <div class="notification-bar">
+            <h4>Manage pages.</h4>
+        </div>
+
+        <div class="sitemap" ng-class="viewMode">
+            <ul class="sitemap-primary col{{pages.length}}">
+                <li class="sitemap-home">
+                    <div class="sitemap-node clearfix">
+                        <button class="btn btn-sm sitemap-add" ng-click="addPage()" title="Add page">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <a href="#/pages/site">{{site.name}}</a>
+                    </div>
+                </li>
+                <li ng-repeat="page in pages" ng-include="'page-item'"></li>
+            </ul>
+        </div>
+    </div>
+
+    <div ng-if="!viewMode">
+        <div ng-include="'/_static/dashboard/app/pages/macros/' + macroAction + '.html'"></div>
     </div>
 </main>

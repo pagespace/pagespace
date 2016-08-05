@@ -81,9 +81,10 @@
 
                 //add button
                 var dropOverlayRule = cssRulesArray.filter(function(rule) {
-                    return rule.selectorText === '.ps-drag-over .ps-drop-overlay';
+                    return rule.selectorText === '.ps-drop-target.ps-drag-over';
                 })[0];
-                dropOverlayRule.style.backgroundColor = specialColor;
+                dropOverlayRule.style.outlineColor = specialColor;
+                dropOverlayRule.style.color = specialColor;
             }
         } catch(e) {
             console.warn(e);
@@ -121,8 +122,28 @@
             return grabHandle;
         }
 
-        Array.prototype.slice.call(document.querySelectorAll('[data-include]')).forEach(function(include) {
+        function createDropTarget(include, first) {
+            var dropTarget = document.createElement('div');
+            dropTarget.setAttribute('data-page-id', include.getAttribute('data-page-id'));
+            if(!first) {
+                //empty include implies first
+                dropTarget.setAttribute('data-target-include', first ? '' : include.getAttribute('data-include'));
+            }
+            dropTarget.classList.add('ps-drop-target');
+            dropTarget.textContent = 'Move here';
+            return dropTarget;
+        }
+
+        Array.prototype.slice.call(document.querySelectorAll('[data-include]')).forEach(function(include, i) {
             include.classList.add('ps-box');
+
+            var dropTargets = [];
+            dropTargets[0] = createDropTarget(include);
+            include.parentNode.insertBefore(dropTargets[0], include.nextElementSibling);
+            if(!include.previousElementSibling) {
+                dropTargets[1] = createDropTarget(include);
+                include.parentNode.insertBefore(dropTargets[1], include);
+            }
 
             //edit button
             var editButton = createEditButton(
@@ -141,10 +162,6 @@
                 include.getAttribute('data-include-id'));
             include.insertBefore(grabHandle, include.firstChild);
 
-            var dragOverlay = document.createElement('div');
-            dragOverlay.classList.add('ps-drop-overlay');
-            include.insertBefore(dragOverlay, include.firstChild);
-
             //drag include
             grabHandle.draggable = true;
             grabHandle.addEventListener('dragstart', function(ev) {
@@ -158,61 +175,82 @@
                 ev.dataTransfer.effectAllowed = 'move';
                 ev.dataTransfer.setData('include-info', JSON.stringify(includeInfo));
                 ev.dataTransfer.setDragImage(include, include.offsetWidth - (include.offsetWidth / 9), 8);
-                include.classList.add('ps-no-drop');
-                include.parentNode.classList.add('ps-dragging-include');
+
+                setTimeout(function () {
+                    include.classList.add('ps-no-drop');
+                    include.parentNode.classList.add('ps-dragging-include');
+
+                    var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
+                    if(nextSibling && nextSibling.classList.contains('ps-drop-target')) {
+                        nextSibling.classList.add('ps-no-drop');
+                    }
+                    if(prevSibling && prevSibling.classList.contains('ps-drop-target')) {
+                        prevSibling.classList.add('ps-no-drop');
+                    }
+                }, 0);
             }, false);
 
             grabHandle.addEventListener('dragend', function() {
                 window.parent.postMessage({ name: 'drag-include-end' }, window.location.origin);
-                document.body.classList.remove('ps-dragging-include');
                 include.classList.remove('ps-no-drop');
                 include.parentNode.classList.remove('ps-dragging-include');
+
+                var nextSibling = include.nextElementSibling, prevSibling = include.previousElementSibling;
+                if(nextSibling) {
+                    nextSibling.classList.remove('ps-no-drop');
+                }
+                if(prevSibling) {
+                    prevSibling.classList.remove('ps-no-drop');
+                }
             }, false);
 
             //drop on include
-            var dragCounter = 0;
-            include.addEventListener('dragenter', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    dragCounter++;
-                    this.classList.add('ps-drag-over');
-                    ev.preventDefault();
-                }
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragenter', function(ev) {
+                    if(containsType(ev.dataTransfer.types, 'include-info')) {
+                        this.classList.add('ps-drag-over');
+                        ev.preventDefault();
+                    }
+                });
             });
-            include.addEventListener('dragover', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    ev.dataTransfer.dropEffect = 'move';
-                    ev.preventDefault();
-                }
+
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragover', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        ev.dataTransfer.dropEffect = 'move';
+                        ev.preventDefault();
+                    }
+                });
             });
-            include.addEventListener('dragleave', function(ev) {
-                if(containsType(ev.dataTransfer.types, 'include-info')) {
-                    dragCounter--;
-                    if(dragCounter === 0) {
+
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('dragleave', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
                         this.classList.remove('ps-drag-over');
                         ev.preventDefault();
                     }
-                }
+                });
             });
-            include.addEventListener('drop', function(ev) {
-                var data = getIncludeDragData(ev);
-                if(data) {
-                    var thisRegion = this.getAttribute('data-region-name');
-                    var thisInclude = this.getAttribute('data-include');
-                    var thatInclude = data.includeIndex;
-                    var thatRegion = data.region;
-                    if((thatRegion === thisRegion) && (thatInclude !== thisInclude)) {
+            dropTargets.forEach(function(dropTarget) {
+                dropTarget.addEventListener('drop', function (ev) {
+                    var data = getIncludeDragData(ev);
+                    if (data) {
                         ev.preventDefault();
+
+                        var toIndex = this.getAttribute('data-target-include') || 0;
+                        var fromIndex = data.includeIndex;
+                        var region = data.region;
                         var message = {
-                            name: 'swap-includes',
+                            name: 'move-include',
                             pageId: this.getAttribute('data-page-id'),
-                            regionName: thisRegion,
-                            includeOne: thisInclude,
-                            includeTwo: thatInclude
+                            regionName: region,
+                            fromIndex: parseInt(fromIndex, 10),
+                            toIndex: parseInt(toIndex, 10)
                         };
                         window.parent.postMessage(message, window.location.origin);
                     }
-                }
-                this.classList.remove('ps-drag-over');
+                    this.classList.remove('ps-drag-over');
+                });
             });
 
             //utils for drag+drop
@@ -272,7 +310,6 @@
         var pageId = evSrc.getAttribute('data-target-page-id');
         var includeId = evSrc.getAttribute('data-target-include-id');
 
-        //TODO: fetch to check existence of default editor
         var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
         var defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
         fetch(customIframeSrc).then(function(res) {
@@ -294,11 +331,37 @@
         });
 
         function setupIframe(iframeSrc) {
-            var startEl = document.querySelector('[data-region=' + region + ']');
-            var iframe = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
+            var startEl = document.querySelector('[data-region=' + region + ']'),
+                modal = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
+            var iframe = modal.querySelector('iframe'),
+                titlebar = modal.querySelector('.ps-include-editor-titlebar');
+
+            //save close button
+            var saveBtn = document.createElement('button');
+            saveBtn.classList.add('ps-include-editor-save', 'ps-btn', 'ps-btn-primary');
+            saveBtn.setAttribute('title', 'Save and close');
+            saveBtn.innerHTML = 'Save and close';
+
+            //save close button
+            var cancelBtn = document.createElement('button');
+            cancelBtn.classList.add('ps-include-editor-cancel', 'ps-btn', 'ps-btn-default');
+            cancelBtn.setAttribute('title', 'Close without saving');
+            cancelBtn.innerHTML = 'Cancel';
+
+            titlebar.appendChild(cancelBtn);
+            titlebar.appendChild(saveBtn);
+
+            saveBtn.addEventListener('click', function() {
+                iframe.contentWindow.window.pagespace.emit('save');
+            });
+
+            cancelBtn.addEventListener('click', function closeModal() {
+                modal.parentNode.removeChild(modal);
+                document.body.style.overflow = 'auto';
+            });
 
             //inject plugin interface
-            iframe.contentWindow.window.pagespace = getPluginInterface(pluginName, pageId, includeId);
+            iframe.contentWindow.window.pagespace = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
         }
     }
 
@@ -342,7 +405,7 @@
 
         var regionPos = startEl.getBoundingClientRect();
         editor.style.left = regionPos.left + 'px';
-        editor.style.top = regionPos.top + 30 + 'px';
+        editor.style.top = regionPos.top + 48 + 'px';
         editor.style.width = regionPos.width + 'px';
         editor.style.height = regionPos.height + 'px';
 
@@ -358,29 +421,19 @@
         editor.appendChild(iframe);
 
         //titlebar
-        var titleBar = document.createElement('div');
-        titleBar.classList.add('ps-include-editor-titlebar');
-        titleBar.innerHTML = '<p>' + title + '</p>';
-
-        //close button
-        var closeBtn = document.createElement('button');
-        closeBtn.classList.add('ps-include-editor-close');
-        closeBtn.classList.add('ps-btn');
-        closeBtn.setAttribute('title', 'Close without saving');
-        closeBtn.innerHTML = '<img src=/_static/dashboard/support/icons/cross-mark1.svg width=12 height=12 alt=Close>';
-
-        titleBar.appendChild(closeBtn);
-
-        editor.appendChild(titleBar);
+        var titlebar = document.createElement('div');
+        titlebar.classList.add('ps-include-editor-titlebar');
+        titlebar.innerHTML = '<p>' + title + '</p>';
+        editor.appendChild(titlebar);
 
         //animate to size
         window.setTimeout(function() {
             setIframeSize(editor, size);
         }, 100);
 
-
         function setIframeSize(editor, size) {
             if(editor) {
+                var TITLE_BAR_HEIGHT = 43;
                 var top, height;
                 if(size === 'small') {
                     top = 200;
@@ -389,9 +442,8 @@
                     top = 100;
                     height = window.innerHeight - 200;
                 } else {
-                    top = 30;
-                    height = window.innerHeight - 30;
-
+                    top = TITLE_BAR_HEIGHT;
+                    height = window.innerHeight - TITLE_BAR_HEIGHT;
                 }
 
                 document.body.style.overflow = 'hidden';
@@ -410,94 +462,6 @@
 
         window.addEventListener('resize', resizeListener);
 
-        closeBtn.addEventListener('click', function() {
-            window.removeEventListener('resize', resizeListener);
-            editor.parentNode.parentNode.removeChild(modal);
-            document.body.style.overflow = 'auto';
-        });
-
-        return iframe;
+        return modal;
     }
-
-    /**
-     * Plugin Interface
-     * @param pluginName
-     * @param pageId
-     * @param region
-     * @param include
-     * @return {{getData: getData, setData: setData, close: close}}
-     */
-    function getPluginInterface(pluginName, pageId, includeId) {
-        return {
-            getKey: function() {
-                return includeId;
-            },
-            getConfig: function() {
-                console.info('Pagespace getting config for %s', pluginName);
-                return fetch('/_api/plugins', {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function(res) {
-                    return res.json();
-                }).then(function(data) {
-                    return data.filter(function(plugin) {
-                        return plugin.name === pluginName;
-                    })[0].config;
-                });
-            },
-            getData: function() {
-                console.info('Pagespace getting data for %s', includeId);
-                return fetch('/_api/includes/' + includeId, {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function(res) {
-                    return res.json();
-                }).then(function(include) {
-                    return include.data || {};
-                });
-            },
-            setData: function(data) {
-                console.info('Pagespace setting data for %s', includeId);
-                var updateData = fetch('/_api/includes/' + includeId, {
-                    method: 'put',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        data: data
-                    })
-                });
-                var updatePage = fetch('/_api/pages/' + pageId, {
-                    method: 'put',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        draft: true
-                    })
-                });
-
-                return Promise.all([ updateData, updatePage ]).then(function() { // jshint ignore:line
-                    return {
-                        status: 'ok'
-                    };
-                });
-            },
-            close: function() {
-                console.info('Pagespace closing plugin editor for %s', includeId);
-                window.parent.location.reload();
-            }
-        };
-    }
-
 })();

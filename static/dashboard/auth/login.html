@@ -1,0 +1,42 @@
+<nav class="side-nav col-sm-2">
+    <div class="section-heading">
+        <h3>Login</h3>
+    </div>
+</nav>
+<main class="main col-sm-4">
+    <div class="notification-bar">
+        <h4>Enter your username and password.</h4>
+        <br>
+        <p class="text-danger"><span ng-show="badCredentials">Invalid username or password.</span></p>
+    </div>
+
+    <form role="form" ng-submit="submit()" class="form-horizontal">
+        <div ng-class="invalidClass">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Username</label>
+                <div class="col-sm-7">
+                    <input type="text" class="form-control" id="username" placeholder="geoffcapes" ng-model="username"
+                           autocapitalize="off" spellcheck="false">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Password</label>
+                <div class="col-sm-7">
+                    <input type="password" class="form-control" id="password" placeholder="Password" ng-model="password">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label"></label>
+                <div class="col-sm-7">
+                    <label style="font-weight: normal">
+                        <input type="checkbox" ng-model="remember_me"> Don't forget me
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-link pull-left"  type="button" style="margin-left: 0" ng-click="forgot()">Forgot password?</button>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+    </form>
+</main>

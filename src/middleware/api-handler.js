@@ -1,22 +1,3 @@
-/**
- * Copyright © 2016, Versatile Internet
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
 //deps
@@ -35,6 +16,7 @@ const urlToModelMap = {
     templates:'Template',
     users: 'User',
     media: 'Media',
+    macros: 'Macro',
     hits: 'Hit'
 };
 
@@ -47,13 +29,14 @@ const populationsMap = {
     Template: 'regions.includes.plugin',
     User: '',
     Media: '',
+    Macro: 'parent basePage template includes.plugin',
     Hit: ''
 };
 
 class ApiHandler extends BaseHandler {
     
     get pattern() {
-        return new RegExp('^/_api/(sites|pages|plugins|includes|templates|users|media|hits)/?(.*)');
+        return new RegExp('^/_api/(sites|pages|plugins|macros|includes|templates|users|media|hits)/?(.*)');
     }
 
     init(support) {
@@ -235,9 +218,12 @@ class ApiHandler extends BaseHandler {
 
 function htmlStringify(obj) {
     const html =
-        '<pre style="font-family: Consolas, \'Courier New\'">' +
-        handlebars.escapeExpression(JSON.stringify(obj, null, 4)) +
-        '</pre>';
+        `<body style="background: #fff; padding: 0;">
+            <link rel="stylesheet" href="/_static/dashboard/support/highlightjs/github-gist.css">
+            <script src="/_static/dashboard/support/highlightjs/highlight.pack.js"></script>
+            <script>hljs.initHighlightingOnLoad();</script>
+            <pre><code class="json">${handlebars.escapeExpression(JSON.stringify(obj, null, 4))}</code></pre>
+        </body>`;
     return html;
 }
 

@@ -1,28 +1,10 @@
-/**
- * Copyright © 2016, Versatile Internet
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
 const toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
 const siteSchema = require('../schemas/site'),
     pageSchema = require('../schemas/page'),
+    macroSchema = require('../schemas/macro'),
     pluginSchema = require('../schemas/plugin'),
     includeSchema = require('../schemas/include'),
     templateSchema = require('../schemas/template'),
@@ -38,6 +20,10 @@ const modelData = [{
     name: 'Page',
     schema: pageSchema,
     publishable: true
+}, {
+    name: 'Macro',
+    schema: macroSchema,
+    publishable: false
 }, {
     name: 'Template',
     schema: templateSchema,

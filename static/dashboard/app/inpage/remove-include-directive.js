@@ -55,19 +55,19 @@
             },
             controller: function($log, $scope, pageService) {
                 $scope.remove = function(pageId, regionName, includeIndex) {
-                    pageService.getPage(pageId).success(function(page) {
+                    pageService.getPage(pageId).then(function(page) {
                         page = pageService.removeInclude(page, regionName, includeIndex);
                         page = pageService.depopulatePage(page);
-                        pageService.updatePage(pageId, page).success(function() {
+                        pageService.updatePage(pageId, page).then(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
                             window.location.reload();
-                        }).error(function(err) {
+                        }).catch(function(err) {
                             $scope.err = err;
                             $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
                         });
-                    }).error(function(err) {
+                    }).catch(function(err) {
                         $scope.err = err;
                         $log.error(err, 'Unable to get page: %s', pageId);
                     });

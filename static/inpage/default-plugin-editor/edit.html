@@ -17,12 +17,11 @@
 <body>
     <div class="container-fluid ps-edit-box" >
         <main class="main row">
-            <div class="col-sm-9" ng-controller="FormController">
-                <form name="myForm"
+            <div class="col-sm-9" ng-controller="FormController as vm">
+                <form name="vm.myForm"
                       sf-schema="schema"
                       sf-form="form"
-                      sf-model="data"
-                      ng-submit="onSubmit(myForm)"></form>
+                      sf-model="data"></form>
             </div>
         </main>
     </div>

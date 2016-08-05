@@ -7,6 +7,9 @@
     var adminApp = angular.module('adminApp');
     adminApp.controller('SiteSettingsController', function($scope, $rootScope, $location, $window, $q, pageService,
                                                            siteService) {
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
         $scope.defaultPage = {
             redirect: null
         };
@@ -15,7 +18,7 @@
             $scope.site = site;
         });
 
-        pageService.getPages().success(function(pages) {
+        pageService.getPages().then(function(pages) {
             $scope.availablePages = pages.filter(function(page) {
                 return page.status === 200 && page.parent !== null;
             });

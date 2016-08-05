@@ -5,6 +5,7 @@ performing the following tasks:
 
 * [Configure site settings](site-settings)
 * [Add pages](#add-pages)
+* [Page shortcuts](#page-shortcuts)
 * [View and edit page content](#view-and-edit)
 * [Configure page settings](#page-settings)
 * [View page details](#page-details)
@@ -44,6 +45,24 @@ Based on page     | If a similar page already exists, choose a base page. If the
 <ol start=4>
 <li> Press <i>Save</i> to complete the finish adding a new page.
 </ol>
+
+<a id=page-shortcuts></a>
+## Page shortcuts
+
+A Pagespace website's administrator can configure Page Shortcuts. These are useful for creating pages which
+are added often and follow a consistent pattern, such as blog posts.
+
+To add a page using a Page Shortcut:
+
+1. Press <i>+New</i> next to the relevant Page Shortcut in the left hand side menu.
+2. On the following form. give the page a name. The URL will be automatically generated but can be edited if desired. 
+   It may be necessary to also provide  a "published" or an "expiry" date, however this is optional. 
+   Press <i>Next</i> when ready.
+3. Now you can add the content for this page. This may vary depending on how the Page Shortcut is configured. 
+   Press <i>Save</i> to finish.
+   
+Pages created using a Page Shortcut can also be subsequently be edited by pressing the Page Shortcut name in the 
+left hand side menu.
 
 <a id=view-and-edit></a>
 ## View and edit page content

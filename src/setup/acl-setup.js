@@ -1,22 +1,3 @@
-/**
- * Copyright © 2016, Versatile Internet
- *
- * This file is part of Pagespace.
- *
- * Pagespace is free software: you can redistribute it and/or modify
- * it under the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Pagespace is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
-
- * You should have received a copy of the Lesser GNU General Public License
- * along with Pagespace.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
 //deps
@@ -26,10 +7,12 @@ const
 //url patterns
 const 
     ALL_PAGES = new RegExp('^/(?!_)(.*)'),
-    DEV_API_REGEX = new RegExp('^/_api/(templates)/?(.*)'),
+    DEV_API_REGEX = new RegExp('^/_api/(templates|macros)/?(.*)'),
     EDITOR_API_REGEX = new RegExp('^/_api/(sites|pages|includes|media)/?(.*)'),
     LOGIN = new RegExp('^/_auth/login'),
-    LOGOUT = new RegExp('^/_auth/logout');
+    LOGOUT = new RegExp('^/_auth/logout'),
+    FORGOT_PASSWORD = new RegExp('^/_auth/forgot-password'),
+    RESET_PASSWORD = new RegExp('^/_auth/reset-password');
 
 //actions
 const 
@@ -58,13 +41,15 @@ module.exports = function(middlwareMap) {
 
     //auth
     acl.match(LOGIN).for(GET, POST).thenAllow(GUEST);
+    acl.match(FORGOT_PASSWORD).for(POST).thenAllow(GUEST);
+    acl.match(RESET_PASSWORD).for(POST).thenAllow(GUEST);
     acl.match(LOGOUT).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //common actions requiring auth
     acl.match(middlwareMap.get('media').pattern).for(POST, PUT).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('templates').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('publishing').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
-    acl.match(middlwareMap.get('dashboard').pattern).for(ALL_ACTIONS).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('templates').pattern).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('publishing').pattern).for(POST, PUT).thenAllow(EDITOR, DEVELOPER, ADMIN);
+    acl.match(middlwareMap.get('dashboard').pattern).for(GET).thenAllow(EDITOR, DEVELOPER, ADMIN);
 
     //api
     acl.match(middlwareMap.get('api').pattern).for(PUT, POST, DELETE).thenAllow(ADMIN);

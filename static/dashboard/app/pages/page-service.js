@@ -1,6 +1,6 @@
 (function() {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('pageService', function($http) {
+    adminApp.factory('pageService', function($http, errorFactory) {
 
         function PageService() {
             this.pageCache = [];
@@ -19,14 +19,17 @@
 
             var path = '/_api/pages';
             var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            var promise = $http.get(url);
-            promise.success(function(pages) {
-                self.pageCache = pages;
+            return $http.get(url).then(function(res) {
+                self.pageCache = res.data;
+                return self.pageCache;
+            }).catch(res => {
+                throw errorFactory.createResponseError(res);
             });
-            return promise;
         };
         PageService.prototype.getPage = function(pageId) {
-            return $http.get('/_api/pages/' + pageId);
+            return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.createPage = function(pageData) {
@@ -35,10 +38,18 @@
                 pageData.url = this.generateUrl(pageData);
             }
 
-            return $http.post('/_api/pages', pageData);
+            return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
+        /**
+         * Deletes a page. If it is not published, its non-shared includes will also be deleted
+         * @param page
+         * @return {Promise|Promise.<T>|*}
+         */
         PageService.prototype.deletePage = function(page) {
+            var promise;
             if(page.published) {
                 var pageData = {
                     status: page.status
@@ -49,47 +60,94 @@
                 }
 
                 //live pages are updated to be gone
-                return $http.put('/_api/pages/' + page._id, pageData);
+                promise = $http.put('/_api/pages/' + page._id, pageData);
             } else {
                 //pages which have never been published can be hard deleted
-                return $http.delete('/_api/pages/' + page._id);
+                promise = $http.delete('/_api/pages/' + page._id).then(() => {
+                    let deleteIncludePromises = [];
+                    for(let templateRegion of page.template.regions) {
+                        let pageRegion = page.regions.find(region => region.name === templateRegion.name);
+                        if(!templateRegion.sharing && pageRegion) {
+                            let promises = pageRegion.includes.map((include) => this.deleteInclude(include._id));
+                            deleteIncludePromises = deleteIncludePromises.concat(promises);
+                        }
+                    }
+                    return Promise.all(deleteIncludePromises);
+                });
             }
+            return promise.then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.deleteInclude = function(includeId) {
+            return $http.delete('/_api/includes' + includeId).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
-            return $http.put('/_api/pages/' + pageId, pageData);
+            return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => {
+                throw errorFactory.createResponseError(res);
+            });
         };
 
-        PageService.prototype.createIncludeData = function(config) {
+        PageService.prototype.createIncludeData = function(plugin) {
 
             var includeData = {};
 
-            var schemaProps = config.schema.properties || {};
+            var schemaProps = plugin.config.schema.properties || {};
             for(var name in schemaProps) {
                 if(schemaProps.hasOwnProperty(name)) {
                     includeData[name] =
-                            typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                        typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
                 }
             }
 
             return $http.post('/_api/includes', {
                 data: includeData
+            }).then(res => {
+                return res.data;
+            });
+        };
+        
+        PageService.prototype.getRegionIndex = function(page, regionName) {
+            //map region name to index
+            var regionIndex = null;
+            for(var i = 0; i < page.regions.length && regionIndex === null; i++) {
+                if(page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+            return regionIndex;
+        };
+        
+        PageService.prototype.addRegion = function(page, regionName) {
+            page.regions.push({
+                name: regionName,
+                includes: []
+            });
+            return page.regions.length - 1;    
+        };
+        
+        PageService.prototype.addIncludeToPage = function(page, regionIndex, plugin, include) {
+            page.regions[regionIndex].includes.push({
+                plugin: plugin,
+                include: include._id
             });
         };
 
-        PageService.prototype.swapIncludes = function(page, regionName, includeOne, includeTwo) {
-
+        PageService.prototype.moveInclude = function(page, regionName, fromIndex, toIndex) {
             //find the region
             var region = page.regions.filter(function(region) {
                 return region.name === regionName;
             })[0];
 
             if(region) {
-                var temp = region.includes[includeOne];
-                region.includes[includeOne] = region.includes[includeTwo];
-                region.includes[includeTwo] = temp;
+                var includeToMove = region.includes[fromIndex];
+                region.includes.splice(fromIndex, 1);
+                region.includes.splice(toIndex, 0, includeToMove);
             }
-
             return page;
         };
 
@@ -104,6 +162,13 @@
             return (parentUrlPart || '') + '/' + slugify(page.name);
         };
 
+        /**
+         * Removes an include from a page model. Does not delete the actual include entity
+         * @param page
+         * @param regionIndex
+         * @param includeIndex
+         * @return {*}
+         */
         PageService.prototype.removeInclude = function(page, regionIndex, includeIndex) {
 
             var i;
@@ -167,6 +232,78 @@
             return page;
         };
 
+        PageService.prototype.synchronizeWithBasePage = function(page) {
+            function getRegionFromPage(page, regionName) {
+                return page.regions.filter(function(region) {
+                        return region.name === regionName;
+                    })[0] || null;
+            }
+            function containsInclude(region, includeToFind) {
+                return region.includes.some(function(include) {
+                    return include._id === includeToFind._id;
+                });
+            }
+            //get basepage from id value
+            var syncResults = [];
+            page.template.regions.forEach(function(templateRegion) {
+                var syncResult = {
+                    region: templateRegion.name,
+                    removedCount: 0,
+                    sharedCount: 0
+                };
+                var sharing = !!templateRegion.sharing;
+                var pageRegion = getRegionFromPage(page, templateRegion.name);
+                if(!pageRegion) {
+                    pageRegion = {
+                        name: templateRegion.name,
+                        includes: []
+                    };
+                    page.regions.push(pageRegion);
+                }
+                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
+                if(baseRegion) {
+                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                    //add additional non-shared includes at the end
+                    baseRegion.includes.forEach(function(baseInclude) {
+                        if(sharing && !containsInclude(pageRegion, baseInclude)) {
+                            pageRegion.includes.push(baseInclude);
+                        }
+                    });
+                    syncResult.sharedCount = pageRegion.includes.length - startCount;
+                }
+                syncResults.push(syncResult);
+            });
+
+            return syncResults;
+        };
+
+        PageService.prototype.getPageHierarchyName = function(page) {
+            var selectName = [];
+            if(page.parent && page.parent.name) {
+                if(page.parent.parent) {
+                    selectName.push('...');
+                }
+
+                selectName.push(page.parent.name);
+            }
+            selectName.push(page.name);
+            return selectName.join(' / ');
+        };
+
+        PageService.prototype.getOrderOfLastPage = function(parentPage) {
+            var siblingsQuery = parentPage ? {
+                parent: parentPage._id
+            } : {
+                root: 'top'
+            };
+
+            //get future siblings
+            return this.getPages(siblingsQuery).then(function(pages) {
+                let pageOrders = pages.map(page => page.order);
+                return Math.max.apply(null, pageOrders);
+            });
+        };
+
         return new PageService();
     });
 
@@ -191,5 +328,3 @@
     }
 
 })();
-
-

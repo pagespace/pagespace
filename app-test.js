@@ -39,7 +39,7 @@ app.use(function(req, res, next) {
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'production') {
+if (app.get('env') !== 'production') {
     app.use(function(err, req, res, next) {
         console.error(err);
         res.status(err.status || 500);

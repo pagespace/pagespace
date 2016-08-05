@@ -1,0 +1,100 @@
+@media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
+    .not-mobile {
+        display: none;
+    }
+
+    .nav-pills > li {
+        float: none;
+    }
+
+    .header-nav a {
+        height: 34px;
+        line-height: 34px;
+        font-size: 16px;
+        padding: 0 8px !important;
+    }
+
+    .header-utils {
+        display: none;
+    }
+
+    .menu-control {
+        display: block;
+    }
+
+    .header-nav {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s;
+    }
+    .header-nav-open .header-nav {
+        max-height: 300px;
+        transition: max-height 0.5s;
+    }
+
+    .side-nav {
+        padding: 8px;
+        padding-bottom: 0;
+        border-bottom: 4px solid #CBCBCB;
+        padding-bottom: 8px;
+        background-image: none;
+    }
+
+    .section-heading {
+        margin-bottom: 1em;
+    }
+    div.not-mobile + .section-heading {
+        margin-top: 0;
+    }
+
+    h3, .h3 {
+        font-size: 20px;
+    }
+
+    .nav > li > a {
+        padding: 0 2px;
+    }
+
+    .main, .aside {
+        padding: 8px;
+    }
+
+    .col-xs-1, .col-sm-1, .col-md-1, .col-lg-1, .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2, .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3, .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4, .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5, .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6, .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7, .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8, .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9, .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10, .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11, .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12 {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-horizontal .form-group {
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+
+    .form-control-static {
+        padding-top: 0;
+        padding-bottom: 0;
+        text-align: right;
+        font-size: 14px;
+    }
+
+    .notification-bar {
+        margin-bottom: 1em;
+    }
+
+    .btn-group .btn {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .list-group-item {
+        padding: 10px 8px;
+    }
+
+    .media-item-preview {
+        float: none;
+        margin-bottom: 1em;
+    }
+}

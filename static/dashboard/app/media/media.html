@@ -4,12 +4,15 @@
     </div>
 
     <div ng-if="availableTags.length">
+
+        <media-upload></media-upload>
+
         <h4>Filter by tag</h4>
         <p></p>
         <ul class="nav nav-pills nav-stacked">
             <div ng-repeat="availableTag in availableTags track by $index">
                 <li style="margin-bottom: 4px">
-                    <button class="btn" ng-class="{'btn-primary': availableTag.on}"
+                    <button class="btn btn-link" ng-class="{'btn-primary': availableTag.on}"
                             ng-click="toggleTag(availableTag)">{{availableTag.text}}</button></li>
             </div>
         </ul>
@@ -18,7 +21,7 @@
 <main class="main col-sm-10">
 
     <div class="media-items-container">
-        <media-upload></media-upload>
+        <media-preview></media-preview>
         <media-items></media-items>
     </div>
 </main>
