@@ -90,7 +90,7 @@
     (function() {
         //change the header color stuff
         var specialColor = window.localStorage.getItem('specialColor');
-        if(specialColor) {
+        if(!specialColor) {
             specialColor = '#29f38f';
             window.localStorage.setItem('specialColor', specialColor);
         }
