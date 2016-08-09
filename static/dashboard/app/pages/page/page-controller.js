@@ -98,14 +98,16 @@ adminApp.controller('PageController',
 
     $scope.$watch('page.status', function(status) {
         status = parseInt(status, 10);
-        if(status !== 301 && status !== 302) {
+        if($scope.page && status !== 301 && status !== 302) {
             $scope.page.redirect = null;
         }
     });
         
     $scope.syncResults = null;
 
-    $scope.synchronizeWithBasePage = pageService.synchronizeWithBasePage;
+    $scope.synchronizeWithBasePage = function(page) {
+        $scope.syncResults = pageService.synchronizeWithBasePage(page);
+    };
 
     $scope.save = function(form) {
         if(form.$invalid) {
