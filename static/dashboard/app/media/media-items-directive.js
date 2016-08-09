@@ -102,8 +102,6 @@
                         $scope.showError('Error updating item', err);
                     });
                 };
-
-
             }
         };
     });
