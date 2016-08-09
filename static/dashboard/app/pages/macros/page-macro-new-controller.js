@@ -23,8 +23,18 @@
             $scope.page.macro = macro._id;
         });
 
+        pageService.getAvailableTags().then(tags => {
+            $scope.availableTags  = tags;
+        });
+
         $scope.updateUrl = function() {
             $scope.page.url = pageService.generateUrl($scope.page);
+        };
+
+        $scope.getMatchingTags = function(text) {
+            text = text.toLowerCase();
+            const tags = $scope.availableTags.filter(tag => tag.text && tag.text.toLowerCase().indexOf(text) > -1)
+            return Promise.resolve(tags);
         };
 
         $scope.cancel = function() {

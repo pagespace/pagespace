@@ -3,7 +3,7 @@
     adminApp.factory('pageService', function($http, errorFactory) {
 
         function PageService() {
-            this.pageCache = [];
+            this.pageCache = null;
         }
         PageService.prototype.getPages = function(filter) {
             var self = this;
@@ -15,17 +15,39 @@
                         queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
                     }
                 }
+            } else if(this.pageCache) {
+                //if no filter and the page cache is populated
+                return Promise.resolve(this.pageCache);
             }
 
             var path = '/_api/pages';
             var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            return $http.get(url).then(function(res) {
-                self.pageCache = res.data;
-                return self.pageCache;
+            return $http.get(url).then(res => {
+                //if no filter was used cache
+                if(!filter) {
+                    self.pageCache = res.data;
+                }
+                return res.data;
             }).catch(res => {
                 throw errorFactory.createResponseError(res);
             });
         };
+
+        PageService.prototype.getAvailableTags = function() {
+            return this.getPages().then(pages => {
+                //combine all tags into one
+                var seen = {};
+                return pages.reduce((allTags, page) => {
+                    return allTags.concat(page.tags.filter(tag => {
+                        return tag.text; //only return tags with text property
+                    }));
+                }, []).filter(function(tag) {
+                    //remove dupes
+                    return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
+                });
+            });
+        };
+
         PageService.prototype.getPage = function(pageId) {
             return $http.get('/_api/pages/' + pageId).then(res => res.data).catch(res => {
                 throw errorFactory.createResponseError(res);
@@ -37,7 +59,7 @@
             if(!pageData.url) {
                 pageData.url = this.generateUrl(pageData);
             }
-
+            this.pageCache = null;
             return $http.post('/_api/pages', pageData).then(res => res.data).catch(res => {
                 throw errorFactory.createResponseError(res);
             });
@@ -49,6 +71,8 @@
          * @return {Promise|Promise.<T>|*}
          */
         PageService.prototype.deletePage = function(page) {
+
+            this.pageCache = null;
             var promise;
             if(page.published) {
                 var pageData = {
@@ -87,6 +111,7 @@
         };
 
         PageService.prototype.updatePage = function(pageId, pageData) {
+            this.pageCache = null;
             return $http.put('/_api/pages/' + pageId, pageData).then(res => res.data).catch(res => {
                 throw errorFactory.createResponseError(res);
             });

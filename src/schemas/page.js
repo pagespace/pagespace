@@ -100,7 +100,10 @@ function generateSchema(modifier) {
         macro : {
             type: Schema.Types.ObjectId,
             ref: 'Macro'
-        }
+        },
+        tags: [{
+            type: Schema.Types.Mixed
+        }]
     });
 
     pageSchema.pre('save', function (next) {

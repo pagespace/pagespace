@@ -442,3 +442,14 @@ div + .section-heading {
     bottom: 0;
     height: 26px;
 }
+
+tags-input .tags {
+    padding: 6px;
+    border: none !important;
+}
+tags-input .tags .tag-item {
+    color: #fff;
+    background: #2780E3;
+    border: 1px solid #2780E3;
+    border-radius: 4px;
+}

@@ -86,6 +86,16 @@ adminApp.controller('PageController',
         $scope.page.url = pageService.generateUrl($scope.page);
     };
 
+    pageService.getAvailableTags().then(tags => {
+        $scope.availableTags  = tags;
+    });
+
+    $scope.getMatchingTags = function(text) {
+        text = text.toLowerCase();
+        const tags = $scope.availableTags.filter(tag => tag.text && tag.text.toLowerCase().indexOf(text) > -1)
+        return Promise.resolve(tags);
+    };
+
     $scope.cancel = function() {
         $location.path('/pages');
     };

@@ -30,6 +30,14 @@
                 <p class="form-control-static text-muted"><i>required</i></p>
             </div>
         </div>
+        <div class="form-group" bs-has-error="tags">
+            <label class="col-sm-3 control-label">Tags</label>
+            <div class="col-sm-7">
+                <tags-input ng-model="page.tags" placeholder="Add tags to organize pages">
+                    <auto-complete source="getMatchingTags($query)"></auto-complete>
+                </tags-input>
+            </div>
+        </div>
         <div class="form-group">
             <div bs-has-error="publishedAt">
                 <label class="col-sm-3 control-label">Published</label>
