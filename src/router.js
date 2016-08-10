@@ -40,7 +40,12 @@ module.exports = function(support) {
 
     //basic auth for api request without a session
     router.use(middlewareMap.get('api').pattern, (req, res, next) => {
-        if(!req.user) {
+        if(!req.user && req.get('Referer') && req.get('Referer').indexOf('/_dashboard') > -1 &&
+                req.headers.accept && req.headers.accept.indexOf('application/json') > -1) {
+            const err = new Error('Session expired (unauthorized)');
+            err.status = 401;
+            next(err);
+        } else if(!req.user) {
             passport.authenticate('basic', { session: false })(req, res, next);
         } else {
             next();

@@ -7,7 +7,7 @@
         'ui.codemirror'
     ]);
 
-    adminApp.config(['$routeProvider', function($routeProvider) {
+    adminApp.config(['$routeProvider', '$provide', '$httpProvider', function($routeProvider, $provide, $httpProvider) {
         $routeProvider.
 
             //site
@@ -165,6 +165,21 @@
                 templateUrl: '/_static/dashboard/app/pages/site-map.html',
                 controller: 'SitemapController'
             });
+        
+        $httpProvider.interceptors.push(function($q, $window, $timeout) {
+            return {
+                // optional method
+                'responseError': function(response) {
+                    var status = response.status;
+                    if (status === 401) {
+                        $timeout(() => {
+                            $window.location.href = '/_auth/login';    
+                        }, 1000);
+                    }
+                    return $q.reject(response);
+                }
+            };
+        });
     }]);
 
     if(window.bunyan) {
