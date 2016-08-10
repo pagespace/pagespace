@@ -124,14 +124,13 @@ h4 {
 
 .main,
 .aside {
+    margin-top: 6px;
     padding: 18px;
     font-size: 18px;
 }
 
 .side-nav {
-    /* min-height: 200px; */
-    /* padding-bottom: 110px; */
-    padding: 18px;
+    padding: 24px 18px 18px 18px;
     padding-bottom: 150px;
     background-image: linear-gradient(to bottom, #CBCBCB 0%, #E5E7EA 100%);
 }
@@ -172,7 +171,7 @@ h4 {
     transition: max-height linear 1s;
     text-align: center;
     background: #CDCDCD;
-    line-height: 28px;
+    line-height: 24px;
     color: #333;
 }
 .scroll-past-header .alert {
@@ -187,7 +186,7 @@ h4 {
 }
 .alert .close {
     position: absolute;
-    top: 2px;
+    top: 1px;
     right: 4px;
     color: #000;
 }
