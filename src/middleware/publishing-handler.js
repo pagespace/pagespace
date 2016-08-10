@@ -48,10 +48,10 @@ class PublishingHandler extends BaseHandler{
                 }
     
                 let templateId = null;
-                if(!page.template) {
+                if(page.status === 200 && !page.template) {
                     logger.warn(`Attempting to publish page without a template: ${page._id}`);
                     continue;
-                } else if(page.status === 200) {
+                } else if(page.template) {
                     templateId = page.template._id.toString();
                 }
     

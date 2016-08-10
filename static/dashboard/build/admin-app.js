@@ -2346,7 +2346,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         $scope.getPageHierarchyName = pageService.getPageHierarchyName;
 
         $scope.defaultPage = {
-            redirect: null
+            redirect: ''
         };
 
         siteService.getSite().then(function (site) {
@@ -2384,7 +2384,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     });
                 }).then(function (response) {
                     var pages = response.data;
-                    var page = pages.length ? pages[0] : null;
+                    var page = pages && pages.length ? pages[0] : null;
 
                     var defaultPageData = {
                         name: 'Default page',

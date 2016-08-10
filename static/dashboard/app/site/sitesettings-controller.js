@@ -11,7 +11,7 @@
         $scope.getPageHierarchyName = pageService.getPageHierarchyName;
 
         $scope.defaultPage = {
-            redirect: null
+            redirect: ''
         };
 
         siteService.getSite().then(function(site) {
@@ -25,7 +25,6 @@
             $scope.defaultPage = pages.filter(function(page) {
                 return page.url === '/';
             })[0];
-
         });
 
         $scope.cancel = function() {
@@ -50,7 +49,7 @@
                     });
                 }).then(function(response) {
                     var pages = response.data;
-                    var page = pages.length ? pages[0] : null;
+                    var page = pages && pages.length ? pages[0] : null;
 
                     var defaultPageData = {
                         name: 'Default page',
