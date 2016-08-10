@@ -348,8 +348,8 @@
             cancelBtn.setAttribute('title', 'Close without saving');
             cancelBtn.innerHTML = 'Cancel';
 
-            titlebar.appendChild(cancelBtn);
             titlebar.appendChild(saveBtn);
+            titlebar.appendChild(cancelBtn);
 
             saveBtn.addEventListener('click', function() {
                 iframe.contentWindow.window.pagespace.emit('save');
