@@ -324,6 +324,10 @@
 
             //get future siblings
             return this.getPages(siblingsQuery).then(function(pages) {
+                if(pages.length === 0) {
+                    return -1;
+                }
+
                 let pageOrders = pages.map(page => page.order);
                 return Math.max.apply(null, pageOrders);
             });
