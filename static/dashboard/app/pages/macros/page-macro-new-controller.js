@@ -33,7 +33,7 @@
 
         $scope.getMatchingTags = function(text) {
             text = text.toLowerCase();
-            const tags = $scope.availableTags.filter(tag => tag.text && tag.text.toLowerCase().indexOf(text) > -1)
+            const tags = $scope.availableTags.filter(tag => tag.text && tag.text.toLowerCase().indexOf(text) > -1);
             return Promise.resolve(tags);
         };
 
