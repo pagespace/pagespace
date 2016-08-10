@@ -2,6 +2,9 @@
     <div class="section-heading">
         <h3>Edit site</h3>
     </div>
+    <ul class="nav nav-pills nav-stacked" ng-show="site._id">
+        <li><a ng-href="{{'#/view-json/sites/' + site._id}}">View JSON</a></li>
+    </ul>
 </nav>
 <main class="main col-sm-6">
     <form role="form" name="settingsForm" class="form-horizontal" novalidate ng-submit="save(settingsForm)" >
