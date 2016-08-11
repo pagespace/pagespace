@@ -30,6 +30,16 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
     $scope.setItems = function (items) {
         $scope.mediaItems = items;
     };
+
+    function compareTags(a,b) {
+        if (a.text < b.text) {
+            return -1;
+        }
+        if (a.text > b.text) {
+            return 1;
+        }
+        return 0;
+    }
     
     $scope.getItems = function() {
         mediaService.getItems().then(function(items) {
@@ -48,7 +58,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
             availableTags = availableTags.filter(function(tag) {
                 return seen.hasOwnProperty(tag.text) ? false : (seen[tag.text] = true);
             });
-            $scope.availableTags = availableTags;
+            $scope.availableTags = availableTags.sort(compareTags);
         }).catch(function(err) {
             $scope.showError('Error getting media items', err);
         });
@@ -78,6 +88,7 @@ adminApp.controller('MediaController', function($scope, $rootScope, $location, $
         if(!exists) {
             $scope.availableTags.push(newTag);
         }    
+        $scope.availableTags.sort(compareTags);
     };
 
     function selectTag(newTag) {
