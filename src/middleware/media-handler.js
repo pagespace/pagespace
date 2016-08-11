@@ -160,18 +160,19 @@ class MediaHandler extends BaseHandler {
             logger.error(err, 'Error uploading media item');
             throw err;
         }).spread((fields, files) => {
-            var uploadItems = Object.keys(files).map((fileKey, i) => {
+            var uploadItems = Object.keys(files).sort().map((fileKey) => {
                 const file = files[fileKey];
+                const index = parseInt(fileKey.substr('file_'.length));
 
                 let tags = [];
                 try {
-                    tags = JSON.parse(fields[`tags_${i}`]);
+                    tags = JSON.parse(fields[`tags_${index}`]);
                 } catch(err) {}
 
                 return {
                     file: file,
-                    name: fields[`name_${i}`],
-                    description: fields[`description_${i}`],
+                    name: fields[`name_${index}`],
+                    description: fields[`description_${index}`],
                     tags: tags
                 };
             });
