@@ -7,8 +7,15 @@
     <form role="form" ng-submit="publish()">
         <div class="notification-bar">
             <h4 ng-show="drafts.length == 0">There are no pages to publish</h4>
-            <h4 ng-show="drafts.length > 0">Select pages to publish:</h4>
-            <p ng-show="submitted" class="text-danger">Please select one or more pages to publish</p>
+            <h4 ng-show="drafts.length > 0">Select pages to publish:
+                <button class="btn btn-sm pull-right" type=button ng-click="unqueueAll()"
+                    style="margin-left: 5px">Unqueue all</button>
+                <button class="btn btn-sm pull-right" type=button ng-click="queueAll()">Queue all</button>
+            </h4>
+
+        </div>
+        <div class="pull-right clearfix">
+
         </div>
         <div class="list-group" ng-show="drafts.length > 0">
             <div ng-repeat="page in drafts"
@@ -46,7 +53,7 @@
         </div>
 
         <div class="action-buttons">
-            <button type="submit" class="btn btn-primary">Publish</button>
+            <button type="submit" class="btn btn-primary" ng-disabled="numQueued() == 0">Publish</button>
             <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
         </div>
     </form>

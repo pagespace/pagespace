@@ -12,6 +12,8 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
 
     var preQueued = $routeParams.pageId || null;
 
+    $scope.drafts = [];
+
     //get all pages with drafts
     publishingService.getDrafts().then(function(drafts) {
         $scope.drafts = drafts;
@@ -24,9 +26,24 @@ adminApp.controller('PublishingController', function($scope, $rootScope, $routeP
     }).catch(function(err) {
         $scope.showError('Error getting drafts to publish', err);
     });
+
+    $scope.queueAll = function() {
+        for(let page of $scope.drafts) {
+            $scope.queueToPublish(page, true);
+        }
+    };
+    $scope.unqueueAll = function() {
+        for(let page of $scope.drafts) {
+            $scope.queueToPublish(page, false);
+        }
+    };
     
-    $scope.queueToPublish = function(page) {
-        page.queued = !page.queued;  
+    $scope.queueToPublish = function(page, force) {
+        page.queued = typeof force ==='boolean' ? force : !page.queued;
+    };
+
+    $scope.numQueued = function() {
+        return $scope.drafts.reduce((prev, curr) => curr.queued ? ++prev : prev, 0);
     };
 
     $scope.showCompare = function(page) {
