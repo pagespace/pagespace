@@ -162,6 +162,7 @@ class PageHandler extends BaseHandler {
                     result = Promise.try(() => {
                         return pluginModule.process(includeData, {
                             preview: previewMode,
+                            req: req,
                             reqUrl: req.url,
                             reqMethod: req.method
                         });
@@ -171,7 +172,7 @@ class PageHandler extends BaseHandler {
                     }).catch((err) => {
                         this.logger.warn('Could not process include for %s (%s) at %s (%s)',
                             pluginModule.name, includeId, req.url, err.message);
-                        this.logger.error(err);
+                        this.logger.error(err, err.message);
                         return {
                             error: err.message
                         };
