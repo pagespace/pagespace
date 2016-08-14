@@ -11,7 +11,7 @@
         <ul class="nav nav-pills nav-stacked">
             <div ng-repeat="availableTag in availableTags track by $index">
                 <li style="margin-bottom: 4px">
-                    <button class="btn btn-link" ng-class="{'btn-primary': availableTag.on}"
+                    <button class="btn btn-sm btn-link" ng-class="{'btn-primary': availableTag.on}"
                             ng-click="toggleTag(availableTag)">{{availableTag.text}}</button></li>
             </div>
         </ul>
