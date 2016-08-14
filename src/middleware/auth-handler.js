@@ -188,8 +188,8 @@ class AuthHandler extends BaseHandler {
         return Promise.all([ User.findOne({ username: username }), randomBytesAsync(32) ]).spread((user, tokenBuf) => {
             //save user with token
             if(user) {
-                user.token = tokenBuf.toString('hex');
-                user.tokenExpiry = Date.now() + (this.emailConfig ? ONE_HOUR : ONE_HOUR * 6);
+                user.forgotPasswordToken = tokenBuf.toString('hex');
+                user.forgotPasswordTokenExpiry = Date.now() + (this.emailConfig ? ONE_HOUR : ONE_HOUR * 6);
                 return user.save();
             }
             return Promise.resolve();
@@ -210,7 +210,7 @@ class AuthHandler extends BaseHandler {
                     to: user.email
                 }, {
                     host: host,
-                    token: user.token
+                    token: user.forgotPasswordToken
                 }).then(err => {
                     logger.warn('Could not send forgotten password email');
                     logger.error(err);
@@ -241,9 +241,13 @@ class AuthHandler extends BaseHandler {
         password = password.trim();
 
         const User = this.dbSupport.getModel('User');
-        User.findOne({ username: username, token: token, tokenExpiry: { $gt: Date.now() }}).then((user) => {
+        User.findOne({
+            username: username,
+            forgotPasswordToken: token,
+            forgotPasswordTokenExpiry: { $gt: Date.now() }
+        }).then((user) => {
             if(user) {
-                user.token = null;
+                user.forgotPasswordToken = null;
                 user.password = password;
                 return user.save();
             }

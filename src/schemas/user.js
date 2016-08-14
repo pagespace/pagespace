@@ -27,14 +27,17 @@ function generateSchema() {
             default: 'guest',
             required: true
         },
+        rememberToken: {
+            type: String
+        },
         blocked: {
             type: Boolean,
             default: false
         },
-        token: {
+        forgotPasswordToken: {
             type: String
         },
-        tokenExpiry: {
+        forgotPasswordTokenExpiry: {
             type: Date
         },
         createdAt: {
