@@ -72,7 +72,7 @@ class MediaHandler extends BaseHandler {
                 throw err;
             }
         }).then(undefined, (err) => {
-            logger.warn(err, 'Unable to serve media');
+            logger.debug(err, 'Unable to serve media');
             return next(err);
         });
     }
