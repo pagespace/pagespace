@@ -36,7 +36,7 @@
   ],
   "dependencies": {
     "a-seal": "^0.2.0",
-    "bcrypt": "^0.8.7",
+    "bcryptjs": "^2.3.0",
     "bluebird": "^3.4.1",
     "bunyan": "^1.8.1",
     "bunyan-prettystream": "^0.1.3",
@@ -73,9 +73,9 @@
     "pagespace-html": "pagespace/pagespace-html",
     "pagespace-nav": "pagespace/pagespace-nav",
     "pagespace-webcopy": "pagespace/pagespace-webcopy",
-    "pagespace-gallery" : "pagespace/pagespace-gallery",
-    "pagespace-markdown" : "pagespace/pagespace-markdown",
-    "pagespace-posts" : "pagespace/pagespace-posts",
+    "pagespace-gallery": "pagespace/pagespace-gallery",
+    "pagespace-markdown": "pagespace/pagespace-markdown",
+    "pagespace-posts": "pagespace/pagespace-posts",
     "serve-favicon": "^2.3.0",
     "supertest": "^1.1.0"
   },
