@@ -15,7 +15,7 @@
             <span class="glyphicon glyphicon-chevron-down order-vertical"></span>
         </button>
 
-        <a class="btn btn-sm sitemap-edit" href="#/pages/configure/basic/{{page._id}}" title="Edit page">
+        <a class="btn btn-sm sitemap-edit" href="#/pages/configure/basic/{{page._id}}" title="Configure page">
             <span class="glyphicon glyphicon-cog"></span>
         </a>
 
@@ -23,9 +23,9 @@
             <span class="glyphicon glyphicon-play"></span>
         </a>
 
-        <a ng-if="!page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}}">{{page.name}}</a>
+        <a ng-if="!page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="{{page.name}}">{{page.name}}</a>
 
-        <a ng-if="page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="Go to {{page.name}} &gt; {{page.redirect.name}}">
+        <a ng-if="page.redirect" href="#/view-page/preview{{page.url}}" class="sitemap-node-title" title="{{page.name}} &gt; {{page.redirect.name}}">
             {{page.name}} &gt; {{page.redirect.name}}</span>
         </a>
     </div>
