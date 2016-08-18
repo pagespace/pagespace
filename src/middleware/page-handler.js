@@ -1,8 +1,7 @@
 'use strict';
 
 //deps
-const 
-    url = require('url'),
+const
     Promise = require('bluebird'),
     typeify = require('../support/typeify'),
     consts = require('../app-constants'),
@@ -45,7 +44,7 @@ class PageHandler extends BaseHandler {
      */
     doGet(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
-        const urlPath = url.parse(req.url).pathname;
+        const urlPath = req.path;
 
         //if previous middleware already determined the resource is a 404
         if(req.status === httpStatus.NOT_FOUND) {
@@ -60,10 +59,10 @@ class PageHandler extends BaseHandler {
     
         const modelModifier = !previewMode ? 'live' : null;
         const Page = this.dbSupport.getModel('Page', modelModifier);
-        const pageQueryCachKey = urlPath + '_' + modelModifier;
+        const pageQueryCacheKey = urlPath + '_' + modelModifier;
     
         //create the page query and execute it and cache it
-        let findPagePromise = this.findPagePromises[pageQueryCachKey];
+        let findPagePromise = this.findPagePromises[pageQueryCacheKey];
         if(previewMode || !findPagePromise) {
             const filter = {
                 url: urlPath
@@ -71,7 +70,7 @@ class PageHandler extends BaseHandler {
             const query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
             findPagePromise = Promise.promisify(query.exec, { context: query })();
             if(!previewMode) {
-                this._setFindPagePromise(pageQueryCachKey, findPagePromise);
+                this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
             }
         }
     
@@ -97,7 +96,7 @@ class PageHandler extends BaseHandler {
                 pageProps = this.getProcessedPageRegions(req, page, pageProps);
             } else {
                 //don't cache none 200s
-                delete this.findPagePromises[pageQueryCachKey];
+                delete this.findPagePromises[pageQueryCacheKey];
             }
     
             return Promise.props(pageProps);
@@ -152,11 +151,14 @@ class PageHandler extends BaseHandler {
         const pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
         if(pluginModule) {
             const cache = includeCache.getCache();
-            return cache.get(includeId).then((result) => {
+            const urlSearch = Object.keys(req.query).sort().reduce((prev, key) => {
+                return `${[prev]}${prev ? '&' : '?'}${key}=${req.query[key]}`;
+            }, '');
+            const includeCacheKey = includeId + urlSearch;
+            return cache.get(includeCacheKey).then((result) => {
                 if(result && !previewMode) {
                     return result;
                 }
-    
                 const includeData = includeWrapper.include && includeWrapper.include.data ? includeWrapper.include.data : {};
                 if (typeof pluginModule.process === 'function') {
                     result = Promise.try(() => {
@@ -168,7 +170,7 @@ class PageHandler extends BaseHandler {
                         });
                     }).then((val) => {
                         //don't cache in preview mode
-                        return !previewMode ? cache.set(includeId, val, pluginModule.ttl) : val;
+                        return !previewMode ? cache.set(includeCacheKey, val, pluginModule.ttl) : val;
                     }).catch((err) => {
                         this.logger.warn('Could not process include for %s (%s) at %s (%s)',
                             pluginModule.name, includeId, req.url, err.message);
