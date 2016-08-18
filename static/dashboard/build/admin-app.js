@@ -2221,6 +2221,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
         var preQueued = $routeParams.pageId || null;
 
+        $scope.drafts = [];
+
         //get all pages with drafts
         publishingService.getDrafts().then(function (drafts) {
             $scope.drafts = drafts;
@@ -2234,8 +2236,67 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             $scope.showError('Error getting drafts to publish', err);
         });
 
-        $scope.queueToPublish = function (page) {
-            page.queued = !page.queued;
+        $scope.queueAll = function () {
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = $scope.drafts[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var page = _step.value;
+
+                    $scope.queueToPublish(page, true);
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+        };
+        $scope.unqueueAll = function () {
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = $scope.drafts[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var page = _step2.value;
+
+                    $scope.queueToPublish(page, false);
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+        };
+
+        $scope.queueToPublish = function (page, force) {
+            page.queued = typeof force === 'boolean' ? force : !page.queued;
+        };
+
+        $scope.numQueued = function () {
+            return $scope.drafts.reduce(function (prev, curr) {
+                return curr.queued ? ++prev : prev;
+            }, 0);
         };
 
         $scope.showCompare = function (page) {
@@ -2804,6 +2865,235 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function () {
 
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('DeletePageController', function ($scope, $rootScope, $routeParams, $location, $timeout, pageService, $window) {
+
+        var pageId = $routeParams.pageId;
+        $scope.status = 410;
+
+        pageService.getPage(pageId).then(function (page) {
+            $scope.page = page;
+
+            //default delete status
+            page.status = 410;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t find a page to delete', err);
+        });
+        pageService.getPages().then(function (pages) {
+            $scope.pages = pages;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t get pages', err);
+        });
+
+        $scope.cancel = function () {
+            $location.path('');
+        };
+
+        $scope.submit = function (form) {
+
+            if (form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0, 0);
+                return;
+            }
+
+            var page = $scope.page;
+
+            pageService.deletePage(page).then(function () {
+                $location.path('');
+                $scope.showInfo('Page: ' + page.name + ' removed.');
+            }).catch(function (err) {
+                $scope.showError('Error deleting page', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, $window) {
+
+        $log.info('Showing page view.');
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
+        $scope.section = $routeParams.section || 'basic';
+
+        $scope.clearNotification();
+
+        var pageId = $routeParams.pageId;
+
+        var parentPageId = $routeParams.parentPageId;
+        var order = $routeParams.order;
+
+        $scope.allPages = [];
+        pageService.getPages().then(function (pages) {
+            $scope.allPages = pages;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t get all pages', err);
+        });
+
+        var pageSetupPromises = [];
+        pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function (templates) {
+            $log.info('Got available templates.');
+            $scope.templates = templates;
+        }));
+        pageSetupPromises.push(pluginService.getPlugins().then(function (availablePlugins) {
+            $log.debug('Got available plugins.');
+            $scope.availablePlugins = availablePlugins;
+        }));
+
+        if (pageId) {
+            $log.debug('Fetching page data for: %s', pageId);
+            $scope.pageId = pageId;
+            pageSetupPromises.push(pageService.getPage(pageId).then(function (page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+                $scope.page = page;
+
+                if (page.expiresAt) {
+                    page.expiresAt = new Date(page.expiresAt);
+                }
+                if (page.publishedAt) {
+                    page.publishedAt = new Date(page.publishedAt);
+                }
+
+                //depopulate redirect page
+                if (page.redirect) {
+                    page.redirect = page.redirect._id;
+                }
+            }));
+        } else {
+            $scope.page = {
+                regions: [],
+                useInNav: true
+            };
+            if (parentPageId) {
+                pageSetupPromises.push(pageService.getPage(parentPageId).then(function (page) {
+                    $scope.page.parent = page;
+                }));
+            } else {
+                $scope.page.root = 'top';
+            }
+        }
+
+        Promise.all(pageSetupPromises).then(function () {
+            //if there's only one template choose it automatically
+            if (!$scope.page.template && $scope.templates.length === 1) {
+                $scope.page.template = $scope.templates[0];
+            }
+        }).catch(function (err) {
+            $scope.showError(err);
+        });
+
+        $scope.updateUrl = function () {
+            $scope.page.url = pageService.generateUrl($scope.page);
+        };
+
+        pageService.getAvailableTags().then(function (tags) {
+            $scope.availableTags = tags;
+        });
+
+        $scope.getMatchingTags = function (text) {
+            text = text.toLowerCase();
+            var tags = $scope.availableTags.filter(function (tag) {
+                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+            });
+            return Promise.resolve(tags);
+        };
+
+        $scope.cancel = function () {
+            $location.path('/pages');
+        };
+
+        $scope.$watch('page.name', function () {
+            if (!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+                $scope.updateUrl();
+            }
+        });
+
+        $scope.$watch('page.status', function (status) {
+            status = parseInt(status, 10);
+            if ($scope.page && status !== 301 && status !== 302) {
+                $scope.page.redirect = null;
+            }
+        });
+
+        $scope.syncResults = null;
+
+        $scope.synchronizeWithBasePage = function (page) {
+            $scope.syncResults = pageService.synchronizeWithBasePage(page);
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0, 0);
+                return;
+            }
+
+            var page = $scope.page;
+            if (order) {
+                page.order = order;
+            }
+
+            if (pageId) {
+                $log.info('Update page: %s...', pageId);
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).then(function () {
+                    $log.info('Page successfully updated');
+                    $scope.showSuccess('Page: ' + page.name + ' saved.');
+                    $location.path('');
+                }).catch(function (err) {
+                    $log.error(err, 'Error updating page');
+                    $scope.showError('Error updating page', err);
+                });
+            } else {
+                $log.info('Creating page...');
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+
+                //create regions based on template
+                var pageRegions = [];
+                page.template.regions.forEach(function (regionMeta) {
+                    var newRegion = {};
+                    newRegion.name = regionMeta.name;
+                    newRegion.includes = [];
+                    pageRegions.push(newRegion);
+                });
+                page.regions = pageRegions;
+
+                if (page.basePage) {
+                    pageService.synchronizeWithBasePage(page);
+                }
+
+                page = pageService.depopulatePage(page);
+                pageService.createPage(page).then(function (page) {
+                    $log.info('Page successfully created');
+                    $scope.showSuccess('Page: ' + page.name + ' created.');
+                    $location.path('');
+                }).catch(function (err) {
+                    $log.error(err, 'Error creating page');
+                    $scope.showError('Error adding new page', err);
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
     var adminApp = angular.module('adminApp');
     adminApp.directive('includeEditor', function () {
         return {
@@ -3081,235 +3371,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 $log.error(err, 'Error creating page');
                 $scope.showError('Error adding new page', err);
             });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('DeletePageController', function ($scope, $rootScope, $routeParams, $location, $timeout, pageService, $window) {
-
-        var pageId = $routeParams.pageId;
-        $scope.status = 410;
-
-        pageService.getPage(pageId).then(function (page) {
-            $scope.page = page;
-
-            //default delete status
-            page.status = 410;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t find a page to delete', err);
-        });
-        pageService.getPages().then(function (pages) {
-            $scope.pages = pages;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t get pages', err);
-        });
-
-        $scope.cancel = function () {
-            $location.path('');
-        };
-
-        $scope.submit = function (form) {
-
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-
-            pageService.deletePage(page).then(function () {
-                $location.path('');
-                $scope.showInfo('Page: ' + page.name + ' removed.');
-            }).catch(function (err) {
-                $scope.showError('Error deleting page', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, $window) {
-
-        $log.info('Showing page view.');
-
-        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
-
-        $scope.section = $routeParams.section || 'basic';
-
-        $scope.clearNotification();
-
-        var pageId = $routeParams.pageId;
-
-        var parentPageId = $routeParams.parentPageId;
-        var order = $routeParams.order;
-
-        $scope.allPages = [];
-        pageService.getPages().then(function (pages) {
-            $scope.allPages = pages;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t get all pages', err);
-        });
-
-        var pageSetupPromises = [];
-        pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function (templates) {
-            $log.info('Got available templates.');
-            $scope.templates = templates;
-        }));
-        pageSetupPromises.push(pluginService.getPlugins().then(function (availablePlugins) {
-            $log.debug('Got available plugins.');
-            $scope.availablePlugins = availablePlugins;
-        }));
-
-        if (pageId) {
-            $log.debug('Fetching page data for: %s', pageId);
-            $scope.pageId = pageId;
-            pageSetupPromises.push(pageService.getPage(pageId).then(function (page) {
-                $log.debug('Got page data OK.');
-                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-                $scope.page = page;
-
-                if (page.expiresAt) {
-                    page.expiresAt = new Date(page.expiresAt);
-                }
-                if (page.publishedAt) {
-                    page.publishedAt = new Date(page.publishedAt);
-                }
-
-                //depopulate redirect page
-                if (page.redirect) {
-                    page.redirect = page.redirect._id;
-                }
-            }));
-        } else {
-            $scope.page = {
-                regions: [],
-                useInNav: true
-            };
-            if (parentPageId) {
-                pageSetupPromises.push(pageService.getPage(parentPageId).then(function (page) {
-                    $scope.page.parent = page;
-                }));
-            } else {
-                $scope.page.root = 'top';
-            }
-        }
-
-        Promise.all(pageSetupPromises).then(function () {
-            //if there's only one template choose it automatically
-            if (!$scope.page.template && $scope.templates.length === 1) {
-                $scope.page.template = $scope.templates[0];
-            }
-        }).catch(function (err) {
-            $scope.showError(err);
-        });
-
-        $scope.updateUrl = function () {
-            $scope.page.url = pageService.generateUrl($scope.page);
-        };
-
-        pageService.getAvailableTags().then(function (tags) {
-            $scope.availableTags = tags;
-        });
-
-        $scope.getMatchingTags = function (text) {
-            text = text.toLowerCase();
-            var tags = $scope.availableTags.filter(function (tag) {
-                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
-            });
-            return Promise.resolve(tags);
-        };
-
-        $scope.cancel = function () {
-            $location.path('/pages');
-        };
-
-        $scope.$watch('page.name', function () {
-            if (!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
-                $scope.updateUrl();
-            }
-        });
-
-        $scope.$watch('page.status', function (status) {
-            status = parseInt(status, 10);
-            if ($scope.page && status !== 301 && status !== 302) {
-                $scope.page.redirect = null;
-            }
-        });
-
-        $scope.syncResults = null;
-
-        $scope.synchronizeWithBasePage = function (page) {
-            $scope.syncResults = pageService.synchronizeWithBasePage(page);
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-            if (order) {
-                page.order = order;
-            }
-
-            if (pageId) {
-                $log.info('Update page: %s...', pageId);
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-                page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).then(function () {
-                    $log.info('Page successfully updated');
-                    $scope.showSuccess('Page: ' + page.name + ' saved.');
-                    $location.path('');
-                }).catch(function (err) {
-                    $log.error(err, 'Error updating page');
-                    $scope.showError('Error updating page', err);
-                });
-            } else {
-                $log.info('Creating page...');
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-
-                //create regions based on template
-                var pageRegions = [];
-                page.template.regions.forEach(function (regionMeta) {
-                    var newRegion = {};
-                    newRegion.name = regionMeta.name;
-                    newRegion.includes = [];
-                    pageRegions.push(newRegion);
-                });
-                page.regions = pageRegions;
-
-                if (page.basePage) {
-                    pageService.synchronizeWithBasePage(page);
-                }
-
-                page = pageService.depopulatePage(page);
-                pageService.createPage(page).then(function (page) {
-                    $log.info('Page successfully created');
-                    $scope.showSuccess('Page: ' + page.name + ' created.');
-                    $location.path('');
-                }).catch(function (err) {
-                    $log.error(err, 'Error creating page');
-                    $scope.showError('Error adding new page', err);
-                });
-            }
         };
     });
 })();

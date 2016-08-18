@@ -19,7 +19,7 @@ app.engine('hbs', pagespace.getViewEngine());
 app.set('view engine', 'hbs');
 
 app.use(pagespace.init({
-    db: 'mongodb://127.0.0.1/test',
+    db: 'mongodb://localhost/pagespace_test',
     dbOptions: {
         user: 'tester',
         pass: 'test'
