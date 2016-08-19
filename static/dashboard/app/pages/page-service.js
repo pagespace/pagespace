@@ -76,12 +76,11 @@
             var promise;
             if(page.published) {
                 var pageData = {
-                    status: page.status
+                    status: page.status || 404,
+                    url: ''
                 };
 
-                if(page.redirect) {
-                    pageData.redirect = page.redirect._id;
-                }
+                pageData.redirect = page.redirect ? page.redirect._id : null;
 
                 //live pages are updated to be gone
                 promise = $http.put('/_api/pages/' + page._id, pageData);

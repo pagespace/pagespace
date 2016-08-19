@@ -45,7 +45,6 @@ function generateSchema(modifier) {
         },
         url: {
             type: String,
-            unique: true,
             index: true
         },
         order: {

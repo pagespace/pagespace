@@ -33,9 +33,9 @@
         <div class="form-group" bs-has-error="defaultPage">
             <label class="col-sm-3 control-label">Default page</label>
             <div class="col-sm-9">
-                <select ng-model="defaultPage.redirect" class="form-control">
-                    <option value="" ng-selected="!defaultPage.redirect">None</option>
-                    <option ng-repeat="page in availablePages" value="{{page._id}}" ng-selected="defaultPage.redirect._id == page._id">{{getPageHierarchyName(page)}}</option>
+                <select ng-model="defaultPage.redirect" class="form-control"
+                        ng-options="page as getPageHierarchyName(page) for page in availablePages track by page._id">
+                    <option value="">None</option>
                 </select>
             </div>
         </div>

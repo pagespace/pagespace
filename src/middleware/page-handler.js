@@ -67,8 +67,13 @@ class PageHandler extends BaseHandler {
             const filter = {
                 url: urlPath
             };
-            const query = Page.findOne(filter).populate('template redirect regions.includes.plugin regions.includes.include');
-            findPagePromise = Promise.promisify(query.exec, { context: query })();
+            const sort = {
+                status: 1,
+                updatedAt: -1
+            };
+            const populate = 'template redirect regions.includes.plugin regions.includes.include';
+            const query = Page.findOne(filter).sort(sort).populate(populate);
+            findPagePromise = query.exec();
             if(!previewMode) {
                 this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
             }
