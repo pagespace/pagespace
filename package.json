@@ -54,7 +54,9 @@
     "passport-remember-me": "^0.0.1",
     "resolve": "^1.1.6",
     "send": "^0.13.2",
-    "serve-static": "^1.11.1",
+    "serve-static": "^1.11.1"
+  },
+  "optionalDependencies": {
     "sharp": "^0.15.1"
   },
   "devDependencies": {

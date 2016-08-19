@@ -8,8 +8,14 @@ const
     send = require('send'),
     Promise = require('bluebird'),
     formidable = require('formidable'),
-    sharp = require('sharp'),
     BaseHandler = require('./base-handler');
+
+//allows pagespace to gracefully fail if Sharp is not working
+try {
+    var sharp = require('sharp');
+} catch(err) {
+    //swallow. pagespace already warns on startup and we will warn later if an image upload is attempted
+}
 
 const 
     writeFileAsync = Promise.promisify(fs.writeFile),
@@ -192,6 +198,17 @@ class MediaHandler extends BaseHandler {
 
     _processImageUpload(uploadItem) {
         const logger = this.logger;
+
+        if(!sharp) {
+            const message =
+                `Cannot upload images because Sharp is not installed.
+                 Please ensure Sharp is installed correctly, including its dependencies.
+                 See http://sharp.readthedocs.io/en/stable/install/`;
+            const err = new Error(message);
+            err.status = 501;
+            logger.warn(err.message);
+            throw err;
+        }
 
         let dimensions = {
             width: 0,

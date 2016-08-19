@@ -151,6 +151,15 @@ class Index extends EventEmitter {
         //define a default thumbnail size
         const imageVariations = opts.imageVariations || consts.DEFAULT_IMAGE_VARIATIONS;
 
+        try {
+            require.resolve("sharp");
+        } catch(e) {
+            const message =
+                'Image uploads will not be enabled because Sharp is not installed. ' +
+                'Please ensure Sharp is installed correctly. See http://sharp.readthedocs.io/en/stable/install/';
+            logger.warn(message);
+        }
+
         //db
         const db = this.mongoose.connection;
         db.on('error', (err) => {
