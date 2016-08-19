@@ -152,8 +152,9 @@ class Index extends EventEmitter {
         const imageVariations = opts.imageVariations || consts.DEFAULT_IMAGE_VARIATIONS;
 
         try {
-            require.resolve("sharp");
+            require.resolve('sharp');
         } catch(e) {
+            //this is most likely necessary if there was a problem with libvps
             const message =
                 'Image uploads will not be enabled because Sharp is not installed. ' +
                 'Please ensure Sharp is installed correctly. See http://sharp.readthedocs.io/en/stable/install/';
