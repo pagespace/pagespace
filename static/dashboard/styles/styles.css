@@ -23,7 +23,7 @@ h1,
 }
 .dashboard-header  {
     position: relative;
-    z-index: 1;
+    z-index: 3;
     background-color: #D7DADE;
     border-bottom: 4px solid #CBCBCB;
 }
