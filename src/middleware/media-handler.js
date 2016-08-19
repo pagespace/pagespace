@@ -308,7 +308,7 @@ class MediaHandler extends BaseHandler {
 
         const logger = this.logger;
 
-        const filePath = image.options.fileIn;
+        const filePath = image.options.input.file;
         const dir = path.dirname(filePath);
         const ext = path.extname(filePath);
         const base = path.basename(filePath);
