@@ -15,12 +15,12 @@ describe('Client sending media requests', function() {
             url: '/_media',
             fields: [
                 {
-                    name: 'name',
+                    name: 'name_0',
                     value: 'Pagespace Logo'
                 }
             ],
             attach: {
-                name: 'file',
+                name: 'file_0',
                 value: __dirname + '/fixtures/media/avatar.png'
             },
             status: 401
@@ -57,7 +57,7 @@ describe('Client sending media requests', function() {
                 }
             ],
             attach: {
-                name: 'file',
+                name: 'file_0',
                 value: __dirname + '/fixtures/media/avatar.png'
             },
             status: 201
@@ -107,7 +107,7 @@ describe('Client sending media requests', function() {
                 }
             ],
             attach: {
-                name: 'file',
+                name: 'file_0',
                 value: __dirname + '/fixtures/media/pagespace.pdf'
             },
             status: 201
@@ -150,7 +150,7 @@ describe('Client sending media requests', function() {
                 }
             ],
             attach: {
-                name: 'file',
+                name: 'file_0',
                 value: __dirname + '/fixtures/media/avatar.png'
             },
             status: 400
