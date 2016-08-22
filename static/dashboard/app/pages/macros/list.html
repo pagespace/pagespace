@@ -5,13 +5,13 @@
     <div class="list-group" ng-show="pages.length > 0">
         <div ng-repeat="page in pages" class="list-group-item">
             <div class="btn-group pull-right">
-                <button type="button" class="btn btn-default" title="Edit"
-                        ng-click="edit(page)">
-                    <span class="glyphicon glyphicon-pencil"></span>
-                </button>
                 <button type="button" class="btn btn-default" title="Publish"
                         ng-click="publish(page)" ng-show="page.draft">
                     <span class="glyphicon glyphicon-play"></span>
+                </button>
+                <button type="button" class="btn btn-default" title="Edit"
+                        ng-click="edit(page)">
+                    <span class="glyphicon glyphicon-pencil"></span>
                 </button>
                 <button type="button" class="btn btn-default" title="Delete"
                         ng-click="removePage(page)">
