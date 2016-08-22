@@ -3,8 +3,10 @@
 //deps
 const 
     url = require('url'),
+    path = require('path'),
     BaseHandler = require('./base-handler');
 
+const version = require(path.join(__dirname, '../../package.json')).version;
 
 class DashboardHandler extends BaseHandler {
     
@@ -27,6 +29,7 @@ class DashboardHandler extends BaseHandler {
         logger.info('New dashboard request from %s', req.user.username);
 
         const pageData = {
+            version: version,
             username: req.user.username,
             displayName: req.user.name,
             allowAdminFeatures: req.user.role === 'admin',
