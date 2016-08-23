@@ -70,7 +70,6 @@
         };
     });
 
-
     authApp.controller("ResetPasswordController", function($scope, $http, $log, $location) {
         
         var token = $location.search().token;
