@@ -141,6 +141,13 @@ h4 {
     background: #f3f3f3 !important;
     color: #999 !important;
 }
+.side-nav li button {
+    margin: 1px 0 8px 0;
+    padding-left: 15px;
+    padding-right: 15px;
+    width: 100%;
+    text-align: left;
+}
 .side-nav dt {
     float: left;
     margin-right: 8px;

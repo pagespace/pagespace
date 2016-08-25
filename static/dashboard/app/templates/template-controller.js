@@ -116,11 +116,11 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         } else {
             $log.info('Creating new template...');
             $log.debug('with data:\n%s', JSON.stringify($scope.template, null, '\t'));
-            templateService.createTemplate($scope.template).then(function() {
+            templateService.createTemplate($scope.template).then(() => {
                 $log.info('Template created successfully');
                 $scope.showSuccess('Template created.');
                 $location.path('/templates');
-            }).catch(function(err) {
+            }).catch(err => {
                 $log.error(err, 'Error creating template');
                 $scope.showError('Error creating template', err);
             });
@@ -131,15 +131,37 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
         var really = window.confirm('Really delete this template?');
         if(really) {
             $log.info('Deleting template: %s...', $scope.template._id);
-            templateService.deleteTemplate($scope.template._id).then(function() {
+            templateService.deleteTemplate($scope.template._id).then(() => {
                 $log.info('Template deleted');
                 $location.path('/templates');
-            }).error(function (err) {
+            }).error(err => {
                 $log.error(err, 'Could not delete template');
                 $scope.showError('Error deleting template', err);
             });
         }
     };
+
+    $scope.duplicate = function() {
+
+        $log.info('Duplicating template %s', $scope.template._id);
+
+        const newTemplate = JSON.parse(JSON.stringify($scope.template));
+        delete newTemplate._id;
+        delete newTemplate.createdAt;
+        delete newTemplate.createdBy;
+        delete newTemplate.updatedAt;
+        delete newTemplate.updatedBy;
+
+        newTemplate.name = `${newTemplate.name} (copy)`;
+        templateService.createTemplate(newTemplate).then(() => {
+            $log.info('Template duplicated successfully');
+            $scope.showSuccess('Template duplicated.');
+            $location.path('/templates');
+        }).catch(err => {
+            $log.error(err, 'Error duplicating template');
+            $scope.showError('Error duplicating template', err);
+        });
+    }
 });
 
 })();
