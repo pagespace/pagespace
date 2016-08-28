@@ -7,7 +7,7 @@ var session = require("express-session");
 
 var app = express();
 
-app.use(favicon(__dirname + '/favicon.ico'));
+app.use(favicon(__dirname + '/static/favicon.ico'));
 app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: process.env.SESSION_SECRET || 'foo'})]);
 
 // view engine setup
