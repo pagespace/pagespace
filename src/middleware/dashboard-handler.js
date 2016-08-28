@@ -16,10 +16,6 @@ class DashboardHandler extends BaseHandler {
     
     init(support) {
         this.logger = support.logger;
-        this.viewEngine = support.viewEngine;
-        this.userBasePath = support.userBasePath;
-        this.dbSupport = support.dbSupport;
-        this.pluginResolver = support.pluginResolver;
         this.imageVariations = support.imageVariations;
     }
 
@@ -39,6 +35,11 @@ class DashboardHandler extends BaseHandler {
 
         const urlPath = url.parse(req.url).pathname;
         const reqInfo = this.pattern.exec(urlPath);
+        if(!reqInfo) {
+            const err = new Error('Unable to parse request info from url');
+            err.status = 400;
+            throw err;
+        }
         const reqType = reqInfo[1];
 
         if(reqType === 'settings') {
@@ -57,7 +58,6 @@ class DashboardHandler extends BaseHandler {
                 }
             });
         }
-
     }
 }
 

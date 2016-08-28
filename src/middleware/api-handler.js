@@ -48,7 +48,9 @@ class ApiHandler extends BaseHandler {
         const urlPath = url.parse(req.url).pathname;
         const apiInfo = this.pattern.exec(urlPath);
         if(!apiInfo) {
-            throw new Error('Unable to parse api info from request url')
+            const err = new Error('Unable to parse api info from request url');
+            err.status = 400;
+            throw err;
         }
         return {
             apiType: apiInfo[1],

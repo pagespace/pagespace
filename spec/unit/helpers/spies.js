@@ -34,11 +34,14 @@ const req = {
         accept: 'application/json'
     },
     user: {
-        _id: 'userid'
+        username: 'Mr User',
+        name: 'mruser',
+        _id: 'userid',
+        role: 'developer'
     }
 };
 
-const res = jasmine.createSpyObj('response', [ 'json', 'send', 'status']);
+const res = jasmine.createSpyObj('response', [ 'json', 'send', 'status', 'render']);
 const next = jasmine.createSpy('next');
 
 module.exports = {
