@@ -1,3 +1,4 @@
+'use strict'
 const
     Promise = require('bluebird'),
     apiHandler = require('../../../src/middleware/api-handler');
@@ -6,48 +7,20 @@ describe('API Handler', () => {
 
     let req, res, next, dbSupport, logger, query, Model;
     beforeEach(() => {
-        logger = jasmine.createSpyObj('logger', [ 'child' ]),
-        logger.child.and.returnValue(jasmine.createSpyObj('loggerChild', [ 'debug', 'info', 'warn', 'error']));
-        dbSupport = jasmine.createSpyObj('dbSupport', [ 'getModel']);
+        //(destructuring would be nice here, but I want Node4 without transpilation)
+        const spies = require('../helpers/spies');
+        req = spies.req;
+        res = spies.res;
+        next = spies.next;
+        dbSupport = spies.dbSupport;
+        logger = spies.logger;
+        query = spies.query;
+        Model = spies.Model;
 
         apiHandler.init({
             logger: logger,
             dbSupport: dbSupport
         });
-
-        //mongoose spies
-        query = jasmine.createSpyObj('query', [ 'populate', 'sort', 'exec']);
-        Model = function(data) { this._setData(data) };
-        Model.find = jasmine.createSpy('find');
-        Model.findOneAndUpdate = jasmine.createSpy('findOneAndUpdate');
-        Model.findByIdAndRemove = jasmine.createSpy('findByIdAndRemove');
-        Model.prototype.save = jasmine.createSpy('save');
-        Model.prototype._setData = jasmine.createSpy('_setData');
-
-        Model.find.and.returnValue(query);
-        Model.findOneAndUpdate.and.returnValue(query);
-        Model.findByIdAndRemove.and.returnValue(query);
-        query.populate.and.returnValue(query);
-        query.sort.and.returnValue(query);
-
-        dbSupport.getModel.and.returnValue(Model);
-
-        //stub express objects
-        req = {};
-        req.url = null;
-        req.body = {
-            __v: 'xyz'
-        };
-        req.query = {};
-        req.headers = {
-            accept: 'application/json'
-        };
-        req.user = {
-            _id: 'userid'
-        };
-
-        res = jasmine.createSpyObj('response', [ 'json', 'send', 'status']);
-        next = jasmine.createSpy('next');
     });
 
     describe('gets items and', () => {
