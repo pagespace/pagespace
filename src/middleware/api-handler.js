@@ -47,6 +47,9 @@ class ApiHandler extends BaseHandler {
     parseApiInfo(req) {
         const urlPath = url.parse(req.url).pathname;
         const apiInfo = this.pattern.exec(urlPath);
+        if(!apiInfo) {
+            throw new Error('Unable to parse api info from request url')
+        }
         return {
             apiType: apiInfo[1],
             itemId: apiInfo[2]
@@ -85,7 +88,7 @@ class ApiHandler extends BaseHandler {
         }
     
         const populations = typeify(req.query.__nopop) ? '' : populationsMap[Model.modelName];
-        Model.find(filter, '-__v').populate(populations).sort('-createdAt').then((results) => {
+        Model.find(filter, '-__v').populate(populations).sort('-createdAt').exec().then(results => {
             logger.info('API request OK in %s ms', Date.now() - req.startTime);
             results = itemId ? results[0] : results;
             if (req.headers.accept && req.headers.accept.indexOf('application/json') === -1) {
@@ -100,7 +103,7 @@ class ApiHandler extends BaseHandler {
             } else {
                 res.json(results);
             }
-        }).then(undefined, (err) => {
+        }).catch(err => {
             logger.error(err, 'Error trying API GET for %s', Model.modelName);
             next(err);
         });
@@ -134,7 +137,7 @@ class ApiHandler extends BaseHandler {
                 logger.info('API POST OK in %s ms', Date.now() - req.startTime);
                 res.status(201);
                 res.json(model);
-            }).then(undefined, (err) => {
+            }).catch(err => {
                 if(err.name === 'CastError' || err.name === 'ValidationError') {
                     //it was the client's fault
                     err.status = 400;
@@ -168,10 +171,10 @@ class ApiHandler extends BaseHandler {
             docData.updatedBy = req.user._id;
             docData.draft = true;
             logger.debug(req.body);
-            Model.findOneAndUpdate({_id: itemId}, docData, { 'new': true }).then( (doc) => {
+            Model.findOneAndUpdate({_id: itemId}, docData, { 'new': true }).exec().then( (doc) => {
                 logger.info('API PUT OK in %s ms', Date.now() - req.startTime);
                 res.json(doc);
-            }).then(undefined, (err) => {
+            }).catch(err => {
                 if(err.name === 'CastError' || err.name === 'ValidationError') {
                     //it was the client's fault
                     err.status = 400;
@@ -188,10 +191,6 @@ class ApiHandler extends BaseHandler {
         const itemId = apiInfo.itemId;
         const Model = this.getModel(apiInfo.apiType);
     
-        //clear props not to write to db
-        delete req.body._id;
-        delete req.body.__v;
-    
         if (!itemId) {
             const message = 'Cannot delete for this url. It should contain an id';
             logger.warn(message);
@@ -200,11 +199,11 @@ class ApiHandler extends BaseHandler {
             next(err);
         } else {
             logger.info('Removing %s with id [%s]', Model.modelName, itemId);
-            Model.findByIdAndRemove(itemId).then(() => {
+            Model.findByIdAndRemove(itemId).exec().then(() => {
                 logger.info('API DELETE OK in %s ms', Date.now() - req.startTime);
-                res.statusCode = 204;
+                res.status(204);
                 res.send();
-            }).then(undefined, (err) => {
+            }).catch(err => {
                 if(err.name === 'CastError') {
                     //it was the client's fault
                     err.status = 400;
