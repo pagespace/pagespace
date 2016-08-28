@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "./clean.sh && ./node_modules/jasmine/bin/jasmine.js",
+    "test": "./node_modules/jasmine/bin/jasmine.js && ./clean.sh && ./node_modules/jasmine/bin/jasmine.js JASMINE_CONFIG_PATH=spec/e2e/config/jasmine.json",
     "start": "node app-test.js"
   },
   "files": [

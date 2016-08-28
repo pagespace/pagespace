@@ -1,5 +1,5 @@
 var bunyan = require('bunyan');
-var createPluginResolver = require('../../src/support/plugin-resolver');
+var createPluginResolver = require('../../../src/support/plugin-resolver');
 
 var pluginResolver = createPluginResolver({
     logger: bunyan.createLogger({

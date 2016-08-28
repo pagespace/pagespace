@@ -1,9 +1,9 @@
-var typeify = require('../../src/support/typeify');
+var typeify = require('../../../src/support/typeify');
 
 describe('typeify', function() {
     
     it('converts to undefined to null ', function() {
-        var x = {}
+        var x = {};
         expect(typeify(x.foo)).toBe(null);
     });
 
