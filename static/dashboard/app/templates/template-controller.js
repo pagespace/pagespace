@@ -134,7 +134,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             templateService.deleteTemplate($scope.template._id).then(() => {
                 $log.info('Template deleted');
                 $location.path('/templates');
-            }).error(err => {
+            }).catch(err => {
                 $log.error(err, 'Could not delete template');
                 $scope.showError('Error deleting template', err);
             });

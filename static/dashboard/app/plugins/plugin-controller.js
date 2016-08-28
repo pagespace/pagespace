@@ -70,7 +70,7 @@ adminApp.controller('PluginController', function($scope, $rootScope, $log, $rout
             pluginService.deletePlugin($scope.plugin._id).then(function () {
                 $scope.showInfo('Plugin deleted');
                 $location.path('/plugins');
-            }).error(function (err) {
+            }).catch(function (err) {
                 $scope.showError('Error deleting plugin', err);
             });
         }

@@ -114,7 +114,7 @@
                 macroService.deleteMacro($scope.macro._id).then(function() {
                     $log.info('Macro deleted');
                     $location.path('/macros');
-                }).error(function (err) {
+                }).catch(function (err) {
                     $log.error(err, 'Could not delete macro');
                     $scope.showError('Error deleting macro', err);
                 });
