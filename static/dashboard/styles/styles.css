@@ -75,7 +75,7 @@ header > nav {
 }
 
 h4 {
-    font-size: 21px;
+    font-size: 22px;
     margin-top: 0;
     margin-bottom: 0;
 }
@@ -133,6 +133,9 @@ h4 {
     padding: 24px 18px 18px 18px;
     padding-bottom: 150px;
     background-image: linear-gradient(to bottom, #CBCBCB 0%, #E5E7EA 100%);
+}
+.side-nav h3 {
+    font-size: 22px;
 }
 .side-nav li a {
     font-size: 18px;
