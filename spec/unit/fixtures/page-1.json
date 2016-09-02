@@ -1,0 +1,264 @@
+{
+  "_id": "560449ff99d5e6354d960b26",
+  "createdBy": {
+    "_id": "56043cd318a5646b496baaaf",
+    "__v": 0,
+    "email": "admin@pagespace.com",
+    "name": "Administrator",
+    "updatePassword": true,
+    "updatedAt": "2015-11-22T23:01:43.703Z",
+    "updatedBy": "56043cd318a5646b496baaaf",
+    "username": "admin",
+    "createdAt": "2015-09-24T18:11:31.621Z",
+    "blocked": false,
+    "role": "admin"
+  },
+  "name": "Page 1",
+  "root": "top",
+  "template": {
+    "_id": "5604446c99d5e6354d960b0f",
+    "__v": 0,
+    "createdBy": "56043cd318a5646b496baaaf",
+    "name": "Template A",
+    "src": "standard.hbs",
+    "updatedAt": "2015-09-24T18:43:56.725Z",
+    "updatedBy": "56043cd318a5646b496baaaf",
+    "createdAt": "2015-09-24T18:42:13.161Z",
+    "properties": [],
+    "regions": [
+      {
+        "name": "Sidebar",
+        "_id": "5604446c99d5e6354d960b14",
+        "sharing": false
+      },
+      {
+        "name": "Main",
+        "_id": "5604446c99d5e6354d960b11",
+        "sharing": false
+      },
+      {
+        "name": "Footer",
+        "_id": "5604446c99d5e6354d960b10",
+        "sharing": false
+      }
+    ]
+  },
+  "updatedAt": "2015-11-12T22:28:57.925Z",
+  "updatedBy": {
+    "_id": "56043cd318a5646b496baaaf",
+    "__v": 0,
+    "email": "admin@pagespace.com",
+    "name": "Administrator",
+    "updatePassword": true,
+    "updatedAt": "2015-11-22T23:01:43.703Z",
+    "updatedBy": "56043cd318a5646b496baaaf",
+    "username": "admin",
+    "createdAt": "2015-09-24T18:11:31.621Z",
+    "blocked": false,
+    "role": "admin"
+  },
+  "url": "/page-1",
+  "tags": [],
+  "expiresAt": null,
+  "createdAt": "2015-09-24T18:42:13.151Z",
+  "status": 200,
+  "published": true,
+  "draft": false,
+  "useInNav": true,
+  "order": 0,
+  "regions": [
+    {
+      "_id": "5604446c99d5e6354d960b14",
+      "name": "Sidebar",
+      "includes": [
+        {
+          "_id": "5604446c99d5e6354d960b15",
+          "plugin": {
+            "_id": "560441fbe4b151164bdb3bf8",
+            "__v": 0,
+            "createdBy": "56043cd318a5646b496baaaf",
+            "module": "pagespace-html",
+            "updatedAt": "2015-09-24T18:33:31.858Z",
+            "updatedBy": "56043cd318a5646b496baaaf",
+            "createdAt": "2015-09-24T18:28:51.677Z",
+            "name": "pagespace-html",
+            "config": {
+              "ttl": 600,
+              "schema": {
+                "required": [],
+                "properties": {
+                  "html": {
+                    "type": "string",
+                    "title": "HTML"
+                  }
+                },
+                "title": "HTML Embed",
+                "type": "object"
+              }
+            },
+            "id": "560441fbe4b151164bdb3bf8"
+          },
+          "include": {
+            "_id": "5644fd37d4fcc63a3140557b",
+            "refCount": 1,
+            "data": {
+              "html": "<p>Sidebar HTML</p>"
+            },
+            "draft": false,
+            "createdAt": "2015-11-12T22:15:04.198Z"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "5604446c99d5e6354d960b11",
+      "name": "Main",
+      "includes": [
+        {
+          "_id": "5604446c99d5e6354d960b13",
+          "plugin": {
+            "_id": "5604436279468d974ca89d7a",
+            "updatedAt": "2015-09-24T18:39:30.317Z",
+            "createdBy": "56043cd318a5646b496baaaf",
+            "module": "pagespace-nav",
+            "__v": 0,
+            "createdAt": "2015-09-24T18:39:11.565Z",
+            "name": "pagespace-nav",
+            "config": {
+              "ttl": 600,
+              "schema": {
+                "form": [
+                  "root",
+                  "navListClass",
+                  "navListItemClass"
+                ],
+                "required": [
+                  " root"
+                ],
+                "properties": {
+                  "navListItemClass": {
+                    "description": "A CSS class to give each LI item containing a navigation item",
+                    "type": "string",
+                    "title": "Item CSS class"
+                  },
+                  "navListClass": {
+                    "description": "A CSS class to add to the wrapping UL element of the navigation items",
+                    "default": "nav",
+                    "type": "string",
+                    "title": "Root CSS class"
+                  },
+                  "root": {
+                    "description": "Use a page id or 'top'. Children of this page will be displayed",
+                    "default": "top",
+                    "type": "string",
+                    "title": "Navigaton root"
+                  }
+                },
+                "title": "Navigation",
+                "type": "object"
+              }
+            },
+            "id": "5604436279468d974ca89d7a"
+          },
+          "include": {
+            "_id": "5644fd37d4fcc63a3140557c",
+            "refCount": 1,
+            "data": {
+              "navListItemClass": "",
+              "navListClass": "nav"
+            },
+            "draft": false,
+            "createdAt": "2015-11-12T22:15:04.198Z"
+          }
+        },
+        {
+          "_id": "5604446c99d5e6354d960b12",
+          "plugin": {
+            "_id": "5604410ce4b151164bdb3bf4",
+            "updatedAt": "2015-09-24T18:29:32.589Z",
+            "createdBy": "56043cd318a5646b496baaaf",
+            "module": "pagespace-webcopy",
+            "__v": 0,
+            "createdAt": "2015-09-24T18:28:51.677Z",
+            "name": "pagespace-webcopy",
+            "config": {
+              "ttl": 600,
+              "schema": {
+                "properties": {
+                  "wrapperClass": {
+                    "type": "string",
+                    "default": "webcopy",
+                    "title": "CSS Class"
+                  },
+                  "html": {
+                    "type": "string",
+                    "default": "<p>New web copy</p>",
+                    "title": "Web copy"
+                  }
+                },
+                "title": "Web copy",
+                "type": "object"
+              }
+            },
+            "id": "5604410ce4b151164bdb3bf4"
+          },
+          "include": {
+            "_id": "5644fd37d4fcc63a3140557d",
+            "refCount": 1,
+            "updatedAt": "2015-11-12T22:15:51.299Z",
+            "data": {
+              "html": "<p>Main content</p>",
+              "cssHref": "",
+              "wrapperClass": "webcopy"
+            },
+            "draft": false,
+            "createdAt": "2015-11-12T22:15:04.198Z"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "5604446c99d5e6354d960b10",
+      "name": "Footer",
+      "includes": [
+        {
+          "plugin": {
+            "_id": "560441fbe4b151164bdb3bf8",
+            "__v": 0,
+            "createdBy": "56043cd318a5646b496baaaf",
+            "module": "pagespace-html",
+            "updatedAt": "2015-09-24T18:33:31.858Z",
+            "updatedBy": "56043cd318a5646b496baaaf",
+            "createdAt": "2015-09-24T18:28:51.677Z",
+            "name": "pagespace-html",
+            "config": {
+              "ttl": 600,
+              "schema": {
+                "required": [],
+                "properties": {
+                  "html": {
+                    "type": "string",
+                    "title": "HTML"
+                  }
+                },
+                "title": "HTML Embed",
+                "type": "object"
+              }
+            },
+            "id": "560441fbe4b151164bdb3bf8"
+          },
+          "_id": "5604448799d5e6354d960b16",
+          "include": {
+            "_id": "5644fd37d4fcc63a3140557e",
+            "refCount": 1,
+            "data": {
+              "html": "<p>Footer HTML</p>"
+            },
+            "draft": false,
+            "createdAt": "2015-11-12T22:15:04.198Z"
+          }
+        }
+      ]
+    }
+  ]
+}

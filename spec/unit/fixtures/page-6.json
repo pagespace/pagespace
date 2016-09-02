@@ -1,0 +1,89 @@
+{
+  "_id": "57c89ef640dc04778473c1d8",
+  "updatedAt": "2016-09-01T21:35:22.825Z",
+  "createdBy": {
+    "_id": "56043cd318a5646b496baaaf",
+    "__v": 0,
+    "email": "admin@pagespace.com",
+    "name": "Administrator",
+    "updatePassword": true,
+    "updatedAt": "2016-09-01T21:29:59.053Z",
+    "updatedBy": "56043cd318a5646b496baaaf",
+    "username": "admin",
+    "rememberToken": "$2a$04$h/zHpEEF6deElWzu02AQHefLHKldjHweuZJR1yKRE7ijvVGoGzW8m",
+    "createdAt": "2015-09-24T18:11:31.621Z",
+    "blocked": false,
+    "role": "admin"
+  },
+  "root": "top",
+  "redirect": null,
+  "name": "Page 6",
+  "url": "/page-6",
+  "template": {
+    "_id": "5604557bb42fff62527b40f7",
+    "updatedAt": "2015-09-24T19:56:43.653Z",
+    "createdBy": "56043cd318a5646b496baaaf",
+    "name": "Template B",
+    "src": "standard.hbs",
+    "__v": 0,
+    "createdAt": "2015-09-24T19:34:51.554Z",
+    "properties": [],
+    "regions": [
+      {
+        "name": "Sidebar",
+        "_id": "5604557bb42fff62527b40fb",
+        "sharing": false
+      },
+      {
+        "name": "Main",
+        "_id": "5604557bb42fff62527b40f9",
+        "sharing": false
+      },
+      {
+        "name": "Footer",
+        "_id": "5604557bb42fff62527b40f8",
+        "sharing": false
+      }
+    ]
+  },
+  "publishedAt": null,
+  "updatedBy": {
+    "_id": "56043cd318a5646b496baaaf",
+    "__v": 0,
+    "email": "admin@pagespace.com",
+    "name": "Administrator",
+    "updatePassword": true,
+    "updatedAt": "2016-09-01T21:29:59.053Z",
+    "updatedBy": "56043cd318a5646b496baaaf",
+    "username": "admin",
+    "rememberToken": "$2a$04$h/zHpEEF6deElWzu02AQHefLHKldjHweuZJR1yKRE7ijvVGoGzW8m",
+    "createdAt": "2015-09-24T18:11:31.621Z",
+    "blocked": false,
+    "role": "admin"
+  },
+  "tags": [],
+  "expiresAt": null,
+  "createdAt": "2016-09-01T21:29:52.696Z",
+  "status": 410,
+  "published": true,
+  "draft": true,
+  "useInNav": true,
+  "order": 5,
+  "regions": [
+    {
+      "name": "Sidebar",
+      "_id": "57c89ef640dc04778473c1db",
+      "includes": []
+    },
+    {
+      "name": "Main",
+      "_id": "57c89ef640dc04778473c1da",
+      "includes": []
+    },
+    {
+      "name": "Footer",
+      "_id": "57c89ef640dc04778473c1d9",
+      "includes": []
+    }
+  ]
+}

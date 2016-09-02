@@ -76,8 +76,7 @@
             var promise;
             if(page.published) {
                 var pageData = {
-                    status: page.status || 404,
-                    url: ''
+                    status: page.status || 404
                 };
 
                 pageData.redirect = page.redirect ? page.redirect._id : null;

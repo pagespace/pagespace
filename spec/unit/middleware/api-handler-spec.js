@@ -1,14 +1,15 @@
 'use strict'
 const
     Promise = require('bluebird'),
+    createSpies = require('../helpers/spies'),
     apiHandler = require('../../../src/middleware/api-handler');
 
 describe('API Handler', () => {
 
-    let req, res, next, dbSupport, logger, query, Model;
+    let spies, req, res, next, dbSupport, logger, query, Model;
     beforeEach(() => {
         //(destructuring would be nice here, but I want Node4 without transpilation)
-        const spies = require('../helpers/spies');
+        spies = createSpies();
         req = spies.req;
         res = spies.res;
         next = spies.next;

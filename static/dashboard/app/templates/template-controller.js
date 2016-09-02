@@ -161,7 +161,7 @@ adminApp.controller('TemplateController', function($log, $scope, $rootScope, $ro
             $log.error(err, 'Error duplicating template');
             $scope.showError('Error duplicating template', err);
         });
-    }
+    };
 });
 
 })();

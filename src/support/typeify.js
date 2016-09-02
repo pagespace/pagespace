@@ -9,6 +9,8 @@
 module.exports = (value) => {
     if(typeof value === 'undefined' || value === null) {
         return null;
+    } else if(typeof value !== 'string') {
+        return value;
     } else if(!isNaN(parseFloat(+value))) {
         return parseFloat(value);
     } else if(value.toLowerCase() === 'false') {

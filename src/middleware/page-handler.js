@@ -72,8 +72,7 @@ class PageHandler extends BaseHandler {
                 updatedAt: -1
             };
             const populate = 'template redirect regions.includes.plugin regions.includes.include';
-            const query = Page.findOne(filter).sort(sort).populate(populate);
-            findPagePromise = query.exec();
+            findPagePromise = Page.findOne(filter).sort(sort).populate(populate).exec();
             if(!previewMode) {
                 this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
             }
@@ -109,7 +108,7 @@ class PageHandler extends BaseHandler {
             const status = pageResult.status;
             if(status === httpStatus.OK) {
                 //all include plugins have resolved and the page can be rendered
-                this.doPage(req, res, next, logger, pageResult);
+                this.doOk(req, res, next, logger, pageResult);
             } else if(httpStatus.REDIRECTS.indexOf(status) >= 0) {
                 //handle redirects
                 logger.info('Request is %s, handling redirect', status);
@@ -126,7 +125,7 @@ class PageHandler extends BaseHandler {
                 next(err);
             }
         }).catch((err) => {
-            this.logger.debug(err);
+            logger.debug(err);
             next(err);
         });
     }
@@ -196,7 +195,7 @@ class PageHandler extends BaseHandler {
     /**
      * Resolves a page.
      */
-    doPage(req, res, next, logger, pageResult) {
+    doOk(req, res, next, logger, pageResult) {
         const page = pageResult.page;
     
         const pageData = {};

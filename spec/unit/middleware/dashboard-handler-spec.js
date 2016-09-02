@@ -1,20 +1,18 @@
 'use strict'
 const
+    createSpies = require('../helpers/spies'),
     dashboardHandler = require('../../../src/middleware/dashboard-handler');
 
 describe('API Handler', () => {
 
-    let req, res, next, dbSupport, logger, query, Model;
+    let spies, req, res, next, logger;
     beforeEach(() => {
         //(destructuring would be nice here, but I want Node4 without transpilation)
-        const spies = require('../helpers/spies');
+        spies = createSpies();
         req = spies.req;
         res = spies.res;
         next = spies.next;
-        dbSupport = spies.dbSupport;
         logger = spies.logger;
-        query = spies.query;
-        Model = spies.Model;
 
         dashboardHandler.init({
             logger: logger,
