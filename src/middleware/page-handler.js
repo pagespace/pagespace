@@ -48,7 +48,7 @@ class PageHandler extends BaseHandler {
 
         //if previous middleware already determined the resource is a 404
         if(req.status === httpStatus.NOT_FOUND) {
-            return this.doNotFound(logger, {
+            return this._doNotFound(logger, {
                 urlPath: urlPath,
                 status: httpStatus.NOT_FOUND
             });
@@ -91,13 +91,13 @@ class PageHandler extends BaseHandler {
     
             //analytics. page exists and its a guest user
             if(this.analytics && page && (!req.user || req.user.role === consts.GUEST_USER.role)) {
-                this.recordHit(req, page._id, logger);
+                this._recordHit(req, page._id, logger);
             }
     
             if(status === httpStatus.OK) {
                 logger.debug('Page found (%s) for %s: %s', status, urlPath, page.id);
                 //each region may need to be processed, this may be async
-                pageProps = this.getProcessedPageRegions(req, page, pageProps);
+                pageProps = this._getProcessedPageRegions(req, page, pageProps);
             } else {
                 //don't cache none 200s
                 delete this.findPagePromises[pageQueryCacheKey];
@@ -108,14 +108,14 @@ class PageHandler extends BaseHandler {
             const status = pageResult.status;
             if(status === httpStatus.OK) {
                 //all include plugins have resolved and the page can be rendered
-                this.doOk(req, res, next, logger, pageResult);
+                this._doOk(req, res, next, logger, pageResult);
             } else if(httpStatus.REDIRECTS.indexOf(status) >= 0) {
                 //handle redirects
                 logger.info('Request is %s, handling redirect', status);
-                this.doRedirect(req, res, next, logger, pageResult, previewMode);
+                this._doRedirect(req, res, next, logger, pageResult, previewMode);
             } else if(status === httpStatus.NOT_FOUND || status === httpStatus.GONE) {
                 //not found or gone
-                this.doNotFound(logger, pageResult);
+                this._doNotFound(logger, pageResult);
             } else {
                 //something else?
                 const message = `Status ${status} is not supported for pages`;
@@ -133,14 +133,14 @@ class PageHandler extends BaseHandler {
     /**
      * Returns a map of page includes to their data (which may need to be processed by the plugin)
      */
-    getProcessedPageRegions(req, page, pageProps) {
+    _getProcessedPageRegions(req, page, pageProps) {
     
         //read data for each plugin
         for(let region of page.regions) {
             for(let includeWrapper of region.includes) {
                 if(includeWrapper.include) {
                     const includeId = includeWrapper.include._id.toString();
-                    pageProps[includeId] = this.processInclude(req, includeWrapper, includeId, pageProps.previewMode);
+                    pageProps[includeId] = this._processInclude(req, includeWrapper, includeId, pageProps.previewMode);
                 }
             }
         }
@@ -151,7 +151,7 @@ class PageHandler extends BaseHandler {
     /**
      * Processes a single include
      */
-    processInclude(req, includeWrapper, includeId, previewMode) {    
+    _processInclude(req, includeWrapper, includeId, previewMode) {
         const pluginModule = this.pluginResolver.require(includeWrapper.plugin ? includeWrapper.plugin.module : null);
         if(pluginModule) {
             const cache = includeCache.getCache();
@@ -195,7 +195,7 @@ class PageHandler extends BaseHandler {
     /**
      * Resolves a page.
      */
-    doOk(req, res, next, logger, pageResult) {
+    _doOk(req, res, next, logger, pageResult) {
         const page = pageResult.page;
     
         const pageData = {};
@@ -287,7 +287,7 @@ class PageHandler extends BaseHandler {
     /**
      * Sends redirects
      */
-    doRedirect(req, res, next, logger, pageResult, previewMode) {
+    _doRedirect(req, res, next, logger, pageResult, previewMode) {
         //redirects
         const redirectPage = pageResult.page.redirect;
         if(redirectPage && redirectPage.url) {
@@ -299,14 +299,14 @@ class PageHandler extends BaseHandler {
         } else {
             logger.warn('Page to redirect to is not set. Sending 404');
             pageResult.status = httpStatus.NOT_FOUND;
-            return this.doNotFound(logger, pageResult);
+            return this._doNotFound(logger, pageResult);
         }
     }
 
     /**
      * Throws an error for missing pages (404 and 410)
      */
-    doNotFound(logger, pageResult) {
+    _doNotFound(logger, pageResult) {
         //page is a 404
         const status = pageResult.status;
         logger.info(`Request is ${status}, passing to next()`);
@@ -321,7 +321,7 @@ class PageHandler extends BaseHandler {
     /**
      * Records a page hit
      */
-    recordHit(req, pageId, logger) {
+    _recordHit(req, pageId, logger) {
     
         const Hit = this.dbSupport.getModel('Hit');
         const hit = new Hit({
