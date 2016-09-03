@@ -5,10 +5,10 @@ const
     fs = require('fs'),
     url = require('url'),
     path = require('path'),
-    send = require('send'),
     Promise = require('bluebird'),
     formidable = require('formidable'),
     BaseHandler = require('./base-handler');
+let send = require('send');
 
 //allows pagespace to gracefully fail if Sharp is not working
 try {
@@ -17,8 +17,7 @@ try {
     //swallow. pagespace already warns on startup and we will warn later if an image upload is attempted
 }
 
-const 
-    writeFileAsync = Promise.promisify(fs.writeFile),
+let writeFileAsync = Promise.promisify(fs.writeFile),
     unlinkAsync = Promise.promisify(fs.unlink);
 
 class MediaHandler extends BaseHandler {
@@ -46,38 +45,39 @@ class MediaHandler extends BaseHandler {
         const Media = this.dbSupport.getModel('Media');
         Media.findOne({
             fileName: itemFileName
-        }).then((model) => {
-            if(model) {
-                let mediaPath = null;
-    
-                //find the variation path for this label
-                if(req.query.label) {
-                    const variation = model.variations.find((variation) => variation.label === req.query.label.trim());
-                    if(variation) {
-                        mediaPath = this._getVariationPath(model.path, variation);
-                    }
-                }
-    
-                //revert to original if there is no variation
-                mediaPath = mediaPath || (path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path));
-    
-                const stream = send(req, mediaPath);
-    
-                // forward non-404 errors
-                stream.on('error', (err) => {
-                    logger.warn(`Error streaming media for ${req.url} (${mediaPath})`);
-                    next(err.status === 404 ? null : err);
-                });
-    
-                // pipe
-                logger.debug(`Streaming media to client for ${mediaPath}`);
-                stream.pipe(res);
-            } else {
+        }).exec().then((model) => {
+            if(!model) {
                 const err = new Error(`${itemFileName} not found`);
                 err.status = 404;
                 throw err;
             }
-        }).then(undefined, (err) => {
+
+            let mediaPath = null;
+
+            //find the variation path for this label
+            if(req.query.label) {
+                const variation = model.variations.find((variation) => variation.label === req.query.label.trim());
+                if(variation) {
+                    mediaPath = this._getVariationPath(model.path, variation);
+                }
+            }
+
+            //revert to original if there is no variation
+            mediaPath = mediaPath || (path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path));
+
+            const stream = send(req, mediaPath);
+
+            // forward non-404 errors
+            stream.on('error', (err) => {
+                logger.warn(`Error streaming media for ${req.url} (${mediaPath})`);
+                next(err.status === 404 ? null : err);
+            });
+
+            // pipe
+            logger.debug(`Streaming media to client for ${mediaPath}`);
+            stream.pipe(res);
+
+        }).catch(err => {
             logger.debug(err, 'Unable to serve media');
             return next(err);
         });
@@ -95,7 +95,7 @@ class MediaHandler extends BaseHandler {
 
         Media.findOneAndRemove({
             fileName: itemFileName
-        }).then((model) => {
+        }).exec().then((model) => {
             //get base
             const basePath = path.isAbsolute(model.path) ? model.path : path.join(mediaDir, model.path);
             //get variations
@@ -103,14 +103,14 @@ class MediaHandler extends BaseHandler {
                 return this._getVariationPath(basePath, variation);
             }));
             //unlink
-            const rollbackPromises = paths.map((filePath) => {
+            const unlinkPromises = paths.map((filePath) => {
                 return unlinkAsync(filePath);
             });
-            return Promise.all(rollbackPromises);
+            return Promise.all(unlinkPromises);
         }).then(() => {
-            res.statusCode = 204;
+            res.status(204);
             res.send();
-        }).then(undefined, (err) => {
+        }).catch(err => {
             logger.error(err, `Couldn't delete media files`);
             next(err);
         });
@@ -123,23 +123,31 @@ class MediaHandler extends BaseHandler {
         const urlPath = url.parse(req.url).pathname;
         const apiInfo = this.pattern.exec(urlPath);
         const itemFileName = apiInfo[1];
+
+        const content = req.body.content;
+
+        if(!content) {
+            const msg = `No content provided to update ${itemFileName}`;
+            const err = new Error(msg);
+            err.status = 400;
+            logger.warn(msg);
+            return next(err);
+        }
+
         logger.info('Updating media text for %s', itemFileName);
         const Media = this.dbSupport.getModel('Media');
-        Media.findOne({ fileName: itemFileName }).then((model) => {
-            logger.info('Updating file %s', model.path);
-            const content = req.body.content;
-            fs.writeFile(model.path, content, (err) => {
-                if(err) {
-                    logger.error(err, 'Could not write file to %s', model.path);
-                    next(err);
-                } else {
-                    logger.info('Update media text OK');
-                    res.send('%s updated successfully', itemFileName);
-                }
-            });
-        }).then(undefined, (err) => {
+        Media.findOne({ fileName: itemFileName }).exec().catch(err => {
             logger.warn(err, 'Unable to find media item to update');
-            return next(err);
+            next(err);
+        }).then((model) => {
+            logger.info('Updating file %s', model.path);
+            return writeFileAsync(model.path, content);
+        }).then(() => {
+            logger.info('Update media text OK');
+            res.send('%s updated successfully', itemFileName);
+        }).catch(err => {
+            logger.error(err, 'Could not write file');
+            next(err);
         });
     }
 
@@ -362,7 +370,6 @@ class MediaHandler extends BaseHandler {
     }
 
     static _isSupportedImage(item) {
-
         const imageTypes = [
             'image/jpeg',
             'image/png'

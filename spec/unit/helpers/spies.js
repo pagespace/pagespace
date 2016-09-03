@@ -1,12 +1,13 @@
 'use strict';
 
 module.exports = function createSpies() {
-//bunyan/logger --------------------------------------------------------------------------------------------------------
+
+    //bunyan/logger ----------------------------------------------------------------------------------------------------
     const logger = jasmine.createSpyObj('logger', [ 'child' ]);
     logger.child.and.returnValue(jasmine.createSpyObj('loggerChild', [ 'debug', 'info', 'warn', 'error']));
 
 
-//mongoose -------------------------------------------------------------------------------------------------------------
+    //mongoose ---------------------------------------------------------------------------------------------------------
     const query = jasmine.createSpyObj('query', [ 'populate', 'sort', 'exec']);
     query.populate.and.returnValue(query);
     query.sort.and.returnValue(query);
@@ -15,6 +16,7 @@ module.exports = function createSpies() {
     Model.find = jasmine.createSpy('find');
     Model.findOne = jasmine.createSpy('findOne');
     Model.findOneAndUpdate = jasmine.createSpy('findOneAndUpdate');
+    Model.findOneAndRemove = jasmine.createSpy('findOneAndRemove');
     Model.findByIdAndRemove = jasmine.createSpy('findByIdAndRemove');
     Model.prototype.save = jasmine.createSpy('save');
     Model.prototype._setData = jasmine.createSpy('_setData');
@@ -22,14 +24,15 @@ module.exports = function createSpies() {
     Model.findOne.and.returnValue(query);
     Model.findOneAndUpdate.and.returnValue(query);
     Model.findByIdAndRemove.and.returnValue(query);
+    Model.findOneAndRemove.and.returnValue(query);
 
-//pagespace support ----------------------------------------------------------------------------------------------------
+    //pagespace support ------------------------------------------------------------------------------------------------
 
-//db support
+    //db support
     const dbSupport = jasmine.createSpyObj('dbSupport', [ 'getModel']);
     dbSupport.getModel.and.returnValue(Model);
 
-//plugin resolver
+    //plugin resolver
     const pluginResolver = jasmine.createSpyObj('pluginResolver', [ 'require']);
     pluginResolver.require.and.callFake(pluginName => {
         return {
@@ -38,15 +41,15 @@ module.exports = function createSpies() {
         };
     });
 
-//view engine
+    //view engine
     const viewEngine = jasmine.createSpyObj('viewEngine', [ 'registerPartial']);
 
-//local resolver
+    //local resolver
     const localeResolver = jasmine.createSpy('localResolver');
     localeResolver.and.returnValue('en');
 
 
-//express stubs --------------------------------------------------------------------------------------------------------
+    //express stubs ----------------------------------------------------------------------------------------------------
     const req = {
         body: {
             __v: 'xyz'
@@ -68,6 +71,12 @@ module.exports = function createSpies() {
     const res = jasmine.createSpyObj('response', [ 'json', 'send', 'status', 'render', 'header', 'redirect']);
     const next = jasmine.createSpy('next');
 
+    //other modules ----------------------------------------------------------------------------------------------------
+
+    //send
+    const stream = jasmine.createSpyObj('stream', ['on', 'pipe']);
+    const send = jasmine.createSpy('send');
+    send.and.returnValue(stream);
 
     return {
         logger,
@@ -79,7 +88,9 @@ module.exports = function createSpies() {
         query,
         req,
         res,
-        next
+        next,
+        send,
+        stream
     };
 }
 

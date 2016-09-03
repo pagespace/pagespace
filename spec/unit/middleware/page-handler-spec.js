@@ -32,10 +32,6 @@ describe('Page Handler', () => {
         require('../../../src/support/include-cache').init()
     });
 
-    afterEach(() => {
-       spies  = null;
-    });
-
     it('renders a live page with a 200 status', (done) => {
         req.url = '/page-1';
         req.path = '/page-1';

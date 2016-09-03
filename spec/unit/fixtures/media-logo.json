@@ -1,0 +1,32 @@
+{
+  "_id": "57ca29f9a3a9581989ec2da8",
+  "updatedAt": "2016-09-03T01:40:09.322Z",
+  "name": "Logo",
+  "description": "undefined",
+  "type": "image/png",
+  "fileName": "logo.png",
+  "size": 4608,
+  "width": 319,
+  "height": 59,
+  "variations": [
+    {
+      "label": "thumb",
+      "format": "png",
+      "size": 4647,
+      "width": 200,
+      "height": 37,
+      "_id": "57ca29f9a3a9581989ec2daa"
+    },
+    {
+      "label": "large",
+      "format": "png",
+      "size": 61008,
+      "width": 1000,
+      "height": 185,
+      "_id": "57ca29f9a3a9581989ec2da9"
+    }
+  ],
+  "createdAt": "2016-09-03T01:39:04.159Z",
+  "tags": [],
+  "path" : "logo.png"
+}
