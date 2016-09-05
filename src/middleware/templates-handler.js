@@ -39,17 +39,17 @@ class TemplatesHandler extends BaseHandler {
     
         if(reqType === reqTypes.TEMPLATES) {
             logger.info('New getAvailableTemplates request');
-            return this.doGetAvailableTemplates(req, res, next, logger);
+            return this._doGetAvailableTemplates(req, res, next, logger);
         } else if (reqType === reqTypes.TEMPLATE_REGIONS) {
             logger.info('New getRegionsForTemplate request');
-            return this.doGetRegionsForTemplate(req, res, next, logger);
+            return this._doGetRegionsForTemplate(req, res, next, logger);
         }
     }
 
     /**
      * Responds with a list of available handlebars templates on the filesystem
      */
-    doGetAvailableTemplates(req, res, next, logger) {
+    _doGetAvailableTemplates(req, res, next, logger) {
     
         let views = null;
         try {
@@ -72,7 +72,7 @@ class TemplatesHandler extends BaseHandler {
     /**
      * Responds with a list of available regions for the given template
      */
-    doGetRegionsForTemplate(req, res, next, logger) {
+    _doGetRegionsForTemplate(req, res, next, logger) {
         const templateSrc = req.query.templateSrc;
     
         if(!templateSrc) {
@@ -89,7 +89,7 @@ class TemplatesHandler extends BaseHandler {
             return next(e);
         }
     
-        this.getRegionsForTemplate(templateSrc, viewDirs).then((regions) => {
+        this._getRegionsForTemplate(templateSrc, viewDirs).then((regions) => {
             viewDirs = viewDirs.join(', ');
             logger.debug(`Found the following regions for: ${templateSrc} (${viewDirs})`);
             return res.json(regions);
@@ -100,7 +100,7 @@ class TemplatesHandler extends BaseHandler {
         });
     }
     
-    getRegionsForTemplate(templateSrc, viewDirs) {
+    _getRegionsForTemplate(templateSrc, viewDirs) {
     
         const readPromises = viewDirs.map((viewDir) => readFileAsync(path.join(viewDir, templateSrc), 'utf8'));
     
