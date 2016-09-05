@@ -6,9 +6,9 @@ const
     url = require('url'),
     path = require('path'),
     Promise = require('bluebird'),
-    formidable = require('formidable'),
     BaseHandler = require('./base-handler');
-let send = require('send');
+let send = require('send'),
+    formidable = require('formidable');
 
 //allows pagespace to gracefully fail if Sharp is not working
 try {
@@ -167,7 +167,7 @@ class MediaHandler extends BaseHandler {
         form.keepExtensions = true;
         form.type = 'multipart';
         form.multiples = true;
-    
+
         const formParseAsync = Promise.promisify(form.parse, { context: form, multiArgs: true });
         formParseAsync(req).catch((err) => {
             //catch upload errors immediately
@@ -192,11 +192,14 @@ class MediaHandler extends BaseHandler {
             });
 
             return Promise.map(uploadItems, (item) => {
-               return MediaHandler._isSupportedImage(item) ? this._processImageUpload(item) : this._processUpload(item);
+               return MediaHandler._isSupportedImage(item) ?
+                   this._processImageUpload(item, logger) : this._processUpload(item, null, null, logger);
             });
         }).then((models) => {
             if(models.every(model => model.duplicate)) {
-                next(new Error('All new files have already been uploaded.'));
+                const err = new Error('All new files have already been uploaded.');
+                err.status = 400;
+                next(err);
             } else {
                 res.status(201);
                 res.json(models);
@@ -204,8 +207,7 @@ class MediaHandler extends BaseHandler {
         });
     }
 
-    _processImageUpload(uploadItem) {
-        const logger = this.logger;
+    _processImageUpload(uploadItem, logger) {
 
         if(!sharp) {
             const message =
@@ -235,17 +237,16 @@ class MediaHandler extends BaseHandler {
 
             //create image variations
             let variationPromises = this.imageVariations.map((variation) => {
-                return this._resizeImage(image, variation.label, meta, variation.size, variation.format || meta.format);
+                let format = variation.format || meta.format;
+                return this._resizeImage(image, variation.label, meta, variation.size, format, logger);
             });
             return Promise.all(variationPromises);
         }).then((variations) => {
-            return this._processUpload(uploadItem, dimensions, variations);
+            return this._processUpload(uploadItem, dimensions, variations, logger);
         });
     }
 
-    _processUpload(item, dimensions, variations) {
-
-        const logger = this.logger;
+    _processUpload(item, dimensions, variations, logger) {
 
         dimensions = dimensions || {};
         variations = variations || [];
@@ -265,8 +266,7 @@ class MediaHandler extends BaseHandler {
             variations: variations
         });
 
-        const saveAsync = Promise.promisify(media.save, { context: media });
-        return Promise.all([ saveAsync(), item.file ].concat(variations).map((promise) => {
+        return Promise.all([ media.save(), item.file ].concat(variations).map((promise) => {
             return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
         })).then((result) => {
             //send response
@@ -312,9 +312,7 @@ class MediaHandler extends BaseHandler {
         });
     }
 
-    _resizeImage(image, label, fromDim, toDim, format) {
-
-        const logger = this.logger;
+    _resizeImage(image, label, fromDim, toDim, format, logger) {
 
         const filePath = image.options.input.file;
         const dir = path.dirname(filePath);

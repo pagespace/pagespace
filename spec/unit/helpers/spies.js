@@ -50,23 +50,25 @@ module.exports = function createSpies() {
 
 
     //express stubs ----------------------------------------------------------------------------------------------------
-    const req = {
-        body: {
-            __v: 'xyz'
-        },
-        headers: {
-            accept: 'application/json'
-        },
-        query: {},
-        session: {},
-        user: {
-            username: 'Mr User',
-            name: 'mruser',
-            _id: 'userid',
-            role: 'developer'
-        },
-        url: null,
+    const http = require('http');
+    const req = http.request({
+        host: 'example.org',
+    });
+    req.body = {
+        __v: 'xyz'
     };
+    req.headers = {
+        accept: 'application/json'
+    };
+    req.query = {},
+    req.session = {},
+    req.user = {
+        username: 'Mr User',
+        name: 'mruser',
+        _id: 'userid',
+        role: 'developer'
+    };
+    req.url = null;
 
     const res = jasmine.createSpyObj('response', [ 'json', 'send', 'status', 'render', 'header', 'redirect']);
     const next = jasmine.createSpy('next');
@@ -78,6 +80,12 @@ module.exports = function createSpies() {
     const send = jasmine.createSpy('send');
     send.and.returnValue(stream);
 
+    //formidable
+    const formidable = {};
+    formidable.IncomingForm = function () {};
+    formidable.IncomingForm.prototype.parse = jasmine.createSpy('parse');
+
+    //export -----------------------------------------------------------------------------------------------------------
     return {
         logger,
         dbSupport,
@@ -90,7 +98,8 @@ module.exports = function createSpies() {
         res,
         next,
         send,
-        stream
+        stream,
+        formidable
     };
 }
 
