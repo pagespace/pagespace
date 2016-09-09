@@ -7,7 +7,7 @@ const
     fs = require('fs'),
     path = require('path');
 
-describe('Page Handler', () => {
+describe('Media Handler', () => {
 
     let spies, req, res, next, dbSupport, logger, query, Model, send, stream, formidable;
     beforeEach(() => {

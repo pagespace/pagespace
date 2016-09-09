@@ -4,7 +4,7 @@ const
     createSpies = require('../helpers/spies'),
     staticHandler = rewire('../../../src/middleware/static-handler');
 
-describe('Publishing Handler', () => {
+describe('Static Handler', () => {
 
     let spies, req, res, next, logger, pluginResolver, mockServeStatic, staticServer;
     beforeEach(() => {

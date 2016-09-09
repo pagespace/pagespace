@@ -4,7 +4,7 @@ const
     createSpies = require('../helpers/spies'),
     templatesHandler = require('../../../src/middleware/templates-handler');
 
-describe('Publishing Handler', () => {
+describe('Templates Handler', () => {
 
     let spies, req, res, next, logger;
     beforeEach(() => {

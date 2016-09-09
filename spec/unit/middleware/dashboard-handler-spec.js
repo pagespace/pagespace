@@ -3,7 +3,7 @@ const
     createSpies = require('../helpers/spies'),
     dashboardHandler = require('../../../src/middleware/dashboard-handler');
 
-describe('API Handler', () => {
+describe('Dashboard Handler', () => {
 
     let spies, req, res, next, logger;
     beforeEach(() => {
