@@ -22,7 +22,7 @@
     "ng-focus-if": "^1.0.4",
     "angular-schema-form": "^0.8.12",
     "angular-touch": "^1.5.8",
-    "browser-bunyan": "^0.3.0",
+    "browser-bunyan": "^0.4.0",
     "fetch": "^1.0.0"
   }
 }
