@@ -91,6 +91,7 @@ module.exports = function createSpies() {
     const req = http.request({
         host: 'example.org',
     });
+    req.app = jasmine.createSpyObj('app', [ 'get', 'set']);
     req.body = {
         __v: 'xyz'
     };

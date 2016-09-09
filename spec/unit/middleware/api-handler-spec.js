@@ -26,7 +26,7 @@ describe('API Handler', () => {
 
     describe('gets items and', () => {
         it('gets a collection of items as json', (done) => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
 
             const result =  [{ name : 'foo'}];
             const resultPromise = Promise.resolve(result);
@@ -43,7 +43,7 @@ describe('API Handler', () => {
         });
 
         it('gets a single item as json', (done) => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
 
             const result =  [{ name : 'foo'}, { name: 'bar'}];
             const resultPromise = Promise.resolve(result);
@@ -62,7 +62,7 @@ describe('API Handler', () => {
         });
 
         it('gets a collection of items as html', (done) => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
             req.headers.accept = 'text/html';
 
             const result =  [{ name : 'foo'}, { name: 'bar'}];
@@ -80,7 +80,7 @@ describe('API Handler', () => {
         });
 
         it('gets a single item as html', (done) => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
             req.headers.accept = 'text/html';
 
             const result =  [{ name : 'foo'}, { name: 'bar'}];
@@ -99,7 +99,7 @@ describe('API Handler', () => {
 
 
         it('handles errors', (done) => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
 
             const err = new Error('test error');
             const resultPromise = Promise.reject(err);
@@ -115,13 +115,13 @@ describe('API Handler', () => {
 
         //pages
         it('gets pages', () => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Page');
         });
         it('gets a page', () => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Page');
@@ -129,13 +129,13 @@ describe('API Handler', () => {
 
         //templates
         it('gets templates', () => {
-            req.url = '/_api/templates';
+            req.path = '/_api/templates';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Template');
         });
         it('gets a template', () => {
-            req.url = '/_api/templates/123';
+            req.path = '/_api/templates/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Template');
@@ -143,13 +143,13 @@ describe('API Handler', () => {
 
         //media
         it('gets media', () => {
-            req.url = '/_api/media';
+            req.path = '/_api/media';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Media');
         });
         it('gets a media', () => {
-            req.url = '/_api/media/123';
+            req.path = '/_api/media/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Media');
@@ -157,13 +157,13 @@ describe('API Handler', () => {
 
         //Include
         it('gets include', () => {
-            req.url = '/_api/includes';
+            req.path = '/_api/includes';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Include');
         });
         it('gets an include', () => {
-            req.url = '/_api/includes/123';
+            req.path = '/_api/includes/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Include');
@@ -171,13 +171,13 @@ describe('API Handler', () => {
 
         //Plugin
         it('gets plugins', () => {
-            req.url = '/_api/plugins';
+            req.path = '/_api/plugins';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Plugin');
         });
         it('gets a plugin', () => {
-            req.url = '/_api/plugins/123';
+            req.path = '/_api/plugins/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Plugin');
@@ -185,13 +185,13 @@ describe('API Handler', () => {
 
         //User
         it('gets users', () => {
-            req.url = '/_api/users';
+            req.path = '/_api/users';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('User');
         });
         it('gets a user', () => {
-            req.url = '/_api/users/123';
+            req.path = '/_api/users/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('User');
@@ -199,20 +199,20 @@ describe('API Handler', () => {
 
         //Macro
         it('gets macros', () => {
-            req.url = '/_api/macros';
+            req.path = '/_api/macros';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Macro');
         });
         it('gets a macro', () => {
-            req.url = '/_api/macros/123';
+            req.path = '/_api/macros/123';
             query.exec.and.returnValue(Promise.resolve());
             apiHandler.doGet(req, res, next);
             expect(dbSupport.getModel).toHaveBeenCalledWith('Macro');
         });
 
         it('tests bad urls', () => {
-            req.url = '/_api/foo';
+            req.path = '/_api/foo';
             query.exec.and.returnValue(Promise.resolve());
             expect(() => apiHandler.doGet(req, res, next)).toThrow();
         });
@@ -221,7 +221,7 @@ describe('API Handler', () => {
     describe('creates items and', () => {
         it('creates an item and sends a response', (done) => {
 
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
             req.body = {
                 name: 'fooy',
                 __v: 'xyz',
@@ -247,7 +247,7 @@ describe('API Handler', () => {
         });
 
         it('cannot post to urls with ids', () => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
 
             apiHandler.doPost(req, res, next);
 
@@ -256,7 +256,7 @@ describe('API Handler', () => {
         });
 
         it('handles errors', (done) => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
             req.body = {
                 name: 'fooy',
                 __v: 'xyz',
@@ -282,7 +282,7 @@ describe('API Handler', () => {
 
         it('updates an item and sends a response', (done) => {
 
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
             req.body = {
                 name: 'fooy',
                 __v: 'xyz',
@@ -310,7 +310,7 @@ describe('API Handler', () => {
         });
 
         it('cannot update using urls without ids', () => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
 
             apiHandler.doPut(req, res, next);
 
@@ -319,7 +319,7 @@ describe('API Handler', () => {
         });
 
         it('handles errors', (done) => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
             req.body = {
                 name: 'fooy',
                 __v: 'xyz',
@@ -345,7 +345,7 @@ describe('API Handler', () => {
 
         it('removes an item and sends a response', (done) => {
 
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
 
             const resultPromise = Promise.resolve();
             query.exec.and.returnValue(resultPromise);
@@ -362,7 +362,7 @@ describe('API Handler', () => {
         });
 
         it('cannot remove using urls without ids', () => {
-            req.url = '/_api/pages';
+            req.path = '/_api/pages';
 
             apiHandler.doDelete(req, res, next);
 
@@ -371,7 +371,7 @@ describe('API Handler', () => {
         });
 
         it('handles errors', (done) => {
-            req.url = '/_api/pages/123';
+            req.path = '/_api/pages/123';
             const err = new Error();
             err.name = 'CastError';
             const resultPromise = Promise.reject(err);

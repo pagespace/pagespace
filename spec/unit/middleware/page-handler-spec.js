@@ -33,7 +33,6 @@ describe('Page Handler', () => {
     });
 
     it('renders a live page with a 200 status', (done) => {
-        req.url = '/page-1';
         req.path = '/page-1';
 
         const pageDataObj =  require('../fixtures/page-1.json');
@@ -151,7 +150,6 @@ describe('Page Handler', () => {
     });
 
     it('caches pages in live mode', () => {
-        req.url = '/page-1';
         req.path = '/page-1';
 
         const pageDataObj =  require('../fixtures/page-1.json');
@@ -182,7 +180,6 @@ describe('Page Handler', () => {
     });
 
     it('handles permanent redirect pages', (done) => {
-        req.url = '/page-2';
         req.path = '/page-2';
 
         const pageDataObj =  require('../fixtures/page-2.json');
@@ -202,7 +199,7 @@ describe('Page Handler', () => {
     });
 
     it('handles permanent redirect pages', (done) => {
-        req.url = '/page-2';
+        req.path = '/page-2';
         req.path = '/page-2';
 
         const pageDataObj =  require('../fixtures/page-2.json');
@@ -220,7 +217,6 @@ describe('Page Handler', () => {
     });
 
     it('handles temporary redirect pages', (done) => {
-        req.url = '/page-4';
         req.path = '/page-4';
 
         const pageDataObj =  require('../fixtures/page-4.json');
@@ -238,7 +234,6 @@ describe('Page Handler', () => {
     });
 
     it('handles removed pages', (done) => {
-        req.url = '/page-6';
         req.path = '/page-6';
 
         const pageDataObj =  require('../fixtures/page-6.json');
@@ -256,7 +251,6 @@ describe('Page Handler', () => {
     });
 
     it('handles pages that never existed', (done) => {
-        req.url = '/page-99';
         req.path = '/page-99';
 
         const findPagePromise = Promise.resolve(null);

@@ -34,7 +34,7 @@ describe('Publishing Handler', () => {
     });
 
     it('publishes pages', (done) => {
-        req.url = '/_publish';
+        req.path = '/_publish';
         req.body = [ "560450f5b42fff62527b40f2", "560450fcb42fff62527b40f3" ];
 
         //mock mongoose toObject() methods
@@ -131,7 +131,7 @@ describe('Publishing Handler', () => {
     });
 
     it('reverts drafts', (done) => {
-        req.url = '/_publish';
+        req.path = '/_publish';
         req.body = { pageId: '560449ff99d5e6354d960b26' };
 
         //mock mongoose toObject() methods

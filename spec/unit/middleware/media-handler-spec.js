@@ -42,7 +42,6 @@ describe('Page Handler', () => {
 
         mediaHandler.__set__('send', send);
 
-        req.url = '/_media/logo.png';
         req.path = '/_media/logo.png';
 
         const mediaModel =  require('../fixtures/media-logo.json');
@@ -93,7 +92,6 @@ describe('Page Handler', () => {
         const unlinkAsync = jasmine.createSpy('unlinkAsync');
         mediaHandler.__set__('unlinkAsync', unlinkAsync);
 
-        req.url = '/_media/logo.png';
         req.path = '/_media/logo.png';
 
         const mediaModel =  require('../fixtures/media-logo.json');
@@ -122,7 +120,6 @@ describe('Page Handler', () => {
         const writeFileAsync = jasmine.createSpy('writeFileAsync');
         mediaHandler.__set__('writeFileAsync', writeFileAsync);
 
-        req.url = '/_media/logo.png';
         req.path = '/_media/logo.png';
         req.body.content = 'Testing 123';
 
@@ -179,7 +176,6 @@ describe('Page Handler', () => {
         mediaHandler.__set__('writeFileAsync', writeFileAsync);
         mediaHandler.__set__('formidable', formidable);
 
-        req.url = '/_media';
         req.path = '/_media';
         req.method = 'POST';
         delete req.body.__v;
@@ -217,7 +213,6 @@ describe('Page Handler', () => {
         mediaHandler.__set__('unlinkAsync', unlinkAsync);
         mediaHandler.__set__('formidable', formidable);
 
-        req.url = '/_media';
         req.path = '/_media';
         req.method = 'POST';
         delete req.body.__v;

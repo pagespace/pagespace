@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{site.name}} - {{page.name}}</title>
+    <meta name="generator" content="Pagespace">
+    <meta name="foo" value="{{template.foo}}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/github.min.css"
+          rel="stylesheet" type="text/css">
+    <style>
+        html {
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            background: #F5FBFF;
+            font-family: Ubuntu Light, Helvetica, Arial, sans-serif;
+        }
+        .header {
+            background: url(/_static/sample/amsterdam-header.jpg) no-repeat ;
+            background-size: 100% 100%;
+            height: 400px;
+            padding: 286px 0 0 90px;
+        }
+        .header .text {
+            display: inline-block;
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 13px #000;
+            font-size: 60px;
+            color: #fff;
+        }
+        .wrap {
+            width: 1000px;
+            margin: 0 auto;
+        }
+        .header .wrap {
+            width: 1030px;
+        }
+        .sidebar {
+            float: right;
+            width: 200px;
+            padding: 20px;
+            margin: 10px 0;
+            background: #fff;
+        }
+        .main {
+            float: left;
+            width: 780px;
+            padding: 20px;
+            margin: 10px;
+            background: #fff;
+        }
+        .footer {
+            clear: both;
+            padding: 20px;
+        }
+        .nav {
+            list-style: none;
+            margin: 0;
+            padding: 10px 0;
+            border-top: 1px solid #F7DC7E;
+            border-bottom: 1px solid #F7DC7E;
+        }
+        .nav li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="wrap"><span class="text">{{site.name}}</span></div>
+</header>
+<div class="wrap">
+
+
+    <div class="sidebar">
+        {{#Sidebar}}
+            {{> Sidebar}}
+        {{/Sidebar}}
+    </div>
+
+    <div class="main">
+        <h1>{{page.name}}</h1>
+        {{#Main}}
+            {{> Main}}
+        {{/Main}}
+    </div>
+
+    <div class="footer">
+        {{#Footer}}
+            {{> Footer}}
+        {{/Footer}}
+    </div>
+</div>
+<script>
+        {{{site.analytics}}}
+</script>
+</body>
+</html>

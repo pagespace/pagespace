@@ -22,7 +22,7 @@ describe('API Handler', () => {
 
     describe('renders the dashboard and ', () => {
         it('renders the dashboard', (done) => {
-            req.url = '/_dashboard';
+            req.path = '/_dashboard';
 
             const html = '<p>dashboard</p>'
 
@@ -49,7 +49,7 @@ describe('API Handler', () => {
         });
 
         it('renders the inpage view', (done) => {
-            req.url = '/_dashboard/inpage';
+            req.path = '/_dashboard/inpage';
 
             const html = '<p>inpage</p>'
 
@@ -65,7 +65,7 @@ describe('API Handler', () => {
         });
 
         it('provides settings', () => {
-            req.url = '/_dashboard/settings';
+            req.path = '/_dashboard/settings';
 
             dashboardHandler.doGet(req, res, next);
 
@@ -73,7 +73,7 @@ describe('API Handler', () => {
         });
 
         it('handles rendering errors', (done) => {
-            req.url = '/_dashboard/inpage';
+            req.path = '/_dashboard/inpage';
             res.render.and.callFake((view, ctx, callback) => {
                 callback(new Error('doh!'));
                 expect(next).toHaveBeenCalled();
@@ -84,7 +84,7 @@ describe('API Handler', () => {
         });
 
         it('handles unrecognized url patterns', () => {
-            req.url = '/_/inpage';
+            req.path = '/_/inpage';
             expect(() =>  dashboardHandler.doGet(req, res, next)).toThrow();
         });
     });

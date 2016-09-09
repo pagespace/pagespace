@@ -3,7 +3,6 @@
 //deps
 const 
     fs = require('fs'),
-    url = require('url'),
     path = require('path'),
     Promise = require('bluebird'),
     BaseHandler = require('./base-handler');
@@ -13,7 +12,7 @@ const readFileAsync = Promise.promisify(fs.readFile);
 const DEFAULT_VIEW_DIR = '/views/pagespace';
 
 const reqTypes  = {
-    TEMPLATES: 'available',
+    AVAILABLE_TEMPLATES: 'available',
     TEMPLATE_REGIONS: 'template-regions',
     TEMPLATE_TEST: 'test',
     TEMPLATE_PREVIEW: 'preview'
@@ -27,17 +26,15 @@ class TemplatesHandler extends BaseHandler {
 
     init(support) {
         this.logger = support.logger;
-        this.viewEngine = support.viewEngine;
     }
 
     doGet(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
-    
-        const urlPath = url.parse(req.url).pathname;
-        const reqInfo = this.pattern.exec(urlPath);
+
+        const reqInfo = this.pattern.exec(req.path);
         const reqType = reqInfo[1];
     
-        if(reqType === reqTypes.TEMPLATES) {
+        if(reqType === reqTypes.AVAILABLE_TEMPLATES) {
             logger.info('New getAvailableTemplates request');
             return this._doGetAvailableTemplates(req, res, next, logger);
         } else if (reqType === reqTypes.TEMPLATE_REGIONS) {
@@ -61,7 +58,7 @@ class TemplatesHandler extends BaseHandler {
     
         const walkPromises = views.map((viewDir) => walkFiles(viewDir));
         Promise.all(walkPromises).then((fileSets) => {
-            const files = Array.prototype.slice(fileSets).concat.apply([], fileSets).map((file) => file.replace(/^\//, ''));
+            const files = Array.prototype.slice(fileSets).concat.apply([], fileSets).map(file => file.replace(/^\//, ''));
             logger.debug('Found the following templates: %s', files.join(', '));
             return res.json(files);
         }).catch((err) => {
