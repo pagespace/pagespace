@@ -3,7 +3,6 @@
 //deps
 const 
     fs = require('fs'),
-    url = require('url'),
     path = require('path'),
     Promise = require('bluebird'),
     BaseHandler = require('./base-handler');
@@ -37,9 +36,8 @@ class MediaHandler extends BaseHandler {
     doGet(req, res, next) {
     
         const logger = this.getRequestLogger(this.logger, req);
-    
-        const urlPath = url.parse(req.url).pathname;
-        const apiInfo = this.pattern.exec(urlPath);
+
+        const apiInfo = this.pattern.exec(req.path);
         const itemFileName = decodeURIComponent(apiInfo[1]);
         const mediaDir = this.mediaDir;
         const Media = this.dbSupport.getModel('Media');
@@ -87,8 +85,7 @@ class MediaHandler extends BaseHandler {
         
         const logger = this.getRequestLogger(this.logger, req);
 
-        const urlPath = url.parse(req.url).pathname;
-        const apiInfo = this.pattern.exec(urlPath);
+        const apiInfo = this.pattern.exec(req.path);
         const itemFileName = decodeURIComponent(apiInfo[1]);
         const mediaDir = this.mediaDir;
         const Media = this.dbSupport.getModel('Media');
@@ -119,9 +116,8 @@ class MediaHandler extends BaseHandler {
     doPut(req, res, next) {
     
         const logger = this.getRequestLogger(this.logger, req);
-    
-        const urlPath = url.parse(req.url).pathname;
-        const apiInfo = this.pattern.exec(urlPath);
+
+        const apiInfo = this.pattern.exec(req.path);
         const itemFileName = apiInfo[1];
 
         const content = req.body.content;

@@ -1,8 +1,7 @@
 'use strict';
 
 //deps
-const 
-    url = require('url'), 
+const
     serveStatic = require('serve-static'),
     BaseHandler = require('./base-handler');
 
@@ -24,9 +23,8 @@ class StaticHandler extends BaseHandler {
         const logger = this.getRequestLogger(this.logger, req);
     
         logger.trace(`Processing static request for ${req.url}`);
-    
-        const urlPath = url.parse(req.url).pathname;
-        const apiInfo = this.pattern.exec(urlPath);
+
+        const apiInfo = this.pattern.exec(req.path);
         const staticType = apiInfo[1];
         let staticPath;
         if(staticType !== 'plugins') {

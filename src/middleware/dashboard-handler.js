@@ -1,8 +1,7 @@
 'use strict';
 
 //deps
-const 
-    url = require('url'),
+const
     path = require('path'),
     BaseHandler = require('./base-handler');
 
@@ -33,8 +32,7 @@ class DashboardHandler extends BaseHandler {
             year: new Date().toISOString().substr(0, 4)
         };
 
-        const urlPath = url.parse(req.url).pathname;
-        const reqInfo = this.pattern.exec(urlPath);
+        const reqInfo = this.pattern.exec(req.path);
         if(!reqInfo) {
             const err = new Error('Unable to parse request info from url');
             err.status = 400;

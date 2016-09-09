@@ -1,7 +1,7 @@
 'use strict';
 
 //support
-const url = require('url'),
+const
     crypto = require('crypto'),
     Promise = require('bluebird'),
     passport = require('passport'),
@@ -45,8 +45,7 @@ class AuthHandler extends BaseHandler {
     doGet(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
 
-        const urlPath = url.parse(req.url).pathname;
-        const reqInfo = this.pattern.exec(urlPath);
+        const reqInfo = this.pattern.exec(req.path);
         const reqType = reqInfo[1];
 
         if(reqType === reqTypes.LOGIN ) {

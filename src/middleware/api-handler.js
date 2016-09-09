@@ -2,7 +2,6 @@
 
 //deps
 const
-    url = require('url'),
     handlebars = require('handlebars'),
     typeify = require('../support/typeify'),
     BaseHandler = require('./base-handler');
@@ -45,8 +44,7 @@ class ApiHandler extends BaseHandler {
     }
 
     parseApiInfo(req) {
-        const urlPath = url.parse(req.url).pathname;
-        const apiInfo = this.pattern.exec(urlPath);
+        const apiInfo = this.pattern.exec(req.path);
         if(!apiInfo) {
             const err = new Error('Unable to parse api info from request url');
             err.status = 400;
