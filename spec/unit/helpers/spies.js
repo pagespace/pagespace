@@ -17,7 +17,7 @@ module.exports = function createSpies() {
 
     //bunyan/logger ----------------------------------------------------------------------------------------------------
     const logger = jasmine.createSpyObj('logger', [ 'child' ]);
-    logger.child.and.returnValue(jasmine.createSpyObj('loggerChild', [ 'debug', 'info', 'warn', 'error']));
+    logger.child.and.returnValue(jasmine.createSpyObj('loggerChild', [ 'trace', 'debug', 'info', 'warn', 'error']));
 
 
     //mongoose ---------------------------------------------------------------------------------------------------------
@@ -74,7 +74,8 @@ module.exports = function createSpies() {
     pluginResolver.require.and.callFake(pluginName => {
         return {
             name: pluginName,
-            viewPartial: `<p>${pluginName}</p>`
+            viewPartial: `<p>${pluginName}</p>`,
+            __dir: '/plugins/' + pluginName
         };
     });
 

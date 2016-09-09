@@ -2,8 +2,8 @@
 
 //deps
 const
-    serveStatic = require('serve-static'),
     BaseHandler = require('./base-handler');
+let serveStatic = require('serve-static');
 
 class StaticHandler extends BaseHandler {
     get pattern() {
