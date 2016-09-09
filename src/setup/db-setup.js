@@ -39,8 +39,7 @@ class DataSetup {
                 const newSite = new Site({
                     name: 'New Pagespace site'
                 });
-                const saveNewSite = Promise.promisify(newSite.save, { context: newSite });
-                const saveSitePromise = saveNewSite();
+                const saveSitePromise = newSite.save();
                 promises.push(saveSitePromise);
                 saveSitePromise.then( () => {
                     logger.info('New site created successfully');
@@ -60,9 +59,8 @@ class DataSetup {
                     name: 'Administrator',
                     updatePassword: true
                 });
-                const saveAdminUser = Promise.promisify(defaultAdmin.save, { context: defaultAdmin });
-                const saveAdminUserPromise = saveAdminUser();
-                promises.push(saveAdminUser());
+                const saveAdminUserPromise = defaultAdmin.save();
+                promises.push(saveAdminUserPromise);
                 saveAdminUserPromise.then( () => {
                     logger.info('Default admin user created');
                 });
@@ -81,10 +79,9 @@ class DataSetup {
         const logger = this.logger;
     
         const PluginModel = this.dbSupport.getModel('Plugin');
-        const query = PluginModel.find({});
-        const getPlugins = Promise.promisify(query.exec, { context: query });
+        const getPlugins = PluginModel.find({}).exec();
     
-        return Promise.join(this._findPluginModules(), getPlugins()).spread(function(newPluginsNames, dbPlugins) {
+        return Promise.join(this._findPluginModules(), getPlugins).spread(function(newPluginsNames, dbPlugins) {
     
             const dbPluginNames = dbPlugins.map(function(dbPlugin) {
                 return dbPlugin.module;
@@ -103,10 +100,9 @@ class DataSetup {
                     module: pluginName
                 };
             });
-            const createPlugins = Promise.promisify(PluginModel.create, { context: PluginModel });
-            return createPlugins(pluginModels);
+            return PluginModel.create(pluginModels);
         }).then(function() {
-            return getPlugins();
+            return getPlugins;
         });
     }
 
@@ -117,9 +113,7 @@ class DataSetup {
     _loadAdminUser() {
         //create an admin user on first run
         const User = this.dbSupport.getModel('User');
-        const query = User.find({ role: 'admin'}, 'username');
-        const getAdminUser = Promise.promisify(query.exec, { context: query });
-        return getAdminUser();
+        return  User.find({ role: 'admin'}, 'username').exec();
     }
 
     /**

@@ -268,7 +268,7 @@ class MediaHandler extends BaseHandler {
 
         return Promise.all([ media.save(), item.file ].concat(variations).map((promise) => {
             return (promise instanceof Promise ? promise : Promise.resolve(promise)).reflect();
-        })).then((result) => {
+        })).then(result => {
             //send response
             const savePromise = result[0];
             if(savePromise.isFulfilled()) {
