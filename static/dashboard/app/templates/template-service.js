@@ -18,7 +18,7 @@
                 throw errorFactory.createResponseError(res);
             });
         };
-        TemplateService.prototype.doGetAvailableTemplates = function() {
+        TemplateService.prototype.getAvailableTemplates = function() {
             return $http.get('/_api/templates').then(res => res.data).catch(res => {
                 throw errorFactory.createResponseError(res);
             });

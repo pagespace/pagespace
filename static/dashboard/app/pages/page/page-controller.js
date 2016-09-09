@@ -30,7 +30,7 @@ adminApp.controller('PageController',
     });
 
     var pageSetupPromises = [];
-    pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
+    pageSetupPromises.push(templateService.getAvailableTemplates().then(function(templates) {
         $log.info('Got available templates.');
         $scope.templates = templates;
     }));

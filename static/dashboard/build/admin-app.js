@@ -563,6 +563,805 @@
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
+    adminApp.controller('MacroController', function ($log, $scope, $rootScope, $routeParams, $location, $window, macroService, templateService, pluginService, pageService) {
+        $log.info('Showing Macro View');
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
+        var macroId = $routeParams.macroId;
+
+        $scope.macro = {
+            includes: []
+        };
+
+        $scope.allPages = [];
+        var setupPromises = [];
+        setupPromises.push(pageService.getPages().then(function (pages) {
+            $scope.allPages = pages;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t get all pages', err);
+        }));
+
+        $scope.templates = [];
+        setupPromises.push(templateService.getAvailableTemplates().then(function (templates) {
+            $log.info('Got available templates.');
+            $scope.templates = templates;
+        }));
+
+        $scope.plugins = [];
+        setupPromises.push(pluginService.getPlugins().then(function (plugins) {
+            $log.info('Got available plugins.');
+            $scope.plugins = plugins;
+        }));
+
+        if (macroId) {
+            $scope.macroId = macroId;
+            $log.debug('Fetching macro data for id: %s...', macroId);
+            setupPromises.push(macroService.getMacro(macroId).then(function (macro) {
+                $log.debug('Got macro data:\n', JSON.stringify(macro, null, '\t'));
+                $scope.macro = macro;
+            }).catch(function (err) {
+                $log.error(err, 'Error getting macro');
+                $scope.showError('Error getting macro', err);
+            }));
+        }
+
+        Promise.all(setupPromises).then(function () {
+            //if there's only one template choose it automatically
+            if ($scope.templates.length === 1) {
+                $scope.macro.template = $scope.templates[0];
+            }
+        }).catch(function (err) {
+            $scope.showError(err);
+        });
+
+        $scope.addInclude = function (regionName) {
+            $scope.macro.includes.push({
+                name: '',
+                plugin: {},
+                region: regionName,
+                _justAdded: true
+            });
+        };
+        $scope.clearJustAdded = function (include) {
+            delete include._justAdded;
+        };
+
+        $scope.cancel = function () {
+            $location.path('/macros');
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+
+            var macro = macroService.depopulateMacro($scope.macro);
+            if (macroId) {
+                $log.info('Updating macro: %s...', macroId);
+                $log.debug('with data:\n%s', JSON.stringify(macro, null, '\t'));
+                macroService.updateMacro(macroId, macro).then(function () {
+                    $log.info('Macro updated successfully');
+                    $scope.showSuccess('Macro updated.');
+                    $location.path('/macros');
+                }).catch(function (err) {
+                    $log.error(err, 'Error updating macro');
+                    $scope.showError('Error updating macro', err);
+                });
+            } else {
+                $log.info('Creating new macro...');
+                $log.debug('with data:\n%s', JSON.stringify(macro, null, '\t'));
+                macroService.createMacro($scope.macro).then(function () {
+                    $log.info('Macro created successfully');
+                    $scope.showSuccess('Macro created.');
+                    $location.path('/macros');
+                }).catch(function (err) {
+                    $log.error(err, 'Error creating macro');
+                    $scope.showError('Error creating macro', err);
+                });
+            }
+        };
+
+        $scope.remove = function () {
+            var really = window.confirm('Really delete this macro?');
+            if (really) {
+                $log.info('Deleting macro: %s...', $scope.macro._id);
+                macroService.deleteMacro($scope.macro._id).then(function () {
+                    $log.info('Macro deleted');
+                    $location.path('/macros');
+                }).catch(function (err) {
+                    $log.error(err, 'Could not delete macro');
+                    $scope.showError('Error deleting macro', err);
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MacroListController', function ($scope, $rootScope, $routeParams, $location, macroService) {
+
+        $rootScope.pageTitle = 'Macros';
+
+        $scope.macros = [];
+
+        macroService.getMacros().then(function (macros) {
+            $scope.macros = macros;
+        }).catch(function (err) {
+            $scope.showError('Error getting macros', err);
+        });
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('macroService', function ($http, errorFactory) {
+
+        function MacroService() {
+            this.clearCache();
+        }
+        MacroService.prototype.getMacros = function () {
+            var _this = this;
+
+            if (Array.isArray(this.macroCache)) {
+                return Promise.resolve(this.macroCache);
+            }
+
+            return $http.get('/_api/macros').then(function (res) {
+                _this.macroCache = res.data;
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        MacroService.prototype.getMacro = function (macroId) {
+            return $http.get('/_api/macros/' + macroId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        MacroService.prototype.createMacro = function (macroData) {
+            var _this2 = this;
+
+            return $http.post('/_api/macros', macroData).then(function (res) {
+                _this2.clearCache();
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MacroService.prototype.updateMacro = function (macroId, macroData) {
+            var _this3 = this;
+
+            return $http.put('/_api/macros/' + macroId, macroData).then(function (res) {
+                _this3.clearCache();
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MacroService.prototype.deleteMacro = function (macroId) {
+            return $http.delete('/_api/macros/' + macroId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MacroService.prototype.depopulateMacro = function (macro) {
+
+            delete macro.createdBy;
+            delete macro.updatedBy;
+            delete macro.createdAt;
+            delete macro.updatedAt;
+
+            if (macro.template && macro.template._id) {
+                macro.template = macro.template._id;
+            }
+            if (macro.parent && macro.parent._id) {
+                macro.parent = macro.parent._id;
+            }
+            if (macro.basePage && macro.basePage._id) {
+                macro.basePage = macro.basePage._id;
+            }
+
+            macro.includes = macro.includes.map(function (include) {
+                if (include.plugin && include.plugin._id) {
+                    include.plugin = include.plugin._id;
+                }
+                return include;
+            });
+
+            return macro;
+        };
+
+        MacroService.prototype.clearCache = function () {
+            this.macroCache = null;
+        };
+
+        return new MacroService();
+    });
+})();
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('pageService', function ($http, errorFactory) {
+
+        function PageService() {
+            this.pageCache = null;
+        }
+        PageService.prototype.getPages = function (filter) {
+            var self = this;
+
+            var queryKeyValPairs = [];
+            if ((typeof filter === 'undefined' ? 'undefined' : _typeof(filter)) === 'object') {
+                for (var key in filter) {
+                    if (filter.hasOwnProperty(key)) {
+                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
+                    }
+                }
+            } else if (this.pageCache) {
+                //if no filter and the page cache is populated
+                return Promise.resolve(this.pageCache);
+            }
+
+            var path = '/_api/pages';
+            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
+            return $http.get(url).then(function (res) {
+                //if no filter was used cache
+                if (!filter) {
+                    self.pageCache = res.data;
+                }
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.getAvailableTags = function () {
+            return this.getPages().then(function (pages) {
+                //combine all tags into one
+                var seen = {};
+                return pages.reduce(function (allTags, page) {
+                    return allTags.concat(page.tags.filter(function (tag) {
+                        return tag.text; //only return tags with text property
+                    }));
+                }, []).filter(function (tag) {
+                    //remove dupes
+                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
+                });
+            });
+        };
+
+        PageService.prototype.getPage = function (pageId) {
+            return $http.get('/_api/pages/' + pageId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.createPage = function (pageData) {
+
+            if (!pageData.url) {
+                pageData.url = this.generateUrl(pageData);
+            }
+            this.pageCache = null;
+            return $http.post('/_api/pages', pageData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        /**
+         * Deletes a page. If it is not published, its non-shared includes will also be deleted
+         * @param page
+         * @return {Promise|Promise.<T>|*}
+         */
+        PageService.prototype.deletePage = function (page) {
+            var _this = this;
+
+            this.pageCache = null;
+            var promise;
+            if (page.published) {
+                var pageData = {
+                    status: page.status || 404
+                };
+
+                pageData.redirect = page.redirect ? page.redirect._id : null;
+
+                //live pages are updated to be gone
+                promise = $http.put('/_api/pages/' + page._id, pageData);
+            } else {
+                //pages which have never been published can be hard deleted
+                promise = $http.delete('/_api/pages/' + page._id).then(function () {
+                    var deleteIncludePromises = [];
+                    var _iteratorNormalCompletion = true;
+                    var _didIteratorError = false;
+                    var _iteratorError = undefined;
+
+                    try {
+                        var _loop = function _loop() {
+                            var templateRegion = _step.value;
+
+                            var pageRegion = page.regions.find(function (region) {
+                                return region.name === templateRegion.name;
+                            });
+                            if (!templateRegion.sharing && pageRegion) {
+                                var promises = pageRegion.includes.map(function (include) {
+                                    return _this.deleteInclude(include._id);
+                                });
+                                deleteIncludePromises = deleteIncludePromises.concat(promises);
+                            }
+                        };
+
+                        for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                            _loop();
+                        }
+                    } catch (err) {
+                        _didIteratorError = true;
+                        _iteratorError = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion && _iterator.return) {
+                                _iterator.return();
+                            }
+                        } finally {
+                            if (_didIteratorError) {
+                                throw _iteratorError;
+                            }
+                        }
+                    }
+
+                    return Promise.all(deleteIncludePromises);
+                });
+            }
+            return promise.then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.deleteInclude = function (includeId) {
+            return $http.delete('/_api/includes' + includeId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.updatePage = function (pageId, pageData) {
+            this.pageCache = null;
+            return $http.put('/_api/pages/' + pageId, pageData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.createIncludeData = function (plugin) {
+
+            var includeData = {};
+
+            var schemaProps = plugin.config.schema.properties || {};
+            for (var name in schemaProps) {
+                if (schemaProps.hasOwnProperty(name)) {
+                    includeData[name] = typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                }
+            }
+
+            return $http.post('/_api/includes', {
+                data: includeData
+            }).then(function (res) {
+                return res.data;
+            });
+        };
+
+        PageService.prototype.getRegionIndex = function (page, regionName) {
+            //map region name to index
+            var regionIndex = null;
+            for (var i = 0; i < page.regions.length && regionIndex === null; i++) {
+                if (page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+            return regionIndex;
+        };
+
+        PageService.prototype.addRegion = function (page, regionName) {
+            page.regions.push({
+                name: regionName,
+                includes: []
+            });
+            return page.regions.length - 1;
+        };
+
+        PageService.prototype.addIncludeToPage = function (page, regionIndex, plugin, include) {
+            page.regions[regionIndex].includes.push({
+                plugin: plugin,
+                include: include._id
+            });
+        };
+
+        PageService.prototype.moveInclude = function (page, regionName, fromIndex, toIndex) {
+            //find the region
+            var region = page.regions.filter(function (region) {
+                return region.name === regionName;
+            })[0];
+
+            if (region) {
+                var includeToMove = region.includes[fromIndex];
+                region.includes.splice(fromIndex, 1);
+                region.includes.splice(toIndex, 0, includeToMove);
+            }
+            return page;
+        };
+
+        PageService.prototype.generateUrl = function (page, parent) {
+
+            parent = parent || page.parent;
+
+            var parentUrlPart = null;
+            if (parent && parent.url) {
+                parentUrlPart = parent.url;
+            }
+            return (parentUrlPart || '') + '/' + slugify(page.name);
+        };
+
+        /**
+         * Removes an include from a page model. Does not delete the actual include entity
+         * @param page
+         * @param regionIndex
+         * @param includeIndex
+         * @return {*}
+         */
+        PageService.prototype.removeInclude = function (page, regionIndex, includeIndex) {
+
+            var i;
+            //convert region name to index
+            for (i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
+                if (page.regions[i].name === regionIndex) {
+                    regionIndex = i;
+                }
+            }
+
+            //remove that index from the regions array
+            if (typeof regionIndex === 'number') {
+                for (i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                    if (i === includeIndex) {
+                        page.regions[regionIndex].includes.splice(i, 1);
+                    }
+                }
+            } else {
+                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
+                throw new Error(msg);
+            }
+
+            return page;
+        };
+
+        PageService.prototype.depopulatePage = function (page) {
+
+            delete page.createdBy;
+            delete page.updatedBy;
+            delete page.createdAt;
+            delete page.updatedAt;
+
+            if (page.template && page.template._id) {
+                page.template = page.template._id;
+            }
+            if (page.parent && page.parent._id) {
+                page.parent = page.parent._id;
+            }
+            if (page.basePage && page.basePage._id) {
+                page.basePage = page.basePage._id;
+            }
+            if (page.redirect && page.redirect._id) {
+                page.redirect = page.redirect._id;
+            }
+            page.regions = page.regions.filter(function (region) {
+                return (typeof region === 'undefined' ? 'undefined' : _typeof(region)) === 'object';
+            }).map(function (region) {
+                region.includes = region.includes.map(function (includeWrapper) {
+
+                    if (includeWrapper.plugin && includeWrapper.plugin._id) {
+                        includeWrapper.plugin = includeWrapper.plugin._id;
+                    }
+                    if (includeWrapper.include && includeWrapper.include._id) {
+                        includeWrapper.include = includeWrapper.include._id;
+                    }
+                    return includeWrapper;
+                });
+
+                return region;
+            });
+            return page;
+        };
+
+        PageService.prototype.synchronizeWithBasePage = function (page) {
+            function getRegionFromPage(page, regionName) {
+                return page.regions.filter(function (region) {
+                    return region.name === regionName;
+                })[0] || null;
+            }
+            function containsInclude(region, includeToFind) {
+                return region.includes.some(function (includeWrapper) {
+                    return includeWrapper.include._id === includeToFind.include;
+                });
+            }
+            //get basepage from id value
+            var syncResults = [];
+            page.template.regions.forEach(function (templateRegion) {
+                var syncResult = {
+                    region: templateRegion.name,
+                    removedCount: 0,
+                    sharedCount: 0
+                };
+                var sharing = !!templateRegion.sharing;
+                var pageRegion = getRegionFromPage(page, templateRegion.name);
+                if (!pageRegion) {
+                    pageRegion = {
+                        name: templateRegion.name,
+                        includes: []
+                    };
+                    page.regions.push(pageRegion);
+                }
+                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
+                if (baseRegion) {
+                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                    //add additional non-shared includes at the end
+                    baseRegion.includes.forEach(function (baseInclude) {
+                        if (sharing && !containsInclude(pageRegion, baseInclude)) {
+                            pageRegion.includes.push(baseInclude);
+                        }
+                    });
+                    syncResult.sharedCount = pageRegion.includes.length - startCount;
+                }
+                syncResults.push(syncResult);
+            });
+
+            return syncResults;
+        };
+
+        PageService.prototype.getPageHierarchyName = function (page) {
+            var selectName = [];
+            if (page.parent && page.parent.name) {
+                if (page.parent.parent) {
+                    selectName.push('...');
+                }
+
+                selectName.push(page.parent.name);
+            }
+            selectName.push(page.name);
+            return selectName.join(' / ');
+        };
+
+        PageService.prototype.getOrderOfLastPage = function (parentPage) {
+            var siblingsQuery = parentPage ? {
+                parent: parentPage._id
+            } : {
+                root: 'top'
+            };
+
+            //get future siblings
+            return this.getPages(siblingsQuery).then(function (pages) {
+                if (pages.length === 0) {
+                    return -1;
+                }
+
+                var pageOrders = pages.map(function (page) {
+                    return page.order;
+                });
+                return Math.max.apply(null, pageOrders);
+            });
+        };
+
+        return new PageService();
+    });
+
+    function slugify(str) {
+
+        str = str || '';
+        str = str.replace(/^\s+|\s+$/g, ''); // trim
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
+        var to = 'aaaaaeeeeeiiiiooooouuuunc------';
+        for (var i = 0, l = from.length; i < l; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+        .replace(/\s+/g, '-') // collapse whitespace and replace by -
+        .replace(/-+/g, '-'); // collapse dashes
+
+        return str;
+    }
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('SitemapController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService) {
+
+        $rootScope.pageTitle = 'Sitemap';
+
+        $scope.updateSearch = function (action) {
+            $scope.viewMode = action;
+            $location.path('/pages').search('action', action).replace();
+        };
+
+        $scope.macroAction = $routeParams.macroAction;
+        $scope.viewMode = $location.search().action;
+        if (!$scope.viewMode && !$scope.macroAction) {
+            $scope.updateSearch('configure');
+        }
+
+        function getSite() {
+            siteService.getSite().then(function (site) {
+                $scope.site = site;
+            }).catch(function (err) {
+                $scope.showError('Error getting site', err);
+            });
+        }
+
+        function getPages() {
+            pageService.getPages().then(function (allPages) {
+                var pageMap = {};
+                allPages = allPages.filter(function (page) {
+                    return page.status < 400;
+                }).sort(function (a, b) {
+                    if (a.order < b.order) {
+                        return -1;
+                    } else if (a.order > b.order) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                });
+                allPages.forEach(function (page) {
+                    pageMap[page._id] = page;
+                });
+
+                var populateChildren = function populateChildren(pages) {
+                    pages.forEach(function (currentPage) {
+                        currentPage.children = allPages.filter(function (childCandidate) {
+                            var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
+                            return currentPage._id === candidateParentId;
+                        });
+                        if (currentPage.children.length > 0) {
+                            populateChildren(currentPage.children);
+                        }
+                    });
+                };
+
+                var primaryRoots = allPages.filter(function (page) {
+                    return page.root === 'top';
+                });
+                populateChildren(primaryRoots);
+
+                $scope.pages = primaryRoots;
+            }).catch(function (err) {
+                $scope.showError('Error getting pages', err);
+            });
+        }
+
+        function getMacros() {
+            macroService.getMacros().then(function (macros) {
+                $scope.macros = macros;
+            });
+        }
+
+        getSite();
+        getPages();
+        getMacros();
+
+        $scope.addPage = function (parentPage) {
+            $scope.showInfo('Preparing new page...');
+
+            pageService.getOrderOfLastPage(parentPage).then(function (highestOrder) {
+                var parentRoot = parentPage ? parentPage._id : 'root';
+                highestOrder++;
+                $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
+            }).catch(function (msg) {
+                $scope.showError('Unable to determine order of new page', msg);
+            });
+        };
+
+        $scope.removePage = function (page) {
+
+            if (page.published) {
+                $location.path('/pages/delete/' + page._id);
+            } else {
+                var really = window.confirm('Really delete this page?');
+                if (really) {
+                    pageService.deletePage(page).then(function () {
+                        window.location.reload();
+                        $scope.showInfo('Page: ' + page.name + ' removed.');
+                    }).catch(function (msg) {
+                        $scope.showError('Error deleting page', msg);
+                    });
+                }
+            }
+        };
+
+        $scope.movePage = function (page, direction) {
+
+            var silbingQuery = {
+                order: page.order + direction
+            };
+            if (page.parent) {
+                silbingQuery.parent = page.parent._id;
+            } else if (page.root) {
+                silbingQuery.root = page.root;
+            }
+
+            pageService.getPages(silbingQuery).then(function (siblings) {
+
+                var siblingPage = siblings[0];
+                if (!siblingPage) {
+                    //$scope.showInfo('Couldn\'t re-order pages');
+                    return;
+                }
+                var promises = [];
+                promises.push(pageService.updatePage(page._id, {
+                    order: page.order + direction,
+                    draft: true
+                }));
+                promises.push(pageService.updatePage(siblingPage._id, {
+                    order: siblingPage.order - direction,
+                    draft: true
+                }));
+
+                Promise.all(promises).then(function () {
+                    getPages();
+                }).catch(function (err) {
+                    $scope.showError('Problem re-ordering pages', err);
+                });
+            });
+        };
+
+        $scope.moveBack = function (page) {
+            $scope.movePage(page, -1);
+        };
+        $scope.moveForward = function (page) {
+            $scope.movePage(page, 1);
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
     adminApp.controller('MediaController', function ($scope, $rootScope, $location, $window, $q, mediaService) {
         $rootScope.pageTitle = 'Media';
 
@@ -1197,805 +1996,6 @@
             }).catch(function (err) {
                 $scope.showError('Could not update text media', err);
             });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MacroController', function ($log, $scope, $rootScope, $routeParams, $location, $window, macroService, templateService, pluginService, pageService) {
-        $log.info('Showing Macro View');
-
-        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
-
-        var macroId = $routeParams.macroId;
-
-        $scope.macro = {
-            includes: []
-        };
-
-        $scope.allPages = [];
-        var setupPromises = [];
-        setupPromises.push(pageService.getPages().then(function (pages) {
-            $scope.allPages = pages;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t get all pages', err);
-        }));
-
-        $scope.templates = [];
-        setupPromises.push(templateService.doGetAvailableTemplates().then(function (templates) {
-            $log.info('Got available templates.');
-            $scope.templates = templates;
-        }));
-
-        $scope.plugins = [];
-        setupPromises.push(pluginService.getPlugins().then(function (plugins) {
-            $log.info('Got available plugins.');
-            $scope.plugins = plugins;
-        }));
-
-        if (macroId) {
-            $scope.macroId = macroId;
-            $log.debug('Fetching macro data for id: %s...', macroId);
-            setupPromises.push(macroService.getMacro(macroId).then(function (macro) {
-                $log.debug('Got macro data:\n', JSON.stringify(macro, null, '\t'));
-                $scope.macro = macro;
-            }).catch(function (err) {
-                $log.error(err, 'Error getting macro');
-                $scope.showError('Error getting macro', err);
-            }));
-        }
-
-        Promise.all(setupPromises).then(function () {
-            //if there's only one template choose it automatically
-            if ($scope.templates.length === 1) {
-                $scope.macro.template = $scope.templates[0];
-            }
-        }).catch(function (err) {
-            $scope.showError(err);
-        });
-
-        $scope.addInclude = function (regionName) {
-            $scope.macro.includes.push({
-                name: '',
-                plugin: {},
-                region: regionName,
-                _justAdded: true
-            });
-        };
-        $scope.clearJustAdded = function (include) {
-            delete include._justAdded;
-        };
-
-        $scope.cancel = function () {
-            $location.path('/macros');
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
-            }
-
-            var macro = macroService.depopulateMacro($scope.macro);
-            if (macroId) {
-                $log.info('Updating macro: %s...', macroId);
-                $log.debug('with data:\n%s', JSON.stringify(macro, null, '\t'));
-                macroService.updateMacro(macroId, macro).then(function () {
-                    $log.info('Macro updated successfully');
-                    $scope.showSuccess('Macro updated.');
-                    $location.path('/macros');
-                }).catch(function (err) {
-                    $log.error(err, 'Error updating macro');
-                    $scope.showError('Error updating macro', err);
-                });
-            } else {
-                $log.info('Creating new macro...');
-                $log.debug('with data:\n%s', JSON.stringify(macro, null, '\t'));
-                macroService.createMacro($scope.macro).then(function () {
-                    $log.info('Macro created successfully');
-                    $scope.showSuccess('Macro created.');
-                    $location.path('/macros');
-                }).catch(function (err) {
-                    $log.error(err, 'Error creating macro');
-                    $scope.showError('Error creating macro', err);
-                });
-            }
-        };
-
-        $scope.remove = function () {
-            var really = window.confirm('Really delete this macro?');
-            if (really) {
-                $log.info('Deleting macro: %s...', $scope.macro._id);
-                macroService.deleteMacro($scope.macro._id).then(function () {
-                    $log.info('Macro deleted');
-                    $location.path('/macros');
-                }).catch(function (err) {
-                    $log.error(err, 'Could not delete macro');
-                    $scope.showError('Error deleting macro', err);
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MacroListController', function ($scope, $rootScope, $routeParams, $location, macroService) {
-
-        $rootScope.pageTitle = 'Macros';
-
-        $scope.macros = [];
-
-        macroService.getMacros().then(function (macros) {
-            $scope.macros = macros;
-        }).catch(function (err) {
-            $scope.showError('Error getting macros', err);
-        });
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('macroService', function ($http, errorFactory) {
-
-        function MacroService() {
-            this.clearCache();
-        }
-        MacroService.prototype.getMacros = function () {
-            var _this = this;
-
-            if (Array.isArray(this.macroCache)) {
-                return Promise.resolve(this.macroCache);
-            }
-
-            return $http.get('/_api/macros').then(function (res) {
-                _this.macroCache = res.data;
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        MacroService.prototype.getMacro = function (macroId) {
-            return $http.get('/_api/macros/' + macroId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        MacroService.prototype.createMacro = function (macroData) {
-            var _this2 = this;
-
-            return $http.post('/_api/macros', macroData).then(function (res) {
-                _this2.clearCache();
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MacroService.prototype.updateMacro = function (macroId, macroData) {
-            var _this3 = this;
-
-            return $http.put('/_api/macros/' + macroId, macroData).then(function (res) {
-                _this3.clearCache();
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MacroService.prototype.deleteMacro = function (macroId) {
-            return $http.delete('/_api/macros/' + macroId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MacroService.prototype.depopulateMacro = function (macro) {
-
-            delete macro.createdBy;
-            delete macro.updatedBy;
-            delete macro.createdAt;
-            delete macro.updatedAt;
-
-            if (macro.template && macro.template._id) {
-                macro.template = macro.template._id;
-            }
-            if (macro.parent && macro.parent._id) {
-                macro.parent = macro.parent._id;
-            }
-            if (macro.basePage && macro.basePage._id) {
-                macro.basePage = macro.basePage._id;
-            }
-
-            macro.includes = macro.includes.map(function (include) {
-                if (include.plugin && include.plugin._id) {
-                    include.plugin = include.plugin._id;
-                }
-                return include;
-            });
-
-            return macro;
-        };
-
-        MacroService.prototype.clearCache = function () {
-            this.macroCache = null;
-        };
-
-        return new MacroService();
-    });
-})();
-'use strict';
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('pageService', function ($http, errorFactory) {
-
-        function PageService() {
-            this.pageCache = null;
-        }
-        PageService.prototype.getPages = function (filter) {
-            var self = this;
-
-            var queryKeyValPairs = [];
-            if ((typeof filter === 'undefined' ? 'undefined' : _typeof(filter)) === 'object') {
-                for (var key in filter) {
-                    if (filter.hasOwnProperty(key)) {
-                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
-                    }
-                }
-            } else if (this.pageCache) {
-                //if no filter and the page cache is populated
-                return Promise.resolve(this.pageCache);
-            }
-
-            var path = '/_api/pages';
-            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            return $http.get(url).then(function (res) {
-                //if no filter was used cache
-                if (!filter) {
-                    self.pageCache = res.data;
-                }
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.getAvailableTags = function () {
-            return this.getPages().then(function (pages) {
-                //combine all tags into one
-                var seen = {};
-                return pages.reduce(function (allTags, page) {
-                    return allTags.concat(page.tags.filter(function (tag) {
-                        return tag.text; //only return tags with text property
-                    }));
-                }, []).filter(function (tag) {
-                    //remove dupes
-                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
-                });
-            });
-        };
-
-        PageService.prototype.getPage = function (pageId) {
-            return $http.get('/_api/pages/' + pageId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.createPage = function (pageData) {
-
-            if (!pageData.url) {
-                pageData.url = this.generateUrl(pageData);
-            }
-            this.pageCache = null;
-            return $http.post('/_api/pages', pageData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        /**
-         * Deletes a page. If it is not published, its non-shared includes will also be deleted
-         * @param page
-         * @return {Promise|Promise.<T>|*}
-         */
-        PageService.prototype.deletePage = function (page) {
-            var _this = this;
-
-            this.pageCache = null;
-            var promise;
-            if (page.published) {
-                var pageData = {
-                    status: page.status || 404
-                };
-
-                pageData.redirect = page.redirect ? page.redirect._id : null;
-
-                //live pages are updated to be gone
-                promise = $http.put('/_api/pages/' + page._id, pageData);
-            } else {
-                //pages which have never been published can be hard deleted
-                promise = $http.delete('/_api/pages/' + page._id).then(function () {
-                    var deleteIncludePromises = [];
-                    var _iteratorNormalCompletion = true;
-                    var _didIteratorError = false;
-                    var _iteratorError = undefined;
-
-                    try {
-                        var _loop = function _loop() {
-                            var templateRegion = _step.value;
-
-                            var pageRegion = page.regions.find(function (region) {
-                                return region.name === templateRegion.name;
-                            });
-                            if (!templateRegion.sharing && pageRegion) {
-                                var promises = pageRegion.includes.map(function (include) {
-                                    return _this.deleteInclude(include._id);
-                                });
-                                deleteIncludePromises = deleteIncludePromises.concat(promises);
-                            }
-                        };
-
-                        for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                            _loop();
-                        }
-                    } catch (err) {
-                        _didIteratorError = true;
-                        _iteratorError = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion && _iterator.return) {
-                                _iterator.return();
-                            }
-                        } finally {
-                            if (_didIteratorError) {
-                                throw _iteratorError;
-                            }
-                        }
-                    }
-
-                    return Promise.all(deleteIncludePromises);
-                });
-            }
-            return promise.then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.deleteInclude = function (includeId) {
-            return $http.delete('/_api/includes' + includeId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.updatePage = function (pageId, pageData) {
-            this.pageCache = null;
-            return $http.put('/_api/pages/' + pageId, pageData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.createIncludeData = function (plugin) {
-
-            var includeData = {};
-
-            var schemaProps = plugin.config.schema.properties || {};
-            for (var name in schemaProps) {
-                if (schemaProps.hasOwnProperty(name)) {
-                    includeData[name] = typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
-                }
-            }
-
-            return $http.post('/_api/includes', {
-                data: includeData
-            }).then(function (res) {
-                return res.data;
-            });
-        };
-
-        PageService.prototype.getRegionIndex = function (page, regionName) {
-            //map region name to index
-            var regionIndex = null;
-            for (var i = 0; i < page.regions.length && regionIndex === null; i++) {
-                if (page.regions[i].name === regionName) {
-                    regionIndex = i;
-                }
-            }
-            return regionIndex;
-        };
-
-        PageService.prototype.addRegion = function (page, regionName) {
-            page.regions.push({
-                name: regionName,
-                includes: []
-            });
-            return page.regions.length - 1;
-        };
-
-        PageService.prototype.addIncludeToPage = function (page, regionIndex, plugin, include) {
-            page.regions[regionIndex].includes.push({
-                plugin: plugin,
-                include: include._id
-            });
-        };
-
-        PageService.prototype.moveInclude = function (page, regionName, fromIndex, toIndex) {
-            //find the region
-            var region = page.regions.filter(function (region) {
-                return region.name === regionName;
-            })[0];
-
-            if (region) {
-                var includeToMove = region.includes[fromIndex];
-                region.includes.splice(fromIndex, 1);
-                region.includes.splice(toIndex, 0, includeToMove);
-            }
-            return page;
-        };
-
-        PageService.prototype.generateUrl = function (page, parent) {
-
-            parent = parent || page.parent;
-
-            var parentUrlPart = null;
-            if (parent && parent.url) {
-                parentUrlPart = parent.url;
-            }
-            return (parentUrlPart || '') + '/' + slugify(page.name);
-        };
-
-        /**
-         * Removes an include from a page model. Does not delete the actual include entity
-         * @param page
-         * @param regionIndex
-         * @param includeIndex
-         * @return {*}
-         */
-        PageService.prototype.removeInclude = function (page, regionIndex, includeIndex) {
-
-            var i;
-            //convert region name to index
-            for (i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
-                if (page.regions[i].name === regionIndex) {
-                    regionIndex = i;
-                }
-            }
-
-            //remove that index from the regions array
-            if (typeof regionIndex === 'number') {
-                for (i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
-                    if (i === includeIndex) {
-                        page.regions[regionIndex].includes.splice(i, 1);
-                    }
-                }
-            } else {
-                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
-                throw new Error(msg);
-            }
-
-            return page;
-        };
-
-        PageService.prototype.depopulatePage = function (page) {
-
-            delete page.createdBy;
-            delete page.updatedBy;
-            delete page.createdAt;
-            delete page.updatedAt;
-
-            if (page.template && page.template._id) {
-                page.template = page.template._id;
-            }
-            if (page.parent && page.parent._id) {
-                page.parent = page.parent._id;
-            }
-            if (page.basePage && page.basePage._id) {
-                page.basePage = page.basePage._id;
-            }
-            if (page.redirect && page.redirect._id) {
-                page.redirect = page.redirect._id;
-            }
-            page.regions = page.regions.filter(function (region) {
-                return (typeof region === 'undefined' ? 'undefined' : _typeof(region)) === 'object';
-            }).map(function (region) {
-                region.includes = region.includes.map(function (includeWrapper) {
-
-                    if (includeWrapper.plugin && includeWrapper.plugin._id) {
-                        includeWrapper.plugin = includeWrapper.plugin._id;
-                    }
-                    if (includeWrapper.include && includeWrapper.include._id) {
-                        includeWrapper.include = includeWrapper.include._id;
-                    }
-                    return includeWrapper;
-                });
-
-                return region;
-            });
-            return page;
-        };
-
-        PageService.prototype.synchronizeWithBasePage = function (page) {
-            function getRegionFromPage(page, regionName) {
-                return page.regions.filter(function (region) {
-                    return region.name === regionName;
-                })[0] || null;
-            }
-            function containsInclude(region, includeToFind) {
-                return region.includes.some(function (include) {
-                    return include._id === includeToFind._id;
-                });
-            }
-            //get basepage from id value
-            var syncResults = [];
-            page.template.regions.forEach(function (templateRegion) {
-                var syncResult = {
-                    region: templateRegion.name,
-                    removedCount: 0,
-                    sharedCount: 0
-                };
-                var sharing = !!templateRegion.sharing;
-                var pageRegion = getRegionFromPage(page, templateRegion.name);
-                if (!pageRegion) {
-                    pageRegion = {
-                        name: templateRegion.name,
-                        includes: []
-                    };
-                    page.regions.push(pageRegion);
-                }
-                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
-                if (baseRegion) {
-                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
-                    //add additional non-shared includes at the end
-                    baseRegion.includes.forEach(function (baseInclude) {
-                        if (sharing && !containsInclude(pageRegion, baseInclude)) {
-                            pageRegion.includes.push(baseInclude);
-                        }
-                    });
-                    syncResult.sharedCount = pageRegion.includes.length - startCount;
-                }
-                syncResults.push(syncResult);
-            });
-
-            return syncResults;
-        };
-
-        PageService.prototype.getPageHierarchyName = function (page) {
-            var selectName = [];
-            if (page.parent && page.parent.name) {
-                if (page.parent.parent) {
-                    selectName.push('...');
-                }
-
-                selectName.push(page.parent.name);
-            }
-            selectName.push(page.name);
-            return selectName.join(' / ');
-        };
-
-        PageService.prototype.getOrderOfLastPage = function (parentPage) {
-            var siblingsQuery = parentPage ? {
-                parent: parentPage._id
-            } : {
-                root: 'top'
-            };
-
-            //get future siblings
-            return this.getPages(siblingsQuery).then(function (pages) {
-                if (pages.length === 0) {
-                    return -1;
-                }
-
-                var pageOrders = pages.map(function (page) {
-                    return page.order;
-                });
-                return Math.max.apply(null, pageOrders);
-            });
-        };
-
-        return new PageService();
-    });
-
-    function slugify(str) {
-
-        str = str || '';
-        str = str.replace(/^\s+|\s+$/g, ''); // trim
-        str = str.toLowerCase();
-
-        // remove accents, swap ñ for n, etc
-        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
-        var to = 'aaaaaeeeeeiiiiooooouuuunc------';
-        for (var i = 0, l = from.length; i < l; i++) {
-            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
-        }
-
-        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-'); // collapse dashes
-
-        return str;
-    }
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('SitemapController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService) {
-
-        $rootScope.pageTitle = 'Sitemap';
-
-        $scope.updateSearch = function (action) {
-            $scope.viewMode = action;
-            $location.path('/pages').search('action', action).replace();
-        };
-
-        $scope.macroAction = $routeParams.macroAction;
-        $scope.viewMode = $location.search().action;
-        if (!$scope.viewMode && !$scope.macroAction) {
-            $scope.updateSearch('configure');
-        }
-
-        function getSite() {
-            siteService.getSite().then(function (site) {
-                $scope.site = site;
-            }).catch(function (err) {
-                $scope.showError('Error getting site', err);
-            });
-        }
-
-        function getPages() {
-            pageService.getPages().then(function (allPages) {
-                var pageMap = {};
-                allPages = allPages.filter(function (page) {
-                    return page.status < 400;
-                }).sort(function (a, b) {
-                    if (a.order < b.order) {
-                        return -1;
-                    } else if (a.order > b.order) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-                allPages.forEach(function (page) {
-                    pageMap[page._id] = page;
-                });
-
-                var populateChildren = function populateChildren(pages) {
-                    pages.forEach(function (currentPage) {
-                        currentPage.children = allPages.filter(function (childCandidate) {
-                            var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
-                            return currentPage._id === candidateParentId;
-                        });
-                        if (currentPage.children.length > 0) {
-                            populateChildren(currentPage.children);
-                        }
-                    });
-                };
-
-                var primaryRoots = allPages.filter(function (page) {
-                    return page.root === 'top';
-                });
-                populateChildren(primaryRoots);
-
-                $scope.pages = primaryRoots;
-            }).catch(function (err) {
-                $scope.showError('Error getting pages', err);
-            });
-        }
-
-        function getMacros() {
-            macroService.getMacros().then(function (macros) {
-                $scope.macros = macros;
-            });
-        }
-
-        getSite();
-        getPages();
-        getMacros();
-
-        $scope.addPage = function (parentPage) {
-            $scope.showInfo('Preparing new page...');
-
-            pageService.getOrderOfLastPage(parentPage).then(function (highestOrder) {
-                var parentRoot = parentPage ? parentPage._id : 'root';
-                highestOrder++;
-                $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
-            }).catch(function (msg) {
-                $scope.showError('Unable to determine order of new page', msg);
-            });
-        };
-
-        $scope.removePage = function (page) {
-
-            if (page.published) {
-                $location.path('/pages/delete/' + page._id);
-            } else {
-                var really = window.confirm('Really delete this page?');
-                if (really) {
-                    pageService.deletePage(page).then(function () {
-                        window.location.reload();
-                        $scope.showInfo('Page: ' + page.name + ' removed.');
-                    }).catch(function (msg) {
-                        $scope.showError('Error deleting page', msg);
-                    });
-                }
-            }
-        };
-
-        $scope.movePage = function (page, direction) {
-
-            var silbingQuery = {
-                order: page.order + direction
-            };
-            if (page.parent) {
-                silbingQuery.parent = page.parent._id;
-            } else if (page.root) {
-                silbingQuery.root = page.root;
-            }
-
-            pageService.getPages(silbingQuery).then(function (siblings) {
-
-                var siblingPage = siblings[0];
-                if (!siblingPage) {
-                    //$scope.showInfo('Couldn\'t re-order pages');
-                    return;
-                }
-                var promises = [];
-                promises.push(pageService.updatePage(page._id, {
-                    order: page.order + direction,
-                    draft: true
-                }));
-                promises.push(pageService.updatePage(siblingPage._id, {
-                    order: siblingPage.order - direction,
-                    draft: true
-                }));
-
-                Promise.all(promises).then(function () {
-                    getPages();
-                }).catch(function (err) {
-                    $scope.showError('Problem re-ordering pages', err);
-                });
-            });
-        };
-
-        $scope.moveBack = function (page) {
-            $scope.movePage(page, -1);
-        };
-        $scope.moveForward = function (page) {
-            $scope.movePage(page, 1);
         };
     });
 })();
@@ -2673,7 +2673,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
         $scope.templates = [];
 
-        templateService.doGetAvailableTemplates().then(function (templates) {
+        templateService.getAvailableTemplates().then(function (templates) {
             $scope.templates = templates;
         }).catch(function (err) {
             $scope.showError('Error getting templates', err);
@@ -2705,7 +2705,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 throw errorFactory.createResponseError(res);
             });
         };
-        TemplateService.prototype.doGetAvailableTemplates = function () {
+        TemplateService.prototype.getAvailableTemplates = function () {
             return $http.get('/_api/templates').then(function (res) {
                 return res.data;
             }).catch(function (res) {
@@ -2881,235 +2881,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
 
         return new UserService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('DeletePageController', function ($scope, $rootScope, $routeParams, $location, $timeout, pageService, $window) {
-
-        var pageId = $routeParams.pageId;
-        $scope.status = 410;
-
-        pageService.getPage(pageId).then(function (page) {
-            $scope.page = page;
-
-            //default delete status
-            page.status = 410;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t find a page to delete', err);
-        });
-        pageService.getPages().then(function (pages) {
-            $scope.pages = pages;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t get pages', err);
-        });
-
-        $scope.cancel = function () {
-            $location.path('');
-        };
-
-        $scope.submit = function (form) {
-
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-
-            pageService.deletePage(page).then(function () {
-                $location.path('');
-                $scope.showInfo('Page: ' + page.name + ' removed.');
-            }).catch(function (err) {
-                $scope.showError('Error deleting page', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, $window) {
-
-        $log.info('Showing page view.');
-
-        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
-
-        $scope.section = $routeParams.section || 'basic';
-
-        $scope.clearNotification();
-
-        var pageId = $routeParams.pageId;
-
-        var parentPageId = $routeParams.parentPageId;
-        var order = $routeParams.order;
-
-        $scope.allPages = [];
-        pageService.getPages().then(function (pages) {
-            $scope.allPages = pages;
-        }).catch(function (err) {
-            $scope.showError('Couldn\'t get all pages', err);
-        });
-
-        var pageSetupPromises = [];
-        pageSetupPromises.push(templateService.doGetAvailableTemplates().then(function (templates) {
-            $log.info('Got available templates.');
-            $scope.templates = templates;
-        }));
-        pageSetupPromises.push(pluginService.getPlugins().then(function (availablePlugins) {
-            $log.debug('Got available plugins.');
-            $scope.availablePlugins = availablePlugins;
-        }));
-
-        if (pageId) {
-            $log.debug('Fetching page data for: %s', pageId);
-            $scope.pageId = pageId;
-            pageSetupPromises.push(pageService.getPage(pageId).then(function (page) {
-                $log.debug('Got page data OK.');
-                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
-                $scope.page = page;
-
-                if (page.expiresAt) {
-                    page.expiresAt = new Date(page.expiresAt);
-                }
-                if (page.publishedAt) {
-                    page.publishedAt = new Date(page.publishedAt);
-                }
-
-                //depopulate redirect page
-                if (page.redirect) {
-                    page.redirect = page.redirect._id;
-                }
-            }));
-        } else {
-            $scope.page = {
-                regions: [],
-                useInNav: true
-            };
-            if (parentPageId) {
-                pageSetupPromises.push(pageService.getPage(parentPageId).then(function (page) {
-                    $scope.page.parent = page;
-                }));
-            } else {
-                $scope.page.root = 'top';
-            }
-        }
-
-        Promise.all(pageSetupPromises).then(function () {
-            //if there's only one template choose it automatically
-            if (!$scope.page.template && $scope.templates.length === 1) {
-                $scope.page.template = $scope.templates[0];
-            }
-        }).catch(function (err) {
-            $scope.showError(err);
-        });
-
-        $scope.updateUrl = function () {
-            $scope.page.url = pageService.generateUrl($scope.page);
-        };
-
-        pageService.getAvailableTags().then(function (tags) {
-            $scope.availableTags = tags;
-        });
-
-        $scope.getMatchingTags = function (text) {
-            text = text.toLowerCase();
-            var tags = $scope.availableTags.filter(function (tag) {
-                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
-            });
-            return Promise.resolve(tags);
-        };
-
-        $scope.cancel = function () {
-            $location.path('/pages');
-        };
-
-        $scope.$watch('page.name', function () {
-            if (!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
-                $scope.updateUrl();
-            }
-        });
-
-        $scope.$watch('page.status', function (status) {
-            status = parseInt(status, 10);
-            if ($scope.page && status !== 301 && status !== 302) {
-                $scope.page.redirect = null;
-            }
-        });
-
-        $scope.syncResults = null;
-
-        $scope.synchronizeWithBasePage = function (page) {
-            $scope.syncResults = pageService.synchronizeWithBasePage(page);
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $scope.submitted = true;
-                $window.scrollTo(0, 0);
-                return;
-            }
-
-            var page = $scope.page;
-            if (order) {
-                page.order = order;
-            }
-
-            if (pageId) {
-                $log.info('Update page: %s...', pageId);
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-                page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).then(function () {
-                    $log.info('Page successfully updated');
-                    $scope.showSuccess('Page: ' + page.name + ' saved.');
-                    $location.path('');
-                }).catch(function (err) {
-                    $log.error(err, 'Error updating page');
-                    $scope.showError('Error updating page', err);
-                });
-            } else {
-                $log.info('Creating page...');
-                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
-
-                //create regions based on template
-                var pageRegions = [];
-                page.template.regions.forEach(function (regionMeta) {
-                    var newRegion = {};
-                    newRegion.name = regionMeta.name;
-                    newRegion.includes = [];
-                    pageRegions.push(newRegion);
-                });
-                page.regions = pageRegions;
-
-                if (page.basePage) {
-                    pageService.synchronizeWithBasePage(page);
-                }
-
-                page = pageService.depopulatePage(page);
-                pageService.createPage(page).then(function (page) {
-                    $log.info('Page successfully created');
-                    $scope.showSuccess('Page: ' + page.name + ' created.');
-                    $location.path('');
-                }).catch(function (err) {
-                    $log.error(err, 'Error creating page');
-                    $scope.showError('Error adding new page', err);
-                });
-            }
-        };
     });
 })();
 'use strict';
@@ -3393,6 +3164,235 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 $log.error(err, 'Error creating page');
                 $scope.showError('Error adding new page', err);
             });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('DeletePageController', function ($scope, $rootScope, $routeParams, $location, $timeout, pageService, $window) {
+
+        var pageId = $routeParams.pageId;
+        $scope.status = 410;
+
+        pageService.getPage(pageId).then(function (page) {
+            $scope.page = page;
+
+            //default delete status
+            page.status = 410;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t find a page to delete', err);
+        });
+        pageService.getPages().then(function (pages) {
+            $scope.pages = pages;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t get pages', err);
+        });
+
+        $scope.cancel = function () {
+            $location.path('');
+        };
+
+        $scope.submit = function (form) {
+
+            if (form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0, 0);
+                return;
+            }
+
+            var page = $scope.page;
+
+            pageService.deletePage(page).then(function () {
+                $location.path('');
+                $scope.showInfo('Page: ' + page.name + ' removed.');
+            }).catch(function (err) {
+                $scope.showError('Error deleting page', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, $window) {
+
+        $log.info('Showing page view.');
+
+        $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+
+        $scope.section = $routeParams.section || 'basic';
+
+        $scope.clearNotification();
+
+        var pageId = $routeParams.pageId;
+
+        var parentPageId = $routeParams.parentPageId;
+        var order = $routeParams.order;
+
+        $scope.allPages = [];
+        pageService.getPages().then(function (pages) {
+            $scope.allPages = pages;
+        }).catch(function (err) {
+            $scope.showError('Couldn\'t get all pages', err);
+        });
+
+        var pageSetupPromises = [];
+        pageSetupPromises.push(templateService.getAvailableTemplates().then(function (templates) {
+            $log.info('Got available templates.');
+            $scope.templates = templates;
+        }));
+        pageSetupPromises.push(pluginService.getPlugins().then(function (availablePlugins) {
+            $log.debug('Got available plugins.');
+            $scope.availablePlugins = availablePlugins;
+        }));
+
+        if (pageId) {
+            $log.debug('Fetching page data for: %s', pageId);
+            $scope.pageId = pageId;
+            pageSetupPromises.push(pageService.getPage(pageId).then(function (page) {
+                $log.debug('Got page data OK.');
+                $log.trace('...with data:\n', JSON.stringify(page, null, '\t'));
+                $scope.page = page;
+
+                if (page.expiresAt) {
+                    page.expiresAt = new Date(page.expiresAt);
+                }
+                if (page.publishedAt) {
+                    page.publishedAt = new Date(page.publishedAt);
+                }
+
+                //depopulate redirect page
+                if (page.redirect) {
+                    page.redirect = page.redirect._id;
+                }
+            }));
+        } else {
+            $scope.page = {
+                regions: [],
+                useInNav: true
+            };
+            if (parentPageId) {
+                pageSetupPromises.push(pageService.getPage(parentPageId).then(function (page) {
+                    $scope.page.parent = page;
+                }));
+            } else {
+                $scope.page.root = 'top';
+            }
+        }
+
+        Promise.all(pageSetupPromises).then(function () {
+            //if there's only one template choose it automatically
+            if (!$scope.page.template && $scope.templates.length === 1) {
+                $scope.page.template = $scope.templates[0];
+            }
+        }).catch(function (err) {
+            $scope.showError(err);
+        });
+
+        $scope.updateUrl = function () {
+            $scope.page.url = pageService.generateUrl($scope.page);
+        };
+
+        pageService.getAvailableTags().then(function (tags) {
+            $scope.availableTags = tags;
+        });
+
+        $scope.getMatchingTags = function (text) {
+            text = text.toLowerCase();
+            var tags = $scope.availableTags.filter(function (tag) {
+                return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+            });
+            return Promise.resolve(tags);
+        };
+
+        $scope.cancel = function () {
+            $location.path('/pages');
+        };
+
+        $scope.$watch('page.name', function () {
+            if (!pageId && $scope.pageForm && $scope.pageForm.url && $scope.pageForm.url.$pristine) {
+                $scope.updateUrl();
+            }
+        });
+
+        $scope.$watch('page.status', function (status) {
+            status = parseInt(status, 10);
+            if ($scope.page && status !== 301 && status !== 302) {
+                $scope.page.redirect = null;
+            }
+        });
+
+        $scope.syncResults = null;
+
+        $scope.synchronizeWithBasePage = function (page) {
+            $scope.syncResults = pageService.synchronizeWithBasePage(page);
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $scope.submitted = true;
+                $window.scrollTo(0, 0);
+                return;
+            }
+
+            var page = $scope.page;
+            if (order) {
+                page.order = order;
+            }
+
+            if (pageId) {
+                $log.info('Update page: %s...', pageId);
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+                page = pageService.depopulatePage(page);
+                pageService.updatePage(pageId, page).then(function () {
+                    $log.info('Page successfully updated');
+                    $scope.showSuccess('Page: ' + page.name + ' saved.');
+                    $location.path('');
+                }).catch(function (err) {
+                    $log.error(err, 'Error updating page');
+                    $scope.showError('Error updating page', err);
+                });
+            } else {
+                $log.info('Creating page...');
+                $log.trace('...with data:\n%s', JSON.stringify(page, null, '\t'));
+
+                //create regions based on template
+                var pageRegions = [];
+                page.template.regions.forEach(function (regionMeta) {
+                    var newRegion = {};
+                    newRegion.name = regionMeta.name;
+                    newRegion.includes = [];
+                    pageRegions.push(newRegion);
+                });
+                page.regions = pageRegions;
+
+                if (page.basePage) {
+                    pageService.synchronizeWithBasePage(page);
+                }
+
+                page = pageService.depopulatePage(page);
+                pageService.createPage(page).then(function (page) {
+                    $log.info('Page successfully created');
+                    $scope.showSuccess('Page: ' + page.name + ' created.');
+                    $location.path('');
+                }).catch(function (err) {
+                    $log.error(err, 'Error creating page');
+                    $scope.showError('Error adding new page', err);
+                });
+            }
         };
     });
 })();

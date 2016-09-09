@@ -26,7 +26,7 @@
         }));
 
         $scope.templates = [];
-        setupPromises.push(templateService.doGetAvailableTemplates().then(function(templates) {
+        setupPromises.push(templateService.getAvailableTemplates().then(function(templates) {
             $log.info('Got available templates.');
             $scope.templates = templates;
         }));
