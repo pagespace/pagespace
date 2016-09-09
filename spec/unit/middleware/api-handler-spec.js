@@ -301,7 +301,7 @@ describe('API Handler', () => {
             expect(doc.__v).toBeUndefined();
             expect(doc.draft).toBe(true);
             expect(doc.name).toBe('fooy');
-            expect(doc.updatedBy).toBe('userid');
+            expect(doc.updatedBy).toBe(req.user._id);
 
             resultPromise.finally(() => {
                 expect(res.json).toHaveBeenCalledWith(model);

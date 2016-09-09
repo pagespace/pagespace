@@ -262,8 +262,8 @@
                     })[0] || null;
             }
             function containsInclude(region, includeToFind) {
-                return region.includes.some(function(include) {
-                    return include._id === includeToFind._id;
+                return region.includes.some(function(includeWrapper) {
+                    return includeWrapper.include._id === includeToFind.include;
                 });
             }
             //get basepage from id value

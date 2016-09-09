@@ -1,8 +1,7 @@
 'use strict';
 
 //deps
-const 
-    Promise = require('bluebird'),
+const
     includeCache = require('../support/include-cache'),
     BaseHandler = require('./base-handler');
 
@@ -21,22 +20,24 @@ class PublishingHandler extends BaseHandler{
         const logger = this.getRequestLogger(this.logger, req);
     
         const draftIds = req.body;
+
+        if(!draftIds || !draftIds.length) {
+            const err = new Error('No page id\'s to publish');
+            err.status = 400;
+            next(err);
+        }
     
         logger.info('Publishing page IDs: [%s] ...', draftIds.join(', '));
     
-        const orConditions = draftIds.map((id) => ({
-            _id: id
-        }));
+        const orConditions = draftIds.map(id => ({ _id: id }));
     
         const DraftPage = this.dbSupport.getModel('Page');
-        const query = DraftPage.find({ $or : orConditions}).populate('template regions.includes.include');
-        const findPagesToPublish = Promise.promisify(query.exec, { context: query });
-        findPagesToPublish().then((pages) => {
+        DraftPage.find({ $or : orConditions}).populate('template regions.includes.include').exec().then((pages) => {
             let updates = [];
             let pageUpdateCount = 0;
             let includeUpdateCount = 0;
             
-            const queuedDraftTemplates = {};
+            const updatedTemplates = {}, updatedIncludes = {};
             const LivePage = this.dbSupport.getModel('Page', 'live');
             const DraftIncludeData = this.dbSupport.getModel('Include');
             const LiveIncludeData = this.dbSupport.getModel('Include', 'live');
@@ -71,48 +72,46 @@ class PublishingHandler extends BaseHandler{
                 livePage.updatedAt = Date.now();
                 livePage.updatedBy = req.user._id;
                 
-                //redirects
-                if(!page.redirect) {
+                //remove old redirects
+                if(!page.redirect && livePage.redirect) {
                     delete livePage.redirect;
                 }
+
     
                 //no longer a draft
                 livePage.draft = false;
+                livePage.published = true;
                 livePage.template = templateId;
-                const saveLivePage = Promise.promisify(LivePage.update, { context: LivePage });
-                updates.push(saveLivePage({_id: pageId}, livePage, { upsert: true }));
+                updates.push(LivePage.update({_id: pageId}, livePage, { upsert: true }));
                 logger.info(`Page queued to publish: ${livePage.name} (id=${pageId}) @ '${livePage.url}'`);
     
                 //page template
-                if(templateId && !queuedDraftTemplates[templateId]) {
+                if(templateId && !updatedTemplates[templateId]) {
                     //replicate live template
                     const liveTemplate = page.template.toObject();
                     delete liveTemplate._id;
                     delete liveTemplate.__v;
                     liveTemplate.draft = false;
-                    const saveLiveTemplate = Promise.promisify(LiveTemplate.update, { context: LiveTemplate});
-                    updates.push(saveLiveTemplate({_id: templateId}, liveTemplate, { upsert: true, overwrite: true }));
-                    queuedDraftTemplates[templateId] = true;
+                    updates.push(LiveTemplate.update({_id: templateId}, liveTemplate, { upsert: true, overwrite: true }));
+                    updatedTemplates[templateId] = true;
     
                     logger.info(`Template queued to publish: ${liveTemplate.name} (id=${templateId})`);
                 }
     
-                //page data
-                let saveDraftIncludeData;
-                let saveLiveIncludeData;
+                //includes
                 for(let region of page.regions) {
                     for(let includeWrapper of region.includes) {
-                        if(includeWrapper.include && includeWrapper.include.draft) {
-                            const includeId = includeWrapper.include._id.toString();
+                        const includeId = includeWrapper.include && includeWrapper.include._id ?
+                            includeWrapper.include._id.toString() : null;
+                        if(includeId && includeWrapper.include.draft && !updatedIncludes[includeId]) {
                             const includeUpdate = includeWrapper.include.toObject();
                             includeUpdate.draft = false;
                             delete includeUpdate._id;
                             delete includeUpdate.__v;
-                            saveDraftIncludeData = Promise.promisify(DraftIncludeData.update, { context: DraftIncludeData});
-                            saveLiveIncludeData = Promise.promisify(LiveIncludeData.update, { context: LiveIncludeData });
-                            updates.push(saveDraftIncludeData({_id: includeId}, includeUpdate, { upsert: true }));
-                            updates.push(saveLiveIncludeData({_id: includeId}, includeUpdate, { upsert: true }));
+                            updates.push(DraftIncludeData.update({_id: includeId}, includeUpdate, { upsert: true }));
+                            updates.push(LiveIncludeData.update({_id: includeId}, includeUpdate, { upsert: true }));
                             includeCache.getCache().del(includeId);
+                            updatedIncludes[includeId] = true;
                             includeUpdateCount++;
     
                             logger.info(`Include data queued to publish (id=${includeId})`);
@@ -121,10 +120,9 @@ class PublishingHandler extends BaseHandler{
                 }
     
                 //undraft page
-                const saveDraftPage = Promise.promisify(page.save, { context: page });
                 page.draft = false;
                 page.published = true;
-                updates.push(saveDraftPage());
+                updates.push(page.save());
                 pageUpdateCount++;
             }
     
@@ -157,7 +155,7 @@ class PublishingHandler extends BaseHandler{
             return DraftPage.findByIdAndUpdate(pageId, newDraftPage, { overwrite: true }).exec();
         }).then(() => {
             logger.info('Draft page successfully reverted');
-            res.statusCode = 204;
+            res.status(204);
             res.send();
         }).catch(err => {
             logger.warn(err, 'Error reverting page');

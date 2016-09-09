@@ -2,6 +2,19 @@
 
 module.exports = function createSpies() {
 
+    //util
+    function traverse(obj, cb) {
+        for (var i in obj) {
+            cb.apply(this, [i, obj[i]]);
+            if (obj[i] !== null && typeof(obj[i]) === 'object') {
+                traverse(obj[i], cb);
+            }
+        }
+    }
+
+//that's all... no magic, no bloated framework
+
+
     //bunyan/logger ----------------------------------------------------------------------------------------------------
     const logger = jasmine.createSpyObj('logger', [ 'child' ]);
     logger.child.and.returnValue(jasmine.createSpyObj('loggerChild', [ 'debug', 'info', 'warn', 'error']));
@@ -14,17 +27,41 @@ module.exports = function createSpies() {
 
     const Model = function(data) { this._setData(data) };
     Model.find = jasmine.createSpy('find');
+    Model.findById = jasmine.createSpy('findById');
     Model.findOne = jasmine.createSpy('findOne');
     Model.findOneAndUpdate = jasmine.createSpy('findOneAndUpdate');
     Model.findOneAndRemove = jasmine.createSpy('findOneAndRemove');
+    Model.findByIdAndUpdate = jasmine.createSpy('findByIdAndUpdate')
     Model.findByIdAndRemove = jasmine.createSpy('findByIdAndRemove');
+    Model.update = jasmine.createSpy('update');
     Model.prototype.save = jasmine.createSpy('save');
     Model.prototype._setData = jasmine.createSpy('_setData');
     Model.find.and.returnValue(query);
+    Model.findById.and.returnValue(query);
     Model.findOne.and.returnValue(query);
     Model.findOneAndUpdate.and.returnValue(query);
+    Model.findByIdAndUpdate.and.returnValue(query);
     Model.findByIdAndRemove.and.returnValue(query);
     Model.findOneAndRemove.and.returnValue(query);
+
+    //called with every property and it's value
+    function mongooseify(obj, returnValues) {
+
+        applyMethods(obj);
+
+        traverse(obj, (key, value) => {
+            applyMethods(value);
+        });
+
+        function applyMethods(value) {
+            if(value && value.hasOwnProperty('_id')) {
+                value.toObject = jasmine.createSpy('toObject');
+                value.toObject.and.returnValue(JSON.parse(JSON.stringify(value)));
+                value.save = jasmine.createSpy('save');
+                value.save.and.returnValue(returnValues && returnValues.save ? returnValues.save : Promise.resolve({name : 'fooy'}));
+            }
+        }
+    }
 
     //pagespace support ------------------------------------------------------------------------------------------------
 
@@ -65,7 +102,7 @@ module.exports = function createSpies() {
     req.user = {
         username: 'Mr User',
         name: 'mruser',
-        _id: 'userid',
+        _id: '56043cd318a5646b496baaaf',
         role: 'developer'
     };
     req.url = null;
@@ -99,7 +136,10 @@ module.exports = function createSpies() {
         next,
         send,
         stream,
-        formidable
+        formidable,
+        testUtil: {
+            mongooseify
+        }
     };
 }
 
