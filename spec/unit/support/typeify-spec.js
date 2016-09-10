@@ -1,27 +1,27 @@
-var typeify = require('../../../src/support/typeify');
+const typeify = require('../../../src/support/typeify');
 
-describe('typeify', function() {
+describe('typeify', () => {
     
-    it('converts to undefined to null ', function() {
-        var x = {};
+    it('converts to undefined to null ', () => {
+        const x = {};
         expect(typeify(x.foo)).toBe(null);
     });
 
-    it('converts strings to booleans ', function() {
+    it('converts strings to booleans ', () => {
         expect(typeify('true')).toBe(true);
         expect(typeify('false')).toBe(false);
     });
 
-    it('converts to strings to numbers ', function() {
+    it('converts to strings to numbers ', () => {
         expect(typeify('5')).toBe(5);
         expect(typeify('3.14')).toBe(3.14);
     });
 
-    it('converts to strings to regexes ', function() {
+    it('converts to strings to regexes ', () => {
         expect(typeify('/^foo/').toString()).toBe(new RegExp('^foo').toString());
     });
 
-    it('converts to strings to strings ', function() {
+    it('converts to strings to strings ', () => {
         expect(typeify('nothing special')).toBe('nothing special');
     });
 });

@@ -1,18 +1,18 @@
-var bunyan = require('bunyan');
-var createPluginResolver = require('../../../src/support/plugin-resolver');
+const
+    bunyan = require('bunyan'),
+    createPluginResolver = require('../../../src/support/plugin-resolver');
 
-var pluginResolver = createPluginResolver({
+const pluginResolver = createPluginResolver({
     logger: bunyan.createLogger({
         name: 'pluginresolver',
         streams: []
     })
 });
 
-describe('Plugin Resolver', function() {
+describe('Plugin Resolver', () => {
 
-    it('requires a plugin module', function() {
-
-        var module = pluginResolver.require('pagespace-webcopy');
+    it('requires a plugin module', () => {
+        const module = pluginResolver.require('pagespace-webcopy');
 
         expect(module.viewPartial).toBeDefined();
         expect(module.__dir).toBeDefined();
