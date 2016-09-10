@@ -1,10 +1,10 @@
 'use strict';
 
 //deps
-const 
-    fs = require('fs'),
+const
     handlebars = require('handlebars'),
     handlebarsIntl = require('handlebars-intl');
+let readFile = require('fs').readFile;
 
 //TODO: add debug logging
 class ViewEngine {
@@ -41,7 +41,7 @@ class ViewEngine {
         locals = locals || {};
     
         for(let commonLocal in instance.commonLocals) {
-            if(locals.hasOwnProperty(commonLocal)) {
+            if(instance.commonLocals.hasOwnProperty(commonLocal) && !locals[commonLocal]) {
                 locals[commonLocal] = instance.commonLocals[commonLocal];
             }
         }
@@ -60,7 +60,7 @@ class ViewEngine {
             }));
         }
     
-        fs.readFile(filename, 'utf8', (err, file) => {
+        readFile(filename, 'utf8', (err, file) => {
     
             if (err) {
                 return done(err);
