@@ -1,8 +1,7 @@
 'use strict';
 
 //de[s
-const 
-    Promise = require('bluebird'),
+const
     Cacheman = require('cacheman');
 
 let cache = null;
@@ -25,50 +24,18 @@ class IncludeCache {
     }
 
     get(key) {
-        return new Promise((resolve, reject) => {
-            this.cache.get(key, (err, val) => {
-                if(err) {
-                    reject(err);
-                } else {
-                    resolve(val);
-                }
-            });
-        });
+        return this.cache.get(key);
     }
 
     set(key, val, ttl) {
-        return new Promise((resolve, reject) => {
-            this.cache.set(key, val, ttl, (err, val) => {
-                if(err) {
-                    reject(err);
-                } else {
-                    resolve(val);
-                }
-            });
-        });
+        return this.cache.set(key, val, ttl);
     }
 
     del(key) {
-        return new Promise((resolve, reject) => {
-            this.cache.del(key, (err, val) => {
-                if(err) {
-                    reject(err);
-                } else {
-                    resolve(val);
-                }
-            });
-        });
+        return this.cache.del(key);
     }
 
     clear() {
-        return new Promise((resolve, reject) => {
-            this.cache.clear((err, val) => {
-                if(err) {
-                    reject(err);
-                } else {
-                    resolve(val);
-                }
-            });
-        });
+        return this.cache.clear();
     }
 }
