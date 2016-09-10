@@ -1,3 +1,4 @@
+'use strict';
 const
     bunyan = require('bunyan'),
     createPluginResolver = require('../../../src/support/plugin-resolver');

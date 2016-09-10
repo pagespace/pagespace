@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 const
     createSpies = require('../helpers/spies'),
     dashboardHandler = require('../../../src/middleware/dashboard-handler');

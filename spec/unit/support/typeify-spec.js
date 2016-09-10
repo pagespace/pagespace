@@ -1,4 +1,6 @@
-const typeify = require('../../../src/support/typeify');
+'use strict';
+const
+    typeify = require('../../../src/support/typeify');
 
 describe('typeify', () => {
     
