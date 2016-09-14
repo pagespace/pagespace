@@ -5,8 +5,8 @@ MAINTAINER Phil Mander (philip.mander@gmail.com)
 RUN apt-get update && \
 
     #python prep
-    apt-get install -y software-properties-common && \
-    apt-add-repository ppa:fkrull/deadsnakes-python2.7 && \
+    #apt-get install -y software-properties-common && \
+    #apt-add-repository ppa:fkrull/deadsnakes-python2.7 && \
 
     #mongo prep
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 && \
@@ -17,7 +17,7 @@ RUN apt-get update && \
 
     #install curl and python (node-gyp requires python, Sharp requires node-gyp)
     apt-get install -y curl \
-                       python2.7 && \
+                       python python-dev python-pip python-virtualenv && \
 
     #install node and mongo
     curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
