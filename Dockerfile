@@ -17,7 +17,7 @@ RUN apt-get update && \
 
     #install curl and python (node-gyp requires python, Sharp requires node-gyp)
     apt-get install -y curl \
-                       python python-dev python-pip python-virtualenv && \
+                       python && \
 
     #install node and mongo
     curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
