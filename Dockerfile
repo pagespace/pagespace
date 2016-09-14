@@ -16,11 +16,18 @@ RUN apt-get update && \
     apt-get update && \
 
     #install curl and python (node-gyp requires python, Sharp requires node-gyp)
-    apt-get install -y curl python2.7 python2.7-dev && \
-    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
+    apt-get install -y curl \
+                       python2.7 && \
 
     #install node and mongo
-    apt-get install -y nodejs build-essential mongodb-org && \
+    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
+    apt-get install -y nodejs \
+                       build-essential \
+                       mongodb-org=3.2.9 \
+                       mongodb-org-server=3.2.9 \
+                       mongodb-org-shell=3.2.9 \
+                       mongodb-org-mongos=3.2.9 \
+                       mongodb-org-tools=3.2.9 && \
 
     #clean up
     rm -rf /var/lib/apt/lists/*
