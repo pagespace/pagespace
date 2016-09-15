@@ -23,11 +23,16 @@ important design goal of Pagespace is to find the perfect balance between a powe
 uncluttered UI. We recognize that some features are not suitable or necessary for all users and are, therefore,
 hidden behind different user roles.
 
+##Docker demo
+You can run the demo that is part of this repository using Docker:
+
+`docker run -it --rm -p 9999:9999 pagespace/demo`
+
 ##Quick start
 
 ###Prerequisites
 
-* Install [MongoDB](http://docs.mongodb.org/getting-started/shell/installation/)
+* Install [MongoDB](http://docs.mongodb.org/getting-started/shell/installation/) [via [Docker](https://hub.docker.com/_/mongo/)] 
 * Use an existing or [create a new](http://expressjs.com/starter/generator.html) Express application
 
 ###Database setup
@@ -64,12 +69,10 @@ var express = require('express');
 var pagespace = require('./src/index');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
-var favicon = require('serve-favicon');
 var session = require("express-session");
 
 var app = express();
 
-app.use(favicon(__dirname + '/favicon.ico'));
 app.use(/^(?!\/_static).+/, [ bodyParser.json(), cookieParser(), session({secret: process.env.SESSION_SECRET || 'foo'})]);
 
 // view engine setup
@@ -106,13 +109,11 @@ See [app.js](./app.js) for a more comprehensive example.
 
 ##Dashboard setup
 
-First install a part plugin, for example [webcopy](https://github.com/pagespace/pagespace-webcopy)
+First install a plugin, for example [webcopy](https://github.com/pagespace/pagespace-webcopy)
 
 ```
     npm install pagespace-webcopy
 ```
 
-Next, import it via the Dashboard
-
-Now you may populate template or page regions with this part.
+Now you may populate template or page regions with this plugin.
 
