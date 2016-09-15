@@ -28,7 +28,9 @@ hidden behind different user roles.
 ##Docker demo
 You can run the demo that is part of this repository using Docker:
 
-`docker run -it --rm -p 9999:9999 pagespace/demo`
+```
+docker run -it --rm -p 9999:9999 pagespace/demo
+```
 
 Then visit [http://localhost:9999/_dashboard](http://localhost:9999/_dashboard). Use the following login credentials:
 
@@ -131,7 +133,9 @@ Now you may populate template or page regions with this plugin.
 
 WYSIWYG HTML editor with integration for Pagespace links and media.
 
-`npm install pagespace-webcopy --save`
+```
+npm install pagespace-webcopy --save
+```
 
 [https://github.com/pagespace/pagespace-webcopy](https://github.com/pagespace/pagespace-webcopy)
 
@@ -139,7 +143,9 @@ WYSIWYG HTML editor with integration for Pagespace links and media.
 
 Simple raw HTML editor
 
-`npm install pagespace-html --save`
+```
+npm install pagespace-html --save
+```
 
 [https://github.com/pagespace/pagespace-html](https://github.com/pagespace/pagespace-html)
 
@@ -147,7 +153,9 @@ Simple raw HTML editor
 
 Markdown editor, processes Markdown to HTML.
 
-`npm install pagespace-markdown --save`
+```
+npm install pagespace-markdown --save
+```
 
 [https://github.com/pagespace/pagespace-markdown](https://github.com/pagespace/pagespace-markdown)
 
@@ -155,7 +163,9 @@ Markdown editor, processes Markdown to HTML.
 
 Creates a gallery include composed of Pagespace media items.
 
-`npm install pagespace-gallery --save`
+```
+npm install pagespace-gallery --save
+```
 
 [https://github.com/pagespace/pagespace-gallery](https://github.com/pagespace/pagespace-gallery)
 
@@ -163,7 +173,9 @@ Creates a gallery include composed of Pagespace media items.
 
 Aggregates includes from a collection of pages into one page. Useful for blog rolls or composing long scroll pages
 
-`npm install pagespace-posts --save`
+```
+npm install pagespace-posts --save
+```
 
 [https://github.com/pagespace/pagespace-posts](https://github.com/pagespace/pagespace-posts)
 
@@ -171,7 +183,9 @@ Aggregates includes from a collection of pages into one page. Useful for blog ro
 
 Creates a navigation include.
 
-`npm install pagespace-nav --save`
+```
+npm install pagespace-nav --save
+```
 
 [https://github.com/pagespace/pagespace-nav](https://github.com/pagespace/pagespace-nav)
 
