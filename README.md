@@ -28,6 +28,11 @@ You can run the demo that is part of this repository using Docker:
 
 `docker run -it --rm -p 9999:9999 pagespace/demo`
 
+Then visit [http://localhost:9999/_dashboard](http://localhost:9999/_dashboard). Use the following login credentials:
+
+Username: **admin**
+Password: **pagespace**
+
 ##Quick start
 
 ###Prerequisites
@@ -41,7 +46,7 @@ Create a new database:
 
 ```
     mongo
-    > use mysite-db
+    > use mysite
 ```
 
 ###Setup with Express
@@ -56,6 +61,7 @@ and some Pagespace plugins to get started
 npm install express
 
 npm install pagespace
+npm install pagespace-webcopy
 
 npm install body-parser
 npm install cookie-parser
@@ -80,7 +86,7 @@ app.set('views', [ pagespace.getViewDir(), pagespace.getDefaultTemplateDir() ]);
 app.engine('hbs', pagespace.getViewEngine());
 
 app.use(pagespace.init({
-    db: 'mongodb://localhost/test'
+    db: 'mongodb://localhost/mysite'
 }));
 
 // catch 404 and forwarding to error handler
@@ -116,4 +122,60 @@ First install a plugin, for example [webcopy](https://github.com/pagespace/pages
 ```
 
 Now you may populate template or page regions with this plugin.
+
+##Plugins
+
+###Webcopy
+
+WYSIWYG HTML editor with integration for Pagespace links and media.
+
+`npm install pagespace-webcopy --save`
+
+[https://github.com/pagespace/pagespace-webcopy](https://github.com/pagespace/pagespace-webcopy)
+
+###HTML
+
+Simple raw HTML editor
+
+`npm install pagespace-html --save`
+
+[https://github.com/pagespace/pagespace-html](https://github.com/pagespace/pagespace-html)
+
+###Markdown
+
+Markdown editor, processes Markdown to HTML.
+
+`npm install pagespace-markdown --save`
+
+[https://github.com/pagespace/pagespace-markdown](https://github.com/pagespace/pagespace-markdown)
+
+###Gallery
+
+Creates a gallery include composed of Pagespace media items.
+
+`npm install pagespace-gallery --save`
+
+[https://github.com/pagespace/pagespace-gallery](https://github.com/pagespace/pagespace-gallery)
+
+###Posts
+
+Aggregates includes from a collection of pages into one page. Useful for blog rolls or composing long scroll pages
+
+`npm install pagespace-posts --save`
+
+[https://github.com/pagespace/pagespace-posts](https://github.com/pagespace/pagespace-posts)
+
+###Nav
+
+Creates a navigation include.
+
+`npm install pagespace-nav --save`
+
+[https://github.com/pagespace/pagespace-nav](https://github.com/pagespace/pagespace-nav)
+
+
+
+
+
+
 
