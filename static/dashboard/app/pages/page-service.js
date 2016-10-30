@@ -87,12 +87,14 @@
                 //pages which have never been published can be hard deleted
                 promise = $http.delete('/_api/pages/' + page._id).then(() => {
                     let deleteIncludePromises = [];
-                    for(let templateRegion of page.template.regions) {
-                        let pageRegion = page.regions.find(region => region.name === templateRegion.name);
-                        if(!templateRegion.sharing && pageRegion) {
-                            let promises = pageRegion.includes.map((include) => this.deleteInclude(include._id));
-                            deleteIncludePromises = deleteIncludePromises.concat(promises);
-                        }
+                    if(page.template) {
+                        for(let templateRegion of page.template.regions) {
+                            let pageRegion = page.regions.find(region => region.name === templateRegion.name);
+                            if(!templateRegion.sharing && pageRegion) {
+                                let promises = pageRegion.includes.map((include) => this.deleteInclude(include._id));
+                                deleteIncludePromises = deleteIncludePromises.concat(promises);
+                            }
+                        }                       
                     }
                     return Promise.all(deleteIncludePromises);
                 });

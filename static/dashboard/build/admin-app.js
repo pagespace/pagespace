@@ -1443,7 +1443,7 @@
 })();
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 (function () {
     var adminApp = angular.module('adminApp');
@@ -1539,43 +1539,44 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 //pages which have never been published can be hard deleted
                 promise = $http.delete('/_api/pages/' + page._id).then(function () {
                     var deleteIncludePromises = [];
-                    var _iteratorNormalCompletion = true;
-                    var _didIteratorError = false;
-                    var _iteratorError = undefined;
+                    if (page.template) {
+                        var _iteratorNormalCompletion = true;
+                        var _didIteratorError = false;
+                        var _iteratorError = undefined;
 
-                    try {
-                        var _loop = function _loop() {
-                            var templateRegion = _step.value;
-
-                            var pageRegion = page.regions.find(function (region) {
-                                return region.name === templateRegion.name;
-                            });
-                            if (!templateRegion.sharing && pageRegion) {
-                                var promises = pageRegion.includes.map(function (include) {
-                                    return _this.deleteInclude(include._id);
-                                });
-                                deleteIncludePromises = deleteIncludePromises.concat(promises);
-                            }
-                        };
-
-                        for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                            _loop();
-                        }
-                    } catch (err) {
-                        _didIteratorError = true;
-                        _iteratorError = err;
-                    } finally {
                         try {
-                            if (!_iteratorNormalCompletion && _iterator.return) {
-                                _iterator.return();
+                            var _loop = function _loop() {
+                                var templateRegion = _step.value;
+
+                                var pageRegion = page.regions.find(function (region) {
+                                    return region.name === templateRegion.name;
+                                });
+                                if (!templateRegion.sharing && pageRegion) {
+                                    var promises = pageRegion.includes.map(function (include) {
+                                        return _this.deleteInclude(include._id);
+                                    });
+                                    deleteIncludePromises = deleteIncludePromises.concat(promises);
+                                }
+                            };
+
+                            for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                                _loop();
                             }
+                        } catch (err) {
+                            _didIteratorError = true;
+                            _iteratorError = err;
                         } finally {
-                            if (_didIteratorError) {
-                                throw _iteratorError;
+                            try {
+                                if (!_iteratorNormalCompletion && _iterator.return) {
+                                    _iterator.return();
+                                }
+                            } finally {
+                                if (_didIteratorError) {
+                                    throw _iteratorError;
+                                }
                             }
                         }
                     }
-
                     return Promise.all(deleteIncludePromises);
                 });
             }
