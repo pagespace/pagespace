@@ -23,8 +23,12 @@ adminApp.controller('PageController',
     var order = $routeParams.order;
 
     $scope.allPages = [];
+    $scope.basePages = [];    
     pageService.getPages().then(function(pages) {
         $scope.allPages = pages;
+        $scope.basePages = pages.filter(page => {
+            return page.isBasePage && page._id !== pageId;
+        });
     }).catch(function(err) {
         $scope.showError('Couldn\'t get all pages', err);
     });
@@ -85,7 +89,7 @@ adminApp.controller('PageController',
     $scope.updateUrl = function() {
         $scope.page.url = pageService.generateUrl($scope.page);
     };
-
+        
     pageService.getAvailableTags().then(tags => {
         $scope.availableTags  = tags;
     });
