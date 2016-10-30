@@ -37,7 +37,7 @@
                     <img src="/_static/dashboard/support/icons/menu.png" width="32" height="32">
                 </button>
             </div>
-            <div class="logo">
+            <div class="logo" title="Pagespace {{version}}">
                 <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
             </div>
         </div>
@@ -68,9 +68,11 @@
                 <a target="_blank" ng-href="\{{viewPageUrl + '?_preview=false'}}" title="Open '\{{viewPageName}}' live page a in new tab">Live</a></span>
             </div>
             <div class="header-utils pull-right col-sm-2">
-                <p><a href="/_auth/logout">
-                    <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout as {{displayName}}" alt="Logout" style="vertical-align: baseline">
-                </a></p>
+                <p>
+                    <a href="/_auth/logout">
+                        <img src="/_static/dashboard/support/icons/power27.svg" width="16" height="16" title="Logout as {{displayName}}" alt="Logout" style="vertical-align: baseline">
+                    </a>
+                </p>
             </div>
         </div>
 
@@ -84,11 +86,6 @@
     </header>
     <div class="row">
         <div ng-view></div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <p><small><a href="http://page.space">Pagespace {{version}}</a></small></p>
-        </div>
     </div>
 </div>
 <script>
