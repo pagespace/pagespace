@@ -5,8 +5,8 @@ const
     includeCache = require('../support/include-cache'),
     BaseHandler = require('./base-handler');
 
-class PublishingHandler extends BaseHandler{
-    
+class PublishingHandler extends BaseHandler {
+
     get pattern() {
         return new RegExp('^/_publish/(pages|revert)');
     }
@@ -18,7 +18,7 @@ class PublishingHandler extends BaseHandler{
 
     doPost(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
-    
+
         const draftIds = req.body;
 
         if(!draftIds || !draftIds.length) {
@@ -26,17 +26,17 @@ class PublishingHandler extends BaseHandler{
             err.status = 400;
             next(err);
         }
-    
+
         logger.info('Publishing page IDs: [%s] ...', draftIds.join(', '));
-    
+
         const orConditions = draftIds.map(id => ({ _id: id }));
-    
+
         const DraftPage = this.dbSupport.getModel('Page');
         DraftPage.find({ $or : orConditions}).populate('template regions.includes.include').exec().then((pages) => {
             let updates = [];
             let pageUpdateCount = 0;
             let includeUpdateCount = 0;
-            
+    
             const updatedTemplates = {}, updatedIncludes = {};
             const LivePage = this.dbSupport.getModel('Page', 'live');
             const DraftIncludeData = this.dbSupport.getModel('Include');
@@ -71,12 +71,12 @@ class PublishingHandler extends BaseHandler{
                 //initial and subsequent publishing events
                 livePage.updatedAt = Date.now();
                 livePage.updatedBy = req.user._id;
-                
+    
                 //remove old redirects
                 if(!page.redirect && livePage.redirect) {
                     delete livePage.redirect;
                 }
-
+    
     
                 //no longer a draft
                 livePage.draft = false;
@@ -126,20 +126,22 @@ class PublishingHandler extends BaseHandler{
                 pageUpdateCount++;
             }
     
-            return [ updates, pageUpdateCount, includeUpdateCount ];
-        }).spread((updates, pageUpdateCount, includeUpdateCount) => {
+            return Promise.all([ pageUpdateCount, includeUpdateCount ].concat(updates));
+        }).then(results => {
+            const pageUpdateCount = results[0];
+            const includeUpdateCount = results[1];
             logger.info(`Publishing completed. Published ${pageUpdateCount} pages and ${includeUpdateCount} includes`);
             res.status(200);
             res.json({
                 message: `Published ${pageUpdateCount} pages and ${includeUpdateCount} includes`,
-                publishCount: updates.length
+                publishCount: results.length - 2
             });
         }).catch(err => {
             logger.warn(err, 'Error during publishing, try again');
             next(err);
         });
     }
-    
+
     doPut(req, res, next) {
         const logger = this.getRequestLogger(this.logger, req);
         var pageId = req.body.pageId;
@@ -154,11 +156,11 @@ class PublishingHandler extends BaseHandler{
             const DraftPage = this.dbSupport.getModel('Page');
             return DraftPage.findByIdAndUpdate(pageId, newDraftPage, { overwrite: true }).exec();
         }).then(() => {
-            logger.info('Draft page successfully reverted');
+                logger.info('Draft page successfully reverted');
             res.status(204);
             res.send();
         }).catch(err => {
-            logger.warn(err, 'Error reverting page');
+                logger.warn(err, 'Error reverting page');
             next(err);
         });
     }
