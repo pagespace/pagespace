@@ -45,16 +45,17 @@
         </ul>
     </div>
 
-    <div class="section-heading">
-        <h3>Page shortcuts</h3>
+    <div ng-if="macros.length">
+        <div class="section-heading">
+            <h3>Page shortcuts</h3>
+        </div>
+        <ul ng-if="macros.length" class="nav nav-pills nav-stacked">
+            <li ng-repeat="macro in macros" ng-class="menuClass('/pages/macros/{{macro._id}}')">
+                <a href="#/pages/macros/{{macro._id}}/new" class="pull-right" style="z-index: 1">+ New</a>
+                <a href="#/pages/macros/{{macro._id}}/list">{{macro.name}}</a>
+            </li>
+        </ul>
     </div>
-    <ul ng-if="macros.length" class="nav nav-pills nav-stacked">
-        <li ng-repeat="macro in macros" ng-class="menuClass('/pages/macros/{{macro._id}}')">
-            <a href="#/pages/macros/{{macro._id}}/new" class="pull-right" style="z-index: 1">+ New</a>
-            <a href="#/pages/macros/{{macro._id}}/list">{{macro.name}}</a>
-        </li>
-    </ul>
-    <p ng-if="!macros.length">There are no page shortcuts available.</p>
 
 </nav>
 <main class="main col-sm-{{viewMode ? '10' : '6'}}">
