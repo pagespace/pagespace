@@ -418,146 +418,6 @@
 
 (function () {
 
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('AddIncludeController', function ($log, $scope, $routeParams, $q, pageService, pluginService) {
-
-        var pageId = $routeParams.pageId;
-        var regionName = $routeParams.region;
-
-        $scope.selectedPlugin = null;
-
-        var pluginsPromise = pluginService.getPlugins();
-        var pagePromise = pageService.getPage(pageId);
-
-        $q.all([pluginsPromise, pagePromise]).then(function (results) {
-            $scope.availablePlugins = results[0];
-            $scope.page = results[1];
-
-            $log.debug('Got available plugins and page ok');
-        }).catch(function (err) {
-            $scope.err = err;
-            $log.error(err, 'Unable to get data');
-        });
-
-        $scope.selectPlugin = function (plugin) {
-            $scope.selectedPlugin = plugin;
-        };
-
-        $scope.addInclude = function () {
-
-            var page = $scope.page;
-
-            //map region name to index
-            var regionIndex = pageService.getRegionIndex(page, regionName);
-
-            //add a new region
-            if (regionIndex === null) {
-                pageService.addRegion(page, regionName);
-            }
-
-            //add the new include to the region
-            if ($scope.selectedPlugin) {
-                pageService.createIncludeData($scope.selectedPlugin).then(function (includeData) {
-                    pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
-                    page = pageService.depopulatePage(page);
-                    return pageService.updatePage(pageId, page);
-                }).then(function () {
-                    $scope.close();
-                }).catch(function (err) {
-                    $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, regionIndex);
-                });
-            } else {
-                $log.error('Unable to determine region index for new include (pageId=%s, region=%s)', pageId, regionName);
-            }
-        };
-
-        $scope.close = function () {
-            window.parent.parent.location.reload();
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp');
-
-    adminApp.directive('removeIncludeDrop', function () {
-        return {
-            replace: true,
-            transclude: true,
-            template: '<div ng-transclude class="remove-include-drop"></div>',
-            link: function link(scope, element) {
-
-                var dragCounter = 0;
-                element[0].addEventListener('dragenter', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter++;
-                        this.classList.add('drag-over');
-                        ev.preventDefault();
-                    }
-                });
-                element[0].addEventListener('dragover', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        ev.dataTransfer.dropEffect = 'move';
-                        ev.preventDefault();
-                    }
-                });
-                element[0].addEventListener('dragleave', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter--;
-                        if (dragCounter === 0) {
-                            this.classList.remove('drag-over');
-                            ev.preventDefault();
-                        }
-                    }
-                });
-                element[0].addEventListener('drop', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        var data = ev.dataTransfer.getData('include-info');
-                        data = JSON.parse(data);
-                        var pageId = data.pageId;
-                        var regionName = data.region;
-                        var includeIndex = parseInt(data.includeIndex);
-                        scope.remove(pageId, regionName, includeIndex);
-                        ev.preventDefault();
-                    }
-                });
-
-                function containsType(list, value) {
-                    for (var i = 0; i < list.length; ++i) {
-                        if (list[i] === value) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            },
-            controller: function controller($log, $scope, pageService) {
-                $scope.remove = function (pageId, regionName, includeIndex) {
-                    pageService.getPage(pageId).then(function (page) {
-                        page = pageService.removeInclude(page, regionName, includeIndex);
-                        page = pageService.depopulatePage(page);
-                        pageService.updatePage(pageId, page).then(function () {
-                            $log.info('Include removed for pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
-                            window.location.reload();
-                        }).catch(function (err) {
-                            $scope.err = err;
-                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
-                        });
-                    }).catch(function (err) {
-                        $scope.err = err;
-                        $log.error(err, 'Unable to get page: %s', pageId);
-                    });
-                };
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
     /**
      *
      * @type {*}
@@ -793,6 +653,146 @@
         };
 
         return new MacroService();
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('AddIncludeController', function ($log, $scope, $routeParams, $q, pageService, pluginService) {
+
+        var pageId = $routeParams.pageId;
+        var regionName = $routeParams.region;
+
+        $scope.selectedPlugin = null;
+
+        var pluginsPromise = pluginService.getPlugins();
+        var pagePromise = pageService.getPage(pageId);
+
+        $q.all([pluginsPromise, pagePromise]).then(function (results) {
+            $scope.availablePlugins = results[0];
+            $scope.page = results[1];
+
+            $log.debug('Got available plugins and page ok');
+        }).catch(function (err) {
+            $scope.err = err;
+            $log.error(err, 'Unable to get data');
+        });
+
+        $scope.selectPlugin = function (plugin) {
+            $scope.selectedPlugin = plugin;
+        };
+
+        $scope.addInclude = function () {
+
+            var page = $scope.page;
+
+            //map region name to index
+            var regionIndex = pageService.getRegionIndex(page, regionName);
+
+            //add a new region
+            if (regionIndex === null) {
+                pageService.addRegion(page, regionName);
+            }
+
+            //add the new include to the region
+            if ($scope.selectedPlugin) {
+                pageService.createIncludeData($scope.selectedPlugin).then(function (includeData) {
+                    pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
+                    page = pageService.depopulatePage(page);
+                    return pageService.updatePage(pageId, page);
+                }).then(function () {
+                    $scope.close();
+                }).catch(function (err) {
+                    $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, regionIndex);
+                });
+            } else {
+                $log.error('Unable to determine region index for new include (pageId=%s, region=%s)', pageId, regionName);
+            }
+        };
+
+        $scope.close = function () {
+            window.parent.parent.location.reload();
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+
+    adminApp.directive('removeIncludeDrop', function () {
+        return {
+            replace: true,
+            transclude: true,
+            template: '<div ng-transclude class="remove-include-drop"></div>',
+            link: function link(scope, element) {
+
+                var dragCounter = 0;
+                element[0].addEventListener('dragenter', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter++;
+                        this.classList.add('drag-over');
+                        ev.preventDefault();
+                    }
+                });
+                element[0].addEventListener('dragover', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        ev.dataTransfer.dropEffect = 'move';
+                        ev.preventDefault();
+                    }
+                });
+                element[0].addEventListener('dragleave', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter--;
+                        if (dragCounter === 0) {
+                            this.classList.remove('drag-over');
+                            ev.preventDefault();
+                        }
+                    }
+                });
+                element[0].addEventListener('drop', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        var data = ev.dataTransfer.getData('include-info');
+                        data = JSON.parse(data);
+                        var pageId = data.pageId;
+                        var regionName = data.region;
+                        var includeIndex = parseInt(data.includeIndex);
+                        scope.remove(pageId, regionName, includeIndex);
+                        ev.preventDefault();
+                    }
+                });
+
+                function containsType(list, value) {
+                    for (var i = 0; i < list.length; ++i) {
+                        if (list[i] === value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            },
+            controller: function controller($log, $scope, pageService) {
+                $scope.remove = function (pageId, regionName, includeIndex) {
+                    pageService.getPage(pageId).then(function (page) {
+                        page = pageService.removeInclude(page, regionName, includeIndex);
+                        page = pageService.depopulatePage(page);
+                        pageService.updatePage(pageId, page).then(function () {
+                            $log.info('Include removed for pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
+                            window.location.reload();
+                        }).catch(function (err) {
+                            $scope.err = err;
+                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
+                        });
+                    }).catch(function (err) {
+                        $scope.err = err;
+                        $log.error(err, 'Unable to get page: %s', pageId);
+                    });
+                };
+            }
+        };
     });
 })();
 'use strict';
@@ -3244,8 +3244,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         var order = $routeParams.order;
 
         $scope.allPages = [];
+        $scope.basePages = [];
         pageService.getPages().then(function (pages) {
             $scope.allPages = pages;
+            $scope.basePages = pages.filter(function (page) {
+                return page.isBasePage && page._id !== pageId;
+            });
         }).catch(function (err) {
             $scope.showError('Couldn\'t get all pages', err);
         });

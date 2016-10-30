@@ -83,11 +83,20 @@
     </div>
 </div>
 
-<div ng-if="allPages.length > 0" class="form-group" bs-has-error="basePage">
+<div class="form-group" bs-has-error="isBasePage">
+    <label class="col-sm-3 control-label">Use as base page</label>
+    <div class="col-sm-7">
+        <label style="display:block; margin-top: 12px">
+            <input type="checkbox"  name="isBasePage" ng-model="page.isBasePage">
+        </label>
+    </div>
+</div>
+
+<div ng-if="basePages.length > 0" class="form-group" bs-has-error="basePage">
     <label class="col-sm-3 control-label">Based on page</label>
     <div class="col-sm-7">
         <select ng-model="page.basePage" class="form-control"
-                ng-options="page as getPageHierarchyName(page) for page in allPages track by page._id">
+                ng-options="page as getPageHierarchyName(page) for page in basePages track by page._id">
             <option  value="">None</option>
         </select>
     </div>

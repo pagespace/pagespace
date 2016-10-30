@@ -43,6 +43,10 @@ function generateSchema(modifier) {
             type: Schema.Types.ObjectId,
             ref: 'Page'
         },
+        isBasePage: {
+            type: Boolean,
+            default: false
+        },
         url: {
             type: String,
             index: true
