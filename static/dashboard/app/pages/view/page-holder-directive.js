@@ -1,25 +1,13 @@
 (function() {
     
     var adminApp = angular.module('adminApp');
-    adminApp.directive('pageHolder', function() {
+    adminApp.directive('pageHolder', function($timeout) {
         return {
             restrict: 'E',
             transclude: true,
             replace: true,
             template: '<div ng-transclude></div>',
             link: function link(scope, element) {
-
-                //sizing
-                function getWindowHeight() {
-                    return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
-                }
-
-                element.css('clear', 'both');
-                element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
-
-                window.addEventListener('resize', function() {
-                    element.css('height', (getWindowHeight() - element[0].offsetTop - 5) + 'px');
-                });
 
                 var pageFrame = element.find('iframe')[0];
                 pageFrame.addEventListener('load', function() {
@@ -47,6 +35,22 @@
                     frameHead.appendChild(adminStyles);
                     frameHead.appendChild(pluginInterfaceScript);
                     frameHead.appendChild(adminScript);
+                });
+                
+                scope.$on('include-saved', function() {
+                    $timeout(() => {
+                        pageFrame.contentWindow.location.reload();
+                    }, 300);
+                });
+
+                scope.$on('include-added', function() {
+                    $timeout(() => {
+                        pageFrame.contentWindow.location.reload();
+                    }, 300);
+                });
+
+                scope.$on('include-removed', () => {
+                    pageFrame.contentWindow.location.reload();
                 });
             }
         };

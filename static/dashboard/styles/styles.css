@@ -385,71 +385,108 @@ div + .section-heading {
     background: url(types/html.png) no-repeat center center;
 }
 
-.inpage-actions {
+.remove-include-action {
     display: none;
-}
-.inpage-actions .header-page-options {
     font-size: 16px;
-    width: 50%;
-    margin: 11px auto !important;
     text-align: center;
+    margin-top: -8px;
+    padding: 4px 84px;
 }
-.inpage-actions .header-page-options.drag-over {
+.remove-include-action.drag-over {
     background-color: rgba(255, 0, 0, 0.5);
     color: #fff;
 }
-.dragging-include .inpage-actions {
+.dragging-include .remove-include-action {
     display: block;
 }
-.dragging-include .header-nav {
-    display: none;
-}
 
-.compare-panel {
-    width: 50%;
+.frame-panel {
     position: absolute;
     top: 64px;
     bottom: 5px;
 }
-.compare-panel .section-heading {
+.frame-panel .section-heading {
     padding: 18px 22px 0 22px;
     height: 50px;
 }
-.compare-panel h4 {
+.frame-panel h4 {
     max-width: 400px;
     max-height: 1em;
 }
-.compare-panel label {
+.frame-panel label {
     display: inline-block;
     margin-bottom: 0;
     margin-left: 22px;
     font-weight: normal;
     font-size: 16px;
 }
-.compare-panel .frame-holder {
+.frame-panel .frame-holder {
     position: absolute;
     top: 50px;
     bottom: 26px;
     width: 100%;
 }
-.compare-panel .frame-holder iframe{
+.frame-panel .frame-holder > div {
+    height: 100%;
+}
+.frame-panel .frame-holder iframe {
     border: none;
     width: 100%;
     height: 100%;
 }
-.compare-panel .frame-holder.scale-to-fit {
+.frame-panel .frame-holder.scale-to-fit {
     transform:scale(0.5);
     transform-origin: 0 0;
 }
-.compare-panel .frame-holder.scale-to-fit iframe{
+.frame-panel .frame-holder.scale-to-fit iframe{
     border: none;
     width: 200%;
     height: 200%;
 }
-.compare-panel .footer-controls {
+.frame-panel .footer-controls {
     position: absolute;
     bottom: 0;
     height: 26px;
+}
+
+.compare-panel {
+    width: 50%;
+}
+.compare-panel:nth-child(1) {
+    left: 0;
+    border-right: 1px solid #E5E7EA;
+}
+.compare-panel:nth-child(2) {
+    right: 0;
+    border-left: 1px solid #e5e7ea
+}
+
+.view-panel:nth-child(1) {
+    left: 0;
+    width: 0;
+    transition: width 0.4s;
+    overflow: hidden;
+}
+.view-panel:nth-child(2) {
+    left: 0;
+    right: 0;
+    z-index: 1;
+    transition: left 0.4s;
+}
+.view-panel .frame-holder {
+    bottom: 0;
+}
+
+.edit-open .view-panel:nth-child(1) {
+    left: 0;
+    width: 800px;
+    box-shadow: 2px -4px 53px -13px #888888;
+    z-index: 2;
+}
+.edit-open .view-panel:nth-child(2) {
+    left: 800px;
+    right: 0;
+    z-index: 1;
 }
 
 tags-input .tags {

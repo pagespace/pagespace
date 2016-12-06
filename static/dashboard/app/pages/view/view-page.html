@@ -1,3 +1,44 @@
-<page-holder>
-    <iframe id="view-page-frame" ng-src="{{getPageUrl()}}" width="100%" height="100%" style="border: none"></iframe>
-</page-holder>
+<main class="main" ng-class="{'edit-open': (isEditing() || isAdding()) }">
+    <div class="frame-panel view-panel">
+        <div ng-if="isEditing()">
+            <div class="section-heading">
+                <div style="margin-top: -8px;">
+                    <button ng-click="save()" type="button" class="btn btn-primary btn-sm pull-right"
+                            style="margin-left: 8px;">Save</button>
+                    <button ng-click="cancel()" type="button" class="btn btn-default btn-sm pull-right">Close</button>
+                </div>
+                <h4>Editing region: {{editing.regionName}}</h4>
+            </div>
+            <div class="frame-holder">
+                <include-editor-view page-id="editing.pageId"
+                                     plugin-name="editing.pluginName"
+                                     include-id="editing.includeId"/>
+            </div>
+        </div>
+        <div ng-if="isAdding()">
+            <div class="section-heading">
+                <div style="margin-top: -8px;">
+                    <button ng-click="add()" type="button" class="btn btn-primary btn-sm pull-right"
+                            style="margin-left: 8px;">Add include</button>
+                    <button ng-click="cancel()" type="button" class="btn btn-default btn-sm pull-right">Close</button>
+                </div>
+                <h4>Add include to: {{adding.regionName}}</h4>
+            </div>
+            <div class="frame-holder">
+                <add-include page-id="adding.pageId"
+                             region-name="adding.regionName"></add-include>
+            </div>
+        </div>
+    </div>
+    <div class="frame-panel view-panel">
+        <div class="section-heading">
+            <div remove-include-drop></div>
+            <h4>{{pageName}}</h4>
+        </div>
+        <div class="frame-holder">
+            <page-holder>
+                <iframe id="view-page-frame" ng-src="{{getPageUrl()}}"></iframe>
+            </page-holder>
+        </div>
+    </div>
+</main>
