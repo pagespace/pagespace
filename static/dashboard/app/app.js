@@ -65,20 +65,7 @@
                 templateUrl: '/_static/dashboard/app/pages/view/view-json.html',
                 controller: 'ViewJsonController'
             }).
-
-            //plugins
-            when('/plugins', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',
-                controller: 'PluginListController'
-            }).
-            when('/plugins/new', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
-                controller: 'PluginController'
-            }).
-            when('/plugins/:pluginId', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
-                controller: 'PluginController'
-            }).
+            
 
             //publishing
             when('/publishing', {
