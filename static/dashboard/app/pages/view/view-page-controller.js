@@ -1,7 +1,8 @@
 (function() {
 
 var adminApp = angular.module('adminApp');
-adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
+adminApp.controller('ViewPageController', 
+    function($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
 
     var env = $routeParams.viewPageEnv;
     var url = $routeParams.url;

@@ -637,6 +637,565 @@
 })();
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('pageService', function ($http, errorFactory) {
+
+        function PageService() {
+            this.pageCache = null;
+        }
+        PageService.prototype.getPages = function (filter) {
+            var self = this;
+
+            var queryKeyValPairs = [];
+            if ((typeof filter === 'undefined' ? 'undefined' : _typeof(filter)) === 'object') {
+                for (var key in filter) {
+                    if (filter.hasOwnProperty(key)) {
+                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
+                    }
+                }
+            } else if (this.pageCache) {
+                //if no filter and the page cache is populated
+                return Promise.resolve(this.pageCache);
+            }
+
+            var path = '/_api/pages';
+            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
+            return $http.get(url).then(function (res) {
+                //if no filter was used cache
+                if (!filter) {
+                    self.pageCache = res.data;
+                }
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.getAvailableTags = function () {
+            return this.getPages().then(function (pages) {
+                //combine all tags into one
+                var seen = {};
+                return pages.reduce(function (allTags, page) {
+                    return allTags.concat(page.tags.filter(function (tag) {
+                        return tag.text; //only return tags with text property
+                    }));
+                }, []).filter(function (tag) {
+                    //remove dupes
+                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
+                });
+            });
+        };
+
+        PageService.prototype.getPage = function (pageId) {
+            return $http.get('/_api/pages/' + pageId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.createPage = function (pageData) {
+
+            if (!pageData.url) {
+                pageData.url = this.generateUrl(pageData);
+            }
+            this.pageCache = null;
+            return $http.post('/_api/pages', pageData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        /**
+         * Deletes a page. If it is not published, its non-shared includes will also be deleted
+         * @param page
+         * @return {Promise|Promise.<T>|*}
+         */
+        PageService.prototype.deletePage = function (page) {
+            var _this = this;
+
+            this.pageCache = null;
+            var promise;
+            if (page.published) {
+                var pageData = {
+                    status: page.status || 404
+                };
+
+                pageData.redirect = page.redirect ? page.redirect._id : null;
+
+                //live pages are updated to be gone
+                promise = $http.put('/_api/pages/' + page._id, pageData);
+            } else {
+                //pages which have never been published can be hard deleted
+                promise = $http.delete('/_api/pages/' + page._id).then(function () {
+                    var deleteIncludePromises = [];
+                    if (page.template) {
+                        var _iteratorNormalCompletion = true;
+                        var _didIteratorError = false;
+                        var _iteratorError = undefined;
+
+                        try {
+                            var _loop = function _loop() {
+                                var templateRegion = _step.value;
+
+                                var pageRegion = page.regions.find(function (region) {
+                                    return region.name === templateRegion.name;
+                                });
+                                if (!templateRegion.sharing && pageRegion) {
+                                    var promises = pageRegion.includes.map(function (include) {
+                                        return _this.deleteInclude(include._id);
+                                    });
+                                    deleteIncludePromises = deleteIncludePromises.concat(promises);
+                                }
+                            };
+
+                            for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                                _loop();
+                            }
+                        } catch (err) {
+                            _didIteratorError = true;
+                            _iteratorError = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion && _iterator.return) {
+                                    _iterator.return();
+                                }
+                            } finally {
+                                if (_didIteratorError) {
+                                    throw _iteratorError;
+                                }
+                            }
+                        }
+                    }
+                    return Promise.all(deleteIncludePromises);
+                });
+            }
+            return promise.then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.deleteInclude = function (includeId) {
+            return $http.delete('/_api/includes' + includeId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.updatePage = function (pageId, pageData) {
+            this.pageCache = null;
+            return $http.put('/_api/pages/' + pageId, pageData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        PageService.prototype.createIncludeData = function (plugin) {
+
+            var includeData = {};
+
+            var schemaProps = plugin.config.schema.properties || {};
+            for (var name in schemaProps) {
+                if (schemaProps.hasOwnProperty(name)) {
+                    includeData[name] = typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
+                }
+            }
+
+            return $http.post('/_api/includes', {
+                data: includeData
+            }).then(function (res) {
+                return res.data;
+            });
+        };
+
+        PageService.prototype.getRegionIndex = function (page, regionName) {
+            //map region name to index
+            var regionIndex = null;
+            for (var i = 0; i < page.regions.length && regionIndex === null; i++) {
+                if (page.regions[i].name === regionName) {
+                    regionIndex = i;
+                }
+            }
+            return regionIndex;
+        };
+
+        PageService.prototype.addRegion = function (page, regionName) {
+            page.regions.push({
+                name: regionName,
+                includes: []
+            });
+            return page.regions.length - 1;
+        };
+
+        PageService.prototype.addIncludeToPage = function (page, regionIndex, plugin, include) {
+            page.regions[regionIndex].includes.push({
+                plugin: plugin,
+                include: include._id
+            });
+        };
+
+        PageService.prototype.moveInclude = function (page, regionName, fromIndex, toIndex) {
+            //find the region
+            var region = page.regions.filter(function (region) {
+                return region.name === regionName;
+            })[0];
+
+            if (region) {
+                var includeToMove = region.includes[fromIndex];
+                region.includes.splice(fromIndex, 1);
+                region.includes.splice(toIndex, 0, includeToMove);
+            }
+            return page;
+        };
+
+        PageService.prototype.generateUrl = function (page, parent) {
+
+            parent = parent || page.parent;
+
+            var parentUrlPart = null;
+            if (parent && parent.url) {
+                parentUrlPart = parent.url;
+            }
+            return (parentUrlPart || '') + '/' + slugify(page.name);
+        };
+
+        /**
+         * Removes an include from a page model. Does not delete the actual include entity
+         * @param page
+         * @param regionIndex
+         * @param includeIndex
+         * @return {*}
+         */
+        PageService.prototype.removeInclude = function (page, regionIndex, includeIndex) {
+
+            var i;
+            //convert region name to index
+            for (i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
+                if (page.regions[i].name === regionIndex) {
+                    regionIndex = i;
+                }
+            }
+
+            //remove that index from the regions array
+            if (typeof regionIndex === 'number') {
+                for (i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
+                    if (i === includeIndex) {
+                        page.regions[regionIndex].includes.splice(i, 1);
+                    }
+                }
+            } else {
+                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
+                throw new Error(msg);
+            }
+
+            return page;
+        };
+
+        PageService.prototype.depopulatePage = function (page) {
+
+            delete page.createdBy;
+            delete page.updatedBy;
+            delete page.createdAt;
+            delete page.updatedAt;
+
+            if (page.template && page.template._id) {
+                page.template = page.template._id;
+            }
+            if (page.parent && page.parent._id) {
+                page.parent = page.parent._id;
+            }
+            if (page.basePage && page.basePage._id) {
+                page.basePage = page.basePage._id;
+            }
+            if (page.redirect && page.redirect._id) {
+                page.redirect = page.redirect._id;
+            }
+            page.regions = page.regions.filter(function (region) {
+                return (typeof region === 'undefined' ? 'undefined' : _typeof(region)) === 'object';
+            }).map(function (region) {
+                region.includes = region.includes.map(function (includeWrapper) {
+
+                    if (includeWrapper.plugin && includeWrapper.plugin._id) {
+                        includeWrapper.plugin = includeWrapper.plugin._id;
+                    }
+                    if (includeWrapper.include && includeWrapper.include._id) {
+                        includeWrapper.include = includeWrapper.include._id;
+                    }
+                    return includeWrapper;
+                });
+
+                return region;
+            });
+            return page;
+        };
+
+        PageService.prototype.synchronizeWithBasePage = function (page) {
+            function getRegionFromPage(page, regionName) {
+                return page.regions.filter(function (region) {
+                    return region.name === regionName;
+                })[0] || null;
+            }
+            function containsInclude(region, includeToFind) {
+                return region.includes.some(function (includeWrapper) {
+                    return includeWrapper.include._id === includeToFind.include;
+                });
+            }
+            //get basepage from id value
+            var syncResults = [];
+            page.template.regions.forEach(function (templateRegion) {
+                var syncResult = {
+                    region: templateRegion.name,
+                    removedCount: 0,
+                    sharedCount: 0
+                };
+                var sharing = !!templateRegion.sharing;
+                var pageRegion = getRegionFromPage(page, templateRegion.name);
+                if (!pageRegion) {
+                    pageRegion = {
+                        name: templateRegion.name,
+                        includes: []
+                    };
+                    page.regions.push(pageRegion);
+                }
+                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
+                if (baseRegion) {
+                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
+                    //add additional non-shared includes at the end
+                    baseRegion.includes.forEach(function (baseInclude) {
+                        if (sharing && !containsInclude(pageRegion, baseInclude)) {
+                            pageRegion.includes.push(baseInclude);
+                        }
+                    });
+                    syncResult.sharedCount = pageRegion.includes.length - startCount;
+                }
+                syncResults.push(syncResult);
+            });
+
+            return syncResults;
+        };
+
+        PageService.prototype.getPageHierarchyName = function (page) {
+            var selectName = [];
+            if (page.parent && page.parent.name) {
+                if (page.parent.parent) {
+                    selectName.push('...');
+                }
+
+                selectName.push(page.parent.name);
+            }
+            selectName.push(page.name);
+            return selectName.join(' / ');
+        };
+
+        PageService.prototype.getOrderOfLastPage = function (parentPage) {
+            var siblingsQuery = parentPage ? {
+                parent: parentPage._id
+            } : {
+                root: 'top'
+            };
+
+            //get future siblings
+            return this.getPages(siblingsQuery).then(function (pages) {
+                if (pages.length === 0) {
+                    return -1;
+                }
+
+                var pageOrders = pages.map(function (page) {
+                    return page.order;
+                });
+                return Math.max.apply(null, pageOrders);
+            });
+        };
+
+        return new PageService();
+    });
+
+    function slugify(str) {
+
+        str = str || '';
+        str = str.replace(/^\s+|\s+$/g, ''); // trim
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
+        var to = 'aaaaaeeeeeiiiiooooouuuunc------';
+        for (var i = 0, l = from.length; i < l; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+        .replace(/\s+/g, '-') // collapse whitespace and replace by -
+        .replace(/-+/g, '-'); // collapse dashes
+
+        return str;
+    }
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('SitemapController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService) {
+
+        $rootScope.pageTitle = 'Sitemap';
+
+        $scope.updateSearch = function (action) {
+            $scope.viewMode = action;
+            $location.path('/pages').search('action', action).replace();
+        };
+
+        $scope.macroAction = $routeParams.macroAction;
+        $scope.viewMode = $location.search().action;
+        if (!$scope.viewMode && !$scope.macroAction) {
+            $scope.updateSearch('configure');
+        }
+
+        function getSite() {
+            siteService.getSite().then(function (site) {
+                $scope.site = site;
+            }).catch(function (err) {
+                $scope.showError('Error getting site', err);
+            });
+        }
+
+        function getPages() {
+            pageService.getPages().then(function (allPages) {
+                var pageMap = {};
+                allPages = allPages.filter(function (page) {
+                    return page.status < 400;
+                }).sort(function (a, b) {
+                    if (a.order < b.order) {
+                        return -1;
+                    } else if (a.order > b.order) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                });
+                allPages.forEach(function (page) {
+                    pageMap[page._id] = page;
+                });
+
+                var populateChildren = function populateChildren(pages) {
+                    pages.forEach(function (currentPage) {
+                        currentPage.children = allPages.filter(function (childCandidate) {
+                            var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
+                            return currentPage._id === candidateParentId;
+                        });
+                        if (currentPage.children.length > 0) {
+                            populateChildren(currentPage.children);
+                        }
+                    });
+                };
+
+                var primaryRoots = allPages.filter(function (page) {
+                    return page.root === 'top';
+                });
+                populateChildren(primaryRoots);
+
+                $scope.pages = primaryRoots;
+            }).catch(function (err) {
+                $scope.showError('Error getting pages', err);
+            });
+        }
+
+        function getMacros() {
+            macroService.getMacros().then(function (macros) {
+                $scope.macros = macros;
+            });
+        }
+
+        getSite();
+        getPages();
+        getMacros();
+
+        $scope.addPage = function (parentPage) {
+            $scope.showInfo('Preparing new page...');
+
+            pageService.getOrderOfLastPage(parentPage).then(function (highestOrder) {
+                var parentRoot = parentPage ? parentPage._id : 'root';
+                highestOrder++;
+                $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
+            }).catch(function (msg) {
+                $scope.showError('Unable to determine order of new page', msg);
+            });
+        };
+
+        $scope.removePage = function (page) {
+
+            if (page.published) {
+                $location.path('/pages/delete/' + page._id);
+            } else {
+                var really = window.confirm('Really delete this page?');
+                if (really) {
+                    pageService.deletePage(page).then(function () {
+                        window.location.reload();
+                        $scope.showInfo('Page: ' + page.name + ' removed.');
+                    }).catch(function (msg) {
+                        $scope.showError('Error deleting page', msg);
+                    });
+                }
+            }
+        };
+
+        $scope.movePage = function (page, direction) {
+
+            var silbingQuery = {
+                order: page.order + direction
+            };
+            if (page.parent) {
+                silbingQuery.parent = page.parent._id;
+            } else if (page.root) {
+                silbingQuery.root = page.root;
+            }
+
+            pageService.getPages(silbingQuery).then(function (siblings) {
+
+                var siblingPage = siblings[0];
+                if (!siblingPage) {
+                    //$scope.showInfo('Couldn\'t re-order pages');
+                    return;
+                }
+                var promises = [];
+                promises.push(pageService.updatePage(page._id, {
+                    order: page.order + direction,
+                    draft: true
+                }));
+                promises.push(pageService.updatePage(siblingPage._id, {
+                    order: siblingPage.order - direction,
+                    draft: true
+                }));
+
+                Promise.all(promises).then(function () {
+                    getPages();
+                }).catch(function (err) {
+                    $scope.showError('Problem re-ordering pages', err);
+                });
+            });
+        };
+
+        $scope.moveBack = function (page) {
+            $scope.movePage(page, -1);
+        };
+        $scope.moveForward = function (page) {
+            $scope.movePage(page, 1);
+        };
+    });
+})();
+'use strict';
+
 (function () {
 
     /**
@@ -1283,561 +1842,61 @@
 })();
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 (function () {
     var adminApp = angular.module('adminApp');
-    adminApp.factory('pageService', function ($http, errorFactory) {
+    adminApp.factory('pluginService', function ($http, errorFactory) {
 
-        function PageService() {
-            this.pageCache = null;
-        }
-        PageService.prototype.getPages = function (filter) {
-            var self = this;
-
-            var queryKeyValPairs = [];
-            if ((typeof filter === 'undefined' ? 'undefined' : _typeof(filter)) === 'object') {
-                for (var key in filter) {
-                    if (filter.hasOwnProperty(key)) {
-                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
-                    }
-                }
-            } else if (this.pageCache) {
-                //if no filter and the page cache is populated
-                return Promise.resolve(this.pageCache);
-            }
-
-            var path = '/_api/pages';
-            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
-            return $http.get(url).then(function (res) {
-                //if no filter was used cache
-                if (!filter) {
-                    self.pageCache = res.data;
-                }
+        function PluginService() {}
+        PluginService.prototype.getPlugins = function () {
+            return $http.get('/_api/plugins').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        PluginService.prototype.getPlugin = function (pluginId) {
+            return $http.get('/_api/plugins/' + pluginId).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
             });
         };
 
-        PageService.prototype.getAvailableTags = function () {
-            return this.getPages().then(function (pages) {
-                //combine all tags into one
-                var seen = {};
-                return pages.reduce(function (allTags, page) {
-                    return allTags.concat(page.tags.filter(function (tag) {
-                        return tag.text; //only return tags with text property
-                    }));
-                }, []).filter(function (tag) {
-                    //remove dupes
-                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
-                });
-            });
-        };
-
-        PageService.prototype.getPage = function (pageId) {
-            return $http.get('/_api/pages/' + pageId).then(function (res) {
+        PluginService.prototype.createPlugin = function (pluginData) {
+            return $http.post('/_api/plugins', pluginData).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
             });
         };
 
-        PageService.prototype.createPage = function (pageData) {
-
-            if (!pageData.url) {
-                pageData.url = this.generateUrl(pageData);
-            }
-            this.pageCache = null;
-            return $http.post('/_api/pages', pageData).then(function (res) {
+        PluginService.prototype.deletePlugin = function (pluginId) {
+            return $http.delete('/_api/plugins/' + pluginId).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
             });
         };
 
-        /**
-         * Deletes a page. If it is not published, its non-shared includes will also be deleted
-         * @param page
-         * @return {Promise|Promise.<T>|*}
-         */
-        PageService.prototype.deletePage = function (page) {
-            var _this = this;
-
-            this.pageCache = null;
-            var promise;
-            if (page.published) {
-                var pageData = {
-                    status: page.status || 404
-                };
-
-                pageData.redirect = page.redirect ? page.redirect._id : null;
-
-                //live pages are updated to be gone
-                promise = $http.put('/_api/pages/' + page._id, pageData);
-            } else {
-                //pages which have never been published can be hard deleted
-                promise = $http.delete('/_api/pages/' + page._id).then(function () {
-                    var deleteIncludePromises = [];
-                    if (page.template) {
-                        var _iteratorNormalCompletion = true;
-                        var _didIteratorError = false;
-                        var _iteratorError = undefined;
-
-                        try {
-                            var _loop = function _loop() {
-                                var templateRegion = _step.value;
-
-                                var pageRegion = page.regions.find(function (region) {
-                                    return region.name === templateRegion.name;
-                                });
-                                if (!templateRegion.sharing && pageRegion) {
-                                    var promises = pageRegion.includes.map(function (include) {
-                                        return _this.deleteInclude(include._id);
-                                    });
-                                    deleteIncludePromises = deleteIncludePromises.concat(promises);
-                                }
-                            };
-
-                            for (var _iterator = page.template.regions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                                _loop();
-                            }
-                        } catch (err) {
-                            _didIteratorError = true;
-                            _iteratorError = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion && _iterator.return) {
-                                    _iterator.return();
-                                }
-                            } finally {
-                                if (_didIteratorError) {
-                                    throw _iteratorError;
-                                }
-                            }
-                        }
-                    }
-                    return Promise.all(deleteIncludePromises);
-                });
-            }
-            return promise.then(function (res) {
+        PluginService.prototype.updatePlugin = function (pluginId, pluginData) {
+            return $http.put('/_api/plugins/' + pluginId, pluginData).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
             });
         };
 
-        PageService.prototype.deleteInclude = function (includeId) {
-            return $http.delete('/_api/includes' + includeId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.updatePage = function (pageId, pageData) {
-            this.pageCache = null;
-            return $http.put('/_api/pages/' + pageId, pageData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PageService.prototype.createIncludeData = function (plugin) {
-
-            var includeData = {};
-
-            var schemaProps = plugin.config.schema.properties || {};
-            for (var name in schemaProps) {
-                if (schemaProps.hasOwnProperty(name)) {
-                    includeData[name] = typeof schemaProps[name].default !== 'undefined' ? schemaProps[name].default : null;
-                }
-            }
-
-            return $http.post('/_api/includes', {
-                data: includeData
+        PluginService.prototype.resetPlugin = function (pluginData) {
+            return $http.put('/_cache/plugins', {
+                module: pluginData.module
             }).then(function (res) {
                 return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
             });
         };
 
-        PageService.prototype.getRegionIndex = function (page, regionName) {
-            //map region name to index
-            var regionIndex = null;
-            for (var i = 0; i < page.regions.length && regionIndex === null; i++) {
-                if (page.regions[i].name === regionName) {
-                    regionIndex = i;
-                }
-            }
-            return regionIndex;
-        };
-
-        PageService.prototype.addRegion = function (page, regionName) {
-            page.regions.push({
-                name: regionName,
-                includes: []
-            });
-            return page.regions.length - 1;
-        };
-
-        PageService.prototype.addIncludeToPage = function (page, regionIndex, plugin, include) {
-            page.regions[regionIndex].includes.push({
-                plugin: plugin,
-                include: include._id
-            });
-        };
-
-        PageService.prototype.moveInclude = function (page, regionName, fromIndex, toIndex) {
-            //find the region
-            var region = page.regions.filter(function (region) {
-                return region.name === regionName;
-            })[0];
-
-            if (region) {
-                var includeToMove = region.includes[fromIndex];
-                region.includes.splice(fromIndex, 1);
-                region.includes.splice(toIndex, 0, includeToMove);
-            }
-            return page;
-        };
-
-        PageService.prototype.generateUrl = function (page, parent) {
-
-            parent = parent || page.parent;
-
-            var parentUrlPart = null;
-            if (parent && parent.url) {
-                parentUrlPart = parent.url;
-            }
-            return (parentUrlPart || '') + '/' + slugify(page.name);
-        };
-
-        /**
-         * Removes an include from a page model. Does not delete the actual include entity
-         * @param page
-         * @param regionIndex
-         * @param includeIndex
-         * @return {*}
-         */
-        PageService.prototype.removeInclude = function (page, regionIndex, includeIndex) {
-
-            var i;
-            //convert region name to index
-            for (i = 0; i < page.regions.length && typeof regionIndex === 'string'; i++) {
-                if (page.regions[i].name === regionIndex) {
-                    regionIndex = i;
-                }
-            }
-
-            //remove that index from the regions array
-            if (typeof regionIndex === 'number') {
-                for (i = page.regions[regionIndex].includes.length - 1; i >= 0; i--) {
-                    if (i === includeIndex) {
-                        page.regions[regionIndex].includes.splice(i, 1);
-                    }
-                }
-            } else {
-                var msg = 'Couldn\'t determine the region that the include to remove belongs to (' + regionIndex + ')';
-                throw new Error(msg);
-            }
-
-            return page;
-        };
-
-        PageService.prototype.depopulatePage = function (page) {
-
-            delete page.createdBy;
-            delete page.updatedBy;
-            delete page.createdAt;
-            delete page.updatedAt;
-
-            if (page.template && page.template._id) {
-                page.template = page.template._id;
-            }
-            if (page.parent && page.parent._id) {
-                page.parent = page.parent._id;
-            }
-            if (page.basePage && page.basePage._id) {
-                page.basePage = page.basePage._id;
-            }
-            if (page.redirect && page.redirect._id) {
-                page.redirect = page.redirect._id;
-            }
-            page.regions = page.regions.filter(function (region) {
-                return (typeof region === 'undefined' ? 'undefined' : _typeof(region)) === 'object';
-            }).map(function (region) {
-                region.includes = region.includes.map(function (includeWrapper) {
-
-                    if (includeWrapper.plugin && includeWrapper.plugin._id) {
-                        includeWrapper.plugin = includeWrapper.plugin._id;
-                    }
-                    if (includeWrapper.include && includeWrapper.include._id) {
-                        includeWrapper.include = includeWrapper.include._id;
-                    }
-                    return includeWrapper;
-                });
-
-                return region;
-            });
-            return page;
-        };
-
-        PageService.prototype.synchronizeWithBasePage = function (page) {
-            function getRegionFromPage(page, regionName) {
-                return page.regions.filter(function (region) {
-                    return region.name === regionName;
-                })[0] || null;
-            }
-            function containsInclude(region, includeToFind) {
-                return region.includes.some(function (includeWrapper) {
-                    return includeWrapper.include._id === includeToFind.include;
-                });
-            }
-            //get basepage from id value
-            var syncResults = [];
-            page.template.regions.forEach(function (templateRegion) {
-                var syncResult = {
-                    region: templateRegion.name,
-                    removedCount: 0,
-                    sharedCount: 0
-                };
-                var sharing = !!templateRegion.sharing;
-                var pageRegion = getRegionFromPage(page, templateRegion.name);
-                if (!pageRegion) {
-                    pageRegion = {
-                        name: templateRegion.name,
-                        includes: []
-                    };
-                    page.regions.push(pageRegion);
-                }
-                var baseRegion = getRegionFromPage(page.basePage, templateRegion.name);
-                if (baseRegion) {
-                    var startCount = pageRegion.includes ? pageRegion.includes.length : 0;
-                    //add additional non-shared includes at the end
-                    baseRegion.includes.forEach(function (baseInclude) {
-                        if (sharing && !containsInclude(pageRegion, baseInclude)) {
-                            pageRegion.includes.push(baseInclude);
-                        }
-                    });
-                    syncResult.sharedCount = pageRegion.includes.length - startCount;
-                }
-                syncResults.push(syncResult);
-            });
-
-            return syncResults;
-        };
-
-        PageService.prototype.getPageHierarchyName = function (page) {
-            var selectName = [];
-            if (page.parent && page.parent.name) {
-                if (page.parent.parent) {
-                    selectName.push('...');
-                }
-
-                selectName.push(page.parent.name);
-            }
-            selectName.push(page.name);
-            return selectName.join(' / ');
-        };
-
-        PageService.prototype.getOrderOfLastPage = function (parentPage) {
-            var siblingsQuery = parentPage ? {
-                parent: parentPage._id
-            } : {
-                root: 'top'
-            };
-
-            //get future siblings
-            return this.getPages(siblingsQuery).then(function (pages) {
-                if (pages.length === 0) {
-                    return -1;
-                }
-
-                var pageOrders = pages.map(function (page) {
-                    return page.order;
-                });
-                return Math.max.apply(null, pageOrders);
-            });
-        };
-
-        return new PageService();
-    });
-
-    function slugify(str) {
-
-        str = str || '';
-        str = str.replace(/^\s+|\s+$/g, ''); // trim
-        str = str.toLowerCase();
-
-        // remove accents, swap ñ for n, etc
-        var from = 'ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;';
-        var to = 'aaaaaeeeeeiiiiooooouuuunc------';
-        for (var i = 0, l = from.length; i < l; i++) {
-            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
-        }
-
-        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-'); // collapse dashes
-
-        return str;
-    }
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('SitemapController', function ($scope, $rootScope, $timeout, $location, siteService, pageService, $routeParams, macroService) {
-
-        $rootScope.pageTitle = 'Sitemap';
-
-        $scope.updateSearch = function (action) {
-            $scope.viewMode = action;
-            $location.path('/pages').search('action', action).replace();
-        };
-
-        $scope.macroAction = $routeParams.macroAction;
-        $scope.viewMode = $location.search().action;
-        if (!$scope.viewMode && !$scope.macroAction) {
-            $scope.updateSearch('configure');
-        }
-
-        function getSite() {
-            siteService.getSite().then(function (site) {
-                $scope.site = site;
-            }).catch(function (err) {
-                $scope.showError('Error getting site', err);
-            });
-        }
-
-        function getPages() {
-            pageService.getPages().then(function (allPages) {
-                var pageMap = {};
-                allPages = allPages.filter(function (page) {
-                    return page.status < 400;
-                }).sort(function (a, b) {
-                    if (a.order < b.order) {
-                        return -1;
-                    } else if (a.order > b.order) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-                allPages.forEach(function (page) {
-                    pageMap[page._id] = page;
-                });
-
-                var populateChildren = function populateChildren(pages) {
-                    pages.forEach(function (currentPage) {
-                        currentPage.children = allPages.filter(function (childCandidate) {
-                            var candidateParentId = childCandidate.parent ? childCandidate.parent._id : null;
-                            return currentPage._id === candidateParentId;
-                        });
-                        if (currentPage.children.length > 0) {
-                            populateChildren(currentPage.children);
-                        }
-                    });
-                };
-
-                var primaryRoots = allPages.filter(function (page) {
-                    return page.root === 'top';
-                });
-                populateChildren(primaryRoots);
-
-                $scope.pages = primaryRoots;
-            }).catch(function (err) {
-                $scope.showError('Error getting pages', err);
-            });
-        }
-
-        function getMacros() {
-            macroService.getMacros().then(function (macros) {
-                $scope.macros = macros;
-            });
-        }
-
-        getSite();
-        getPages();
-        getMacros();
-
-        $scope.addPage = function (parentPage) {
-            $scope.showInfo('Preparing new page...');
-
-            pageService.getOrderOfLastPage(parentPage).then(function (highestOrder) {
-                var parentRoot = parentPage ? parentPage._id : 'root';
-                highestOrder++;
-                $location.path('/pages/new/' + encodeURIComponent(parentRoot) + '/' + encodeURIComponent(highestOrder));
-            }).catch(function (msg) {
-                $scope.showError('Unable to determine order of new page', msg);
-            });
-        };
-
-        $scope.removePage = function (page) {
-
-            if (page.published) {
-                $location.path('/pages/delete/' + page._id);
-            } else {
-                var really = window.confirm('Really delete this page?');
-                if (really) {
-                    pageService.deletePage(page).then(function () {
-                        window.location.reload();
-                        $scope.showInfo('Page: ' + page.name + ' removed.');
-                    }).catch(function (msg) {
-                        $scope.showError('Error deleting page', msg);
-                    });
-                }
-            }
-        };
-
-        $scope.movePage = function (page, direction) {
-
-            var silbingQuery = {
-                order: page.order + direction
-            };
-            if (page.parent) {
-                silbingQuery.parent = page.parent._id;
-            } else if (page.root) {
-                silbingQuery.root = page.root;
-            }
-
-            pageService.getPages(silbingQuery).then(function (siblings) {
-
-                var siblingPage = siblings[0];
-                if (!siblingPage) {
-                    //$scope.showInfo('Couldn\'t re-order pages');
-                    return;
-                }
-                var promises = [];
-                promises.push(pageService.updatePage(page._id, {
-                    order: page.order + direction,
-                    draft: true
-                }));
-                promises.push(pageService.updatePage(siblingPage._id, {
-                    order: siblingPage.order - direction,
-                    draft: true
-                }));
-
-                Promise.all(promises).then(function () {
-                    getPages();
-                }).catch(function (err) {
-                    $scope.showError('Problem re-ordering pages', err);
-                });
-            });
-        };
-
-        $scope.moveBack = function (page) {
-            $scope.movePage(page, -1);
-        };
-        $scope.moveForward = function (page) {
-            $scope.movePage(page, 1);
-        };
+        return new PluginService();
     });
 })();
 'use strict';
@@ -2055,65 +2114,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
 
         return new PublishingService();
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('pluginService', function ($http, errorFactory) {
-
-        function PluginService() {}
-        PluginService.prototype.getPlugins = function () {
-            return $http.get('/_api/plugins').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        PluginService.prototype.getPlugin = function (pluginId) {
-            return $http.get('/_api/plugins/' + pluginId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PluginService.prototype.createPlugin = function (pluginData) {
-            return $http.post('/_api/plugins', pluginData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PluginService.prototype.deletePlugin = function (pluginId) {
-            return $http.delete('/_api/plugins/' + pluginId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PluginService.prototype.updatePlugin = function (pluginId, pluginData) {
-            return $http.put('/_api/plugins/' + pluginId, pluginData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        PluginService.prototype.resetPlugin = function (pluginData) {
-            return $http.put('/_cache/plugins', {
-                module: pluginData.module
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new PluginService();
     });
 })();
 'use strict';
@@ -2568,441 +2568,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
 
         return new UserService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp'),
-        TMPL = '<div>\n                <div class="notification-bar">\n                    <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>\n                </div>\n                <div class="list-group" ng-show="availablePlugins.length > 0">\n                    <li ng-click="selectPlugin(plugin)" ng-repeat="plugin in availablePlugins"\n                        class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">\n                        <h4 class="list-group-item-heading">{{plugin.name}}</h4>\n                    </li>\n                </div>\n            </div>';
-
-    adminApp.directive('addInclude', function () {
-        return {
-            scope: {
-                pageId: '=',
-                regionName: '='
-            },
-            replace: true,
-            template: TMPL,
-            controller: function controller($log, $scope, $timeout, $q, pageService, pluginService) {
-
-                var regionName = null;
-                var pageId = $scope.pageId;
-                regionName = $scope.regionName;
-
-                $scope.selectedPlugin = null;
-
-                var pluginsPromise = pluginService.getPlugins();
-                var pagePromise = pageService.getPage(pageId);
-
-                $q.all([pluginsPromise, pagePromise]).then(function (results) {
-                    $scope.availablePlugins = results[0];
-                    $scope.page = results[1];
-
-                    $log.debug('Got available plugins and page ok');
-                }).catch(function (err) {
-                    $scope.err = err;
-                    $log.error(err, 'Unable to get data');
-                });
-
-                $scope.selectPlugin = function (plugin) {
-                    $scope.selectedPlugin = plugin;
-                };
-
-                $scope.$on('include-added', function () {
-                    var page = $scope.page;
-
-                    //map region name to index
-                    var regionIndex = pageService.getRegionIndex(page, regionName);
-
-                    //add a new region
-                    if (regionIndex === null) {
-                        pageService.addRegion(page, regionName);
-                    }
-
-                    //add the new include to the region
-                    if ($scope.selectedPlugin) {
-                        pageService.createIncludeData($scope.selectedPlugin).then(function (includeData) {
-
-                            $scope.$emit('edit-include', pageId, $scope.selectedPlugin.name, includeData._id, regionName);
-
-                            pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
-                            page = pageService.depopulatePage(page);
-                            return pageService.updatePage(pageId, page);
-                        }).catch(function (err) {
-                            var msg = 'Update page to add include failed (pageId=' + pageId + ', region=' + regionIndex + ')';
-                            $log.error(err, msg);
-                        });
-                    } else {
-                        var msgDetails = 'pageId=' + pageId + ', region=' + regionName;
-                        $log.error('Unable to determine region for new include (' + msgDetails + ')');
-                    }
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('includeEditorView', function ($log) {
-        return {
-            scope: {
-                pageId: '=',
-                pluginName: '=',
-                includeId: '='
-            },
-            template: '',
-            link: function link(scope, element) {
-                var el = element[0],
-                    defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
-
-                var pluginInterface = null;
-
-                scope.$watch('includeId', function () {
-                    var pageId = scope.pageId,
-                        pluginName = scope.pluginName,
-                        includeId = scope.includeId;
-
-                    if (!pageId || !pluginName || !includeId) {
-                        return;
-                    }
-
-                    var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
-                    pluginInterface = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
-
-                    fetch(customIframeSrc).then(function (res) {
-                        if (res.status === 404) {
-                            setupIframe(defaultIframeSrc, pluginInterface);
-                        } else if (res.status === 200) {
-                            setupIframe(customIframeSrc, pluginInterface);
-                        } else {
-                            var err = new Error(res.statusText);
-                            err.status = res.status;
-                            $log.error(err);
-                        }
-                    });
-                });
-
-                scope.$on('$destroy', function () {
-                    /*                  if(iframeHeightUpdateInterval) {
-                     clearInterval(iframeHeightUpdateInterval);
-                     }*/
-                });
-
-                scope.$on('include-saved', function () {
-                    if (pluginInterface) {
-                        pluginInterface.emit('save');
-                    }
-                });
-
-                scope.$on('edit-closed', function () {
-                    clearEl();
-                });
-
-                function clearEl() {
-                    while (el.firstChild) {
-                        el.removeChild(el.firstChild);
-                    }
-                }
-
-                function setupIframe(iframeSrc, pluginInterface) {
-
-                    clearEl();
-
-                    var iframe = document.createElement('iframe');
-                    iframe.name = 'pagespace-editor';
-                    iframe.src = iframeSrc;
-                    iframe.width = '100%';
-                    iframe.height = '100%';
-                    el.appendChild(iframe);
-
-                    //inject plugin interface
-                    iframe.contentWindow.window.pagespace = pluginInterface;
-                }
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('pageHolder', function ($timeout, pageViewStates) {
-        return {
-            restrict: 'E',
-            transclude: true,
-            replace: true,
-            template: '<div ng-transclude></div>',
-            link: function link(scope, el) {
-
-                var pageFrame = el.find('iframe')[0];
-                pageFrame.addEventListener('load', function () {
-
-                    //scaling
-                    scope.$watch('state', function (newVal, oldVal, scope) {
-                        scalePageView(scope.state, scope.scalingOn);
-                    });
-                    scope.$watch('scalingOn', function (newVal, oldVal, scope) {
-                        scalePageView(scope.state, scope.scalingOn);
-                    });
-
-                    function scalePageView(pageViewState, scalingOn) {
-                        var scale = 1;
-                        if (pageViewState !== pageViewStates.NONE && scalingOn) {
-                            var ww = window.innerWidth;
-                            if (ww > 800 && ww <= 1500) {
-                                scale = 0.5;
-                            } else if (ww > 1500) {
-                                scale = (ww - 800) / ww;
-                            }
-                        }
-                        el[0].style.transform = 'scale(' + scale + ')';
-                        var scaleCompensation = 1 / scale * 100 + '%';
-                        pageFrame.style.width = scaleCompensation;
-                        pageFrame.style.height = scaleCompensation;
-                    }
-
-                    //injection
-                    var adminStyles = document.createElement('link');
-                    adminStyles.setAttribute('type', 'text/css');
-                    adminStyles.setAttribute('rel', 'stylesheet');
-                    adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
-
-                    var pluginInterfaceScript = document.createElement('script');
-                    pluginInterfaceScript.src = '/_static/inpage/plugin-interface.js';
-
-                    var adminScript = document.createElement('script');
-                    adminScript.src = '/_static/inpage/inpage-edit.js';
-
-                    adminScript.onload = function () {
-                        window.setTimeout(function () {
-                            //not sure how to guarantee the css is ready
-                            pageFrame.contentWindow.pagespace.setupAdminMode();
-                        }, 50);
-                    };
-
-                    var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
-                    frameHead.appendChild(adminStyles);
-                    frameHead.appendChild(pluginInterfaceScript);
-                    frameHead.appendChild(adminScript);
-                });
-
-                scope.$on('include-saved', function () {
-                    $timeout(function () {
-                        pageFrame.contentWindow.location.reload();
-                    }, 300);
-                });
-
-                scope.$on('include-added', function () {
-                    $timeout(function () {
-                        pageFrame.contentWindow.location.reload();
-                    }, 300);
-                });
-
-                scope.$on('include-removed', function () {
-                    pageFrame.contentWindow.location.reload();
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp'),
-        tmpl = '<div class="remove-include-action well">\n                <span class="glyphicon glyphicon-trash"></span> Remove\n            </div>';
-
-    adminApp.directive('removeIncludeDrop', function () {
-        return {
-            replace: true,
-            template: tmpl,
-            link: function link(scope, element) {
-
-                var dragCounter = 0;
-                element[0].addEventListener('dragenter', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter++;
-                        this.classList.add('drag-over');
-                        ev.preventDefault();
-                    }
-                });
-                element[0].addEventListener('dragover', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        ev.dataTransfer.dropEffect = 'move';
-                        ev.preventDefault();
-                    }
-                });
-                element[0].addEventListener('dragleave', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        dragCounter--;
-                        if (dragCounter === 0) {
-                            this.classList.remove('drag-over');
-                            ev.preventDefault();
-                        }
-                    }
-                });
-                element[0].addEventListener('drop', function (ev) {
-                    if (containsType(ev.dataTransfer.types, 'include-info')) {
-                        var data = ev.dataTransfer.getData('include-info');
-                        data = JSON.parse(data);
-                        var pageId = data.pageId;
-                        var regionName = data.region;
-                        var includeIndex = parseInt(data.includeIndex);
-                        scope.remove(pageId, regionName, includeIndex);
-                        ev.preventDefault();
-                    }
-                });
-
-                function containsType(list, value) {
-                    for (var i = 0; i < list.length; ++i) {
-                        if (list[i] === value) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            },
-            controller: function controller($log, $scope, pageService) {
-                $scope.remove = function (pageId, regionName, includeIndex) {
-                    pageService.getPage(pageId).then(function (page) {
-                        page = pageService.removeInclude(page, regionName, includeIndex);
-                        page = pageService.depopulatePage(page);
-                        pageService.updatePage(pageId, page).then(function () {
-                            $log.info('Include removed for pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
-                            $scope.$broadcast('include-removed');
-                        }).catch(function (err) {
-                            $scope.err = err;
-                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s)', pageId, regionName, includeIndex);
-                        });
-                    }).catch(function (err) {
-                        $scope.err = err;
-                        $log.error(err, 'Unable to get page: %s', pageId);
-                    });
-                };
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('ViewJsonController', function ($scope, $rootScope, $routeParams) {
-
-        var url = $routeParams.url;
-
-        $scope.getPageUrl = function () {
-            return '/_api/' + url;
-        };
-    });
-
-    adminApp.directive('jsonHolder', function () {
-        return {
-            restrict: 'E',
-            transclude: true,
-            replace: true,
-            template: '<div ng-transclude></div>',
-            link: function link(scope, element) {
-
-                //sizing
-                function getWindowHeight() {
-                    return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
-                }
-
-                element.css('clear', 'both');
-                element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
-
-                window.addEventListener('resize', function () {
-                    element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
-                });
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
-
-        var env = $routeParams.viewPageEnv;
-        var url = $routeParams.url;
-
-        $scope.scalingOn = true;
-
-        $scope.state = pageViewStates.NONE;
-
-        $scope.isEditing = function () {
-            return $scope.state === pageViewStates.EDITING;
-        };
-        $scope.isAdding = function () {
-            return $scope.state === pageViewStates.ADDING;
-        };
-
-        $scope.getPageUrl = function () {
-            var showPreview = env === 'preview';
-            return '/' + (url || '') + '?_preview=' + showPreview;
-        };
-
-        $scope.pageName = '';
-        pageService.getPages({
-            url: '/' + url
-        }).then(function (pages) {
-            $scope.pageName = pageService.getPageHierarchyName(pages[0]);
-        });
-
-        //editing
-        $scope.editing = {};
-        $scope.$on('edit-include', function (ev, pageId, pluginName, includeId, regionName) {
-            $timeout(function () {
-                $scope.state = pageViewStates.EDITING;
-                $scope.editing = {
-                    pageId: pageId,
-                    pluginName: pluginName,
-                    includeId: includeId,
-                    regionName: regionName
-                };
-            }, 0);
-        });
-
-        $scope.adding = {};
-        $scope.$on('add-include', function (ev, pageId, regionName) {
-            $timeout(function () {
-                $scope.state = pageViewStates.ADDING;
-                $scope.adding = {
-                    pageId: pageId,
-                    regionName: regionName
-                };
-            }, 0);
-        });
-
-        $scope.add = function () {
-            $log.info('Broadcasting "include-added" event');
-            $scope.$broadcast('include-added');
-        };
-
-        $scope.save = function () {
-            $log.info('Broadcasting "include-saved" event');
-            $scope.$broadcast('include-saved');
-        };
-
-        $scope.cancel = function () {
-            $log.info('Closing include edit');
-            $scope.state = pageViewStates.NONE;
-            $scope.$broadcast('edit-closed');
-        };
     });
 })();
 'use strict';
@@ -3519,6 +3084,441 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     $scope.showError('Error adding new page', err);
                 });
             }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp'),
+        TMPL = '<div>\n                <div class="notification-bar">\n                    <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>\n                </div>\n                <div class="list-group" ng-show="availablePlugins.length > 0">\n                    <li ng-click="selectPlugin(plugin)" ng-repeat="plugin in availablePlugins"\n                        class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">\n                        <h4 class="list-group-item-heading">{{plugin.name}}</h4>\n                    </li>\n                </div>\n            </div>';
+
+    adminApp.directive('addInclude', function () {
+        return {
+            scope: {
+                pageId: '=',
+                regionName: '='
+            },
+            replace: true,
+            template: TMPL,
+            controller: function controller($log, $scope, $timeout, $q, pageService, pluginService) {
+
+                var regionName = null;
+                var pageId = $scope.pageId;
+                regionName = $scope.regionName;
+
+                $scope.selectedPlugin = null;
+
+                var pluginsPromise = pluginService.getPlugins();
+                var pagePromise = pageService.getPage(pageId);
+
+                $q.all([pluginsPromise, pagePromise]).then(function (results) {
+                    $scope.availablePlugins = results[0];
+                    $scope.page = results[1];
+
+                    $log.debug('Got available plugins and page ok');
+                }).catch(function (err) {
+                    $scope.err = err;
+                    $log.error(err, 'Unable to get data');
+                });
+
+                $scope.selectPlugin = function (plugin) {
+                    $scope.selectedPlugin = plugin;
+                };
+
+                $scope.$on('include-added', function () {
+                    var page = $scope.page;
+
+                    //map region name to index
+                    var regionIndex = pageService.getRegionIndex(page, regionName);
+
+                    //add a new region
+                    if (regionIndex === null) {
+                        pageService.addRegion(page, regionName);
+                    }
+
+                    //add the new include to the region
+                    if ($scope.selectedPlugin) {
+                        pageService.createIncludeData($scope.selectedPlugin).then(function (includeData) {
+
+                            $scope.$emit('edit-include', pageId, $scope.selectedPlugin.name, includeData._id, regionName);
+
+                            pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
+                            page = pageService.depopulatePage(page);
+                            return pageService.updatePage(pageId, page);
+                        }).catch(function (err) {
+                            var msg = 'Update page to add include failed (pageId=' + pageId + ', region=' + regionIndex + ')';
+                            $log.error(err, msg);
+                        });
+                    } else {
+                        var msgDetails = 'pageId=' + pageId + ', region=' + regionName;
+                        $log.error('Unable to determine region for new include (' + msgDetails + ')');
+                    }
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('includeEditorView', function ($log) {
+        return {
+            scope: {
+                pageId: '=',
+                pluginName: '=',
+                includeId: '='
+            },
+            template: '',
+            link: function link(scope, element) {
+                var el = element[0],
+                    defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
+
+                var pluginInterface = null;
+
+                scope.$watch('includeId', function () {
+                    var pageId = scope.pageId,
+                        pluginName = scope.pluginName,
+                        includeId = scope.includeId;
+
+                    if (!pageId || !pluginName || !includeId) {
+                        return;
+                    }
+
+                    var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
+                    pluginInterface = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
+
+                    fetch(customIframeSrc).then(function (res) {
+                        if (res.status === 404) {
+                            setupIframe(defaultIframeSrc, pluginInterface);
+                        } else if (res.status === 200) {
+                            setupIframe(customIframeSrc, pluginInterface);
+                        } else {
+                            var err = new Error(res.statusText);
+                            err.status = res.status;
+                            $log.error(err);
+                        }
+                    });
+                });
+
+                scope.$on('$destroy', function () {
+                    /*                  if(iframeHeightUpdateInterval) {
+                     clearInterval(iframeHeightUpdateInterval);
+                     }*/
+                });
+
+                scope.$on('include-saved', function () {
+                    if (pluginInterface) {
+                        pluginInterface.emit('save');
+                    }
+                });
+
+                scope.$on('edit-closed', function () {
+                    clearEl();
+                });
+
+                function clearEl() {
+                    while (el.firstChild) {
+                        el.removeChild(el.firstChild);
+                    }
+                }
+
+                function setupIframe(iframeSrc, pluginInterface) {
+
+                    clearEl();
+
+                    var iframe = document.createElement('iframe');
+                    iframe.name = 'pagespace-editor';
+                    iframe.src = iframeSrc;
+                    iframe.width = '100%';
+                    iframe.height = '100%';
+                    el.appendChild(iframe);
+
+                    //inject plugin interface
+                    iframe.contentWindow.window.pagespace = pluginInterface;
+                }
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('pageHolder', function ($timeout, pageViewStates) {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            template: '<div ng-transclude></div>',
+            link: function link(scope, el) {
+
+                var pageFrame = el.find('iframe')[0];
+                pageFrame.addEventListener('load', function () {
+
+                    //scaling
+                    scope.$watch('state', function (newVal, oldVal, scope) {
+                        scalePageView(scope.state, scope.scalingOn);
+                    });
+                    scope.$watch('scalingOn', function (newVal, oldVal, scope) {
+                        scalePageView(scope.state, scope.scalingOn);
+                    });
+
+                    function scalePageView(pageViewState, scalingOn) {
+                        var scale = 1;
+                        if (pageViewState !== pageViewStates.NONE && scalingOn) {
+                            var ww = window.innerWidth;
+                            if (ww > 800 && ww <= 1500) {
+                                scale = 0.5;
+                            } else if (ww > 1500) {
+                                scale = (ww - 800) / ww;
+                            }
+                        }
+                        el[0].style.transform = 'scale(' + scale + ')';
+                        var scaleCompensation = 1 / scale * 100 + '%';
+                        pageFrame.style.width = scaleCompensation;
+                        pageFrame.style.height = scaleCompensation;
+                    }
+
+                    //injection
+                    var adminStyles = document.createElement('link');
+                    adminStyles.setAttribute('type', 'text/css');
+                    adminStyles.setAttribute('rel', 'stylesheet');
+                    adminStyles.setAttribute('href', '/_static/inpage/inpage-edit.css');
+
+                    var pluginInterfaceScript = document.createElement('script');
+                    pluginInterfaceScript.src = '/_static/inpage/plugin-interface.js';
+
+                    var adminScript = document.createElement('script');
+                    adminScript.src = '/_static/inpage/inpage-edit.js';
+
+                    adminScript.onload = function () {
+                        window.setTimeout(function () {
+                            //not sure how to guarantee the css is ready
+                            pageFrame.contentWindow.pagespace.setupAdminMode();
+                        }, 50);
+                    };
+
+                    var frameHead = pageFrame.contentWindow.document.getElementsByTagName('head')[0];
+                    frameHead.appendChild(adminStyles);
+                    frameHead.appendChild(pluginInterfaceScript);
+                    frameHead.appendChild(adminScript);
+                });
+
+                scope.$on('include-saved', function () {
+                    $timeout(function () {
+                        pageFrame.contentWindow.location.reload();
+                    }, 300);
+                });
+
+                scope.$on('include-added', function () {
+                    $timeout(function () {
+                        pageFrame.contentWindow.location.reload();
+                    }, 300);
+                });
+
+                scope.$on('include-removed', function () {
+                    pageFrame.contentWindow.location.reload();
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp'),
+        tmpl = '<div class="remove-include-action well">\n                <span class="glyphicon glyphicon-trash"></span> Remove\n            </div>';
+
+    adminApp.directive('removeIncludeDrop', function () {
+        return {
+            replace: true,
+            template: tmpl,
+            link: function link(scope, element) {
+
+                var dragCounter = 0;
+                element[0].addEventListener('dragenter', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter++;
+                        this.classList.add('drag-over');
+                        ev.preventDefault();
+                    }
+                });
+                element[0].addEventListener('dragover', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        ev.dataTransfer.dropEffect = 'move';
+                        ev.preventDefault();
+                    }
+                });
+                element[0].addEventListener('dragleave', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        dragCounter--;
+                        if (dragCounter === 0) {
+                            this.classList.remove('drag-over');
+                            ev.preventDefault();
+                        }
+                    }
+                });
+                element[0].addEventListener('drop', function (ev) {
+                    if (containsType(ev.dataTransfer.types, 'include-info')) {
+                        var data = ev.dataTransfer.getData('include-info');
+                        data = JSON.parse(data);
+                        var pageId = data.pageId;
+                        var regionName = data.region;
+                        var includeIndex = parseInt(data.includeIndex);
+                        scope.remove(pageId, regionName, includeIndex);
+                        ev.preventDefault();
+                    }
+                });
+
+                function containsType(list, value) {
+                    for (var i = 0; i < list.length; ++i) {
+                        if (list[i] === value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            },
+            controller: function controller($log, $scope, pageService) {
+                $scope.remove = function (pageId, regionName, includeIndex) {
+                    pageService.getPage(pageId).then(function (page) {
+                        page = pageService.removeInclude(page, regionName, includeIndex);
+                        page = pageService.depopulatePage(page);
+                        pageService.updatePage(pageId, page).then(function () {
+                            $log.info('Include removed for pageId=%s, region=%s, include=%s', pageId, regionName, includeIndex);
+                            $scope.$broadcast('include-removed');
+                        }).catch(function (err) {
+                            $scope.err = err;
+                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s)', pageId, regionName, includeIndex);
+                        });
+                    }).catch(function (err) {
+                        $scope.err = err;
+                        $log.error(err, 'Unable to get page: %s', pageId);
+                    });
+                };
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('ViewJsonController', function ($scope, $rootScope, $routeParams) {
+
+        var url = $routeParams.url;
+
+        $scope.getPageUrl = function () {
+            return '/_api/' + url;
+        };
+    });
+
+    adminApp.directive('jsonHolder', function () {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            template: '<div ng-transclude></div>',
+            link: function link(scope, element) {
+
+                //sizing
+                function getWindowHeight() {
+                    return isNaN(window.innerHeight) ? window.clientHeight : window.innerHeight;
+                }
+
+                element.css('clear', 'both');
+                element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
+
+                window.addEventListener('resize', function () {
+                    element.css('height', getWindowHeight() - element[0].offsetTop - 5 + 'px');
+                });
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
+
+        var env = $routeParams.viewPageEnv;
+        var url = $routeParams.url;
+
+        $scope.scalingOn = true;
+
+        $scope.state = pageViewStates.NONE;
+
+        $scope.isEditing = function () {
+            return $scope.state === pageViewStates.EDITING;
+        };
+        $scope.isAdding = function () {
+            return $scope.state === pageViewStates.ADDING;
+        };
+
+        $scope.getPageUrl = function () {
+            var showPreview = env === 'preview';
+            return '/' + (url || '') + '?_preview=' + showPreview;
+        };
+
+        $scope.pageName = '';
+        pageService.getPages({
+            url: '/' + url
+        }).then(function (pages) {
+            $scope.pageName = pageService.getPageHierarchyName(pages[0]);
+        });
+
+        //editing
+        $scope.editing = {};
+        $scope.$on('edit-include', function (ev, pageId, pluginName, includeId, regionName) {
+            $timeout(function () {
+                $scope.state = pageViewStates.EDITING;
+                $scope.editing = {
+                    pageId: pageId,
+                    pluginName: pluginName,
+                    includeId: includeId,
+                    regionName: regionName
+                };
+            }, 0);
+        });
+
+        $scope.adding = {};
+        $scope.$on('add-include', function (ev, pageId, regionName) {
+            $timeout(function () {
+                $scope.state = pageViewStates.ADDING;
+                $scope.adding = {
+                    pageId: pageId,
+                    regionName: regionName
+                };
+            }, 0);
+        });
+
+        $scope.add = function () {
+            $log.info('Broadcasting "include-added" event');
+            $scope.$broadcast('include-added');
+        };
+
+        $scope.save = function () {
+            $log.info('Broadcasting "include-saved" event');
+            $scope.$broadcast('include-saved');
+        };
+
+        $scope.cancel = function () {
+            $log.info('Closing include edit');
+            $scope.state = pageViewStates.NONE;
+            $scope.$broadcast('edit-closed');
         };
     });
 })();
