@@ -2,15 +2,15 @@
 
 const toCollectionName = require('mongoose/lib/utils').toCollectionName;
 
-const siteSchema = require('../schemas/site'),
+const 
+    siteSchema = require('../schemas/site'),
     pageSchema = require('../schemas/page'),
     macroSchema = require('../schemas/macro'),
     pluginSchema = require('../schemas/plugin'),
     includeSchema = require('../schemas/include'),
     templateSchema = require('../schemas/template'),
     userSchema = require('../schemas/user'),
-    mediaSchema = require('../schemas/media'),
-    hitSchema = require('../schemas/hit');
+    mediaSchema = require('../schemas/media');
 
 const modelData = [{
     name: 'Site',
@@ -43,10 +43,6 @@ const modelData = [{
 }, {
     name: 'Media',
     schema: mediaSchema,
-    publishable: false
-}, {
-    name: 'Hit',
-    schema: hitSchema,
     publishable: false
 }];
 

@@ -15,8 +15,7 @@ const urlToModelMap = {
     templates:'Template',
     users: 'User',
     media: 'Media',
-    macros: 'Macro',
-    hits: 'Hit'
+    macros: 'Macro'
 };
 
 //fields to auto populate when making queries to these model names (the keys)
@@ -28,14 +27,13 @@ const populationsMap = {
     Template: 'regions.includes.plugin',
     User: '',
     Media: '',
-    Macro: 'parent basePage template includes.plugin',
-    Hit: ''
+    Macro: 'parent basePage template includes.plugin'
 };
 
 class ApiHandler extends BaseHandler {
     
     get pattern() {
-        return new RegExp('^/_api/(sites|pages|plugins|macros|includes|templates|users|media|hits)/?(.*)');
+        return new RegExp('^/_api/(sites|pages|plugins|macros|includes|templates|users|media)/?(.*)');
     }
 
     init(support) {

@@ -88,12 +88,7 @@ class PageHandler extends BaseHandler {
                 previewMode: previewMode,
                 urlPath: urlPath
             };
-    
-            //analytics. page exists and its a guest user
-            if(this.analytics && page && (!req.user || req.user.role === consts.GUEST_USER.role)) {
-                this._recordHit(req, page._id, logger);
-            }
-    
+            
             if(status === httpStatus.OK) {
                 logger.debug('Page found (%s) for %s: %s', status, urlPath, page.id);
                 //each region may need to be processed, this may be async
@@ -316,24 +311,6 @@ class PageHandler extends BaseHandler {
         const err = new Error(errMessage);
         err.status = status;
         throw err;
-    }
-
-    /**
-     * Records a page hit
-     */
-    _recordHit(req, pageId, logger) {
-    
-        const Hit = this.dbSupport.getModel('Hit');
-        const hit = new Hit({
-            page: pageId,
-            ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-            referrer: req.headers['referrer'], // jshint ignore:line
-            agent: req.headers['user-agent'],
-            session: req.sessionID
-        });
-        hit.save().catch(err => {
-            logger.warn(err, 'Couldn\'t save page hit');
-        });
     }
 
     /**
