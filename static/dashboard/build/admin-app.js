@@ -3252,7 +3252,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 (function () {
 
     var adminApp = angular.module('adminApp'),
-        TMPL = '<div>\n                <div class="notification-bar">\n                    <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>\n                </div>\n                <div class="list-group" ng-show="availablePlugins.length > 0">\n                    <li ng-click="selectPlugin(plugin)" ng-repeat="plugin in availablePlugins"\n                        class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">\n                        <h4 class="list-group-item-heading">{{plugin.name}}</h4>\n                    </li>\n                </div>\n            </div>';
+        TMPL = '<div class="notification-bar">\n                    <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>\n                </div>\n                <div class="list-group" ng-show="availablePlugins.length > 0">\n                    <li ng-click="selectPlugin(plugin)" ng-repeat="plugin in availablePlugins"\n                        class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">\n                        <h4 class="list-group-item-heading">{{plugin.name}}</h4>\n                    </li>\n                </div>';
 
     adminApp.directive('addInclude', function () {
         return {
@@ -3262,7 +3262,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             },
             replace: true,
             template: TMPL,
-            controller: function controller($log, $scope, $timeout, pageService, pluginService) {
+            controller: function controller($log, $scope, $timeout, $q, pageService, pluginService) {
 
                 var regionName = null;
                 var pageId = $scope.pageId;
@@ -3273,7 +3273,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 var pluginsPromise = pluginService.getPlugins();
                 var pagePromise = pageService.getPage(pageId);
 
-                Promise.all([pluginsPromise, pagePromise]).then(function (results) {
+                $q.all([pluginsPromise, pagePromise]).then(function (results) {
                     $scope.availablePlugins = results[0];
                     $scope.page = results[1];
 
@@ -3467,7 +3467,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 (function () {
 
     var adminApp = angular.module('adminApp'),
-        tmpl = '<div class="remove-include-drop pull-right">\n                <div class="well remove-include-action">\n                    <span class="glyphicon glyphicon-trash"></span> Remove\n                </div>\n            </div>';
+        tmpl = '<div class="remove-include-action well">\n                <span class="glyphicon glyphicon-trash"></span> Remove\n            </div>';
 
     adminApp.directive('removeIncludeDrop', function () {
         return {
@@ -3635,6 +3635,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         $scope.adding = {};
         $scope.$on('add-include', function (ev, pageId, regionName) {
             $timeout(function () {
+                console.log('adding!!!!!!');
                 $scope.state = states.ADDING;
                 $scope.adding = {
                     pageId: pageId,

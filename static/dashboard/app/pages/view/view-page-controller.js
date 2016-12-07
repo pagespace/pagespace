@@ -46,6 +46,7 @@ adminApp.controller('ViewPageController', function($scope, $rootScope, $routePar
     $scope.adding = {};
     $scope.$on('add-include', (ev, pageId, regionName) => {
         $timeout(() => {
+            console.log('adding!!!!!!')
             $scope.state = states.ADDING;
             $scope.adding = {
                 pageId,

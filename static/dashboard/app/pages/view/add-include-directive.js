@@ -4,8 +4,7 @@
         adminApp = angular.module('adminApp'),
 
         TMPL =
-            `<div>
-                <div class="notification-bar">
+            `<div class="notification-bar">
                     <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>
                 </div>
                 <div class="list-group" ng-show="availablePlugins.length > 0">
@@ -13,8 +12,7 @@
                         class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">
                         <h4 class="list-group-item-heading">{{plugin.name}}</h4>
                     </li>
-                </div>
-            </div>`;
+                </div>`;
 
     adminApp.directive('addInclude', function() {
         return {
@@ -24,7 +22,7 @@
             },
             replace: true,
             template: TMPL,
-            controller: function($log, $scope, $timeout, pageService, pluginService) {
+            controller: function($log, $scope, $timeout, $q, pageService, pluginService) {
 
                 let regionName = null;
                 var pageId = $scope.pageId;
@@ -35,7 +33,7 @@
                 var pluginsPromise = pluginService.getPlugins();
                 var pagePromise = pageService.getPage(pageId);
 
-                Promise.all([pluginsPromise, pagePromise ]).then(function(results) {
+                $q.all([pluginsPromise, pagePromise ]).then(function(results) {
                     $scope.availablePlugins = results[0];
                     $scope.page = results[1];
 

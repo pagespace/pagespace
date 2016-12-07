@@ -3,11 +3,9 @@
     const 
         adminApp = angular.module('adminApp'),
         
-        tmpl =  
-            `<div class="remove-include-drop pull-right">
-                <div class="well remove-include-action">
-                    <span class="glyphicon glyphicon-trash"></span> Remove
-                </div>
+        tmpl =
+            `<div class="remove-include-action well">
+                <span class="glyphicon glyphicon-trash"></span> Remove
             </div>`;
         
     adminApp.directive('removeIncludeDrop', function() {

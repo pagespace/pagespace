@@ -155,11 +155,32 @@ h4 {
     float: left;
     margin-right: 8px;
 }
-.header-page-options {
-    padding: 7px 18px;
-    margin: 11px 0 0 0 !important;
+.header-page-options > .well {
+    padding: 4px 18px;
+    margin: -11px 0 0 0 !important;
     background: rgba(255, 255, 255, 0.65);
+    text-align: center;
+    min-width: 200px;
 }
+
+.remove-include-action {
+    display: none;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 0;
+}
+.drag-over.remove-include-action {
+    background-color: rgba(255, 0, 0, 0.5);
+    color: #fff;
+}
+.dragging-include .remove-include-action {
+    display: block;
+}
+.dragging-include .page-preview-options {
+    display: none;
+}
+
+
 .header-utils {
     padding-right: 22px !important;
     text-align: right;
@@ -383,21 +404,6 @@ div + .section-heading {
 }
 .media-html {
     background: url(types/html.png) no-repeat center center;
-}
-
-.remove-include-action {
-    display: none;
-    font-size: 16px;
-    text-align: center;
-    margin-top: -8px;
-    padding: 4px 84px;
-}
-.remove-include-action.drag-over {
-    background-color: rgba(255, 0, 0, 0.5);
-    color: #fff;
-}
-.dragging-include .remove-include-action {
-    display: block;
 }
 
 .frame-panel {
