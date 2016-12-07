@@ -637,6 +637,652 @@
 })();
 'use strict';
 
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MediaController', function ($scope, $rootScope, $location, $window, $q, mediaService) {
+        $rootScope.pageTitle = 'Media';
+
+        $scope.files = [];
+
+        $scope.mediaItems = [];
+        $scope.filteredItems = [];
+        $scope.availableTags = [];
+        $scope.selectedTags = [];
+
+        $scope.getTypeShortName = mediaService.getTypeShortName;
+        $scope.getSrcPath = mediaService.getSrcPath;
+
+        $scope.clearFiles = function () {
+            $scope.files = [];
+        };
+
+        $scope.toggleEditing = function (item) {
+            item._editing = !item._editing;
+        };
+
+        $scope.setItems = function (items) {
+            $scope.mediaItems = items;
+        };
+
+        function compareTags(a, b) {
+            if (a.text < b.text) {
+                return -1;
+            }
+            if (a.text > b.text) {
+                return 1;
+            }
+            return 0;
+        }
+
+        $scope.getItems = function () {
+            mediaService.getItems().then(function (items) {
+                $scope.setItems(items);
+                $scope.updateFilter();
+
+                //combine all tags into one
+                var availableTags = items.reduce(function (allTags, item) {
+                    return allTags.concat(item.tags.filter(function (tag) {
+                        return tag.text; //only return tags with text property
+                    }));
+                }, []);
+
+                //remove dups
+                var seen = {};
+                availableTags = availableTags.filter(function (tag) {
+                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
+                });
+                $scope.availableTags = availableTags.sort(compareTags);
+            }).catch(function (err) {
+                $scope.showError('Error getting media items', err);
+            });
+        };
+
+        $scope.getMatchingTags = function (text) {
+            text = text.toLowerCase();
+            return $q(function (resolve) {
+                resolve($scope.availableTags.filter(function (tag) {
+                    return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
+                }));
+            });
+        };
+
+        $scope.toggleTag = function (tag) {
+            if (tag.on) {
+                deselectTag(tag);
+            } else {
+                selectTag(tag);
+            }
+        };
+
+        $scope.addTag = function (newTag) {
+            var exists = $scope.availableTags.some(function (availableTag) {
+                return availableTag.text === newTag.text;
+            });
+            if (!exists) {
+                $scope.availableTags.push(newTag);
+            }
+            $scope.availableTags.sort(compareTags);
+        };
+
+        function selectTag(newTag) {
+            newTag.on = true;
+            var alreadyExists = $scope.selectedTags.some(function (tag) {
+                return newTag.text === tag.text;
+            });
+            if (!alreadyExists) {
+                $scope.selectedTags.push(newTag);
+            }
+            $scope.updateFilter();
+        }
+
+        function deselectTag(oldTag) {
+            oldTag.on = false;
+            $scope.selectedTags = $scope.selectedTags.filter(function (tag) {
+                return oldTag.text !== tag.text;
+            });
+            $scope.updateFilter();
+        }
+
+        $scope.updateFilter = function () {
+
+            if ($scope.selectedTags.length === 0) {
+                $scope.filteredItems = $scope.mediaItems;
+                return;
+            }
+
+            $scope.filteredItems = $scope.mediaItems.filter(function (item) {
+                return item.tags.some(function (tag) {
+                    return $scope.selectedTags.some(function (selectedTag) {
+                        return selectedTag.text === tag.text;
+                    });
+                });
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var tmpl = '\n         <div class="list-group col-sm-11">\n            <div class="notification-bar">\n                <h4>Media library</h4>\n            </div>\n             <div ng-repeat="item in filteredItems" class="media-item list-group-item">    \n                <div class="media-item-part clearfix">\n                    <div class="btn-group pull-right">\n                        <button type="button" class="btn btn-default" title="Cancel"\n                                ng-show="item._editing" ng-click="revertItem(item)">\n                            <span class="glyphicon glyphicon glyphicon-remove"></span>\n                        </button>\n                        <button type="button" class="btn btn-primary" title="Update"\n                                ng-show="item._editing" ng-click="updateItem(item)">                                \n                            <span class="glyphicon glyphicon glyphicon-ok"></span>\n                        </button>\n                        <button type="button" class="btn btn-default" title="Edit" \n                                ng-show="!item._editing" ng-click="item._editing = !item._editing">\n                            <span class="glyphicon glyphicon-pencil"></span>\n                        </button>      \n                        <button type="button" class="btn btn-default" title="Delete" \n                                ng-show="!item._editing" ng-click="deleteItem(item)">\n                            <span class="glyphicon glyphicon-trash"></span>\n                        </button> \n                    </div>     \n                    <div class="media-item-preview" style="cursor: pointer;">\n                        <img ng-src="{{getSrcPath(item, \'thumb\', \'/_static/dashboard/styles/types/file.png\')}}" \n                             ng-click="!item._editing ? showItem(item) : \'\'" \n                             alt="{{item.name}}" title="{{item.type}}">\n                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>\n                    </div>                     \n                    <div ng-if="!item._editing" class="media-item-view"> \n                        <h3>{{item.name}}</h3>\n                        <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       \n                        <p><small>\n                            <a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a>\n                        </small></p>                                         \n                    </div>\n                    <div ng-if="item._editing" class="media-item-edit">\n                        <input placeholder="Name" ng-model="item.name" required class="form-control">\n                        <tags-input ng-model="item.tags" on-tag-added="addTag($tag)" \n                            placeholder="Add tags to help manage your files">\n                            <auto-complete source="getMatchingTags($query)"></auto-complete>\n                        </tags-input>         \n                    </div>   \n                </div>                                                          \n            </div>\n            <p ng-if="!mediaItems.length">The media library is empty</p>\n            <p ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>\n        </div>';
+
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('mediaItems', function () {
+        return {
+            scope: true,
+            template: tmpl,
+            link: function link(scope, element, mediaService) {
+
+                //  scope.isImage = mediaService.isImage;
+            },
+            controller: function controller($log, $scope, $location, mediaService) {
+
+                $scope.isImage = mediaService.isImage;
+                $scope.getMimeClass = mediaService.getMimeClass;
+
+                $scope.getItems();
+
+                $scope.showItem = function (item) {
+                    $location.path('/media/' + item._id);
+                };
+
+                $scope.deleteItem = function (item) {
+                    var really = window.confirm('Really delete the item, ' + item.name + '?');
+                    if (really) {
+                        mediaService.deleteItem(item.fileName).then(function () {
+                            $scope.getItems();
+                            $scope.showInfo('Media: ' + item.name + ' removed.');
+                        }).catch(function (err) {
+                            $scope.showError('Error deleting page', err);
+                        });
+                    }
+                };
+
+                $scope.revertItem = function (item) {
+                    mediaService.getItem(item._id).then(function (itemFromServer) {
+                        item.name = itemFromServer.name;
+                        item.tags = itemFromServer.tags;
+                        item._editing = false;
+                    }).catch(function (err) {
+                        $scope.showError('Error reverting item', err);
+                    });
+                };
+
+                $scope.updateItem = function (item) {
+                    mediaService.updateItem(item._id, item).then(function () {
+                        item._editing = false;
+                    }).catch(function (err) {
+                        $scope.showError('Error updating item', err);
+                    });
+                };
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    var tmpl = '<form ng-if="files.length > 0" ng-submit="upload(uploadForm)" name="uploadForm" \n              class="form-horizontal media-upload-form" novalidate>\n            <div class="list-group col-sm-11">                     \n                <div class="notification-bar">\n                    <h4>Prepare media to add</h4>\n                </div>\n                <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   \n                    <div class="media-item-part clearfix">\n                        <div class="btn-group pull-right">\n                            <button type="button" class="btn btn-default" title="Remove" tabindex="-1"\n                                    ng-click="remove(file)" ng-disabled="uploading">\n                                <span class="glyphicon glyphicon-trash"></span>\n                            </button>      \n                        </div>\n                        <div class="media-item-preview">\n                            <img ng-src="{{getSrcPath(file.item, null, \'/_static/dashboard/styles/types/file.png\')}}" \n                                 alt="{{file.item.name}}" title="{{file.item.type}}">\n                            <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>\n                        </div>   \n                        <div class="media-item-edit">\n                            <input placeholder="Name" ng-model="file.item.name" required class="form-control">   \n                            <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" \n                                        placeholder="Add tags to help manage your files">\n                                <auto-complete source="getMatchingTags($query)"></auto-complete>\n                            </tags-input>     \n                            <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   \n                        </div>                 \n                    </div>\n                </div>                              \n            </div>\n            <div class="action-buttons col-sm-11">\n                <button type="submit" class="btn btn-primary" ng-disabled="uploading">                    \n                    <ng-pluralize count="files.length"\n                                  when="{\'one\': \'Add file\', \'other\': \'Add {} files\'}">\n                    </ng-pluralize>\n                </button>\n                <button ng-click="cancel()" ng-disabled="uploading" \n                    type="button" class="btn btn-default" >Cancel</button>\n            </div>     \n        </form>';
+
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('mediaPreview', function () {
+        return {
+            scope: true,
+            template: tmpl,
+            controller: function controller($scope, $window, $q, $location, mediaService) {
+
+                $scope.uploading = false;
+                $scope.isImage = mediaService.isImage;
+                $scope.getMimeClass = mediaService.getMimeClass;
+
+                $scope.remove = function (file) {
+                    var selectedFiles = $scope.files;
+                    for (var i = selectedFiles.length - 1; i >= 0; i--) {
+                        if (selectedFiles[i].name === file.name) {
+                            selectedFiles.splice(i, 1);
+                        }
+                    }
+                };
+
+                function generateName(fileName) {
+                    return fileName.split('.')[0].split(/-|_/).map(function (part) {
+                        return part.charAt(0).toUpperCase() + part.slice(1);
+                    }).join(' ');
+                }
+
+                $scope.setFiles = function (newFiles) {
+                    var existingFilePaths = $scope.files.map(function (file) {
+                        return file.name;
+                    });
+
+                    for (var i = 0; i < newFiles.length; i++) {
+                        var file = newFiles[i];
+
+                        var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
+                        var tooBig = file.size > 1024 * 1024 * 100; //too big. TODO: inform user
+
+                        if (alreadySelected || tooBig) {
+                            continue;
+                        }
+
+                        file.item = {
+                            fileSrc: null,
+                            type: file.type,
+                            tags: []
+                        };
+                        if (mediaService.isImage(file)) {
+                            (function (file) {
+                                var reader = new FileReader();
+                                reader.readAsDataURL(file);
+                                reader.onload = function (e) {
+                                    file.item.fileSrc = e.target.result;
+                                    $scope.$apply();
+                                };
+                            })(file);
+                        }
+
+                        file.item.name = generateName(file.name);
+                        $scope.files.push(file);
+                    }
+                };
+
+                $scope.upload = function () {
+
+                    if ($scope.files.length > 4) {
+                        var msg = 'Are you ready to upload the chosen files?';
+                        if (!$window.confirm(msg)) {
+                            return;
+                        }
+                    }
+
+                    var formData = new FormData();
+                    var i, file;
+                    for (i = 0; i < $scope.files.length; i++) {
+                        file = $scope.files[i];
+                        formData.append('file_' + i, file);
+                        formData.append('name_' + i, file.item.name);
+                        formData.append('description_' + i, file.item.description);
+                        formData.append('tags_' + i, JSON.stringify(file.item.tags));
+                    }
+
+                    mediaService.uploadItem(formData).then(function () {
+                        $scope.uploading = true;
+                        $scope.showSuccess('Upload successful');
+                    }).catch(function (err) {
+                        $scope.showError('Error uploading file', err);
+                    }).finally(function () {
+                        $scope.clearFiles();
+                        $scope.getItems();
+                        $scope.uploading = false;
+                    });
+                    $scope.showInfo('Upload in progress...');
+                };
+
+                $scope.cancel = function () {
+                    if ($scope.files.length > 4) {
+                        var msg = 'Really cancel this upload?';
+                        if ($window.confirm(msg)) {
+                            $scope.clearFiles();
+                        }
+                    } else {
+                        $scope.clearFiles();
+                    }
+                };
+
+                var confirmExitMsg = 'There are files ready to upload.';
+                $scope.$on('$locationChangeStart', function (ev) {
+                    if ($scope.files.length > 0 && !$window.confirm(confirmExitMsg + '\n\nAre you sure you want leave this page?')) {
+                        ev.preventDefault();
+                    }
+                });
+
+                $window.onbeforeunload = function () {
+                    return $scope.files.length > 0 ? confirmExitMsg : undefined;
+                };
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('mediaService', function ($http, $log, errorFactory) {
+
+        var mimeTypeShortNames = {
+            'audio/basic': 'audio',
+            'video/msvideo': 'video',
+            'video/avi': 'video',
+            'image/bmp': 'bitmap',
+            'text/css': 'css',
+            'application/msword': 'word',
+            'image/gif': 'gif',
+            'application/x-gzip': 'gzip',
+            'text/html': 'html',
+            'image/jpeg': 'jpeg',
+            'application/x-javascript': 'js',
+            'audio/x-midi': 'midi',
+            'video/mpeg': 'video',
+            'audio/vorbis': 'ogg',
+            'application/ogg': 'ogg',
+            'application/pdf': 'pdf',
+            'image/png': 'png',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'ppt',
+            'video/quicktime': 'qt',
+            'image/svg+xml': 'svg',
+            'application/x-shockwave-flash': 'flash',
+            'application/x-tar': 'tar',
+            'image/tiff': 'tar',
+            'text/plain': 'text',
+            'audio/wav, audio/x-wav': 'wav',
+            'application/vnd.ms-excel': 'excel',
+            'application/xml': 'xml',
+            'application/zip': 'zip'
+        };
+
+        function MediaService() {}
+
+        MediaService.prototype.getItems = function () {
+            return $http.get('/_api/media').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.getItem = function (mediaId) {
+            return $http.get('/_api/media/' + mediaId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.updateItem = function (mediaId, mediaData) {
+            return $http.put('/_api/media' + mediaId, mediaData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.updateItemText = function (mediaData, content) {
+            return $http.put('/_media/' + mediaData.fileName, {
+                content: content
+            }).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.deleteItem = function (fileName) {
+            return $http.delete('/_media/' + fileName).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.uploadItem = function (formData) {
+            //store upload in session, then accept media data
+            return $http.post('/_media', formData, {
+                withCredentials: true,
+                headers: { 'Content-Type': undefined },
+                transformRequest: angular.identity
+            }).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.getItemText = function (item) {
+            return $http.get('/_media/' + item.fileName).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        MediaService.prototype.getImageVariations = function () {
+            return $http.get('/_dashboard/settings').then(function (res) {
+                var settings = res.data;
+                return settings.imageVariations || [];
+            }).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        //some utils
+        MediaService.prototype.isImage = function (item) {
+            return item && item.type && !!item.type.match(/^image/);
+        };
+        MediaService.prototype.isText = function (item) {
+            return item && item.type && !!item.type.match(/text\/[plain|json|html]/);
+        };
+        MediaService.prototype.isDocument = function (item) {
+            return item && item.type && !!item.type.match(/application\/pdf/);
+        };
+
+        MediaService.prototype.getMimeClass = function (item) {
+            return 'media-' + item.type.split('/')[1];
+        };
+
+        MediaService.prototype.getSrcPath = function (item, label, fallback) {
+            var src = null;
+
+            if (this.isImage(item)) {
+                if (item.fileSrc) {
+                    src = item.fileSrc;
+                } else if (item.fileName) {
+                    src = '/_media/' + item.fileName;
+                    if (label) {
+                        src += '?label=' + label;
+                    }
+                }
+            } else {
+                src = fallback;
+            }
+
+            return src;
+        };
+
+        MediaService.prototype.getTypeShortName = function (item) {
+
+            if (mimeTypeShortNames[item.type]) {
+                return mimeTypeShortNames[item.type];
+            }
+
+            try {
+                return item.fileName.split('\.')[1].toLowerCase();
+            } catch (err) {
+                $log.warn(err);
+                return '???';
+            }
+        };
+
+        /* jshint ignore:start */
+        //thanks http://stackoverflow.com/a/14919494/200113
+        MediaService.prototype.humanFileSize = function (bytes) {
+            var exp = Math.log(bytes) / Math.log(1024) | 0;
+            var result = (bytes / Math.pow(1024, exp)).toFixed(2);
+
+            return result + ' ' + (exp == 0 ? 'bytes' : 'KMGTPEZY'[exp - 1] + 'B');
+        };
+        /* jshint ignore:end */
+
+        return new MediaService();
+    });
+})();
+'use strict';
+
+(function () {
+
+    var tmpl = '<div class="media-file-select" ng-click="selectFiles()">\n            <input type="file" multiple="true" class="ng-hide">\n            <button class="btn btn-link">\n                <span class="glyphicon glyphicon-plus"></span>\n                <span class="add-text">Add files to library</span>\n                <span class="drop-text">Drop to add files</span>\n            </button>\n        </div>';
+
+    var adminApp = angular.module('adminApp');
+    adminApp.directive('mediaUpload', function () {
+        return {
+            scope: true,
+            template: tmpl,
+            link: function link(scope, element) {
+
+                var rootEl = element[0];
+
+                var fileInputEl = rootEl.querySelector('input');
+                fileInputEl.addEventListener('change', function () {
+                    scope.setFiles(this.files);
+                    fileInputEl.value = '';
+                });
+
+                scope.selectFiles = function () {
+                    setTimeout(function () {
+                        fileInputEl.click();
+                    }, 0);
+                };
+
+                var dragCounter = 0;
+                rootEl.addEventListener('dragenter', function (ev) {
+                    dragCounter++;
+                    this.classList.add('media-item-dragging');
+                    ev.preventDefault();
+                });
+                rootEl.addEventListener('dragover', function (ev) {
+                    ev.dataTransfer.dropEffect = 'copy';
+                    ev.preventDefault();
+                });
+                rootEl.addEventListener('dragleave', function (ev) {
+                    dragCounter--;
+                    if (dragCounter === 0) {
+                        this.classList.remove('media-item-dragging');
+                        ev.preventDefault();
+                    }
+                });
+
+                rootEl.addEventListener("drop", function (ev) {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+
+                    var dt = ev.dataTransfer;
+                    scope.setFiles(dt.files);
+                    fileInputEl.value = '';
+                    this.classList.remove('media-item-dragging');
+                }, false);
+            },
+            controller: function controller($scope, $window, $q, $location, mediaService) {
+
+                $scope.uploading = false;
+                $scope.isImage = mediaService.isImage;
+                $scope.getMimeClass = mediaService.getMimeClass;
+
+                function generateName(fileName) {
+                    return fileName.split('.')[0].split(/-|_/).map(function (part) {
+                        return part.charAt(0).toUpperCase() + part.slice(1);
+                    }).join(' ');
+                }
+
+                $scope.setFiles = function (newFiles) {
+                    var existingFilePaths = $scope.files.map(function (file) {
+                        return file.name;
+                    });
+
+                    for (var i = 0; i < newFiles.length; i++) {
+                        var file = newFiles[i];
+
+                        var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
+                        var tooBig = file.size > 1024 * 1024 * 100; //too big. TODO: inform user
+
+                        if (alreadySelected || tooBig) {
+                            continue;
+                        }
+
+                        file.item = {
+                            fileSrc: null,
+                            type: file.type,
+                            tags: []
+                        };
+                        if (mediaService.isImage(file)) {
+                            (function (file) {
+                                var reader = new FileReader();
+                                reader.readAsDataURL(file);
+                                reader.onload = function (e) {
+                                    file.item.fileSrc = e.target.result;
+                                    $scope.$apply();
+                                };
+                            })(file);
+                        }
+
+                        file.item.name = generateName(file.name);
+                        $scope.files.push(file);
+                    }
+                };
+            }
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('MediaItemController', function ($scope, $rootScope, $location, $routeParams, mediaService) {
+        $rootScope.pageTitle = 'Media';
+
+        $scope.isImage = mediaService.isImage;
+        $scope.isText = mediaService.isText;
+        $scope.isDocument = mediaService.isDocument;
+        $scope.getSrcPath = mediaService.getSrcPath;
+        $scope.humanFileSize = mediaService.humanFileSize;
+
+        $scope.getDocSrcPath = function (item) {
+            return item ? '/_media/' + item.fileName : null;
+        };
+
+        var mediaId = $routeParams.mediaId;
+
+        $scope.cancel = function () {
+            $location.path('/media');
+        };
+
+        mediaService.getItem(mediaId).then(function (item) {
+            $scope.item = item;
+            return mediaService.isText(item) ? mediaService.getItemText(item) : null;
+        }).then(function (text) {
+            if (text) {
+                $scope.editorOpts = {
+                    mode: 'xml'
+                };
+                $scope.itemText = text;
+            }
+        }).catch(function (err) {
+            $scope.showError('Error getting media item', err);
+        });
+
+        $scope.updateItemText = function () {
+            mediaService.updateItemText($scope.item, $scope.itemText).then(function () {
+                $scope.showSuccess('Media item updated');
+                $location.path('/media');
+            }).catch(function (err) {
+                $scope.showError('Could not update text media', err);
+            });
+        };
+    });
+})();
+'use strict';
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 (function () {
@@ -1191,652 +1837,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
         $scope.moveForward = function (page) {
             $scope.movePage(page, 1);
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MediaController', function ($scope, $rootScope, $location, $window, $q, mediaService) {
-        $rootScope.pageTitle = 'Media';
-
-        $scope.files = [];
-
-        $scope.mediaItems = [];
-        $scope.filteredItems = [];
-        $scope.availableTags = [];
-        $scope.selectedTags = [];
-
-        $scope.getTypeShortName = mediaService.getTypeShortName;
-        $scope.getSrcPath = mediaService.getSrcPath;
-
-        $scope.clearFiles = function () {
-            $scope.files = [];
-        };
-
-        $scope.toggleEditing = function (item) {
-            item._editing = !item._editing;
-        };
-
-        $scope.setItems = function (items) {
-            $scope.mediaItems = items;
-        };
-
-        function compareTags(a, b) {
-            if (a.text < b.text) {
-                return -1;
-            }
-            if (a.text > b.text) {
-                return 1;
-            }
-            return 0;
-        }
-
-        $scope.getItems = function () {
-            mediaService.getItems().then(function (items) {
-                $scope.setItems(items);
-                $scope.updateFilter();
-
-                //combine all tags into one
-                var availableTags = items.reduce(function (allTags, item) {
-                    return allTags.concat(item.tags.filter(function (tag) {
-                        return tag.text; //only return tags with text property
-                    }));
-                }, []);
-
-                //remove dups
-                var seen = {};
-                availableTags = availableTags.filter(function (tag) {
-                    return seen.hasOwnProperty(tag.text) ? false : seen[tag.text] = true;
-                });
-                $scope.availableTags = availableTags.sort(compareTags);
-            }).catch(function (err) {
-                $scope.showError('Error getting media items', err);
-            });
-        };
-
-        $scope.getMatchingTags = function (text) {
-            text = text.toLowerCase();
-            return $q(function (resolve) {
-                resolve($scope.availableTags.filter(function (tag) {
-                    return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
-                }));
-            });
-        };
-
-        $scope.toggleTag = function (tag) {
-            if (tag.on) {
-                deselectTag(tag);
-            } else {
-                selectTag(tag);
-            }
-        };
-
-        $scope.addTag = function (newTag) {
-            var exists = $scope.availableTags.some(function (availableTag) {
-                return availableTag.text === newTag.text;
-            });
-            if (!exists) {
-                $scope.availableTags.push(newTag);
-            }
-            $scope.availableTags.sort(compareTags);
-        };
-
-        function selectTag(newTag) {
-            newTag.on = true;
-            var alreadyExists = $scope.selectedTags.some(function (tag) {
-                return newTag.text === tag.text;
-            });
-            if (!alreadyExists) {
-                $scope.selectedTags.push(newTag);
-            }
-            $scope.updateFilter();
-        }
-
-        function deselectTag(oldTag) {
-            oldTag.on = false;
-            $scope.selectedTags = $scope.selectedTags.filter(function (tag) {
-                return oldTag.text !== tag.text;
-            });
-            $scope.updateFilter();
-        }
-
-        $scope.updateFilter = function () {
-
-            if ($scope.selectedTags.length === 0) {
-                $scope.filteredItems = $scope.mediaItems;
-                return;
-            }
-
-            $scope.filteredItems = $scope.mediaItems.filter(function (item) {
-                return item.tags.some(function (tag) {
-                    return $scope.selectedTags.some(function (selectedTag) {
-                        return selectedTag.text === tag.text;
-                    });
-                });
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var tmpl = '\n         <div class="list-group col-sm-11">\n            <div class="notification-bar">\n                <h4>Media library</h4>\n            </div>\n             <div ng-repeat="item in filteredItems" class="media-item list-group-item">    \n                <div class="media-item-part clearfix">\n                    <div class="btn-group pull-right">\n                        <button type="button" class="btn btn-default" title="Cancel"\n                                ng-show="item._editing" ng-click="revertItem(item)">\n                            <span class="glyphicon glyphicon glyphicon-remove"></span>\n                        </button>\n                        <button type="button" class="btn btn-primary" title="Update"\n                                ng-show="item._editing" ng-click="updateItem(item)">                                \n                            <span class="glyphicon glyphicon glyphicon-ok"></span>\n                        </button>\n                        <button type="button" class="btn btn-default" title="Edit" \n                                ng-show="!item._editing" ng-click="item._editing = !item._editing">\n                            <span class="glyphicon glyphicon-pencil"></span>\n                        </button>      \n                        <button type="button" class="btn btn-default" title="Delete" \n                                ng-show="!item._editing" ng-click="deleteItem(item)">\n                            <span class="glyphicon glyphicon-trash"></span>\n                        </button> \n                    </div>     \n                    <div class="media-item-preview" style="cursor: pointer;">\n                        <img ng-src="{{getSrcPath(item, \'thumb\', \'/_static/dashboard/styles/types/file.png\')}}" \n                             ng-click="!item._editing ? showItem(item) : \'\'" \n                             alt="{{item.name}}" title="{{item.type}}">\n                        <span class="item-type" ng-if="!isImage(item)">{{getTypeShortName(item)}}</span>\n                    </div>                     \n                    <div ng-if="!item._editing" class="media-item-view"> \n                        <h3>{{item.name}}</h3>\n                        <p><span class="label label-primary" ng-repeat="tag in item.tags">{{tag.text}}</span></p>       \n                        <p><small>\n                            <a href="/_media/{{item.fileName}}" target="_blank">/_media/{{item.fileName}}</a>\n                        </small></p>                                         \n                    </div>\n                    <div ng-if="item._editing" class="media-item-edit">\n                        <input placeholder="Name" ng-model="item.name" required class="form-control">\n                        <tags-input ng-model="item.tags" on-tag-added="addTag($tag)" \n                            placeholder="Add tags to help manage your files">\n                            <auto-complete source="getMatchingTags($query)"></auto-complete>\n                        </tags-input>         \n                    </div>   \n                </div>                                                          \n            </div>\n            <p ng-if="!mediaItems.length">The media library is empty</p>\n            <p ng-if="mediaItems.length && !filteredItems.length">No items match this filter</p>\n        </div>';
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('mediaItems', function () {
-        return {
-            scope: true,
-            template: tmpl,
-            link: function link(scope, element, mediaService) {
-
-                //  scope.isImage = mediaService.isImage;
-            },
-            controller: function controller($log, $scope, $location, mediaService) {
-
-                $scope.isImage = mediaService.isImage;
-                $scope.getMimeClass = mediaService.getMimeClass;
-
-                $scope.getItems();
-
-                $scope.showItem = function (item) {
-                    $location.path('/media/' + item._id);
-                };
-
-                $scope.deleteItem = function (item) {
-                    var really = window.confirm('Really delete the item, ' + item.name + '?');
-                    if (really) {
-                        mediaService.deleteItem(item.fileName).then(function () {
-                            $scope.getItems();
-                            $scope.showInfo('Media: ' + item.name + ' removed.');
-                        }).catch(function (err) {
-                            $scope.showError('Error deleting page', err);
-                        });
-                    }
-                };
-
-                $scope.revertItem = function (item) {
-                    mediaService.getItem(item._id).then(function (itemFromServer) {
-                        item.name = itemFromServer.name;
-                        item.tags = itemFromServer.tags;
-                        item._editing = false;
-                    }).catch(function (err) {
-                        $scope.showError('Error reverting item', err);
-                    });
-                };
-
-                $scope.updateItem = function (item) {
-                    mediaService.updateItem(item._id, item).then(function () {
-                        item._editing = false;
-                    }).catch(function (err) {
-                        $scope.showError('Error updating item', err);
-                    });
-                };
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    var tmpl = '<form ng-if="files.length > 0" ng-submit="upload(uploadForm)" name="uploadForm" \n              class="form-horizontal media-upload-form" novalidate>\n            <div class="list-group col-sm-11">                     \n                <div class="notification-bar">\n                    <h4>Prepare media to add</h4>\n                </div>\n                <div ng-repeat="file in files" ng-click="showItem(item)" class="media-item list-group-item">   \n                    <div class="media-item-part clearfix">\n                        <div class="btn-group pull-right">\n                            <button type="button" class="btn btn-default" title="Remove" tabindex="-1"\n                                    ng-click="remove(file)" ng-disabled="uploading">\n                                <span class="glyphicon glyphicon-trash"></span>\n                            </button>      \n                        </div>\n                        <div class="media-item-preview">\n                            <img ng-src="{{getSrcPath(file.item, null, \'/_static/dashboard/styles/types/file.png\')}}" \n                                 alt="{{file.item.name}}" title="{{file.item.type}}">\n                            <span class="item-type" ng-if="!isImage(file.item)">{{getTypeShortName(file.item)}}</span>\n                        </div>   \n                        <div class="media-item-edit">\n                            <input placeholder="Name" ng-model="file.item.name" required class="form-control">   \n                            <tags-input ng-model="file.item.tags" on-tag-added="addTag($tag)" \n                                        placeholder="Add tags to help manage your files">\n                                <auto-complete source="getMatchingTags($query)"></auto-complete>\n                            </tags-input>     \n                            <p style="margin-top: 1em"><small>/_media/{{file.name}}</small></p>   \n                        </div>                 \n                    </div>\n                </div>                              \n            </div>\n            <div class="action-buttons col-sm-11">\n                <button type="submit" class="btn btn-primary" ng-disabled="uploading">                    \n                    <ng-pluralize count="files.length"\n                                  when="{\'one\': \'Add file\', \'other\': \'Add {} files\'}">\n                    </ng-pluralize>\n                </button>\n                <button ng-click="cancel()" ng-disabled="uploading" \n                    type="button" class="btn btn-default" >Cancel</button>\n            </div>     \n        </form>';
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('mediaPreview', function () {
-        return {
-            scope: true,
-            template: tmpl,
-            controller: function controller($scope, $window, $q, $location, mediaService) {
-
-                $scope.uploading = false;
-                $scope.isImage = mediaService.isImage;
-                $scope.getMimeClass = mediaService.getMimeClass;
-
-                $scope.remove = function (file) {
-                    var selectedFiles = $scope.files;
-                    for (var i = selectedFiles.length - 1; i >= 0; i--) {
-                        if (selectedFiles[i].name === file.name) {
-                            selectedFiles.splice(i, 1);
-                        }
-                    }
-                };
-
-                function generateName(fileName) {
-                    return fileName.split('.')[0].split(/-|_/).map(function (part) {
-                        return part.charAt(0).toUpperCase() + part.slice(1);
-                    }).join(' ');
-                }
-
-                $scope.setFiles = function (newFiles) {
-                    var existingFilePaths = $scope.files.map(function (file) {
-                        return file.name;
-                    });
-
-                    for (var i = 0; i < newFiles.length; i++) {
-                        var file = newFiles[i];
-
-                        var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
-                        var tooBig = file.size > 1024 * 1024 * 100; //too big. TODO: inform user
-
-                        if (alreadySelected || tooBig) {
-                            continue;
-                        }
-
-                        file.item = {
-                            fileSrc: null,
-                            type: file.type,
-                            tags: []
-                        };
-                        if (mediaService.isImage(file)) {
-                            (function (file) {
-                                var reader = new FileReader();
-                                reader.readAsDataURL(file);
-                                reader.onload = function (e) {
-                                    file.item.fileSrc = e.target.result;
-                                    $scope.$apply();
-                                };
-                            })(file);
-                        }
-
-                        file.item.name = generateName(file.name);
-                        $scope.files.push(file);
-                    }
-                };
-
-                $scope.upload = function () {
-
-                    if ($scope.files.length > 4) {
-                        var msg = 'Are you ready to upload the chosen files?';
-                        if (!$window.confirm(msg)) {
-                            return;
-                        }
-                    }
-
-                    var formData = new FormData();
-                    var i, file;
-                    for (i = 0; i < $scope.files.length; i++) {
-                        file = $scope.files[i];
-                        formData.append('file_' + i, file);
-                        formData.append('name_' + i, file.item.name);
-                        formData.append('description_' + i, file.item.description);
-                        formData.append('tags_' + i, JSON.stringify(file.item.tags));
-                    }
-
-                    mediaService.uploadItem(formData).then(function () {
-                        $scope.uploading = true;
-                        $scope.showSuccess('Upload successful');
-                    }).catch(function (err) {
-                        $scope.showError('Error uploading file', err);
-                    }).finally(function () {
-                        $scope.clearFiles();
-                        $scope.getItems();
-                        $scope.uploading = false;
-                    });
-                    $scope.showInfo('Upload in progress...');
-                };
-
-                $scope.cancel = function () {
-                    if ($scope.files.length > 4) {
-                        var msg = 'Really cancel this upload?';
-                        if ($window.confirm(msg)) {
-                            $scope.clearFiles();
-                        }
-                    } else {
-                        $scope.clearFiles();
-                    }
-                };
-
-                var confirmExitMsg = 'There are files ready to upload. Are you sure you want to navigate away?';
-                $scope.$on('$locationChangeStart', function (ev) {
-                    if ($scope.files.length > 0 && !$window.confirm(confirmExitMsg)) {
-                        ev.preventDefault();
-                    }
-                });
-
-                $window.onbeforeunload = function () {
-                    return $scope.files.length > 0 ? confirmExitMsg : undefined;
-                };
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('mediaService', function ($http, $log, errorFactory) {
-
-        var mimeTypeShortNames = {
-            'audio/basic': 'audio',
-            'video/msvideo': 'video',
-            'video/avi': 'video',
-            'image/bmp': 'bitmap',
-            'text/css': 'css',
-            'application/msword': 'word',
-            'image/gif': 'gif',
-            'application/x-gzip': 'gzip',
-            'text/html': 'html',
-            'image/jpeg': 'jpeg',
-            'application/x-javascript': 'js',
-            'audio/x-midi': 'midi',
-            'video/mpeg': 'video',
-            'audio/vorbis': 'ogg',
-            'application/ogg': 'ogg',
-            'application/pdf': 'pdf',
-            'image/png': 'png',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'ppt',
-            'video/quicktime': 'qt',
-            'image/svg+xml': 'svg',
-            'application/x-shockwave-flash': 'flash',
-            'application/x-tar': 'tar',
-            'image/tiff': 'tar',
-            'text/plain': 'text',
-            'audio/wav, audio/x-wav': 'wav',
-            'application/vnd.ms-excel': 'excel',
-            'application/xml': 'xml',
-            'application/zip': 'zip'
-        };
-
-        function MediaService() {}
-
-        MediaService.prototype.getItems = function () {
-            return $http.get('/_api/media').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.getItem = function (mediaId) {
-            return $http.get('/_api/media/' + mediaId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.updateItem = function (mediaId, mediaData) {
-            return $http.put('/_api/media' + mediaId, mediaData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.updateItemText = function (mediaData, content) {
-            return $http.put('/_media/' + mediaData.fileName, {
-                content: content
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.deleteItem = function (fileName) {
-            return $http.delete('/_media/' + fileName).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.uploadItem = function (formData) {
-            //store upload in session, then accept media data
-            return $http.post('/_media', formData, {
-                withCredentials: true,
-                headers: { 'Content-Type': undefined },
-                transformRequest: angular.identity
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.getItemText = function (item) {
-            return $http.get('/_media/' + item.fileName).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        MediaService.prototype.getImageVariations = function () {
-            return $http.get('/_dashboard/settings').then(function (res) {
-                var settings = res.data;
-                return settings.imageVariations || [];
-            }).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        //some utils
-        MediaService.prototype.isImage = function (item) {
-            return item && item.type && !!item.type.match(/^image/);
-        };
-        MediaService.prototype.isText = function (item) {
-            return item && item.type && !!item.type.match(/text\/[plain|json|html]/);
-        };
-        MediaService.prototype.isDocument = function (item) {
-            return item && item.type && !!item.type.match(/application\/pdf/);
-        };
-
-        MediaService.prototype.getMimeClass = function (item) {
-            return 'media-' + item.type.split('/')[1];
-        };
-
-        MediaService.prototype.getSrcPath = function (item, label, fallback) {
-            var src = null;
-
-            if (this.isImage(item)) {
-                if (item.fileSrc) {
-                    src = item.fileSrc;
-                } else if (item.fileName) {
-                    src = '/_media/' + item.fileName;
-                    if (label) {
-                        src += '?label=' + label;
-                    }
-                }
-            } else {
-                src = fallback;
-            }
-
-            return src;
-        };
-
-        MediaService.prototype.getTypeShortName = function (item) {
-
-            if (mimeTypeShortNames[item.type]) {
-                return mimeTypeShortNames[item.type];
-            }
-
-            try {
-                return item.fileName.split('\.')[1].toLowerCase();
-            } catch (err) {
-                $log.warn(err);
-                return '???';
-            }
-        };
-
-        /* jshint ignore:start */
-        //thanks http://stackoverflow.com/a/14919494/200113
-        MediaService.prototype.humanFileSize = function (bytes) {
-            var exp = Math.log(bytes) / Math.log(1024) | 0;
-            var result = (bytes / Math.pow(1024, exp)).toFixed(2);
-
-            return result + ' ' + (exp == 0 ? 'bytes' : 'KMGTPEZY'[exp - 1] + 'B');
-        };
-        /* jshint ignore:end */
-
-        return new MediaService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    var tmpl = '<div class="media-file-select" ng-click="selectFiles()">\n            <input type="file" multiple="true" class="ng-hide">\n            <button class="btn btn-link">\n                <span class="glyphicon glyphicon-plus"></span>\n                <span class="add-text">Add files to library</span>\n                <span class="drop-text">Drop to add files</span>\n            </button>\n        </div>';
-
-    var adminApp = angular.module('adminApp');
-    adminApp.directive('mediaUpload', function () {
-        return {
-            scope: true,
-            template: tmpl,
-            link: function link(scope, element) {
-
-                var rootEl = element[0];
-
-                var fileInputEl = rootEl.querySelector('input');
-                fileInputEl.addEventListener('change', function () {
-                    scope.setFiles(this.files);
-                    fileInputEl.value = '';
-                });
-
-                scope.selectFiles = function () {
-                    setTimeout(function () {
-                        fileInputEl.click();
-                    }, 0);
-                };
-
-                var dragCounter = 0;
-                rootEl.addEventListener('dragenter', function (ev) {
-                    dragCounter++;
-                    this.classList.add('media-item-dragging');
-                    ev.preventDefault();
-                });
-                rootEl.addEventListener('dragover', function (ev) {
-                    ev.dataTransfer.dropEffect = 'copy';
-                    ev.preventDefault();
-                });
-                rootEl.addEventListener('dragleave', function (ev) {
-                    dragCounter--;
-                    if (dragCounter === 0) {
-                        this.classList.remove('media-item-dragging');
-                        ev.preventDefault();
-                    }
-                });
-
-                rootEl.addEventListener("drop", function (ev) {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-
-                    var dt = ev.dataTransfer;
-                    scope.setFiles(dt.files);
-                    fileInputEl.value = '';
-                    this.classList.remove('media-item-dragging');
-                }, false);
-            },
-            controller: function controller($scope, $window, $q, $location, mediaService) {
-
-                $scope.uploading = false;
-                $scope.isImage = mediaService.isImage;
-                $scope.getMimeClass = mediaService.getMimeClass;
-
-                function generateName(fileName) {
-                    return fileName.split('.')[0].split(/-|_/).map(function (part) {
-                        return part.charAt(0).toUpperCase() + part.slice(1);
-                    }).join(' ');
-                }
-
-                $scope.setFiles = function (newFiles) {
-                    var existingFilePaths = $scope.files.map(function (file) {
-                        return file.name;
-                    });
-
-                    for (var i = 0; i < newFiles.length; i++) {
-                        var file = newFiles[i];
-
-                        var alreadySelected = existingFilePaths.indexOf(file.name) > -1; //already selected
-                        var tooBig = file.size > 1024 * 1024 * 100; //too big. TODO: inform user
-
-                        if (alreadySelected || tooBig) {
-                            continue;
-                        }
-
-                        file.item = {
-                            fileSrc: null,
-                            type: file.type,
-                            tags: []
-                        };
-                        if (mediaService.isImage(file)) {
-                            (function (file) {
-                                var reader = new FileReader();
-                                reader.readAsDataURL(file);
-                                reader.onload = function (e) {
-                                    file.item.fileSrc = e.target.result;
-                                    $scope.$apply();
-                                };
-                            })(file);
-                        }
-
-                        file.item.name = generateName(file.name);
-                        $scope.files.push(file);
-                    }
-                };
-            }
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('MediaItemController', function ($scope, $rootScope, $location, $routeParams, mediaService) {
-        $rootScope.pageTitle = 'Media';
-
-        $scope.isImage = mediaService.isImage;
-        $scope.isText = mediaService.isText;
-        $scope.isDocument = mediaService.isDocument;
-        $scope.getSrcPath = mediaService.getSrcPath;
-        $scope.humanFileSize = mediaService.humanFileSize;
-
-        $scope.getDocSrcPath = function (item) {
-            return item ? '/_media/' + item.fileName : null;
-        };
-
-        var mediaId = $routeParams.mediaId;
-
-        $scope.cancel = function () {
-            $location.path('/media');
-        };
-
-        mediaService.getItem(mediaId).then(function (item) {
-            $scope.item = item;
-            return mediaService.isText(item) ? mediaService.getItemText(item) : null;
-        }).then(function (text) {
-            if (text) {
-                $scope.editorOpts = {
-                    mode: 'xml'
-                };
-                $scope.itemText = text;
-            }
-        }).catch(function (err) {
-            $scope.showError('Error getting media item', err);
-        });
-
-        $scope.updateItemText = function () {
-            mediaService.updateItemText($scope.item, $scope.itemText).then(function () {
-                $scope.showSuccess('Media item updated');
-                $location.path('/media');
-            }).catch(function (err) {
-                $scope.showError('Could not update text media', err);
-            });
         };
     });
 })();
@@ -3452,7 +3452,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 (function () {
 
     var adminApp = angular.module('adminApp');
-    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
+    adminApp.controller('ViewPageController', function ($scope, $rootScope, $routeParams, $log, $window, $timeout, pageService, pageViewStates) {
 
         var env = $routeParams.viewPageEnv;
         var url = $routeParams.url;
@@ -3519,6 +3519,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             $log.info('Closing include edit');
             $scope.state = pageViewStates.NONE;
             $scope.$broadcast('edit-closed');
+        };
+
+        //exit while editing confirmation
+        var confirmExitMsg = 'You are currently editing an include.';
+        $scope.$on('$locationChangeStart', function (ev) {
+            if ($scope.state === pageViewStates.EDITING && !$window.confirm(confirmExitMsg + '\n\nAre you sure you want leave this page?')) {
+                ev.preventDefault();
+            }
+        });
+        $window.onbeforeunload = function () {
+            return $scope.state === pageViewStates.EDITING ? confirmExitMsg : undefined;
         };
     });
 })();

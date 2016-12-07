@@ -146,9 +146,10 @@
                     }
                 };
 
-                var confirmExitMsg = 'There are files ready to upload. Are you sure you want to navigate away?';
+                var confirmExitMsg = 'There are files ready to upload.';
                 $scope.$on('$locationChangeStart', function (ev) {
-                    if ($scope.files.length > 0 && !$window.confirm(confirmExitMsg)) {
+                    if ($scope.files.length > 0 &&
+                        !$window.confirm(confirmExitMsg + '\n\nAre you sure you want leave this page?')) {
                         ev.preventDefault();
                     }
                 });

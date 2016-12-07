@@ -2,7 +2,7 @@
 
 var adminApp = angular.module('adminApp');
 adminApp.controller('ViewPageController', 
-    function($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
+    function($scope, $rootScope, $routeParams, $log, $window, $timeout, pageService, pageViewStates) {
 
     var env = $routeParams.viewPageEnv;
     var url = $routeParams.url;
@@ -65,6 +65,18 @@ adminApp.controller('ViewPageController',
         $log.info('Closing include edit');
         $scope.state = pageViewStates.NONE;
         $scope.$broadcast('edit-closed');
+    };
+
+    //exit while editing confirmation
+    var confirmExitMsg = 'You are currently editing an include.';
+    $scope.$on('$locationChangeStart', function (ev) {
+        if ($scope.state === pageViewStates.EDITING && 
+            !$window.confirm(confirmExitMsg +  '\n\nAre you sure you want leave this page?')) {
+            ev.preventDefault();
+        }
+    });
+    $window.onbeforeunload = function() {
+        return $scope.state === pageViewStates.EDITING ? confirmExitMsg : undefined;
     };
 });
 
