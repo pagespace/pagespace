@@ -66,10 +66,10 @@
                         pageService.updatePage(pageId, page).then(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
-                            $scope.$broadcast('include-removed')
+                            $scope.$broadcast('include-removed');
                         }).catch(function(err) {
                             $scope.err = err;
-                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
+                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s)',
                                 pageId, regionName, includeIndex);
                         });
                     }).catch(function(err) {

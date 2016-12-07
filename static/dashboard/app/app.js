@@ -7,6 +7,12 @@
         'ui.codemirror'
     ]);
 
+    adminApp.constant('pageViewStates', {
+        NONE: Symbol('NONE'),
+        EDITING: Symbol('EDITING'),
+        ADDING: Symbol('ADDING')
+    });
+
     adminApp.config(['$routeProvider', '$provide', '$httpProvider', function($routeProvider, $provide, $httpProvider) {
         $routeProvider.
 

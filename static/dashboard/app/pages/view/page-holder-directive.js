@@ -1,16 +1,40 @@
 (function() {
     
     var adminApp = angular.module('adminApp');
-    adminApp.directive('pageHolder', function($timeout) {
+    adminApp.directive('pageHolder', function($timeout, pageViewStates) {
         return {
             restrict: 'E',
             transclude: true,
             replace: true,
             template: '<div ng-transclude></div>',
-            link: function link(scope, element) {
+            link: function link(scope, el) {
 
-                var pageFrame = element.find('iframe')[0];
+                var pageFrame = el.find('iframe')[0];
                 pageFrame.addEventListener('load', function() {
+
+                    //scaling
+                    scope.$watch('state', (newVal, oldVal, scope) => {
+                        scalePageView(scope.state, scope.scalingOn);
+                    });
+                    scope.$watch('scalingOn', (newVal, oldVal, scope) => {
+                        scalePageView(scope.state, scope.scalingOn);
+                    });
+
+                    function scalePageView(pageViewState, scalingOn) {
+                        let scale = 1;
+                        if(pageViewState !== pageViewStates.NONE && scalingOn) {
+                            const ww = window.innerWidth;
+                            if(ww > 800 && ww <= 1500) {
+                                scale = 0.5;
+                            } else if (ww > 1500) {
+                                scale = (ww - 800) / ww;
+                            }
+                        }
+                        el[0].style.transform = `scale(${scale})`;
+                        var scaleCompensation = ((1 / scale) * 100) + '%';
+                        pageFrame.style.width = scaleCompensation;
+                        pageFrame.style.height = scaleCompensation;
+                    }
 
                     //injection
                     var adminStyles = document.createElement('link');

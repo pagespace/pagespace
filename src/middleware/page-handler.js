@@ -4,7 +4,6 @@
 const
     Promise = require('bluebird'),
     typeify = require('../support/typeify'),
-    consts = require('../app-constants'),
     includeCache = require('../support/include-cache'),
     BaseHandler = require('./base-handler');
 

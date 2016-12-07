@@ -4,7 +4,8 @@
         adminApp = angular.module('adminApp'),
 
         TMPL =
-            `<div class="notification-bar">
+            `<div>
+                <div class="notification-bar">
                     <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>
                 </div>
                 <div class="list-group" ng-show="availablePlugins.length > 0">
@@ -12,7 +13,8 @@
                         class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">
                         <h4 class="list-group-item-heading">{{plugin.name}}</h4>
                     </li>
-                </div>`;
+                </div>
+            </div>`;
 
     adminApp.directive('addInclude', function() {
         return {
@@ -62,17 +64,19 @@
                     if($scope.selectedPlugin) {
                         pageService.createIncludeData($scope.selectedPlugin).then(function(includeData) {
                             
-                            $scope.$emit('edit-include', pageId, $scope.selectedPlugin.name, includeData._id, regionName);
+                            $scope.$emit('edit-include', 
+                                pageId, $scope.selectedPlugin.name, includeData._id, regionName);
                             
                             pageService.addIncludeToPage(page, regionIndex, $scope.selectedPlugin, includeData);
                             page = pageService.depopulatePage(page);
                             return pageService.updatePage(pageId, page);
                         }).catch(function(err) {
-                            $log.error(err, 'Update page to add include failed (pageId=%s, region=%s)', pageId, regionIndex);
+                            const msg = `Update page to add include failed (pageId=${pageId}, region=${regionIndex})`;
+                            $log.error(err, msg);
                         });
                     } else {
-                        $log.error('Unable to determine region index for new include (pageId=%s, region=%s)',
-                            pageId, regionName);
+                        const msgDetails = `pageId=${pageId}, region=${regionName}`;
+                        $log.error(`Unable to determine region for new include (${msgDetails})`);
                     }
                 });
             }

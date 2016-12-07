@@ -1,21 +1,17 @@
 (function() {
-    
-const states = {
-    NONE: Symbol('NONE'),
-    EDITING: Symbol('EDITING'),
-    ADDING: Symbol('ADDING')
-};
-    
+
 var adminApp = angular.module('adminApp');
-adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams, $log, $timeout, pageService) {
+adminApp.controller('ViewPageController', function($scope, $rootScope, $routeParams, $log, $timeout, pageService, pageViewStates) {
 
     var env = $routeParams.viewPageEnv;
     var url = $routeParams.url;
+    
+    $scope.scalingOn = true;
 
-    $scope.state = states.NONE;
+    $scope.state = pageViewStates.NONE;
 
-    $scope.isEditing = () => $scope.state === states.EDITING;
-    $scope.isAdding = () => $scope.state === states.ADDING;
+    $scope.isEditing = () => $scope.state === pageViewStates.EDITING;
+    $scope.isAdding = () => $scope.state === pageViewStates.ADDING;
     
     $scope.getPageUrl = function() {
         var showPreview = env === 'preview';
@@ -33,7 +29,7 @@ adminApp.controller('ViewPageController', function($scope, $rootScope, $routePar
     $scope.editing = {};
     $scope.$on('edit-include', (ev, pageId, pluginName, includeId, regionName) => {
         $timeout(() => {
-            $scope.state = states.EDITING;
+            $scope.state = pageViewStates.EDITING;
             $scope.editing = {
                 pageId,
                 pluginName,
@@ -46,8 +42,7 @@ adminApp.controller('ViewPageController', function($scope, $rootScope, $routePar
     $scope.adding = {};
     $scope.$on('add-include', (ev, pageId, regionName) => {
         $timeout(() => {
-            console.log('adding!!!!!!')
-            $scope.state = states.ADDING;
+            $scope.state = pageViewStates.ADDING;
             $scope.adding = {
                 pageId,
                 regionName
@@ -67,7 +62,7 @@ adminApp.controller('ViewPageController', function($scope, $rootScope, $routePar
 
     $scope.cancel = function () {
         $log.info('Closing include edit');
-        $scope.state = states.NONE;
+        $scope.state = pageViewStates.NONE;
         $scope.$broadcast('edit-closed');
     };
 });
