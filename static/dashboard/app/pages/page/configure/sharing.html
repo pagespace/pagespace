@@ -1,0 +1,52 @@
+<div class="form-group" bs-has-error="title">
+    <label class="col-sm-3 control-label">Title</label>
+    <div class="col-sm-7">
+        <div class="input-group">
+            <input type="text" class="form-control input" name="title" focus-if="!pageId"
+                   ng-model="page.title" placeholder="e.g. Contact us">
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-primary btn" title="Revert title to page name" ng-click="revertTitle()">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </span>
+        </div>
+    </div>
+    <div class="col-sm-2">
+        <p class="form-control-static text-muted"><i>optional</i></p>
+    </div>
+</div>
+<div class="form-group" bs-has-error="description">
+    <label class="col-sm-3 control-label">Description</label>
+    <div class="col-sm-7">
+        <textarea class="form-control input-medium" name="description" rows="3"
+                  ng-model="page.description" placeholder="Describe this page for sharing"></textarea>
+    </div>
+    <div class="col-sm-2">
+        <p class="form-control-static text-muted"><i>optional</i></p>
+    </div>
+</div>
+<div class="form-group" bs-has-error="imageUrl">
+    <label class="col-sm-3 control-label">Thumbnail image</label>
+    <div class="col-sm-7">
+        <select ng-model="page.image" name="image"
+                ng-options="image as image.name for image in availableImages track by image._id"
+                class="form-control">
+            <option value="" disabled selected>Choose an image</option>
+        </select>
+    </div>
+    <div class="col-sm-2">
+        <p class="form-control-static text-muted"><i>optional</i></p>
+    </div>
+</div>
+<div class="form-group" >
+    <div class="col-sm-7 col-sm-offset-3">
+        <p class="text-muted">Images with the tag "share" will be listed here</p>
+        <p ng-if="page.image">
+            <img ng-src="{{getSrcPath(page.image, 'thumb')}}" alt="{{page.image.name}}">
+        </p>
+    </div>
+</div>
+<div class="action-buttons">
+    <button type="submit" class="btn btn-primary" ng-disabled="page.template == null">Save</button>
+    <button ng-click="cancel()" type="button" class="btn btn-default">Cancel</button>
+</div>
