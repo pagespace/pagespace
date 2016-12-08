@@ -951,6 +951,8 @@
 })();
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 (function () {
     var adminApp = angular.module('adminApp');
     adminApp.factory('mediaService', function ($http, $log, errorFactory) {
@@ -988,8 +990,20 @@
 
         function MediaService() {}
 
-        MediaService.prototype.getItems = function () {
-            return $http.get('/_api/media').then(function (res) {
+        MediaService.prototype.getItems = function (filter) {
+            var queryKeyValPairs = [];
+            if ((typeof filter === 'undefined' ? 'undefined' : _typeof(filter)) === 'object') {
+                for (var key in filter) {
+                    if (filter.hasOwnProperty(key)) {
+                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
+                    }
+                }
+            }
+
+            var path = '/_api/media';
+            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
+
+            return $http.get(url).then(function (res) {
                 return res.data;
             }).catch(function (res) {
                 throw errorFactory.createResponseError(res);
@@ -1089,7 +1103,7 @@
                         src += '?label=' + label;
                     }
                 }
-            } else {
+            } else if (fallback) {
                 src = fallback;
             }
 
@@ -1563,6 +1577,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             }
             if (page.redirect && page.redirect._id) {
                 page.redirect = page.redirect._id;
+            }
+            if (page.image && page.image._id) {
+                page.image = page.image._id;
             }
             page.regions = page.regions.filter(function (region) {
                 return (typeof region === 'undefined' ? 'undefined' : _typeof(region)) === 'object';
@@ -2188,6 +2205,143 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
+    adminApp.controller('UserController', function ($scope, $rootScope, $log, $location, $routeParams, $window, userService) {
+        $rootScope.pageTitle = 'User';
+
+        var userId = $routeParams.userId;
+        $scope.userId = userId;
+
+        $scope.roles = [{
+            name: 'editor',
+            label: 'Editor'
+        }, {
+            name: 'developer',
+            label: 'Developer'
+        }, {
+            name: 'admin',
+            label: 'Admin'
+        }];
+
+        if (userId) {
+            userService.getUser(userId).then(function (user) {
+                $scope.user = user;
+            });
+        }
+
+        $scope.cancel = function () {
+            $location.path('/users');
+        };
+
+        $scope.save = function (form) {
+            if (form.$invalid) {
+                $window.scrollTo(0, 0);
+                $scope.submitted = true;
+                return;
+            }
+            var user = $scope.user;
+            if (userId) {
+                userService.updateUser(userId, user).then(function () {
+                    $scope.showSuccess('User updated.');
+                    $location.path('/users');
+                }).catch(function (err) {
+                    $scope.showError('Error updating user', err);
+                });
+            } else {
+                userService.createUser(user).then(function () {
+                    $scope.showSuccess('User created.');
+                    $location.path('/users');
+                }).catch(function (err) {
+                    $scope.showError('Error creating user', err);
+                });
+            }
+        };
+
+        $scope.remove = function () {
+            userService.deleteTemplate($scope.user._id).then(function () {
+                $log.info('User removed');
+                $location.path('/templates');
+            }).catch(function (err) {
+                $scope.showError('Error deleting template', err);
+            });
+        };
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
+    adminApp.controller('UserListController', function ($scope, $rootScope, $location, userService) {
+        $rootScope.pageTitle = 'Users';
+
+        userService.getUsers().then(function (users) {
+            $scope.users = users;
+        });
+    });
+})();
+'use strict';
+
+(function () {
+    var adminApp = angular.module('adminApp');
+    adminApp.factory('userService', function ($http, errorFactory) {
+
+        function UserService() {}
+
+        UserService.prototype.getUsers = function () {
+            return $http.get('/_api/users').then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+        UserService.prototype.getUser = function (userId) {
+            return $http.get('/_api/users/' + userId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.createUser = function (userData) {
+            return $http.post('/_api/users', userData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.deleteUser = function (userId) {
+            return $http.delete('/_api/users/' + userId).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        UserService.prototype.updateUser = function (userId, userData) {
+            return $http.put('/_api/users/' + userId, userData).then(function (res) {
+                return res.data;
+            }).catch(function (res) {
+                throw errorFactory.createResponseError(res);
+            });
+        };
+
+        return new UserService();
+    });
+})();
+'use strict';
+
+(function () {
+
+    /**
+     *
+     * @type {*}
+     */
+    var adminApp = angular.module('adminApp');
     adminApp.controller('TemplateController', function ($log, $scope, $rootScope, $routeParams, $location, $window, templateService) {
         $log.info('Showing Template View');
 
@@ -2431,143 +2585,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
 
         return new TemplateService();
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('UserController', function ($scope, $rootScope, $log, $location, $routeParams, $window, userService) {
-        $rootScope.pageTitle = 'User';
-
-        var userId = $routeParams.userId;
-        $scope.userId = userId;
-
-        $scope.roles = [{
-            name: 'editor',
-            label: 'Editor'
-        }, {
-            name: 'developer',
-            label: 'Developer'
-        }, {
-            name: 'admin',
-            label: 'Admin'
-        }];
-
-        if (userId) {
-            userService.getUser(userId).then(function (user) {
-                $scope.user = user;
-            });
-        }
-
-        $scope.cancel = function () {
-            $location.path('/users');
-        };
-
-        $scope.save = function (form) {
-            if (form.$invalid) {
-                $window.scrollTo(0, 0);
-                $scope.submitted = true;
-                return;
-            }
-            var user = $scope.user;
-            if (userId) {
-                userService.updateUser(userId, user).then(function () {
-                    $scope.showSuccess('User updated.');
-                    $location.path('/users');
-                }).catch(function (err) {
-                    $scope.showError('Error updating user', err);
-                });
-            } else {
-                userService.createUser(user).then(function () {
-                    $scope.showSuccess('User created.');
-                    $location.path('/users');
-                }).catch(function (err) {
-                    $scope.showError('Error creating user', err);
-                });
-            }
-        };
-
-        $scope.remove = function () {
-            userService.deleteTemplate($scope.user._id).then(function () {
-                $log.info('User removed');
-                $location.path('/templates');
-            }).catch(function (err) {
-                $scope.showError('Error deleting template', err);
-            });
-        };
-    });
-})();
-'use strict';
-
-(function () {
-
-    /**
-     *
-     * @type {*}
-     */
-    var adminApp = angular.module('adminApp');
-    adminApp.controller('UserListController', function ($scope, $rootScope, $location, userService) {
-        $rootScope.pageTitle = 'Users';
-
-        userService.getUsers().then(function (users) {
-            $scope.users = users;
-        });
-    });
-})();
-'use strict';
-
-(function () {
-    var adminApp = angular.module('adminApp');
-    adminApp.factory('userService', function ($http, errorFactory) {
-
-        function UserService() {}
-
-        UserService.prototype.getUsers = function () {
-            return $http.get('/_api/users').then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-        UserService.prototype.getUser = function (userId) {
-            return $http.get('/_api/users/' + userId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.createUser = function (userData) {
-            return $http.post('/_api/users', userData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.deleteUser = function (userId) {
-            return $http.delete('/_api/users/' + userId).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        UserService.prototype.updateUser = function (userId, userData) {
-            return $http.put('/_api/users/' + userId, userData).then(function (res) {
-                return res.data;
-            }).catch(function (res) {
-                throw errorFactory.createResponseError(res);
-            });
-        };
-
-        return new UserService();
     });
 })();
 'use strict';
@@ -2914,11 +2931,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
      * @type {*}
      */
     var adminApp = angular.module('adminApp');
-    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, $window) {
+    adminApp.controller('PageController', function ($log, $scope, $rootScope, $routeParams, $location, $timeout, pageService, templateService, pluginService, mediaService, $window) {
 
         $log.info('Showing page view.');
 
         $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+        $scope.getSrcPath = mediaService.getSrcPath.bind(mediaService);
 
         $scope.section = $routeParams.section || 'basic';
 
@@ -2948,6 +2966,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         pageSetupPromises.push(pluginService.getPlugins().then(function (availablePlugins) {
             $log.debug('Got available plugins.');
             $scope.availablePlugins = availablePlugins;
+        }));
+        pageSetupPromises.push(mediaService.getItems({
+            tags: 'contains({"text" : "share"})'
+        }).then(function (availableImages) {
+            $log.debug('Got available images.');
+            $scope.availableImages = availableImages;
         }));
 
         if (pageId) {
@@ -3007,6 +3031,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 return tag.text && tag.text.toLowerCase().indexOf(text) > -1;
             });
             return Promise.resolve(tags);
+        };
+
+        $scope.revertTitle = function () {
+            $scope.page.title = $scope.page.name;
         };
 
         $scope.cancel = function () {

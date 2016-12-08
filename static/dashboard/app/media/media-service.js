@@ -36,8 +36,20 @@
         function MediaService() {
         }
 
-        MediaService.prototype.getItems = function() {
-            return $http.get('/_api/media').then(res => res.data).catch(res => {
+        MediaService.prototype.getItems = function(filter) {
+            var queryKeyValPairs = [];
+            if(typeof filter === 'object') {
+                for(var key in filter) {
+                    if(filter.hasOwnProperty(key)) {
+                        queryKeyValPairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(filter[key]));
+                    }
+                }
+            } 
+
+            var path = '/_api/media';
+            var url = queryKeyValPairs.length ? path + '?' + queryKeyValPairs.join('&') : path;
+            
+            return $http.get(url).then(res => res.data).catch(res => {
                 throw errorFactory.createResponseError(res);
             });
         };
@@ -121,7 +133,7 @@
                         src += '?label=' + label;
                     }
                 }
-            } else {
+            } else if(fallback) {
                 src = fallback;
             }
             

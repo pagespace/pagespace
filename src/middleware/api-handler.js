@@ -3,6 +3,7 @@
 //deps
 const
     handlebars = require('handlebars'),
+    mongoSanitize = require('mongo-sanitize'),
     typeify = require('../support/typeify'),
     BaseHandler = require('./base-handler');
 
@@ -21,7 +22,7 @@ const urlToModelMap = {
 //fields to auto populate when making queries to these model names (the keys)
 const populationsMap = {
     Site: '',
-    Page: 'parent template basePage regions.includes.plugin regions.includes.include redirect createdBy updatedBy',
+    Page: 'parent template basePage regions.includes.plugin regions.includes.include redirect createdBy updatedBy image',
     Plugin: '',
     Include: '',
     Template: 'regions.includes.plugin',
@@ -81,7 +82,7 @@ class ApiHandler extends BaseHandler {
         for (let p in req.query) {
             //use __ prefix to stop special query params being included in filter
             if (req.query.hasOwnProperty(p) && p.indexOf('__') !== 0) {
-                filter[p] = typeify(req.query[p]);
+                filter[p] = parseQueryExpression(typeify(req.query[p]), logger);
             }
         }
     
@@ -211,6 +212,21 @@ class ApiHandler extends BaseHandler {
             });
         }
     }
+}
+
+const CONTAINS_REGEX = /^contains\((.+)\)$/;
+
+function parseQueryExpression(str, logger) {
+    
+    //allow clients to safely use $elemMatch queries
+    if(CONTAINS_REGEX.test(str)) {
+        try {
+            return { $elemMatch: mongoSanitize(JSON.parse(CONTAINS_REGEX.exec(str)[1])) };
+        } catch(err) {
+            logger.warn(`Cannot parse query expression: ${str}`);
+        }
+    }
+    return str;
 }
 
 function htmlStringify(obj) {

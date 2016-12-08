@@ -70,7 +70,7 @@ class PageHandler extends BaseHandler {
                 status: 1,
                 updatedAt: -1
             };
-            const populate = 'template redirect regions.includes.plugin regions.includes.include';
+            const populate = 'template redirect regions.includes.plugin regions.includes.include image';
             findPagePromise = Page.findOne(filter).sort(sort).populate(populate).exec();
             if(!previewMode) {
                 this._setFindPagePromise(pageQueryCacheKey, findPagePromise);
@@ -197,6 +197,15 @@ class PageHandler extends BaseHandler {
         pageData.page = page.toObject();
         pageData.preview = pageResult.previewMode;
         pageData.live = !pageResult.previewMode;
+
+        //pass request info to view. this is currently only the info needed for constructing the host address.
+        //I'm not sure if the full request object should just be passed
+        //ensure app.set('trust proxy', true); for the correct values to work over proxies.
+        //See https://expressjs.com/en/guide/behind-proxies.html
+        pageData.req = {
+            protocol: req.protocol,
+            hostname: req.hostname
+        };
     
         //template properties
         pageData.template = {};

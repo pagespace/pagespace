@@ -106,10 +106,25 @@ function generateSchema(modifier) {
         },
         tags: [{
             type: Schema.Types.Mixed
-        }]
+        }],
+        title: {
+            type: String
+        },
+        description: {
+            type: String
+        },
+        image: {
+            type: Schema.Types.ObjectId,
+            ref: 'Media'
+        }
     });
 
     pageSchema.pre('save', function (next) {
+
+        if(!this.title) {
+            this.title = this.get('name');
+        }
+
         this.updatedAt = Date.now();
         next();
     });
