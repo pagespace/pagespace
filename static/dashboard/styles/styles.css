@@ -416,7 +416,6 @@ div + .section-heading {
     height: 50px;
 }
 .frame-panel h4 {
-    max-width: 400px;
     max-height: 1em;
 }
 .frame-panel label {
@@ -465,6 +464,9 @@ div + .section-heading {
 .compare-panel:nth-child(2) {
     right: 0;
     border-left: 1px solid #e5e7ea
+}
+.compare-panel h4 {
+    max-width: 400px;
 }
 
 .view-panel:nth-child(1) {
