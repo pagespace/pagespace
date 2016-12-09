@@ -314,6 +314,19 @@ class Index extends EventEmitter {
     getDefaultTemplateDir() {
         return path.join(__dirname, '/../views/templates');
     }
+
+    /**
+     * Resolves all the live pages managed by Pagespace with a 200 status code (unless a custom filter is specified).
+     * @param filter Override the filter to get pages with. Defaults to `{ status: 200 }`
+     * @return {Promise|Promise.<TResult>|*}
+     */
+    pages(filter) {
+        filter = filter || { status: 200 };
+        const Page = this.dbSupport.getModel('Page', 'live');
+        return Page.find(filter).exec().then(pages => {
+            return pages.map(page => page.toObject());        
+        });
+    }
 }
 
 //export a new instance
