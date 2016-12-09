@@ -41,9 +41,6 @@
                 <span data-color="#ff005a" class="p">p</span><span data-color="#00D6F3" class="a">a</span><span data-color="#faa129" class="g">g</span><span data-color="#29f38f" class="e">e</span><span data-color="#cbcbcb">space</span>
             </div>
         </div>
-        <div class="inpage-actions col-sm-7">
-            <div ng-include="'/_static/dashboard/app/inpage/remove-include.html'"></div>
-        </div>
         <nav class="header-nav col-sm-8">
             <ul class="nav nav-pills">
                 <li ng-class="menuClass('/pages', '/')"><a href="#/pages">Pages</a></li>
@@ -53,7 +50,6 @@
                 {{#allowDeveloperFeatures}}
                     <li ng-class="menuClass('/macros')"><a href="#/macros">Macros</a></li>
                     <li ng-class="menuClass('/templates')"><a href="#/templates">Templates</a></li>
-                    <li ng-class="menuClass('/plugins')"><a href="#/plugins">Plugins</a></li>
                 {{/allowDeveloperFeatures}}
                 {{#allowAdminFeatures}}
                     <li ng-class="menuClass('/users')"><a href="#/users">Users</a></li>
@@ -61,12 +57,6 @@
             </ul>
         </nav>
         <div class="col-sm-2">
-            <div class="well pull-left header-page-options" ng-show="viewPageUrl">
-                <span class="glyphicon glyphicon glyphicon-new-window"></span>&nbsp;
-                <a target="_blank" ng-href="\{{viewPageUrl + '?_preview=true'}}" title="Open '\{{viewPageName}}' preview in a new tab">Preview</a>
-                <span ng-show="viewPageUrlPublished">&nbsp;|&nbsp;
-                <a target="_blank" ng-href="\{{viewPageUrl + '?_preview=false'}}" title="Open '\{{viewPageName}}' live page a in new tab">Live</a></span>
-            </div>
             <div class="header-utils pull-right col-sm-2">
                 <p>
                     <a href="/_auth/logout">

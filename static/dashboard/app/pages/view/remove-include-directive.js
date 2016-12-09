@@ -1,12 +1,17 @@
 (function() {
 
-    var adminApp = angular.module('adminApp');
-
+    const 
+        adminApp = angular.module('adminApp'),
+        
+        tmpl =
+            `<div class="remove-include-action well">
+                <span class="glyphicon glyphicon-trash"></span> Remove
+            </div>`;
+        
     adminApp.directive('removeIncludeDrop', function() {
         return {
             replace: true,
-            transclude: true,
-            template: '<div ng-transclude class="remove-include-drop"></div>',
+            template: tmpl,
             link: function link(scope, element) {
 
                 var dragCounter = 0;
@@ -61,10 +66,10 @@
                         pageService.updatePage(pageId, page).then(function() {
                             $log.info('Include removed for pageId=%s, region=%s, include=%s',
                                 pageId, regionName, includeIndex);
-                            window.location.reload();
+                            $scope.$broadcast('include-removed');
                         }).catch(function(err) {
                             $scope.err = err;
-                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s',
+                            $log.error(err, 'Update page to remove include failed (pageId=%s, region=%s, include=%s)',
                                 pageId, regionName, includeIndex);
                         });
                     }).catch(function(err) {

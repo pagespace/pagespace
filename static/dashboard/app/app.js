@@ -7,6 +7,12 @@
         'ui.codemirror'
     ]);
 
+    adminApp.constant('pageViewStates', {
+        NONE: Symbol('NONE'),
+        EDITING: Symbol('EDITING'),
+        ADDING: Symbol('ADDING')
+    });
+
     adminApp.config(['$routeProvider', '$provide', '$httpProvider', function($routeProvider, $provide, $httpProvider) {
         $routeProvider.
 
@@ -14,16 +20,6 @@
             when('/pages/site', {
                 templateUrl: '/_static/dashboard/app/site/sitesettings.html',
                 controller: 'SiteSettingsController'
-            }).
-
-            //inpage
-            when('/add-include/:pageId/:region', {
-                templateUrl: '/_static/dashboard/app/inpage/add-include.html',
-                controller: 'AddIncludeController'
-            }).
-            when('/remove-include/:pageId/:region/:include', {
-                templateUrl: '/_static/dashboard/app/inpage/remove-include.html',
-                controller: 'RemoveIncludeController'
             }).
 
             //sitemap
@@ -75,20 +71,7 @@
                 templateUrl: '/_static/dashboard/app/pages/view/view-json.html',
                 controller: 'ViewJsonController'
             }).
-
-            //plugins
-            when('/plugins', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin-list.html',
-                controller: 'PluginListController'
-            }).
-            when('/plugins/new', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
-                controller: 'PluginController'
-            }).
-            when('/plugins/:pluginId', {
-                templateUrl: '/_static/dashboard/app/plugins/plugin.html',
-                controller: 'PluginController'
-            }).
+            
 
             //publishing
             when('/publishing', {
@@ -311,25 +294,6 @@
                 $scope.message = null;
             }, 1000 * 6);
         });
-
-        function swapIncludes(pageId, regionName, includeOne, includeTwo) {
-            pageService.getPage(pageId).then(function(page) {
-                page = pageService.swapIncludes(page, regionName, parseInt(includeOne), parseInt(includeTwo));
-                page = pageService.depopulatePage(page);
-                pageService.updatePage(pageId, page).then(function() {
-                    $log.info('Includes (%s and %s) swapped for pageId=%s, region=%s',
-                        includeOne, includeTwo, pageId, regionName);
-                    window.location.reload();
-                }).catch(function(err) {
-                    $scope.err = err;
-                    $log.error(err, 'Failed to swap includes (%s and %s) swapped for pageId=%s, region=%s',
-                        includeOne, includeTwo, pageId, regionName);
-                });
-            }).catch(function(err) {
-                $scope.err = err;
-                $log.error(err, 'Unable to get page: %s', pageId);
-            });
-        }
         
         function moveInclude(pageId, regionName, fromIndex, toIndex) {
             pageService.getPage(pageId).then(function(page) {
@@ -360,6 +324,14 @@
             });
         }
 
+        function editInclude(pageId, pluginName, includeId, regionName) {
+            $scope.$broadcast('edit-include', pageId, pluginName, includeId, regionName);
+        }
+
+        function addInclude(pageId, regionName) {
+            $scope.$broadcast('add-include', pageId, regionName);
+        }
+
         window.addEventListener('message', function(ev) {
             if(ev.origin === window.location.origin) {
                 if(ev.data.name === 'drag-include-start') {
@@ -368,6 +340,10 @@
                     document.body.classList.remove('dragging-include');
                 } else if(ev.data.name === 'move-include') {
                     moveInclude(ev.data.pageId, ev.data.regionName, ev.data.fromIndex, ev.data.toIndex);
+                } else if(ev.data.name === 'edit-include') {
+                    editInclude(ev.data.pageId, ev.data.pluginName, ev.data.includeId, ev.data.regionName);
+                } else if(ev.data.name === 'add-include') {
+                    addInclude(ev.data.pageId, ev.data.regionName);
                 }
             }
         });

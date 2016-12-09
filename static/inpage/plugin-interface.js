@@ -71,9 +71,8 @@ window.pagespace.getPluginInterface = function getPluginInterface(pluginName, pa
 
         close: function() {
             console.info('Pagespace closing plugin editor');
-            window.parent.location.reload();
         },
-        
+
         _events: {},
         on: function (event, listener) {
             if (typeof this._events[event] !== 'object') {

@@ -30,16 +30,6 @@
             </div>
         </div>
 
-        <div class="form-group" bs-has-error="defaultPage">
-            <label class="col-sm-3 control-label">Default page</label>
-            <div class="col-sm-9">
-                <select ng-model="defaultPage.redirect" class="form-control"
-                        ng-options="page as getPageHierarchyName(page) for page in availablePages track by page._id">
-                    <option value="">None</option>
-                </select>
-            </div>
-        </div>
-
         <div class="form-group" bs-has-error="analytics">
             <label class="col-sm-3 control-label">Analytics code</label>
             <div class="col-sm-9">

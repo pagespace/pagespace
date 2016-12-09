@@ -155,11 +155,32 @@ h4 {
     float: left;
     margin-right: 8px;
 }
-.header-page-options {
-    padding: 7px 18px;
-    margin: 11px 0 0 0 !important;
+.header-page-options > .well {
+    padding: 4px 18px;
+    margin: -6px 0 0 0 !important;
     background: rgba(255, 255, 255, 0.65);
+    text-align: center;
+    min-width: 200px;
 }
+
+.remove-include-action {
+    display: none;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 0;
+}
+.drag-over.remove-include-action {
+    background-color: rgba(255, 0, 0, 0.5);
+    color: #fff;
+}
+.dragging-include .remove-include-action {
+    display: block;
+}
+.dragging-include .page-preview-options {
+    display: none;
+}
+
+
 .header-utils {
     padding-right: 22px !important;
     text-align: right;
@@ -385,73 +406,128 @@ div + .section-heading {
     background: url(types/html.png) no-repeat center center;
 }
 
-.inpage-actions {
-    display: none;
-}
-.inpage-actions .header-page-options {
-    font-size: 16px;
-    width: 50%;
-    margin: 11px auto !important;
-    text-align: center;
-}
-.inpage-actions .header-page-options.drag-over {
-    background-color: rgba(255, 0, 0, 0.5);
-    color: #fff;
-}
-.dragging-include .inpage-actions {
-    display: block;
-}
-.dragging-include .header-nav {
-    display: none;
-}
-
-.compare-panel {
-    width: 50%;
+.frame-panel {
     position: absolute;
     top: 64px;
     bottom: 5px;
 }
-.compare-panel .section-heading {
-    padding: 18px 22px 0 22px;
+.frame-panel .section-heading {
+    padding: 13px 22px 0 22px;
     height: 50px;
 }
-.compare-panel h4 {
-    max-width: 400px;
+.frame-panel h4 {
     max-height: 1em;
 }
-.compare-panel label {
+.frame-panel label {
     display: inline-block;
     margin-bottom: 0;
     margin-left: 22px;
     font-weight: normal;
     font-size: 16px;
 }
-.compare-panel .frame-holder {
+.frame-panel .frame-holder {
     position: absolute;
     top: 50px;
     bottom: 26px;
     width: 100%;
 }
-.compare-panel .frame-holder iframe{
+.frame-panel .frame-holder > div {
+    height: 100%;
+}
+.frame-panel .frame-holder iframe {
     border: none;
     width: 100%;
     height: 100%;
 }
-.compare-panel .frame-holder.scale-to-fit {
+.frame-panel .frame-holder.scale-to-fit {
     transform:scale(0.5);
     transform-origin: 0 0;
 }
-.compare-panel .frame-holder.scale-to-fit iframe{
+.frame-panel .frame-holder.scale-to-fit iframe{
     border: none;
     width: 200%;
     height: 200%;
 }
-.compare-panel .footer-controls {
+.frame-panel .footer-controls {
     position: absolute;
     bottom: 0;
     height: 26px;
 }
 
+.compare-panel {
+    width: 50%;
+}
+.compare-panel:nth-child(1) {
+    left: 0;
+    border-right: 1px solid #E5E7EA;
+}
+.compare-panel:nth-child(2) {
+    right: 0;
+    border-left: 1px solid #e5e7ea
+}
+.compare-panel h4 {
+    max-width: 400px;
+}
+
+.view-panel:nth-child(1) {
+    left: 0;
+    width: 0;
+    transition: width 0.4s;
+    overflow: hidden;
+}
+.view-panel:nth-child(2) {
+    left: 0;
+    right: 0;
+    z-index: 1;
+    transition: left 0.4s;
+}
+.view-panel .frame-holder {
+    bottom: 0;
+}
+.view-panel div {
+    transform-origin: 0 0;
+    transition: scale 0.5s
+}
+
+.edit-open .view-panel:nth-child(1) {
+    left: 0;
+    box-shadow: 2px -4px 53px -13px #888888;
+    z-index: 2;
+}
+.edit-open .view-panel:nth-child(2) {
+    right: 0;
+    z-index: 1;
+}
+@media (max-width: 800px) {
+    .edit-open .view-panel:nth-child(1) {
+        width: 100%;
+    }
+    .edit-open .view-panel:nth-child(2) {
+        display: none;
+    }
+}
+@media (min-width: 801px) and (max-width: 1500px) {
+    .edit-open .view-panel:nth-child(1) {
+        width: 50%;
+    }
+    .edit-open .view-panel:nth-child(2) {
+        left: 50%;
+    }
+}
+@media (min-width: 1501px) {
+    .edit-open .view-panel:nth-child(1) {
+        width: 800px;
+    }
+    .edit-open .view-panel:nth-child(2) {
+        left: 800px;
+    }
+}
+.view-panel .scale-to-fit {
+    display: none;
+}
+.edit-open .view-panel .scale-to-fit {
+    display: block;
+}
 tags-input .tags {
     padding: 6px;
     border: none !important;

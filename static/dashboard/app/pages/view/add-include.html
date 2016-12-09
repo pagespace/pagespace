@@ -1,0 +1,9 @@
+<div class="notification-bar">
+    <p ng-show="availablePlugins.length == 0">No plugins have been imported</p>
+</div>
+<div class="list-group" ng-show="availablePlugins.length > 0">
+    <li ng-click="selectPlugin(plugin)" ng-repeat="plugin in availablePlugins"
+        class="list-group-item" ng-class="{active: selectedPlugin == plugin}" style="cursor: pointer">
+        <h4 class="list-group-item-heading">{{plugin.name}}</h4>
+    </li>
+</div>

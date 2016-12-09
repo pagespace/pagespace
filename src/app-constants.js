@@ -1,13 +1,13 @@
 'use strict';
 
-module.exports = {
+module.exports = Object.freeze({
     TAB: '\t',
 
     appStates: {
-        NOT_READY: 0,
-        READY: 1,
-        FAILED: 3,
-        STOPPED: 4
+        NOT_READY: Symbol('not ready'),
+        READY: Symbol('ready'),
+        FAILED: Symbol('failed'),
+        STOPPED: Symbol('stopped')
     },
     GUEST_USER: {
         username: 'guest',
@@ -23,4 +23,4 @@ module.exports = {
         label: 'large',
         size: 1000
     }]
-};
+});

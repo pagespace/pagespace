@@ -305,64 +305,17 @@
 
         //data about the plugin from the button that launched the editor
         var pluginName = evSrc.getAttribute('data-target-plugin');
-        var pluginTitle = pluginName.replace('-', ' ') + ' editor';
         var region = evSrc.getAttribute('data-target-region');
         var pageId = evSrc.getAttribute('data-target-page-id');
         var includeId = evSrc.getAttribute('data-target-include-id');
 
-        var customIframeSrc = '/_static/plugins/' + pluginName + '/edit.html';
-        var defaultIframeSrc = '/_static/inpage/default-plugin-editor/edit.html';
-        fetch(customIframeSrc).then(function(res) {
-            if(res.status !== 200) {
-                var err = new Error(res.statusText);
-                err.status = res.status;
-                throw err;
-            } else {
-                setupIframe(customIframeSrc);
-            }
-        }).catch(function(err) {
-            if(err.status === 404) {
-                setupIframe(defaultIframeSrc);
-            } else {
-                throw err;
-            }
-        }).catch(function(err) {
-            console.error(err);
-        });
-
-        function setupIframe(iframeSrc) {
-            var startEl = document.querySelector('[data-region=' + region + ']'),
-                modal = launchIframeModal(iframeSrc, 'pagespace-editor', pluginTitle, startEl, 'full');
-            var iframe = modal.querySelector('iframe'),
-                titlebar = modal.querySelector('.ps-include-editor-titlebar');
-
-            //save close button
-            var saveBtn = document.createElement('button');
-            saveBtn.classList.add('ps-include-editor-save', 'ps-btn', 'ps-btn-primary');
-            saveBtn.setAttribute('title', 'Save and close');
-            saveBtn.innerHTML = 'Save and close';
-
-            //save close button
-            var cancelBtn = document.createElement('button');
-            cancelBtn.classList.add('ps-include-editor-cancel', 'ps-btn', 'ps-btn-default');
-            cancelBtn.setAttribute('title', 'Close without saving');
-            cancelBtn.innerHTML = 'Cancel';
-
-            titlebar.appendChild(saveBtn);
-            titlebar.appendChild(cancelBtn);
-
-            saveBtn.addEventListener('click', function() {
-                iframe.contentWindow.window.pagespace.emit('save');
-            });
-
-            cancelBtn.addEventListener('click', function closeModal() {
-                modal.parentNode.removeChild(modal);
-                document.body.style.overflow = 'auto';
-            });
-
-            //inject plugin interface
-            iframe.contentWindow.window.pagespace = window.pagespace.getPluginInterface(pluginName, pageId, includeId);
-        }
+        window.parent.postMessage({
+            name: 'edit-include',
+            pageId: pageId,
+            regionName: region,
+            includeId: includeId,
+            pluginName: pluginName
+        }, window.location.origin);
     }
 
     /**
@@ -373,95 +326,11 @@
 
         var pageId = evSrc.getAttribute('data-target-page-id');
         var region = evSrc.getAttribute('data-target-region');
-
-        var iFrameName = 'add_include';
-        var iframeSrc = '/_dashboard/inpage#/add-include/' + pageId + '/' + region;
-        var startEl = document.querySelector('[data-region=' + region + ']');
-        var title = 'Add include';
-        launchIframeModal(iframeSrc, iFrameName, title, startEl, 'medium');
-    }
-
-    /**
-     * Launch iframe
-     * @param src
-     * @param frameName
-     * @param title
-     * @param startEl
-     * @return {*}
-     */
-    function launchIframeModal(src, frameName, title, startEl, size) {
-
-        //create the modal
-        var modal = document.createElement('div');
-        modal.id = 'include-modal';
-        modal.className = 'ps-include-modal';
-
-        document.body.appendChild(modal);
-
-        //create the editor frame
-        var editor = document.createElement('div');
-        editor.id = 'include-editor';
-        editor.className = 'ps-include-editor';
-
-        var regionPos = startEl.getBoundingClientRect();
-        editor.style.left = regionPos.left + 'px';
-        editor.style.top = regionPos.top + 48 + 'px';
-        editor.style.width = regionPos.width + 'px';
-        editor.style.height = regionPos.height + 'px';
-
-        //document.body.appendChild(editor);
-        modal.appendChild(editor);
-
-        //create the iframe
-        var iframe = document.createElement('iframe');
-        iframe.name = frameName;
-        iframe.src = src;
-        iframe.width = '100%';
-        iframe.height = '100%';
-        editor.appendChild(iframe);
-
-        //titlebar
-        var titlebar = document.createElement('div');
-        titlebar.classList.add('ps-include-editor-titlebar');
-        titlebar.innerHTML = '<p>' + title + '</p>';
-        editor.appendChild(titlebar);
-
-        //animate to size
-        window.setTimeout(function() {
-            setIframeSize(editor, size);
-        }, 100);
-
-        function setIframeSize(editor, size) {
-            if(editor) {
-                var TITLE_BAR_HEIGHT = 43;
-                var top, height;
-                if(size === 'small') {
-                    top = 200;
-                    height = window.innerHeight - 400;
-                } else if(size === 'medium') {
-                    top = 100;
-                    height = window.innerHeight - 200;
-                } else {
-                    top = TITLE_BAR_HEIGHT;
-                    height = window.innerHeight - TITLE_BAR_HEIGHT;
-                }
-
-                document.body.style.overflow = 'hidden';
-
-                var maxLeft = (window.innerWidth / 12) * 2;
-                editor.style.top = top + 'px';
-                editor.style.left = window.innerWidth < 1000 ? 0 : maxLeft + 'px';
-                editor.style.width = window.innerWidth < 1000 ?
-                    window.innerWidth + 'px' : window.innerWidth - (maxLeft * 2) + 'px';
-                editor.style.height = height+ 'px';
-            }
-        }
-        var resizeListener = function() {
-            setIframeSize(editor, size);
-        };
-
-        window.addEventListener('resize', resizeListener);
-
-        return modal;
+        
+        window.parent.postMessage({
+            name: 'add-include',
+            pageId: pageId,
+            regionName: region
+        }, window.location.origin);
     }
 })();
