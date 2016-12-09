@@ -7,11 +7,12 @@
 var adminApp = angular.module('adminApp');
 adminApp.controller('PageController',
     function($log, $scope, $rootScope, $routeParams, $location, $timeout,
-             pageService, templateService, pluginService, $window) {
+             pageService, templateService, pluginService, mediaService, $window) {
 
     $log.info('Showing page view.');
 
     $scope.getPageHierarchyName = pageService.getPageHierarchyName;
+    $scope.getSrcPath = mediaService.getSrcPath.bind(mediaService);
 
     $scope.section = $routeParams.section || 'basic';
 
@@ -42,6 +43,12 @@ adminApp.controller('PageController',
         $log.debug('Got available plugins.');
         $scope.availablePlugins = availablePlugins;
     }));
+    pageSetupPromises.push(mediaService.getItems({ 
+        tags : 'contains({"text" : "share"})'
+    }).then(function (availableImages) {
+        $log.debug('Got available images.');
+        $scope.availableImages = availableImages;
+    }));    
 
     if(pageId) {
         $log.debug('Fetching page data for: %s', pageId);
@@ -98,6 +105,10 @@ adminApp.controller('PageController',
         text = text.toLowerCase();
         const tags = $scope.availableTags.filter(tag => tag.text && tag.text.toLowerCase().indexOf(text) > -1);
         return Promise.resolve(tags);
+    };
+
+    $scope.revertTitle = function() {
+        $scope.page.title = $scope.page.name;
     };
 
     $scope.cancel = function() {

@@ -238,6 +238,9 @@
             if(page.redirect && page.redirect._id) {
                 page.redirect = page.redirect._id;
             }
+            if(page.image && page.image._id) {
+                page.image = page.image._id;
+            }
             page.regions = page.regions.filter(function(region) {
                 return typeof region === 'object';
             }).map(function(region) {

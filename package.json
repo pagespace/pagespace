@@ -45,6 +45,7 @@
     "handlebars": "^4.0.5",
     "handlebars-intl": "^1.1.1",
     "mkdirp": "^0.5.0",
+    "mongo-sanitize": "^1.0.0",
     "mongoose": "^4.5.7",
     "nodemailer": "^2.5.0",
     "nodemailer-html-to-text": "^2.1.0",
