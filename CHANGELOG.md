@@ -21,6 +21,14 @@ templates.
 * Basic request information added to rendering context: `req.protocol`, `req.hostname`. Useful for constructing the 
 page's URL.
 
+#### Pages API
+
+Expose pages to Express. Useful for sitemaps
+
+### Bugs
+
+* Requests for pages that are not in the database should not pass an `Error` to `next()`
+
 ### Other changes
 
 * **Default page feature removed** (i.e. / --> /home [301]). It's now preferable that this is handled by Express routing.

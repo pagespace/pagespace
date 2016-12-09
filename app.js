@@ -28,6 +28,14 @@ app.use(pagespace.init({
     logLevel: 'debug'
 }));
 
+app.get('/sitemap.xml', (req, res, next) => {
+   pagespace.pages().then(pages => {
+       const xml = pages.map(page => `<url><loc>${req.protocol}://${req.hostname}${page.url}</loc></url>`).join('');
+       res.type('xml');
+       res.send(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${xml}</urlset>`);
+   });
+});
+
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');

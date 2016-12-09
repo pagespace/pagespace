@@ -104,6 +104,24 @@ pagespace.ready().then(function() {
 });
 ```
 
+### pagespace.pages()
+
+Resolves all the live pages managed by Pagespace. Useful for things like sitemaps.
+
+```javascript
+app.get('/sitemap.xml', (req, res, next) => {
+    pagespace.pages().then(pages => {
+        const xml = pages.map(page => `<url><loc>${req.protocol}://${req.hostname}${page.url}</loc></url>`).join('');
+        res.type('xml');
+        res.send(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${xml}</urlset>`);
+    }).catch(err => {
+        err = err || new Error('Could not generate sitemap');
+        err.status = 500;
+        next(err);
+    });
+});
+```
+
 ### pagesapce.stop()
 
 Forcefully stop the Pagespace middleware from processing requests. This is useful for tests, but not usually

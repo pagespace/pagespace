@@ -79,8 +79,8 @@ class PageHandler extends BaseHandler {
     
         //get the page from the db!
         findPagePromise.then((page) => {
-            const status = page ? page.status : httpStatus.NOT_FOUND;
-    
+            const status = page ? page.status : 0;
+
             let pageProps = {
                 page: page,
                 status: status,
@@ -111,12 +111,8 @@ class PageHandler extends BaseHandler {
                 //not found or gone
                 this._doNotFound(logger, pageResult);
             } else {
-                //something else?
-                const message = `Status ${status} is not supported for pages`;
-                logger.warn(message);
-                const err = new Error(message);
-                err.status = 500;
-                next(err);
+                //something else? Pass on to next Express middleware
+                next();
             }
         }).catch((err) => {
             logger.debug(err);

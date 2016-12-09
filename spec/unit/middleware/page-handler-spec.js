@@ -163,7 +163,7 @@ describe('Page Handler', () => {
         expect(Model.findOne.calls.count()).toBe(1);
     });
 
-    it('dpes not cache pages in preview mode', () => {
+    it('does not cache pages in preview mode', () => {
         req.url = '/page-1?_preview=true';
         req.path = '/page-1';
         req.query._preview = 'true'; //(meant to be a string)
@@ -259,8 +259,7 @@ describe('Page Handler', () => {
         dashboardHandler.doGet(req, res, next);
 
         next.and.callFake(err => {
-            expect(err.status).toBe(404);
-            expect(err.message).toBe('Page not found for /page-99 (404)');
+            expect(err).toBeUndefined(); //no error should be given for non-existent pages
             done();
         });
     })
