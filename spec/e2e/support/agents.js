@@ -1,4 +1,4 @@
-var app = require('../../../app-test.js');
+var app = require('../../../app.js');
 var server = app.server;
 var Promise = require('bluebird');
 var request = require('supertest');
