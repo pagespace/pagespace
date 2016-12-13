@@ -28,6 +28,10 @@ app.use(pagespace.init({
     logLevel: 'debug'
 }));
 
+app.use(/^\/$/, (req, res) => {
+   res.redirect('/page-1', 301);
+});
+
 app.get('/sitemap.xml', (req, res, next) => {
    pagespace.pages().then(pages => {
        const xml = pages.map(page => `<url><loc>${req.protocol}://${req.hostname}${page.url}</loc></url>`).join('');

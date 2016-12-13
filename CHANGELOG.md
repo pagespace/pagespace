@@ -1,7 +1,13 @@
 Pagespace Changelog
 =================================
 
-## 1.4.0 (2016-12-09)
+## 1.4.1 (2016-12-13)
+
+### Other changes
+
+* Since the default page feature was removed, this must now move to the Express routing, but was missing.
+
+## 1.4.0 (2016-12-13)
 
 ### Features
 
