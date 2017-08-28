@@ -24,8 +24,8 @@ Website __managers__ benefit from an admin dashboard where they have full websit
 important design goal of Pagespace is to find the perfect balance between a powerful management interface and a clean
 uncluttered UI. We recognize that some features are not suitable or necessary for all users and are, therefore,
 hidden behind different user roles.
-
-##Docker demo
+ 
+## Docker demo
 You can run the demo that is part of this repository using Docker:
 
 ```
@@ -37,14 +37,14 @@ Then visit [http://localhost:9999/_dashboard](http://localhost:9999/_dashboard).
 Username: **admin**
 Password: **pagespace**
 
-##Quick start
+## Quick start
 
-###Prerequisites
+### Prerequisites
 
 * Install [MongoDB](http://docs.mongodb.org/getting-started/shell/installation/) [via [Docker](https://hub.docker.com/_/mongo/)] 
 * Use an existing or [create a new](http://expressjs.com/starter/generator.html) Express application
 
-###Database setup
+### Database setup
 
 Create a new database:
 
@@ -53,7 +53,7 @@ Create a new database:
     > use mysite
 ```
 
-###Setup with Express
+### Setup with Express
 
 Pagespace is just another piece of Express middleware.
 
@@ -117,7 +117,7 @@ app.listen(9999, function() {
 
 See [app.js](./app.js) for a more comprehensive example.
 
-##Dashboard setup
+## Dashboard setup
 
 First install a plugin, for example [webcopy](https://github.com/pagespace/pagespace-webcopy)
 
@@ -129,7 +129,7 @@ Now you may populate template or page regions with this plugin.
 
 ##Plugins
 
-###Webcopy
+### Webcopy
 
 WYSIWYG HTML editor with integration for Pagespace links and media.
 
@@ -139,7 +139,7 @@ npm install pagespace-webcopy --save
 
 [https://github.com/pagespace/pagespace-webcopy](https://github.com/pagespace/pagespace-webcopy)
 
-###HTML
+### HTML
 
 Simple raw HTML editor
 
@@ -149,7 +149,7 @@ npm install pagespace-html --save
 
 [https://github.com/pagespace/pagespace-html](https://github.com/pagespace/pagespace-html)
 
-###Markdown
+### Markdown
 
 Markdown editor, processes Markdown to HTML.
 
@@ -159,7 +159,7 @@ npm install pagespace-markdown --save
 
 [https://github.com/pagespace/pagespace-markdown](https://github.com/pagespace/pagespace-markdown)
 
-###Gallery
+### Gallery
 
 Creates a gallery include composed of Pagespace media items.
 
@@ -169,7 +169,7 @@ npm install pagespace-gallery --save
 
 [https://github.com/pagespace/pagespace-gallery](https://github.com/pagespace/pagespace-gallery)
 
-###Posts
+### Posts
 
 Aggregates includes from a collection of pages into one page. Useful for blog rolls or composing long scroll pages
 
@@ -179,7 +179,7 @@ npm install pagespace-posts --save
 
 [https://github.com/pagespace/pagespace-posts](https://github.com/pagespace/pagespace-posts)
 
-###Nav
+### Nav
 
 Creates a navigation include.
 
